@@ -564,7 +564,7 @@ export function MainEditor() {
                 <div className="w-full max-w-md space-y-3 animate-in fade-in slide-in-from-bottom-2 duration-500">
                   <div className="flex items-center justify-between px-2">
                     <a 
-                      href="https://github.com/nobnobz/fusion-widget-manager" 
+                      href="https://github.com/nobnobz/Omni-Template-Bot-Bid-Raiser" 
                       target="_blank" 
                       rel="noopener noreferrer" 
                       className="flex items-center gap-2 opacity-60 hover:opacity-100 hover:text-primary transition-all group/tpl"
