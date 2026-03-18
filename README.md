@@ -1,65 +1,41 @@
-<div align="center">
-  <img src="https://raw.githubusercontent.com/nobnobz/fusion-widget-manager/main/public/branding/clown_logo.png" width="160" height="160" alt="Fusion Widget Manager Logo">
-  
-  # Fusion Widget Manager
-  **The ultimate visual editor for your Fusion & Omni configurations.**
+# Fusion Widget Manager
 
-  [![GitHub Stars](https://img.shields.io/github/stars/nobnobz/fusion-widget-manager?style=for-the-badge&color=ffd700)](https://github.com/nobnobz/fusion-widget-manager/stargazers)
-  [![GitHub License](https://img.shields.io/github/license/nobnobz/fusion-widget-manager?style=for-the-badge&color=blue)](https://github.com/nobnobz/fusion-widget-manager/blob/main/LICENSE)
-  [![Deployment Status](https://img.shields.io/github/actions/workflow/status/nobnobz/fusion-widget-manager/nextjs.yml?branch=main&style=for-the-badge&label=Deployment)](https://nobnobz.github.io/fusion-widget-manager/)
+A powerful, web-based manager for Fusion widgets. Designed for the community, it simplifies the process of creating, editing, and managing widget configurations for the Fusion ecosystem.
 
-  [**✨ Open Live App ✨**](https://nobnobz.github.io/fusion-widget-manager/)
-</div>
+Link: [**Fusion Widget Manager**](https://nobnobz.github.io/fusion-widget-manager/)
 
 ---
 
-## 🚀 Overview
+## ✨ Features
 
-**Fusion Widget Manager** is a modern, high-performance web application designed to simplify the management of widget configurations for the Fusion ecosystem. Whether you are coming from Omni or building new layouts from scratch, this tool provides a seamless, visual-first experience.
+### 📥 Versatile Import
+- **Direct Paste**: Paste your Fusion JSON exports directly into the editor.
+- **Drag & Drop**: Simply drop any `.json` widget configuration file.
+- **Omni Converter**: One-click conversion for Omni snapshots, making them fully compatible with Fusion.
 
-## ✨ Key Features
+### 🎨 Visual Editing
+- **Widget Previews**: See your changes in real-time.
+- **Sortable Lists**: Reorder widgets with a smooth drag-and-drop interface.
+- **Detailed Properties**: Edit everything from titles to specific catalog links.
 
-### 🔄 Intelligent Conversion & Import
-- **Omni-to-Fusion Magic**: Drop an Omni snapshot and watch it instantly transform into a valid Fusion configuration.
-- **Priority Sorting**: Automatically respects the original item order and subgroup hierarchies.
-- **Direct Synchronization**: Link your **AIOMetadata** manifest URL to sync catalog data in real-time.
+### 🔄 Advanced Sync
+- **AIOMetadata Integration**: Enter your manifest URL to sync catalog data automatically.
+- **UME Templates**: Stay up-to-date with the latest official templates from the [UME repository](https://github.com/nobnobz/Omni-Template-Bot-Bid-Raiser).
+---
 
-### 🎨 Visual-First Editor
-- **Live Previews**: See your collection rows and classic rows as they will appear in-app.
-- **Drag-and-Drop Organization**: Effortlessly reorder widgets and collection items with a smooth, native-feel interface.
-- **Batch Editing**: Manage multiple data sources and catalog types with ease.
+## 📖 How to Use
 
-### 🍱 Curated Templates
-- **Official UME Templates**: Integrated access to the latest community templates from the [UME repository](https://github.com/nobnobz/Omni-Template-Bot-Bid-Raiser).
-- **One-Click Loading**: Start with a professional base and customize it to your needs.
-
-## 🛠️ Tech Stack
-
-Built with a focus on speed, aesthetics, and reliability:
-- **Framework**: Next.js 15 (App Router)
-- **Styling**: Tailwind CSS & Framer Motion (for premium animations)
-- **UI Components**: Shadcn/UI (Radix UI)
-- **Icons**: Lucide React
-- **Deployment**: GitHub Pages (Static Export)
-
-## 📖 Getting Started
-
-1. **Launch the Manager**: Visit the [Live Demo](https://nobnobz.github.io/fusion-widget-manager/).
-2. **Import Data**: Drop a `.json` file, paste your current configuration, or select a template.
-3. **Configure Sync**: (Optional) Add your AIOMetadata URL in the **Manifest URL** field.
-4. **Edit & Export**: Refine your widgets, then hit **Export** to copy the final JSON to your clipboard for use in Fusion.
+1. **Start**: Drag an Omni/Fusion .JSON, paste Fusion widgets exports, or select a UME Template.
+2. **Setup**: If you're new, click the **"Guide"** button in the top right for a detailed walkthrough.
+3. **Customize**: Edit your widgets, reorder them, and update their properties.
+4. **Export**: Use the **Export** button to get your customized JSON and copy it to your clipboard.
+5. **Import into Fusion**: Open Fusion, go to `Widgets → Import Widgets`, and paste your content.
 
 ---
 
-## ❤️ Support & Community
-
-If you find this tool helpful, please consider supporting the project:
-- ☕️ **[Buy me a Coffee (Ko-fi)](https://ko-fi.com/botbidraiser)**
-- ⭐ **Star the Repository** to show your appreciation!
+## ❤️ Support
+If you find this tool helpful, feel free to support the developer:
+[Buy me a Coffee (Ko-fi)](https://ko-fi.com/botbidraiser)
 
 ---
-
-<div align="center">
-  <p><i>Developed with passion for the Fusion community.</i></p>
-  <p><b>nobnobz / Fusion Widget Manager</b></p>
-</div>
+*Made with Antigravity 🛸 by [bot-bid-raiser](https://github.com/nobnobz)*
