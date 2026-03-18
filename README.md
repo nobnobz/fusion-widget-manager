@@ -25,7 +25,7 @@ Link: [**Fusion Widget Manager**](https://nobnobz.github.io/fusion-widget-manage
 
 ## 📖 How to Use
 
-1. **Start**: Drag an Omni/Fusion snapshot, paste Fusion JSON, or select a UME Template.
+1. **Start**: Drag an Omni/Fusion .JSON, paste Fusion widgets exports, or select a UME Template.
 2. **Setup**: If you're new, click the **"Guide"** button in the top right for a detailed walkthrough.
 3. **Customize**: Edit your widgets, reorder them, and update their properties.
 4. **Export**: Use the **Export** button to get your customized JSON and copy it to your clipboard.
