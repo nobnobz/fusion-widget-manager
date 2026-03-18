@@ -97,7 +97,7 @@ export function SortableWidget({
     );
 
     // 2. Strict Fusion transformation
-    const fusionWidget = convertEditorWidgetToFusionWidget(normalized);
+    const fusionWidget = convertEditorWidgetToFusionWidget(normalized, manifestUrl);
 
     // Wrap the single widget in the format expected by the ImportMergeDialog
     const exportData = {
