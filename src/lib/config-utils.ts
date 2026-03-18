@@ -280,7 +280,7 @@ export function convertEditorWidgetToFusionWidget(widget: any, manifestUrl: stri
   if (!widget) return null;
 
   // Clone base properties and normalize ID with prefix if needed
-  const prefix = widget.type === 'row.classic' ? 'classic.' : 'collection.';
+  const prefix = widget.type === 'row.classic' ? 'catalog.' : 'collection.';
   const id = widget.id && widget.id.startsWith(prefix) ? widget.id : `${prefix}${widget.id}`;
 
   const fusionWidget: any = {
@@ -302,27 +302,46 @@ export function convertEditorWidgetToFusionWidget(widget: any, manifestUrl: stri
       }
     };
   } else if (widget.type === 'row.classic') {
-    fusionWidget.cacheTTL = widget.cacheTTL;
-    fusionWidget.limit = widget.limit;
+    fusionWidget.cacheTTL = widget.cacheTTL || 1800;
     
     const presentation = widget.presentation || {};
     fusionWidget.presentation = {
       aspectRatio: presentation.aspectRatio || 'poster',
-      cardStyle: presentation.cardStyle || 'medium',
-      badges: presentation.badges,
-      imageURL: presentation.backgroundImageURL || presentation.imageURL || ''
+      badges: presentation.badges || { providers: false, ratings: true },
+      cardStyle: presentation.cardStyle || 'medium'
     };
     
     fusionWidget.dataSource = convertEditorDataSourceToFusionDataSource(widget.dataSource, manifestUrl);
+    
+    // Cleanup internal/unsupported fields for row.classic
+    delete fusionWidget.hideTitle;
+    delete fusionWidget.limit;
   }
 
   return fusionWidget;
 }
 
 export function exportConfigToFusion(config: FusionWidgetsConfig, manifestUrl: string | null = null): any {
+  const fusionWidgets = (config.widgets || []).map(w => convertEditorWidgetToFusionWidget(w, manifestUrl));
+  
+  // Collect all unique required addons (those that are URLs)
+  const addonsSet = new Set<string>();
+  fusionWidgets.forEach(w => {
+    if (w.type === 'row.classic' && w.dataSource?.payload?.addonId?.startsWith('http')) {
+      addonsSet.add(w.dataSource.payload.addonId);
+    } else if (w.type === 'collection.row' && Array.isArray(w.dataSource?.payload?.items)) {
+      w.dataSource.payload.items.forEach((item: any) => {
+        if (item.dataSource?.payload?.addonId?.startsWith('http')) {
+          addonsSet.add(item.dataSource.payload.addonId);
+        }
+      });
+    }
+  });
+
   return {
     exportType: config.exportType || 'fusionWidgets',
     exportVersion: config.exportVersion || 1,
-    widgets: (config.widgets || []).map(w => convertEditorWidgetToFusionWidget(w, manifestUrl))
+    requiredAddons: Array.from(addonsSet),
+    widgets: fusionWidgets
   };
 }

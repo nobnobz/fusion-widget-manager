@@ -99,10 +99,24 @@ export function SortableWidget({
     // 2. Strict Fusion transformation
     const fusionWidget = convertEditorWidgetToFusionWidget(normalized, manifestUrl);
 
+    // 3. Collect required addons for this single widget
+    const addonsSet = new Set<string>();
+    if (fusionWidget.type === 'row.classic' && fusionWidget.dataSource?.payload?.addonId?.startsWith('http')) {
+      addonsSet.add(fusionWidget.dataSource.payload.addonId);
+    } else if (fusionWidget.type === 'collection.row' && Array.isArray(fusionWidget.dataSource?.payload?.items)) {
+      /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+      fusionWidget.dataSource.payload.items.forEach((item: any) => {
+        if (item.dataSource?.payload?.addonId?.startsWith('http')) {
+          addonsSet.add(item.dataSource.payload.addonId);
+        }
+      });
+    }
+
     // Wrap the single widget in the format expected by the ImportMergeDialog
     const exportData = {
       exportType: "fusionWidgets",
       exportVersion: 1,
+      requiredAddons: Array.from(addonsSet),
       widgets: [fusionWidget]
     };
     const widgetJson = JSON.stringify(exportData, null, 2);
