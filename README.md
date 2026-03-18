@@ -1,4 +1,4 @@
-# 🛸 Fusion Widget Manager
+# Fusion Widget Manager
 
 A powerful, web-based manager for Fusion widgets. Designed for the community, it simplifies the process of creating, editing, and managing widget configurations for the Fusion ecosystem.
 
