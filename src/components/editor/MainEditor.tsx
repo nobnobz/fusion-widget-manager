@@ -431,7 +431,7 @@ export function MainEditor() {
             <div className="absolute -inset-20 bg-primary/25 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none transform-gpu" />
             <div className="relative size-40 sm:size-52 flex items-center justify-center rounded-full overflow-hidden select-none">
               <img
-                src="/branding/clown_logo.png"
+                src="/fusion-widget-manager/branding/clown_logo.png"
                 alt="Clown Logo"
                 className="w-full h-full object-contain animate-in zoom-in-110 duration-1000"
               />
