@@ -2,13 +2,13 @@
 
 A powerful, web-based manager for Fusion widgets. Designed for the community, it simplifies the process of creating, editing, and managing widget configurations for the Fusion ecosystem.
 
-Link: [**Fusion Widget Manager**](https://nobnobz.github.io/fusion-widget-manager/)
+✨ Link: [**Fusion Widget Manager**](https://nobnobz.github.io/fusion-widget-manager/)
 
 ---
 
 ## ✨ Features
 
-### 📥 Versatile Import
+### 📥 Import
 - **Direct Paste**: Paste your Fusion JSON exports directly into the editor.
 - **Drag & Drop**: Simply drop any `.json` widget configuration file.
 - **Omni Converter**: One-click conversion for Omni snapshots, making them fully compatible with Fusion.
