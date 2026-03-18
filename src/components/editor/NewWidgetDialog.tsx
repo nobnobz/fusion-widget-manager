@@ -40,12 +40,12 @@ export function NewWidgetDialog({ isOpen, onOpenChange, onCreated }: NewWidgetDi
         ? { kind: 'collection' as const, payload: { items: [] } }
         : { kind: 'addonCatalog' as const, payload: { addonId: 'YOUR_AIOMETADATA', catalogId: '', type: 'movie' } },
       ...(type === 'row.classic' && {
-        cacheTTL: 0,
+        cacheTTL: 1800,
         limit: 20,
         presentation: {
-          aspectRatio: 'wide' as const,
-          cardStyle: 'small' as const,
-          badges: { providers: true, ratings: true }
+          aspectRatio: 'poster' as const,
+          cardStyle: 'medium' as const,
+          badges: { providers: false, ratings: true }
         }
       })
     };
