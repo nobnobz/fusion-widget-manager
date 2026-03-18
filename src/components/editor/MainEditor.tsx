@@ -920,7 +920,7 @@ export function MainEditor() {
                 </p>
                 <Button 
                   variant="outline" 
-                  className="w-full h-10 rounded-xl justify-center text-[10px] font-bold"
+                  className="w-full h-10 rounded-xl justify-center text-[10px] font-bold bg-background/50 backdrop-blur-sm"
                   onClick={() => window.open('https://github.com/nobnobz/Omni-Template-Bot-Bid-Raiser/blob/main/ume-aiometadata-config.json', '_blank')}
                 >
                   <Download className="size-3 mr-2" />
@@ -929,7 +929,7 @@ export function MainEditor() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
                   <Button 
                     variant="outline" 
-                    className="h-10 rounded-xl justify-center text-[10px] font-bold"
+                    className="h-10 rounded-xl justify-center text-[10px] font-bold bg-background/50 backdrop-blur-sm"
                     onClick={() => window.open('https://aiometadatafortheweebs.midnightignite.me/configure/', '_blank')}
                   >
                     <Globe className="size-3 mr-2 text-primary" />
@@ -937,7 +937,7 @@ export function MainEditor() {
                   </Button>
                   <Button 
                     variant="outline" 
-                    className="h-10 rounded-xl justify-center text-[10px] font-bold"
+                    className="h-10 rounded-xl justify-center text-[10px] font-bold bg-background/50 backdrop-blur-sm"
                     onClick={() => window.open('https://aiometadata.fortheweak.cloud/configure/', '_blank')}
                   >
                     <Globe className="size-3 mr-2 text-blue-500" />
