@@ -120,7 +120,12 @@ export function normalizeOmniSnapshot(snapshot: any): NormalizedOmniModel {
     subgroups: values.catalog_groups || {},
     selectedCatalogs: values.selected_catalogs || [],
     catalogOrdering: values.catalog_ordering || [],
-    globalGroupOrder: values.catalog_group_order || [],
+    globalGroupOrder: [
+      ...(Array.isArray(values.catalog_group_order) ? values.catalog_group_order : []),
+      ...(Array.isArray(values.catalog_groups_order) ? values.catalog_groups_order : []),
+      ...(Array.isArray(values.subgroup_order_list) ? values.subgroup_order_list : []),
+      ...(Array.isArray(values.subgroup_order) ? values.subgroup_order : [])
+    ],
     customNames: values.custom_catalog_names || {},
     imageUrls: values.catalog_group_image_urls || {},
     smallCatalogs: values.small_catalogs || [],
@@ -171,8 +176,18 @@ export function convertOmniToFusion(snapshot: any): FusionWidgetsConfig {
     const items: CollectionItem[] = [];
     
     const sortedSubgroups = [...group.subgroups].sort((a, b) => {
-      const indexA = model.globalGroupOrder.findIndex(item => item && item.trim() === a.trim());
-      const indexB = model.globalGroupOrder.findIndex(item => item && item.trim() === b.trim());
+      const getIndex = (name: string) => {
+        return model.globalGroupOrder.findIndex(item => {
+          if (!item) return false;
+          if (typeof item === 'string') return item.trim().toLowerCase() === name.trim().toLowerCase();
+          if (typeof item === 'object' && item.name) return item.name.trim().toLowerCase() === name.trim().toLowerCase();
+          return false;
+        });
+      };
+      
+      const indexA = getIndex(a);
+      const indexB = getIndex(b);
+      
       if (indexA === -1 && indexB === -1) return 0;
       if (indexA === -1) return 1;
       if (indexB === -1) return -1;
