@@ -872,10 +872,10 @@ export function MainEditor() {
       <ConfirmationDialog
         isOpen={showRestartConfirm}
         onOpenChange={setShowRestartConfirm}
-        title="Go to Start Page?"
+        title="Clear & Restart?"
         variant="danger"
-        description="Are you sure you want to go back? All current widgets will be cleared from temporary storage."
-        confirmText="Go back"
+        description="Are you sure you want to start over? All current widgets will be permanently cleared from temporary storage."
+        confirmText="START OVER"
         onConfirm={() => {
           clearConfig();
           setView('welcome');
