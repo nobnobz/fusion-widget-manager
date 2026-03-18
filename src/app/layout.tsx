@@ -4,6 +4,8 @@ import { ConfigProvider } from "@/context/ConfigContext";
 import { ThemeChromeSync } from "@/components/theme-chrome-sync";
 import { ThemeProvider } from "@/components/theme-provider";
 import "./globals.css";
+import IconImage from '@/../public/icon.png';
+import FaviconImage from '@/../public/favicon.png';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -19,9 +21,9 @@ export const metadata: Metadata = {
   title: "Widget Manager",
   description: "A clean, visual editor for fusionWidgets JSON",
   icons: {
-    icon: "/icon.png",
-    shortcut: "/favicon.png",
-    apple: "/icon.png",
+    icon: IconImage.src,
+    shortcut: FaviconImage.src,
+    apple: IconImage.src,
   },
   appleWebApp: {
     capable: true,

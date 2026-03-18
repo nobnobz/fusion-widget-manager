@@ -38,6 +38,7 @@ import {
 } from 'lucide-react';
 import Image from 'next/image';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
+import LogoImage from '@/../public/branding/clown_logo.png';
 import { convertOmniToFusion } from '@/lib/omni-converter';
 
 import { Textarea } from '@/components/ui/textarea';
@@ -459,7 +460,7 @@ export function MainEditor() {
             <div className="absolute -inset-20 bg-primary/25 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none transform-gpu" />
             <div className="relative size-40 sm:size-52 flex items-center justify-center rounded-full overflow-hidden select-none">
               <Image
-                src="/branding/clown_logo.png"
+                src={LogoImage}
                 alt="Clown Logo"
                 width={208}
                 height={208}
@@ -918,11 +919,11 @@ export function MainEditor() {
                   First, download the template and upload it to your AIOMetadata instance. Then add the addon to Fusion.
                 </p>
                 <Button 
-                  variant="secondary" 
-                  className="w-full h-11 rounded-xl text-[10px] font-bold uppercase tracking-widest shadow-sm mb-2"
+                  variant="outline" 
+                  className="w-full h-10 rounded-xl justify-center text-[10px] font-bold"
                   onClick={() => window.open('https://github.com/nobnobz/Omni-Template-Bot-Bid-Raiser/blob/main/ume-aiometadata-config.json', '_blank')}
                 >
-                  <Download className="size-4 mr-2" />
+                  <Download className="size-3 mr-2" />
                   Download AIOMetadata Template (.json)
                 </Button>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
