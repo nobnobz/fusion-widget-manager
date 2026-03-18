@@ -584,7 +584,7 @@ export function MainEditor() {
                         </button>
                       </PopoverTrigger>
                       <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-1 rounded-2xl border-border/40 bg-card/95 backdrop-blur-xl shadow-2xl" align="start">
-                        <div className="flex flex-col gap-0.5">
+                        <div className="flex flex-col gap-0.5 max-h-[160px] overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-muted-foreground/20 hover:scrollbar-thumb-muted-foreground/40 scrollbar-track-transparent">
                           {githubTemplates.map((template) => (
                             <button
                               key={template.download_url}
