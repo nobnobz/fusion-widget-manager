@@ -1,0 +1,245 @@
+"use client";
+
+import { useState } from 'react';
+import { useConfig } from '@/context/ConfigContext';
+import { CollectionRowWidget, CollectionItem } from '@/lib/types/widget';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Plus, ListTree, Layers, SortAsc, SortDesc } from 'lucide-react';
+
+import { cn } from '@/lib/utils';
+import { CollectionItemEditor } from './CollectionItemEditor';
+import { AddItemDialog } from './AddItemDialog';
+import { 
+  DndContext, 
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+
+export function CollectionRowEditor({ widget, searchQuery = "" }: { widget: CollectionRowWidget, searchQuery?: string }) {
+  const { updateWidget } = useConfig();
+  const [expandedItemId, setExpandedItemId] = useState<string | null>(null);
+
+  const filteredItems = widget.dataSource.payload.items.filter(item => {
+    if (!searchQuery) return true;
+    const q = searchQuery.toLowerCase();
+    return (item.name || "").toLowerCase().includes(q) || item.id.toLowerCase().includes(q);
+  });
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 5,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const handleUpdate = (updates: any) => {
+    updateWidget(widget.id, updates);
+  };
+
+  const handleAddItem = (newItem: CollectionItem) => {
+    handleUpdate({
+      dataSource: {
+        ...widget.dataSource,
+        payload: {
+          ...widget.dataSource.payload,
+          items: [...widget.dataSource.payload.items, newItem]
+        }
+      }
+    });
+  };
+
+  const handleDeleteItem = (itemId: string) => {
+    handleUpdate({
+      dataSource: {
+        ...widget.dataSource,
+        payload: {
+          ...widget.dataSource.payload,
+          items: widget.dataSource.payload.items.filter(item => item.id !== itemId)
+        }
+      }
+    });
+  };
+
+  const handleDuplicateItem = (itemId: string) => {
+    const index = widget.dataSource.payload.items.findIndex(item => item.id === itemId);
+    if (index === -1) return;
+    const original = widget.dataSource.payload.items[index];
+    const copy = { ...original, id: crypto.randomUUID(), name: `${original.name} (Copy)` };
+    const nextItems = [...widget.dataSource.payload.items];
+    nextItems.splice(index + 1, 0, copy);
+    handleUpdate({
+      dataSource: {
+        ...widget.dataSource,
+        payload: {
+          ...widget.dataSource.payload,
+          items: nextItems
+        }
+      }
+    });
+  };
+
+  const handleUpdateItem = (itemId: string, updates: Partial<CollectionItem>) => {
+    handleUpdate({
+      dataSource: {
+        ...widget.dataSource,
+        payload: {
+          ...widget.dataSource.payload,
+          items: widget.dataSource.payload.items.map(item => 
+            item.id === itemId ? { ...item, ...updates } : item
+          )
+        }
+      }
+    });
+  };
+  
+  const handleSort = (direction: 'asc' | 'desc') => {
+    const sortedItems = [...widget.dataSource.payload.items].sort((a, b) => {
+      const nameA = (a.name || "").trim().toLowerCase();
+      const nameB = (b.name || "").trim().toLowerCase();
+      return direction === 'asc' 
+        ? nameA.localeCompare(nameB) 
+        : nameB.localeCompare(nameA);
+    });
+
+    handleUpdate({
+      dataSource: {
+        ...widget.dataSource,
+        payload: {
+          ...widget.dataSource.payload,
+          items: sortedItems
+        }
+      }
+    });
+  };
+
+
+  function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      const oldIndex = widget.dataSource.payload.items.findIndex((item) => item.id === active.id);
+      const newIndex = widget.dataSource.payload.items.findIndex((item) => item.id === over.id);
+      
+      handleUpdate({
+        dataSource: {
+          ...widget.dataSource,
+          payload: {
+            ...widget.dataSource.payload,
+            items: arrayMove(widget.dataSource.payload.items, oldIndex, newIndex)
+          }
+        }
+      });
+    }
+  }
+
+  return (
+    <div className="space-y-6 animate-in fade-in slide-in-from-top-4 duration-500">
+      <div className="flex flex-col sm:flex-row items-end gap-4">
+        <div className="flex-1 space-y-2.5">
+          <Label htmlFor="title" className="text-xs font-bold uppercase tracking-wider text-muted-foreground/60 ml-1">Widget Title</Label>
+            <Input 
+              id="title" 
+              value={widget.title} 
+              onChange={(e) => handleUpdate({ title: e.target.value })} 
+              className="h-10 bg-muted/20 dark:bg-muted/10 border-zinc-200 dark:border-border/40 focus:border-primary/50 transition-all font-semibold px-4 rounded-xl shadow-sm dark:shadow-none flex-1 backdrop-blur-sm"
+              placeholder="e.g. Featured Content"
+            />
+        </div>
+        <AddItemDialog onAdd={handleAddItem} />
+      </div>
+
+      <div className="h-px bg-border w-full opacity-50" />
+
+      <div className="space-y-4">
+        <div className="flex items-center justify-between px-1">
+          <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground/50 flex items-center gap-2">
+            <ListTree className="size-3.5" />
+            Items ({filteredItems.length})
+          </h3>
+
+          <div className="flex items-center gap-1">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="h-7 px-2.5 text-xs font-bold uppercase tracking-wider text-muted-foreground/60 hover:text-primary hover:bg-primary/5 transition-all rounded-lg border border-transparent hover:border-primary/10"
+              onClick={() => handleSort('asc')}
+              title="Sort A-Z"
+            >
+              <SortAsc className="size-3.5 mr-1.5" />
+              A-Z
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="h-7 px-2.5 text-xs font-bold uppercase tracking-wider text-muted-foreground/60 hover:text-primary hover:bg-primary/5 transition-all rounded-lg border border-transparent hover:border-primary/10"
+              onClick={() => handleSort('desc')}
+              title="Sort Z-A"
+            >
+              <SortDesc className="size-3.5 mr-1.5" />
+              Z-A
+            </Button>
+          </div>
+        </div>
+
+        <DndContext 
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+        >
+          <div className="grid grid-cols-1 gap-4">
+            <SortableContext 
+              items={filteredItems.map(item => item.id)}
+              strategy={verticalListSortingStrategy}
+            >
+              {filteredItems.map((item, index) => (
+                <CollectionItemEditor 
+                  key={item.id}
+                  item={item}
+                  index={index}
+                  isExpanded={expandedItemId === item.id}
+                  onToggleExpand={() => setExpandedItemId(expandedItemId === item.id ? null : item.id)}
+                  onUpdate={(updates) => handleUpdateItem(item.id, updates)}
+                  onDelete={() => handleDeleteItem(item.id)}
+                  onDuplicate={() => handleDuplicateItem(item.id)}
+                />
+              ))}
+            </SortableContext>
+            
+            {widget.dataSource.payload.items.length === 0 && (
+              <div className="py-12 border-2 border-dashed rounded-2xl flex flex-col items-center justify-center text-muted-foreground/30 bg-muted/10 border-border">
+                <Layers className="size-10 mb-4 opacity-20" />
+                <p className="text-sm font-medium opacity-60 mb-6">This collection has no items yet</p>
+                <AddItemDialog 
+                  onAdd={handleAddItem} 
+                  trigger={
+                    <Button variant="outline" size="sm" className="h-9 rounded-xl font-bold px-6 text-[10px] uppercase tracking-wider">
+                      <Plus className="size-3.5 mr-2" /> Add first item
+                    </Button>
+                  }
+                />
+              </div>
+            )}
+          </div>
+        </DndContext>
+      </div>
+    </div>
+  );
+}

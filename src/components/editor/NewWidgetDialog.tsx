@@ -1,0 +1,171 @@
+"use client";
+
+import { useState } from 'react';
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogFooter,
+  DialogDescription,
+  DialogClose
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Box, Layers, Plus, Check } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { useConfig } from '@/context/ConfigContext';
+
+interface NewWidgetDialogProps {
+  isOpen: boolean;
+  onOpenChange: (open: boolean) => void;
+  onCreated: (id: string) => void;
+}
+
+export function NewWidgetDialog({ isOpen, onOpenChange, onCreated }: NewWidgetDialogProps) {
+  const { addWidget } = useConfig();
+  const [title, setTitle] = useState('');
+  const [type, setType] = useState<'collection.row' | 'row.classic'>('collection.row');
+
+  const handleCreate = () => {
+    if (!title.trim()) return;
+
+    const id = crypto.randomUUID();
+    const newWidget = {
+      id,
+      title: title.trim(),
+      type: type,
+      dataSource: type === 'collection.row' 
+        ? { kind: 'collection' as const, payload: { items: [] } }
+        : { kind: 'addonCatalog' as const, payload: { addonId: 'YOUR_AIOMETADATA', catalogId: '', type: 'movie' } },
+      ...(type === 'row.classic' && {
+        cacheTTL: 0,
+        limit: 20,
+        presentation: {
+          aspectRatio: 'wide' as const,
+          cardStyle: 'small' as const,
+          badges: { providers: true, ratings: true }
+        }
+      })
+    };
+
+    // @ts-expect-error - newWidget properties are validated by processWidgetWithManifest
+    addWidget(newWidget);
+    onCreated(id);
+    onOpenChange(false);
+    setTitle('');
+    setType('collection.row');
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[500px] rounded-[2.5rem] border border-border/40 bg-card/95 backdrop-blur-2xl shadow-2xl p-0 overflow-hidden [&>button:last-child]:top-8 [&>button:last-child]:right-8 [&>button:last-child]:size-9 [&>button:last-child]:rounded-full [&>button:last-child]:bg-muted/30 [&>button:last-child]:hover:bg-muted/50 [&>button:last-child]:transition-all [&>button:last-child]:border-none [&>button:last-child]:flex [&>button:last-child]:items-center [&>button:last-child]:justify-center">
+        <div className="p-8 pt-10">
+          <DialogHeader className="space-y-4 items-start text-left">
+            <div className="size-14 rounded-2xl bg-primary/5 border border-primary/10 flex items-center justify-center text-primary mb-6 shadow-sm">
+              <Plus className="size-7" />
+            </div>
+            <div className="space-y-1">
+              <DialogTitle className="text-2xl font-bold tracking-tight">Add New Widget</DialogTitle>
+              <DialogDescription className="text-muted-foreground/60 text-xs font-medium leading-relaxed">
+                Create a new widget to organize your Fusion content.
+              </DialogDescription>
+            </div>
+          </DialogHeader>
+
+          <div className="space-y-8 py-8">
+            <div className="space-y-2.5">
+              <Label htmlFor="widget-title" className="text-xs font-bold uppercase tracking-widest text-muted-foreground/40 ml-1">Widget Title</Label>
+              <div className="relative group bg-muted/20 rounded-2xl border border-border/10 focus-within:border-primary/30 transition-all p-1">
+                <Input
+                  id="widget-title"
+                  placeholder="e.g. Recommended for You"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  className="h-12 bg-transparent border-none focus-visible:ring-0 px-4 font-bold text-lg transition-all"
+                  autoFocus
+                  onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2.5">
+              <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground/40 ml-1">Widget Type</Label>
+              <div className="grid grid-cols-2 gap-4">
+                <button
+                  type="button"
+                  onClick={() => setType('collection.row')}
+                  className={cn(
+                    "flex flex-col items-start gap-4 p-5 rounded-2xl border transition-all relative overflow-hidden group/btn",
+                    type === 'collection.row' 
+                      ? "bg-primary/5 border-primary shadow-sm" 
+                      : "bg-muted/10 border-transparent hover:bg-muted/20 hover:border-border/30"
+                  )}
+                >
+                  <div className={cn(
+                    "size-10 rounded-xl flex items-center justify-center transition-colors shadow-sm",
+                    type === 'collection.row' ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground group-hover/btn:bg-muted/80"
+                  )}>
+                    <Box className="size-5" />
+                  </div>
+                  <div className="text-left">
+                    <p className="font-bold text-sm">Collection</p>
+                    <p className="text-xs text-muted-foreground/60 font-medium leading-tight mt-1">Manual items with custom metadata</p>
+                  </div>
+                  {type === 'collection.row' && (
+                    <div className="absolute top-4 right-4 animate-in fade-in zoom-in">
+                      <Check className="size-4 text-primary" />
+                    </div>
+                  )}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setType('row.classic')}
+                  className={cn(
+                    "flex flex-col items-start gap-4 p-5 rounded-2xl border transition-all relative overflow-hidden group/btn",
+                    type === 'row.classic' 
+                      ? "bg-indigo-500/5 border-indigo-500 shadow-sm" 
+                      : "bg-muted/10 border-transparent hover:bg-muted/20 hover:border-border/30"
+                  )}
+                >
+                  <div className={cn(
+                    "size-10 rounded-xl flex items-center justify-center transition-colors shadow-sm",
+                    type === 'row.classic' ? "bg-indigo-500 text-white" : "bg-muted text-muted-foreground group-hover/btn:bg-muted/80"
+                  )}>
+                    <Layers className="size-5" />
+                  </div>
+                  <div className="text-left">
+                    <p className="font-bold text-sm">Row</p>
+                    <p className="text-xs text-muted-foreground/60 font-medium leading-tight mt-1">Dynamic stream from single catalog</p>
+                  </div>
+                  {type === 'row.classic' && (
+                    <div className="absolute top-4 right-4 animate-in fade-in zoom-in">
+                      <Check className="size-4 text-indigo-500" />
+                    </div>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter className="flex-col sm:flex-row gap-4 mt-4">
+            <DialogClose asChild>
+              <Button variant="ghost" className="flex-1 h-12 rounded-xl font-bold uppercase tracking-wider text-xs text-muted-foreground/40 hover:text-muted-foreground hover:bg-muted/30 transition-all">
+                Cancel
+              </Button>
+            </DialogClose>
+            <Button 
+              onClick={handleCreate}
+              disabled={!title.trim()}
+              className="flex-1 h-12 rounded-xl font-bold uppercase tracking-wider text-xs shadow-lg shadow-primary/20 transition-all active:scale-95"
+            >
+              Create
+            </Button>
+          </DialogFooter>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
