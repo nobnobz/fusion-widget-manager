@@ -121,7 +121,12 @@ export function normalizeOmniSnapshot(snapshot: any): NormalizedOmniModel {
     subgroups: values.catalog_groups || {},
     selectedCatalogs: values.selected_catalogs || [],
     catalogOrdering: values.catalog_ordering || [],
-    globalGroupOrder: /* ... as before ... */,
+    globalGroupOrder: [
+      ...(Array.isArray(values.catalog_group_order) ? values.catalog_group_order : []),
+      ...(Array.isArray(values.catalog_groups_order) ? values.catalog_groups_order : []),
+      ...(Array.isArray(values.subgroup_order_list) ? values.subgroup_order_list : []),
+      ...(Array.isArray(values.subgroup_order) ? values.subgroup_order : [])
+    ],
     subgroupOrderMap: values.subgroup_order || {},
     customNames: values.custom_catalog_names || {},
     imageUrls: values.catalog_group_image_urls || {},
