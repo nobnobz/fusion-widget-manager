@@ -2,7 +2,7 @@
 
 A powerful, web-based manager for Fusion widgets. Designed for the community, it simplifies the process of creating, editing, and managing widget configurations for the Fusion ecosystem.
 
-[🚀 **GitHub Pages**](https://nobnobz.github.io/fusion-widget-manager/)
+Link: [**Fusion Widget Manager**](https://nobnobz.github.io/fusion-widget-manager/)
 
 ---
 
