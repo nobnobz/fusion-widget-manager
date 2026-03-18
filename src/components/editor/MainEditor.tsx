@@ -684,8 +684,8 @@ export function MainEditor() {
             <div className="max-w-[1400px] mx-auto">
               <div className="flex items-center justify-between h-20 px-8 rounded-3xl bg-background/60 backdrop-blur-xl border border-border shadow-md transition-all">
                 <div className="flex items-center gap-6 group/logo">
-                  <div className="size-16 sm:size-20 flex items-center justify-center overflow-hidden transition-all duration-500 group-hover/logo:scale-110 group-hover/logo:rotate-3">
-                    <img src="/branding/clown_logo.png" alt="Logo" className="w-full h-full object-contain drop-shadow-sm" />
+                  <div className="size-16 sm:size-20 relative flex items-center justify-center overflow-hidden transition-all duration-500 group-hover/logo:scale-110 group-hover/logo:rotate-3">
+                    <Image src={LogoImage} alt="Logo" fill className="object-contain drop-shadow-sm" priority />
                   </div>
                   <div className="flex flex-col -space-y-1">
                     <h1 className="text-base font-black tracking-tight leading-none">Fusion Widget</h1>
