@@ -6,7 +6,7 @@ A powerful, web-based manager for Fusion widgets. Designed for the community, it
 
 ---
 
-## ✨ Features
+## Features
 
 ### 📥 Import
 - **Direct Paste**: Paste your Fusion JSON exports directly into the editor.
