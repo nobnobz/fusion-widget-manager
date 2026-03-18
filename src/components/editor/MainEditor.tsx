@@ -962,7 +962,7 @@ export function MainEditor() {
               <section className="space-y-3">
                 <h3 className="text-[15px] font-black uppercase tracking-widest text-primary/90">4. Personalize & Export</h3>
                 <p className="text-[13px] text-muted-foreground/90 leading-relaxed">
-                  Edit your widgets, then use <strong>Export</strong> or <strong>Copy</strong>. You can paste the text of the .JSON in Fusion under <strong>Widgets → Import Widgets</strong> to import the new widgets.
+                  Edit your widgets, then use <strong>Export</strong> and <strong>Copy the widget to your clipboard</strong>. You can paste the text of the .JSON in Fusion under <strong>Widgets → Import Widgets</strong> to import the new widgets.
                 </p>
                 <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4">
                   <p className="text-[11px] font-semibold text-blue-500/90 leading-relaxed">
