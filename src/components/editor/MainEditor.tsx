@@ -8,7 +8,35 @@ import { ManifestModal } from './ManifestModal';
 import { CollectionRowEditor } from './CollectionRowEditor';
 import { RowClassicEditor } from './RowClassicEditor';
 import { Button } from '@/components/ui/button';
-import { Plus, Download, Upload, Settings, ChevronRight, ChevronDown, Wand2, ClipboardPaste, Copy, Check, FileJson2, Menu, Book, RotateCcw, Heart, Github, Globe } from 'lucide-react';
+import {
+  FileJson2,
+  Upload,
+  Plus,
+  Settings,
+  Settings2,
+  Table2,
+  RefreshCw,
+  RotateCcw,
+  Download,
+  Check,
+  X,
+  Github,
+  Heart,
+  ChevronDown,
+  ChevronRight,
+  Book,
+  ClipboardPaste,
+  Copy,
+  Menu,
+  Wand2,
+  Search,
+  Zap,
+  Layout,
+  Layers,
+  Component,
+  Globe
+} from 'lucide-react';
+import Image from 'next/image';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { convertOmniToFusion } from '@/lib/omni-converter';
 
@@ -430,10 +458,13 @@ export function MainEditor() {
           <div className="relative group mb-2">
             <div className="absolute -inset-20 bg-primary/25 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none transform-gpu" />
             <div className="relative size-40 sm:size-52 flex items-center justify-center rounded-full overflow-hidden select-none">
-              <img
-                src="/fusion-widget-manager/branding/clown_logo.png"
+              <Image
+                src="/branding/clown_logo.png"
                 alt="Clown Logo"
+                width={208}
+                height={208}
                 className="w-full h-full object-contain animate-in zoom-in-110 duration-1000"
+                priority
               />
             </div>
           </div>

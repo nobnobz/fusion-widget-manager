@@ -19,9 +19,9 @@ export const metadata: Metadata = {
   title: "Widget Manager",
   description: "A clean, visual editor for fusionWidgets JSON",
   icons: {
-    icon: "/fusion-widget-manager/icon.png",
-    shortcut: "/fusion-widget-manager/favicon.png",
-    apple: "/fusion-widget-manager/icon.png",
+    icon: "/icon.png",
+    shortcut: "/favicon.png",
+    apple: "/icon.png",
   },
   appleWebApp: {
     capable: true,
