@@ -26,6 +26,7 @@ export interface NormalizedOmniModel {
   subgroups: Record<string, NormalizedOmniSubgroup>;
   selectedCatalogs: string[];
   catalogOrdering: string[];
+  globalGroupOrder: string[];
   customNames: Record<string, string>;
   imageUrls: Record<string, string>;
   smallCatalogs: string[];
@@ -118,6 +119,7 @@ export function normalizeOmniSnapshot(snapshot: any): NormalizedOmniModel {
     subgroups: values.catalog_groups || {},
     selectedCatalogs: values.selected_catalogs || [],
     catalogOrdering: values.catalog_ordering || [],
+    globalGroupOrder: values.catalog_group_order || [],
     customNames: values.custom_catalog_names || {},
     imageUrls: values.catalog_group_image_urls || {},
     smallCatalogs: values.small_catalogs || [],
@@ -167,7 +169,16 @@ export function convertOmniToFusion(snapshot: any): FusionWidgetsConfig {
 
     const items: CollectionItem[] = [];
     
-    group.subgroups.forEach(subgroupName => {
+    const sortedSubgroups = [...group.subgroups].sort((a, b) => {
+      const indexA = model.globalGroupOrder.indexOf(a);
+      const indexB = model.globalGroupOrder.indexOf(b);
+      if (indexA === -1 && indexB === -1) return 0;
+      if (indexA === -1) return 1;
+      if (indexB === -1) return -1;
+      return indexA - indexB;
+    });
+
+    sortedSubgroups.forEach(subgroupName => {
       // Skip structural placeholders
       if (subgroupName.includes('❗️')) return;
       
