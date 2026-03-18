@@ -27,6 +27,7 @@ export interface NormalizedOmniModel {
   selectedCatalogs: string[];
   catalogOrdering: string[];
   globalGroupOrder: string[];
+  subgroupOrderMap: Record<string, string[]>;
   customNames: Record<string, string>;
   imageUrls: Record<string, string>;
   smallCatalogs: string[];
@@ -120,12 +121,8 @@ export function normalizeOmniSnapshot(snapshot: any): NormalizedOmniModel {
     subgroups: values.catalog_groups || {},
     selectedCatalogs: values.selected_catalogs || [],
     catalogOrdering: values.catalog_ordering || [],
-    globalGroupOrder: [
-      ...(Array.isArray(values.catalog_group_order) ? values.catalog_group_order : []),
-      ...(Array.isArray(values.catalog_groups_order) ? values.catalog_groups_order : []),
-      ...(Array.isArray(values.subgroup_order_list) ? values.subgroup_order_list : []),
-      ...(Array.isArray(values.subgroup_order) ? values.subgroup_order : [])
-    ],
+    globalGroupOrder: /* ... as before ... */,
+    subgroupOrderMap: values.subgroup_order || {},
     customNames: values.custom_catalog_names || {},
     imageUrls: values.catalog_group_image_urls || {},
     smallCatalogs: values.small_catalogs || [],
@@ -175,26 +172,19 @@ export function convertOmniToFusion(snapshot: any): FusionWidgetsConfig {
 
     const items: CollectionItem[] = [];
     
-    const sortedSubgroups = [...group.subgroups].sort((a, b) => {
-      const getIndex = (name: string) => {
-        return model.globalGroupOrder.findIndex(item => {
-          if (!item) return false;
-          if (typeof item === 'string') return item.trim().toLowerCase() === name.trim().toLowerCase();
-          if (typeof item === 'object' && item.name) return item.name.trim().toLowerCase() === name.trim().toLowerCase();
-          return false;
-        });
-      };
-      
-      const indexA = getIndex(a);
-      const indexB = getIndex(b);
-      
-      if (indexA === -1 && indexB === -1) return 0;
-      if (indexA === -1) return 1;
-      if (indexB === -1) return -1;
-      return indexA - indexB;
-    });
+    const authoritativeOrder = model.subgroupOrderMap[group.id] || [];
+    const baseSubgroups = group.subgroups || [];
+    
+    // 1. Authoritative items (in order) that actually exist in the base list
+    const itemsToRender = authoritativeOrder.filter(name => baseSubgroups.includes(name));
+    
+    // 2. Leftover items (in original relative order) that are in base list but NOT in authoritative order
+    const leftovers = baseSubgroups.filter(name => !authoritativeOrder.includes(name));
+    
+    // Combine them: Ordered first, then leftovers
+    const finalSubgroups = [...itemsToRender, ...leftovers];
 
-    sortedSubgroups.forEach(subgroupName => {
+    finalSubgroups.forEach(subgroupName => {
       // Skip structural placeholders
       if (subgroupName.includes('❗️')) return;
       
