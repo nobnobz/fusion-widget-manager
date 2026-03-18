@@ -93,7 +93,7 @@ export function normalizeOmniSnapshot(snapshot: any): NormalizedOmniModel {
         id: groupId,
         name: group.name || 'Untitled Group',
         posterType: group.posterType || group.poster_type || 'poster',
-        subgroups: group.subgroupNames || group.subgroup_order || group.catalog_group_order || []
+        subgroups: group.catalog_group_order || group.subgroup_order || group.subgroupNames || []
       });
     }
 
