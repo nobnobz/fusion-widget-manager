@@ -1,6 +1,17 @@
 # Changelog
+...
+## [0.1.1] - 2026-03-18
+### Fixed
+- **Omni Sorting**: Replaced heuristic sorting with precise iteration using decoded `subgroup_order._data` for perfect item sequences.
+- **GitHub Pages Assets**: Fixed broken logos and icons in production by switching to static image imports.
+- **Deployment Concurrency**: Prevented GitHub Actions deployment failures by enabling `cancel-in-progress` in the workflow.
+- **Single Widget Copy**: Fixed an issue where the `YOUR_AIOMETADATA` placeholder was not replaced during individual widget copies.
 
-All notable changes to this project will be documented in this file.
+### Changed
+- **UI Refinement**: Updated "Start Over" confirmation dialog for better clarity.
+- **UME Templates**: Updated repository links to point to the new individual template repository.
+- **CI/CD Environment**: Upgraded GitHub Actions runners to Node.js 22 to address deprecation warnings.
+- **Template UX**: Limited the maximum height of the template selection dropdown for a cleaner layout.
 
 ## [0.1.0] - 2026-03-18
 ### Added
