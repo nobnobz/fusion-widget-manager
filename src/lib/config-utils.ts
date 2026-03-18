@@ -217,9 +217,13 @@ export function convertEditorDataSourceToFusionDataSource(ds: any, manifestUrl: 
     payload.addonId = manifestUrl;
   }
   
-  // Validation: BLOCK export if placeholder still exists
+  // Validation: BLOCK export if placeholder still exists or catalogId is empty
   if (payload.addonId === MANIFEST_PLACEHOLDER) {
     throw new Error(`Export failed: A data source still uses the placeholder '${MANIFEST_PLACEHOLDER}'. Please sync a manifest first.`);
+  }
+  
+  if (!payload.catalogId || payload.catalogId === '') {
+    throw new Error(`Export failed: A data source still has an empty catalog ID. Please select a catalog first.`);
   }
   
   // Resolve type via global rule

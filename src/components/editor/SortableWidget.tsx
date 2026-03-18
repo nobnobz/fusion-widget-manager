@@ -63,7 +63,8 @@ export function SortableWidget({
     /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
     const checkDS = (ds: any) => {
       if (!ds.payload?.addonId?.toUpperCase().includes('AIOMETADATA')) return false;
-      if (!ds.payload?.catalogId) return false;
+      // If catalogId is missing or empty, it's invalid
+      if (!ds.payload?.catalogId || ds.payload.catalogId === '') return true;
       return !manifestCatalogs.some(c => `${c.type}::${c.id}` === ds.payload.catalogId);
     };
 
@@ -87,42 +88,46 @@ export function SortableWidget({
   const handleCopy = (e: React.MouseEvent) => {
     e.stopPropagation();
     
-    // 1. Initial normalization/sync
-    const normalized = processWidgetWithManifest(
-      widget,
-      manifestUrl,
-      replacePlaceholder,
-      manifestCatalogs,
-      true // Sanitize on export
-    );
+    try {
+      // 1. Initial normalization/sync
+      const normalized = processWidgetWithManifest(
+        widget,
+        manifestUrl,
+        replacePlaceholder,
+        manifestCatalogs,
+        true // Sanitize on export
+      );
 
-    // 2. Strict Fusion transformation
-    const fusionWidget = convertEditorWidgetToFusionWidget(normalized, manifestUrl);
+      // 2. Strict Fusion transformation
+      const fusionWidget = convertEditorWidgetToFusionWidget(normalized, manifestUrl);
 
-    // 3. Collect required addons for this single widget
-    const addonsSet = new Set<string>();
-    if (fusionWidget.type === 'row.classic' && fusionWidget.dataSource?.payload?.addonId?.startsWith('http')) {
-      addonsSet.add(fusionWidget.dataSource.payload.addonId);
-    } else if (fusionWidget.type === 'collection.row' && Array.isArray(fusionWidget.dataSource?.payload?.items)) {
-      /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-      fusionWidget.dataSource.payload.items.forEach((item: any) => {
-        if (item.dataSource?.payload?.addonId?.startsWith('http')) {
-          addonsSet.add(item.dataSource.payload.addonId);
-        }
-      });
+      // 3. Collect required addons for this single widget
+      const addonsSet = new Set<string>();
+      if (fusionWidget.type === 'row.classic' && fusionWidget.dataSource?.payload?.addonId?.startsWith('http')) {
+        addonsSet.add(fusionWidget.dataSource.payload.addonId);
+      } else if (fusionWidget.type === 'collection.row' && Array.isArray(fusionWidget.dataSource?.payload?.items)) {
+        /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+        fusionWidget.dataSource.payload.items.forEach((item: any) => {
+          if (item.dataSource?.payload?.addonId?.startsWith('http')) {
+            addonsSet.add(item.dataSource.payload.addonId);
+          }
+        });
+      }
+
+      // Wrap the single widget in the format expected by the ImportMergeDialog
+      const exportData = {
+        exportType: "fusionWidgets",
+        exportVersion: 1,
+        requiredAddons: Array.from(addonsSet),
+        widgets: [fusionWidget]
+      };
+      const widgetJson = JSON.stringify(exportData, null, 2);
+      navigator.clipboard.writeText(widgetJson);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err: any) {
+      alert(err.message || "Failed to copy widget. Please ensure a catalog is selected.");
     }
-
-    // Wrap the single widget in the format expected by the ImportMergeDialog
-    const exportData = {
-      exportType: "fusionWidgets",
-      exportVersion: 1,
-      requiredAddons: Array.from(addonsSet),
-      widgets: [fusionWidget]
-    };
-    const widgetJson = JSON.stringify(exportData, null, 2);
-    navigator.clipboard.writeText(widgetJson);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
   };
 
   const handleDelete = (e: React.MouseEvent) => {
