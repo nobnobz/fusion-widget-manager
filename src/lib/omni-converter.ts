@@ -86,6 +86,7 @@ export function normalizeOmniSnapshot(snapshot: any): NormalizedOmniModel {
   const mainGroups: NormalizedOmniMainGroup[] = [];
   const mainGroupOrder = values.main_group_order || [];
   const mainCatalogGroups = values.main_catalog_groups || {};
+  const subgroupOrder = values.subgroup_order || {};
   
   mainGroupOrder.forEach((groupId: string) => {
     const group = mainCatalogGroups[groupId];
@@ -94,7 +95,7 @@ export function normalizeOmniSnapshot(snapshot: any): NormalizedOmniModel {
         id: groupId,
         name: group.name || 'Untitled Group',
         posterType: group.posterType || group.poster_type || 'poster',
-        subgroups: group.catalog_group_order || group.subgroup_order || group.subgroupNames || []
+        subgroups: subgroupOrder[groupId] || group.catalog_group_order || group.subgroup_order || group.subgroupNames || []
       });
     }
 
@@ -170,8 +171,8 @@ export function convertOmniToFusion(snapshot: any): FusionWidgetsConfig {
     const items: CollectionItem[] = [];
     
     const sortedSubgroups = [...group.subgroups].sort((a, b) => {
-      const indexA = model.globalGroupOrder.indexOf(a);
-      const indexB = model.globalGroupOrder.indexOf(b);
+      const indexA = model.globalGroupOrder.findIndex(item => item && item.trim() === a.trim());
+      const indexB = model.globalGroupOrder.findIndex(item => item && item.trim() === b.trim());
       if (indexA === -1 && indexB === -1) return 0;
       if (indexA === -1) return 1;
       if (indexB === -1) return -1;
