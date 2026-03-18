@@ -495,9 +495,10 @@ export function MainEditor() {
                 <Button
                   onClick={handlePasteImport}
                   size="lg"
-                  className="h-14 min-w-[240px] rounded-2xl shadow-xl shadow-primary/20 animate-in zoom-in-95 duration-300 font-bold uppercase tracking-widest text-xs"
+                  className="h-14 min-w-[240px] rounded-2xl shadow-xl shadow-primary/20 animate-in zoom-in-95 duration-300 font-bold uppercase tracking-widest text-xs bg-primary hover:bg-primary/90 hover:scale-[1.02] active:scale-[0.98] transition-all relative overflow-hidden group/load"
                 >
-                  <ClipboardPaste className="size-5 mr-3" />
+                  <div className="absolute inset-0 bg-gradient-to-tr from-white/10 to-transparent pointer-events-none" />
+                  <ClipboardPaste className="size-5 mr-3 shrink-0" />
                   Load Configuration
                 </Button>
               ) : (
@@ -505,19 +506,19 @@ export function MainEditor() {
                   <div className="flex gap-4">
                     <Button
                       variant="outline"
-                      className="flex-1 h-14 rounded-[1.25rem] border-border bg-card/50 hover:bg-muted transition-all font-bold uppercase tracking-widest text-[11px] px-8 group/btn"
+                      className="flex-1 h-14 rounded-[1.25rem] border-border/80 bg-background/50 backdrop-blur-sm hover:bg-muted/80 transition-all font-bold uppercase tracking-widest text-[11px] px-8 group/btn hover:scale-[1.02] active:scale-[0.98] shadow-sm"
                       onClick={() => fileInputRef.current?.click()}
                     >
-                      <Upload className="size-4 mr-3 text-muted-foreground group-hover/btn:text-primary transition-colors" />
+                      <Upload className="size-4 mr-3 text-muted-foreground group-hover/btn:text-primary transition-colors shrink-0" />
                       Import Fusion JSON
                     </Button>
                     <Button
-                      className="flex-1 h-14 rounded-[1.25rem] font-bold uppercase tracking-widest text-[11px] px-8 shadow-lg shadow-primary/25 group/create relative overflow-hidden"
+                      className="flex-1 h-14 rounded-[1.25rem] font-bold uppercase tracking-widest text-[11px] px-8 shadow-lg shadow-primary/20 group/create relative overflow-hidden bg-primary hover:bg-primary/90 hover:scale-[1.02] active:scale-[0.98] transition-all"
                       onClick={handleAddFirstWidget}
                     >
-                      <div className="absolute inset-0 bg-gradient-to-r from-primary via-primary to-indigo-600 opacity-100 group-hover:scale-110 transition-transform duration-500" />
+                      <div className="absolute inset-0 bg-gradient-to-tr from-white/10 to-transparent pointer-events-none" />
                       <div className="relative flex items-center">
-                        <Plus className="size-4 mr-3" />
+                        <Plus className="size-4 mr-3 shrink-0" />
                         Create New
                       </div>
                     </Button>
@@ -532,7 +533,7 @@ export function MainEditor() {
                 <div className="w-full max-w-md space-y-3 animate-in fade-in slide-in-from-bottom-2 duration-500">
                   <div className="flex items-center justify-between px-2">
                     <a 
-                      href="https://github.com/nobnobz/Omni-Template-Bot-Bid-Raiser/tree/main" 
+                      href="https://github.com/nobnobz/fusion-widget-manager" 
                       target="_blank" 
                       rel="noopener noreferrer" 
                       className="flex items-center gap-2 opacity-60 hover:opacity-100 hover:text-primary transition-all group/tpl"
@@ -733,7 +734,7 @@ export function MainEditor() {
         {/* Global Subtle Footer at the very bottom */}
         <footer className="w-full py-12 flex flex-col items-center gap-4 mt-auto">
           <a 
-            href="https://github.com/nobnobz/Omni-Template-Bot-Bid-Raiser" 
+            href="https://github.com/nobnobz/fusion-widget-manager" 
             target="_blank" 
             rel="noopener noreferrer"
             className="flex items-center gap-2 text-[9px] font-bold uppercase tracking-[0.2em] text-muted-foreground/30 hover:text-primary hover:opacity-100 transition-all group/link"
