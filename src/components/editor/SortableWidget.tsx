@@ -261,19 +261,19 @@ export function SortableWidget({
           </div>
         </div>
 
-        <div className="sm:hidden flex w-full flex-col gap-3">
-          <div className="flex items-start gap-3 min-w-0">
+        <div className="sm:hidden flex w-full flex-col gap-2.5">
+          <div className="flex items-start gap-2.5 min-w-0">
             <div 
               {...attributes} 
               {...listeners}
-              className="mt-0.5 size-9 flex items-center justify-center rounded-xl text-muted-foreground/30 hover:text-primary hover:bg-primary/10 transition-all cursor-grab active:cursor-grabbing border border-transparent hover:border-primary/10 shrink-0 touch-none select-none"
+              className="size-9 flex items-center justify-center rounded-xl text-muted-foreground/30 hover:text-primary hover:bg-primary/10 transition-all cursor-grab active:cursor-grabbing border border-transparent hover:border-primary/10 shrink-0 touch-none select-none"
               onClick={(e) => e.stopPropagation()}
             >
               <GripVertical className="size-4" />
             </div>
 
-            <div className="min-w-0 flex-1">
-              <div className="flex items-start gap-2">
+            <div className="min-w-0 flex-1 pt-0.5">
+              <div className="flex items-start gap-1.5">
                 {hasInvalidCatalog && (
                   <AlertTriangle className="mt-0.5 size-4 text-amber-500 animate-pulse shrink-0" />
                 )}
@@ -292,13 +292,13 @@ export function SortableWidget({
                   ) : (
                     <button
                       type="button"
-                      className="flex w-full items-start gap-2 overflow-hidden text-left"
+                      className="flex w-full items-center gap-1.5 overflow-hidden text-left"
                       onClick={startEditing}
                     >
-                      <h3 className="truncate text-[15.5px] font-black tracking-tight text-foreground leading-tight">
+                      <h3 className="truncate text-[14.5px] font-extrabold tracking-[-0.02em] text-foreground/95 leading-[1.15]">
                         {widget.title}
                       </h3>
-                      <Pencil className="mt-1 size-3 text-primary/40 shrink-0" />
+                      <Pencil className="size-3 text-primary/45 shrink-0" />
                     </button>
                   )}
                 </div>
@@ -322,7 +322,7 @@ export function SortableWidget({
             </div>
           </div>
 
-          <div className="flex items-center justify-between gap-2 border-t border-border/40 pt-2.5">
+          <div className="flex items-center justify-between gap-2 border-t border-border/40 pt-2">
             <div className="flex items-center gap-2 px-2.5 py-1 rounded-full bg-background/50 border border-border/40 shadow-sm backdrop-blur-sm">
               <span className={cn(
                 "text-[9px] font-black uppercase tracking-[0.18em]",
