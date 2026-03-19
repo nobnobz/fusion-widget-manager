@@ -297,15 +297,18 @@ export function CollectionItemEditor({
                   </Button>
                 </div>
 
-                <div className="mt-3 flex items-center justify-between gap-2 border-t border-border/50 pt-2.5">
-                  <div className="flex items-center gap-2">
+                <div className="mt-3 flex items-center justify-between gap-2 border-t border-border/40 pt-2.5">
+                  <div className="flex items-center gap-2 px-2.5 py-1 rounded-full bg-background/50 border border-border/40 shadow-sm backdrop-blur-sm">
                     {isExpanded && (
-                      <span className="rounded-full bg-background/60 px-2 py-0.5 text-[8px] font-bold uppercase tracking-[0.12em] text-muted-foreground/70 border border-border/40">
-                        {item.hideTitle ? 'Title hidden' : 'Title visible'}
-                      </span>
+                      <>
+                        <span className="text-[9px] font-black uppercase tracking-[0.18em] text-muted-foreground/80">
+                          {item.hideTitle ? 'Hidden' : 'Visible'}
+                        </span>
+                        <div className="size-1 rounded-full bg-border mx-0.5" />
+                      </>
                     )}
-                    <span className="rounded-full bg-muted/40 px-2 py-0.5 text-[8px] font-bold uppercase tracking-[0.12em] text-muted-foreground/60 border border-border/20">
-                      {item.dataSources.length} source{item.dataSources.length === 1 ? '' : 's'}
+                    <span className="text-[9px] font-bold uppercase tracking-[0.14em] text-muted-foreground/50">
+                      {item.dataSources.length} Source{item.dataSources.length === 1 ? '' : 's'}
                     </span>
                   </div>
 

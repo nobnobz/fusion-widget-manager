@@ -295,12 +295,10 @@ export function SortableWidget({
                       className="flex w-full items-start gap-2 overflow-hidden text-left"
                       onClick={startEditing}
                     >
-                      <h3 className="truncate text-[15px] font-black tracking-tight text-foreground leading-tight">
+                      <h3 className="truncate text-[15.5px] font-black tracking-tight text-foreground leading-tight">
                         {widget.title}
                       </h3>
-                      <div className="mt-0.5 rounded-lg bg-primary/10 p-1 text-primary/80 shrink-0">
-                        <Pencil className="size-3" />
-                      </div>
+                      <Pencil className="mt-1 size-3 text-primary/40 shrink-0" />
                     </button>
                   )}
                 </div>
@@ -324,20 +322,20 @@ export function SortableWidget({
             </div>
           </div>
 
-          <div className="flex items-center justify-between gap-2 border-t border-border/50 pt-2.5">
-            <div className="flex items-center gap-2">
-              <div className={cn(
-                "px-2 py-0.5 rounded-md text-[8px] font-black uppercase tracking-[0.12em] shadow-sm",
-                widget.type.startsWith('collection') 
-                  ? "bg-primary/10 text-primary border border-primary/20" 
-                  : "bg-indigo-500/10 text-indigo-500 border border-indigo-500/20"
+          <div className="flex items-center justify-between gap-2 border-t border-border/40 pt-2.5">
+            <div className="flex items-center gap-2 px-2.5 py-1 rounded-full bg-background/50 border border-border/40 shadow-sm backdrop-blur-sm">
+              <span className={cn(
+                "text-[9px] font-black uppercase tracking-[0.18em]",
+                widget.type.startsWith('collection') ? "text-primary/90" : "text-indigo-500/90"
               )}>
                 {widget.type.split('.')[0] === 'collection' ? 'Collection' : 'Classic'}
-              </div>
+              </span>
               {widget.dataSource.kind === 'collection' && widget.dataSource.payload?.items && (
-                <div className="flex items-center gap-1 text-[8px] font-bold text-muted-foreground/40 uppercase tracking-[0.1em]">
-                  <div className="size-1 rounded-full bg-muted-foreground/20" />
-                  <span>{widget.dataSource.payload.items.length} items</span>
+                <div className="flex items-center gap-2">
+                  <div className="size-1 rounded-full bg-border" />
+                  <span className="text-[9px] font-bold uppercase tracking-[0.14em] text-muted-foreground/70">
+                    {widget.dataSource.payload.items.length} Items
+                  </span>
                 </div>
               )}
             </div>

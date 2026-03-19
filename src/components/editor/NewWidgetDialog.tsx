@@ -67,21 +67,21 @@ export function NewWidgetDialog({ isOpen, onOpenChange, onCreated }: NewWidgetDi
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[550px] rounded-[3rem] border border-border/40 bg-background/95 backdrop-blur-2xl shadow-2xl p-0 overflow-hidden [&>button:last-child]:top-8 [&>button:last-child]:right-8 [&>button:last-child]:size-10 [&>button:last-child]:rounded-2xl [&>button:last-child]:bg-muted/10 [&>button:last-child]:hover:bg-muted/20 [&>button:last-child]:transition-all [&>button:last-child]:border-none [&>button:last-child]:flex [&>button:last-child]:items-center [&>button:last-child]:justify-center">
-        <div className="p-10 pt-12">
+      <DialogContent className="sm:max-w-[550px] rounded-[3rem] border border-border/40 bg-background/95 backdrop-blur-2xl shadow-2xl p-0 overflow-hidden max-sm:w-[calc(100vw-1rem)] max-sm:max-w-[calc(100vw-1rem)] max-sm:rounded-[1.9rem] [&>button:last-child]:top-8 [&>button:last-child]:right-8 [&>button:last-child]:size-10 [&>button:last-child]:rounded-2xl [&>button:last-child]:bg-muted/10 [&>button:last-child]:hover:bg-muted/20 [&>button:last-child]:transition-all [&>button:last-child]:border-none [&>button:last-child]:flex [&>button:last-child]:items-center [&>button:last-child]:justify-center max-sm:[&>button:last-child]:top-4 max-sm:[&>button:last-child]:right-4 max-sm:[&>button:last-child]:size-9 max-sm:[&>button:last-child]:rounded-xl">
+        <div className="p-10 pt-12 max-sm:p-5 max-sm:pt-6">
           <DialogHeader className="space-y-6 items-start text-left">
-            <div className="size-16 rounded-[1.5rem] bg-primary/10 border border-primary/20 flex items-center justify-center text-primary mb-2 shadow-inner">
-               <Sparkles className="size-8" />
+            <div className="size-16 rounded-[1.5rem] bg-primary/10 border border-primary/20 flex items-center justify-center text-primary mb-2 shadow-inner max-sm:size-12 max-sm:rounded-[1rem]">
+               <Sparkles className="size-8 max-sm:size-6" />
             </div>
             <div className="space-y-2">
-              <DialogTitle className="text-3xl font-black tracking-tighter">Add New Widget</DialogTitle>
-              <DialogDescription className="text-muted-foreground/80 text-[13px] font-medium leading-relaxed max-w-[360px]">
+              <DialogTitle className="text-3xl font-black tracking-tighter max-sm:text-2xl">Add New Widget</DialogTitle>
+              <DialogDescription className="text-muted-foreground/80 text-[13px] font-medium leading-relaxed max-w-[360px] max-sm:text-xs max-sm:max-w-none">
                 Create a new widget to organize your Fusion content.
               </DialogDescription>
             </div>
           </DialogHeader>
 
-          <div className="space-y-8 py-8">
+          <div className="space-y-8 py-8 max-sm:space-y-6 max-sm:py-6">
             <div className="space-y-2.5">
               <Label htmlFor="widget-title" className="text-xs font-bold uppercase tracking-widest text-muted-foreground/40 ml-1">Widget Title</Label>
               <div className="relative group bg-muted/20 rounded-2xl border border-border/10 focus-within:border-primary/30 transition-all p-1">
@@ -90,7 +90,7 @@ export function NewWidgetDialog({ isOpen, onOpenChange, onCreated }: NewWidgetDi
                   placeholder="e.g. Recommended for You"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  className="h-12 bg-transparent border-none focus-visible:ring-0 px-4 font-bold text-lg transition-all"
+                  className="h-12 max-sm:h-11 bg-transparent border-none focus-visible:ring-0 px-4 font-bold text-lg max-sm:text-base transition-all"
                   autoFocus
                   onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
                 />
@@ -99,12 +99,12 @@ export function NewWidgetDialog({ isOpen, onOpenChange, onCreated }: NewWidgetDi
 
             <div className="space-y-2.5">
               <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground/40 ml-1">Widget Type</Label>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 <button
                   type="button"
                   onClick={() => setType('collection.row')}
                   className={cn(
-                    "flex flex-col items-start gap-4 p-5 rounded-2xl border transition-all relative overflow-hidden group/btn",
+                    "flex flex-col items-start gap-4 p-5 max-sm:p-4 rounded-2xl max-sm:rounded-[1.15rem] border transition-all relative overflow-hidden group/btn min-h-[156px] max-sm:min-h-[132px]",
                     type === 'collection.row' 
                       ? "bg-primary/5 border-primary shadow-sm" 
                       : "bg-muted/10 border-transparent hover:bg-muted/20 hover:border-border/30"
@@ -131,7 +131,7 @@ export function NewWidgetDialog({ isOpen, onOpenChange, onCreated }: NewWidgetDi
                   type="button"
                   onClick={() => setType('row.classic')}
                   className={cn(
-                    "flex flex-col items-start gap-4 p-5 rounded-2xl border transition-all relative overflow-hidden group/btn",
+                    "flex flex-col items-start gap-4 p-5 max-sm:p-4 rounded-2xl max-sm:rounded-[1.15rem] border transition-all relative overflow-hidden group/btn min-h-[156px] max-sm:min-h-[132px]",
                     type === 'row.classic' 
                       ? "bg-indigo-500/5 border-indigo-500 shadow-sm" 
                       : "bg-muted/10 border-transparent hover:bg-muted/20 hover:border-border/30"
@@ -157,16 +157,16 @@ export function NewWidgetDialog({ isOpen, onOpenChange, onCreated }: NewWidgetDi
             </div>
           </div>
 
-          <DialogFooter className="flex-col sm:flex-row gap-4 mt-4">
+          <DialogFooter className="flex-col sm:flex-row gap-3 sm:gap-4 mt-4">
             <DialogClose asChild>
-              <Button variant="ghost" className="flex-1 h-12 rounded-xl font-bold uppercase tracking-wider text-xs text-muted-foreground/40 hover:text-muted-foreground hover:bg-muted/30 transition-all">
+              <Button variant="ghost" className="w-full sm:flex-1 h-11 sm:h-12 rounded-xl max-sm:rounded-[1rem] font-bold uppercase tracking-wider text-xs text-muted-foreground/40 hover:text-muted-foreground hover:bg-muted/30 transition-all">
                 Cancel
               </Button>
             </DialogClose>
             <Button 
               onClick={handleCreate}
               disabled={!title.trim()}
-              className="flex-1 h-12 rounded-xl font-bold uppercase tracking-wider text-xs shadow-lg shadow-primary/20 transition-all active:scale-95"
+              className="w-full sm:flex-1 h-11 sm:h-12 rounded-xl max-sm:rounded-[1rem] font-bold uppercase tracking-wider text-xs shadow-lg shadow-primary/20 transition-all active:scale-95"
             >
               Create
             </Button>

@@ -93,16 +93,16 @@ export function ManifestModal({ isOpen, onOpenChange }: ManifestModalProps) {
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px] rounded-[2.5rem] border border-border/40 bg-card/95 backdrop-blur-2xl shadow-2xl [&>button:last-child]:top-8 [&>button:last-child]:right-8 [&>button:last-child]:size-9 [&>button:last-child]:rounded-full [&>button:last-child]:bg-muted/30 [&>button:last-child]:hover:bg-muted/50 [&>button:last-child]:transition-all [&>button:last-child]:border-none [&>button:last-child]:flex [&>button:last-child]:items-center [&>button:last-child]:justify-center">
-        <DialogHeader className="space-y-4 pt-4">
-          <div className="size-14 rounded-2xl bg-primary/5 border border-primary/10 flex items-center justify-center text-primary mb-2 shadow-sm">
-            <Sparkles className="size-7" />
+      <DialogContent className="sm:max-w-[500px] rounded-[2.5rem] border border-border/40 bg-card/95 backdrop-blur-2xl shadow-2xl max-sm:w-[calc(100vw-1rem)] max-sm:max-w-[calc(100vw-1rem)] max-sm:rounded-[1.9rem] [&>button:last-child]:top-8 [&>button:last-child]:right-8 [&>button:last-child]:size-9 [&>button:last-child]:rounded-full [&>button:last-child]:bg-muted/30 [&>button:last-child]:hover:bg-muted/50 [&>button:last-child]:transition-all [&>button:last-child]:border-none [&>button:last-child]:flex [&>button:last-child]:items-center [&>button:last-child]:justify-center max-sm:[&>button:last-child]:top-4 max-sm:[&>button:last-child]:right-4">
+        <DialogHeader className="space-y-4 pt-4 max-sm:pt-2">
+          <div className="size-14 rounded-2xl bg-primary/5 border border-primary/10 flex items-center justify-center text-primary mb-2 shadow-sm max-sm:size-12 max-sm:rounded-[1rem]">
+            <Sparkles className="size-7 max-sm:size-6" />
           </div>
           <div className="space-y-1">
-            <DialogTitle className="text-2xl font-bold tracking-tight">
+            <DialogTitle className="text-2xl font-bold tracking-tight max-sm:text-xl">
               {isManual ? 'Manual Manifest Sync' : 'AIOMetadata Setup'}
             </DialogTitle>
-            <DialogDescription className="text-muted-foreground/60 text-xs font-medium leading-relaxed">
+            <DialogDescription className="text-muted-foreground/60 text-xs font-medium leading-relaxed max-sm:text-[11px]">
               {isManual 
                 ? 'Paste your AIOMetadata manifest JSON below to sync catalogs. This bypasses CORS and connection issues.'
                 : 'Enter your AIOMetadata manifest URL below to automatically sync your catalogs and update placeholders.'}
@@ -110,7 +110,7 @@ export function ManifestModal({ isOpen, onOpenChange }: ManifestModalProps) {
           </div>
         </DialogHeader>
 
-        <div className="py-6">
+        <div className="py-6 max-sm:py-5">
           {!isManual ? (
             <div className="space-y-4">
               <div className="relative group bg-muted/20 rounded-2xl border border-border/10 focus-within:border-primary/30 transition-all p-1">
@@ -118,7 +118,7 @@ export function ManifestModal({ isOpen, onOpenChange }: ManifestModalProps) {
                   <Globe className="absolute left-3.5 size-4 text-muted-foreground/30 group-focus-within:text-primary transition-colors" />
                   <Input
                     placeholder="https://aiometadata.fortheweak.cloud/manifest.json"
-                    className="pl-11 h-12 bg-transparent border-none focus-visible:ring-0 transition-all font-medium text-sm"
+                    className="pl-11 h-12 max-sm:h-11 bg-transparent border-none focus-visible:ring-0 transition-all font-medium text-sm max-sm:text-[13px]"
                     value={url}
                     onChange={(e) => setUrl(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && handleLoad()}
@@ -146,7 +146,7 @@ export function ManifestModal({ isOpen, onOpenChange }: ManifestModalProps) {
               <div className="relative group bg-muted/20 rounded-2xl border border-border/10 focus-within:border-primary/30 transition-all p-2">
                 <textarea
                   placeholder='{ "catalogs": [...] }'
-                  className="w-full min-h-[150px] bg-transparent border-none focus:outline-none transition-all font-mono text-[10px] leading-tight resize-none p-2"
+                  className="w-full min-h-[150px] max-sm:min-h-[180px] bg-transparent border-none focus:outline-none transition-all font-mono text-[10px] leading-tight resize-none p-2"
                   value={manualJson}
                   onChange={(e) => setManualJson(e.target.value)}
                 />
@@ -161,10 +161,10 @@ export function ManifestModal({ isOpen, onOpenChange }: ManifestModalProps) {
           )}
         </div>
 
-        <DialogFooter className="flex-col sm:flex-row gap-4 pb-4">
+        <DialogFooter className="flex-col sm:flex-row gap-3 sm:gap-4 pb-4">
           <Button
             variant="ghost"
-            className="flex-1 h-11 rounded-xl font-bold uppercase tracking-wider text-xs text-muted-foreground/40 hover:text-muted-foreground hover:bg-muted/30 transition-all"
+            className="w-full sm:flex-1 h-11 rounded-xl max-sm:rounded-[1rem] font-bold uppercase tracking-wider text-xs text-muted-foreground/40 hover:text-muted-foreground hover:bg-muted/30 transition-all"
             onClick={() => {
               setView('selection');
               onOpenChange(false);
@@ -173,7 +173,7 @@ export function ManifestModal({ isOpen, onOpenChange }: ManifestModalProps) {
             Skip for now
           </Button>
           <Button
-            className="flex-1 h-11 rounded-xl font-bold uppercase tracking-wider text-xs shadow-lg shadow-primary/20 transition-all"
+            className="w-full sm:flex-1 h-11 rounded-xl max-sm:rounded-[1rem] font-bold uppercase tracking-wider text-xs shadow-lg shadow-primary/20 transition-all"
             onClick={isManual ? handleManualSync : handleLoad}
             disabled={isLoading || (isManual ? !manualJson : !url)}
           >

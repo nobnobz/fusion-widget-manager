@@ -60,25 +60,25 @@ export function ImportMergeDialog({ open, onOpenChange }: ImportMergeDialogProps
         setJsonInput('');
       }
     }}>
-      <DialogContent className="sm:max-w-[550px] rounded-[3rem] border border-border/40 bg-background/95 backdrop-blur-2xl shadow-2xl p-0 overflow-hidden [&>button:last-child]:top-8 [&>button:last-child]:right-8 [&>button:last-child]:size-10 [&>button:last-child]:rounded-2xl [&>button:last-child]:bg-muted/10 [&>button:last-child]:hover:bg-muted/20 [&>button:last-child]:transition-all [&>button:last-child]:border-none [&>button:last-child]:flex [&>button:last-child]:items-center [&>button:last-child]:justify-center">
-        <div className="p-10 pt-12">
+      <DialogContent className="sm:max-w-[550px] rounded-[3rem] border border-border/40 bg-background/95 backdrop-blur-2xl shadow-2xl p-0 overflow-hidden max-sm:w-[calc(100vw-1rem)] max-sm:max-w-[calc(100vw-1rem)] max-sm:rounded-[1.9rem] [&>button:last-child]:top-8 [&>button:last-child]:right-8 [&>button:last-child]:size-10 [&>button:last-child]:rounded-2xl [&>button:last-child]:bg-muted/10 [&>button:last-child]:hover:bg-muted/20 [&>button:last-child]:transition-all [&>button:last-child]:border-none [&>button:last-child]:flex [&>button:last-child]:items-center [&>button:last-child]:justify-center max-sm:[&>button:last-child]:top-4 max-sm:[&>button:last-child]:right-4 max-sm:[&>button:last-child]:size-9 max-sm:[&>button:last-child]:rounded-xl">
+        <div className="p-10 pt-12 max-sm:p-5 max-sm:pt-6">
           <DialogHeader className="space-y-6 items-start text-left">
-            <div className="size-16 rounded-[1.5rem] bg-primary/10 border border-primary/20 flex items-center justify-center text-primary mb-2 shadow-inner">
-               <CloudUpload className="size-8" />
+            <div className="size-16 rounded-[1.5rem] bg-primary/10 border border-primary/20 flex items-center justify-center text-primary mb-2 shadow-inner max-sm:size-12 max-sm:rounded-[1rem]">
+               <CloudUpload className="size-8 max-sm:size-6" />
             </div>
             <div className="space-y-2">
-              <DialogTitle className="text-3xl font-black tracking-tighter">Merge Import</DialogTitle>
-              <DialogDescription className="text-muted-foreground/80 text-[13px] font-medium leading-relaxed max-w-[360px]">
+              <DialogTitle className="text-3xl font-black tracking-tighter max-sm:text-2xl">Merge Import</DialogTitle>
+              <DialogDescription className="text-muted-foreground/80 text-[13px] font-medium leading-relaxed max-w-[360px] max-sm:text-xs max-sm:max-w-none">
                 Paste your Fusion JSON here. Existing widgets with the same title and type will be skipped automatically.
               </DialogDescription>
             </div>
           </DialogHeader>
 
-          <div className="space-y-6 py-6">
+          <div className="space-y-6 py-6 max-sm:space-y-5 max-sm:py-5">
             <div className="relative group bg-muted/20 rounded-2xl border border-border/10 focus-within:border-primary/30 transition-all p-1">
               <Textarea
                 placeholder='{ "exportType": "fusionWidgets", ... }'
-                className="min-h-[250px] font-mono text-[11px] bg-transparent border-none focus-visible:ring-0 p-4 resize-none transition-all leading-relaxed"
+                className="min-h-[250px] max-sm:min-h-[220px] font-mono text-[11px] bg-transparent border-none focus-visible:ring-0 p-4 max-sm:p-3 resize-none transition-all leading-relaxed"
                 value={jsonInput}
                 onChange={(e) => setJsonInput(e.target.value)}
               />
@@ -107,16 +107,16 @@ export function ImportMergeDialog({ open, onOpenChange }: ImportMergeDialogProps
             )}
           </div>
 
-          <DialogFooter className="flex-col sm:flex-row gap-4">
+          <DialogFooter className="flex-col sm:flex-row gap-3 sm:gap-4">
             <DialogClose asChild>
-              <Button variant="ghost" className="flex-1 h-12 rounded-xl font-bold uppercase tracking-wider text-xs text-muted-foreground/40 hover:text-muted-foreground hover:bg-muted/30 transition-all">
+              <Button variant="ghost" className="w-full sm:flex-1 h-11 sm:h-12 rounded-xl max-sm:rounded-[1rem] font-bold uppercase tracking-wider text-xs text-muted-foreground/40 hover:text-muted-foreground hover:bg-muted/30 transition-all">
                 Cancel
               </Button>
             </DialogClose>
             <Button 
               onClick={handleImport}
               disabled={!jsonInput.trim() || !!success}
-              className="flex-1 h-12 rounded-xl font-bold uppercase tracking-wider text-xs shadow-lg shadow-primary/20 transition-all active:scale-95 px-8"
+              className="w-full sm:flex-1 h-11 sm:h-12 rounded-xl max-sm:rounded-[1rem] font-bold uppercase tracking-wider text-xs shadow-lg shadow-primary/20 transition-all active:scale-95 px-8"
             >
               Merge Widgets
             </Button>
