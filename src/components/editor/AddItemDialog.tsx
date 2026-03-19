@@ -69,13 +69,13 @@ export function AddItemDialog({ onAdd, trigger }: AddItemDialogProps) {
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md p-0 overflow-hidden">
-        <DialogHeader className="p-6 pb-0">
-          <DialogTitle className="text-xl font-bold tracking-tight">Add New Item</DialogTitle>
-          <p className="text-xs text-muted-foreground/60 font-medium">Configure a new entry for your collection.</p>
+      <DialogContent className="sm:max-w-md p-0 overflow-hidden max-sm:w-[calc(100vw-1rem)] max-sm:max-w-[calc(100vw-1rem)] max-sm:rounded-[1.75rem]">
+        <DialogHeader className="p-6 pb-0 max-sm:p-4 max-sm:pb-0">
+          <DialogTitle className="text-xl font-bold tracking-tight max-sm:text-lg">Add New Item</DialogTitle>
+          <p className="text-xs text-muted-foreground/60 font-medium max-sm:text-[11px]">Configure a new entry for your collection.</p>
         </DialogHeader>
         
-        <div className="p-6 space-y-5">
+        <div className="p-6 space-y-5 max-sm:p-4 max-sm:space-y-4">
           <div className="space-y-2.5">
             <Label htmlFor="item-title" className="text-xs font-bold uppercase tracking-wider text-muted-foreground/50 ml-1">Item Title</Label>
             <Input
@@ -83,7 +83,7 @@ export function AddItemDialog({ onAdd, trigger }: AddItemDialogProps) {
               placeholder="e.g. Inception"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="h-10 bg-background border-border focus:border-primary/50 rounded-xl font-semibold"
+              className="h-10 max-sm:h-11 bg-background border-border focus:border-primary/50 rounded-xl max-sm:rounded-[1rem] font-semibold"
               autoFocus
               onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
             />
@@ -96,7 +96,7 @@ export function AddItemDialog({ onAdd, trigger }: AddItemDialogProps) {
               placeholder="https://..."
               value={backgroundImageURL}
               onChange={(e) => setBackgroundImageURL(e.target.value)}
-              className="h-10 bg-background border-border focus:border-primary/50 rounded-xl px-4 font-mono text-xs"
+              className="h-10 max-sm:h-11 bg-background border-border focus:border-primary/50 rounded-xl max-sm:rounded-[1rem] px-4 font-mono text-xs"
             />
           </div>
           
@@ -112,7 +112,7 @@ export function AddItemDialog({ onAdd, trigger }: AddItemDialogProps) {
                   key={opt.id}
                   onClick={() => setLayout(opt.id as 'Wide' | 'Poster' | 'Square')}
                   className={cn(
-                    "flex flex-col items-center justify-center gap-2 p-3 rounded-xl border transition-all",
+                    "flex flex-col items-center justify-center gap-2 p-3 max-sm:min-h-[88px] rounded-xl max-sm:rounded-[1rem] border transition-all",
                     layout === opt.id 
                       ? "bg-primary/5 border-primary text-primary shadow-sm" 
                       : "bg-muted/30 border-transparent text-muted-foreground/60 hover:bg-muted/50"
@@ -139,12 +139,12 @@ export function AddItemDialog({ onAdd, trigger }: AddItemDialogProps) {
           </div>
         </div>
         
-        <DialogFooter className="px-6 py-4 bg-muted/30 border-t border-border flex items-center justify-end gap-3">
+        <DialogFooter className="px-6 py-4 bg-muted/30 border-t border-border flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3 max-sm:px-4 max-sm:py-4">
           <Button 
             variant="ghost" 
             onClick={() => setOpen(false)}
             size="sm"
-            className="h-9 px-6 rounded-lg text-xs font-bold uppercase tracking-wider"
+            className="h-10 max-sm:h-11 w-full sm:w-auto px-6 rounded-xl max-sm:rounded-[1rem] text-xs font-bold uppercase tracking-wider"
           >
             Cancel
           </Button>
@@ -152,7 +152,7 @@ export function AddItemDialog({ onAdd, trigger }: AddItemDialogProps) {
             onClick={handleAdd}
             disabled={!name.trim()}
             size="sm"
-            className="h-9 px-6 rounded-xl font-bold uppercase tracking-wider text-xs shadow-lg shadow-primary/20 bg-primary hover:bg-primary/90 text-primary-foreground transition-all active:scale-95"
+            className="h-10 max-sm:h-11 w-full sm:w-auto px-6 rounded-xl max-sm:rounded-[1rem] font-bold uppercase tracking-wider text-xs shadow-lg shadow-primary/20 bg-primary hover:bg-primary/90 text-primary-foreground transition-all active:scale-95"
           >
             Create Item
           </Button>

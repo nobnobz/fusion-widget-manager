@@ -303,23 +303,6 @@ export function SortableWidget({
                       </div>
                     </button>
                   )}
-
-                  <div className="mt-2 flex flex-wrap items-center gap-2">
-                    <div className={cn(
-                      "px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-[0.15em]",
-                      widget.type.startsWith('collection') 
-                        ? "bg-primary/10 text-primary border border-primary/20" 
-                        : "bg-indigo-500/10 text-indigo-500 border border-indigo-500/20"
-                    )}>
-                      {widget.type.split('.')[0] === 'collection' ? 'Collection' : 'Classic'}
-                    </div>
-                    {widget.dataSource.kind === 'collection' && widget.dataSource.payload?.items && (
-                      <div className="flex items-center gap-1.5 rounded-full bg-muted/40 px-2.5 py-1 text-[9px] font-bold uppercase tracking-[0.12em] text-muted-foreground/70">
-                        <div className="size-1 rounded-full bg-muted-foreground/30" />
-                        <span>{widget.dataSource.payload.items.length} items</span>
-                      </div>
-                    )}
-                  </div>
                 </div>
 
                 <Button
@@ -341,25 +324,44 @@ export function SortableWidget({
             </div>
           </div>
 
-          <div className="flex items-center justify-end gap-2 border-t border-border/50 pt-2.5">
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="size-9 rounded-xl border border-border/50 bg-background/50 hover:bg-primary/10 hover:text-primary transition-all shadow-sm"
-              onClick={handleCopy}
-              title="Copy widget JSON"
-            >
-              {copied ? <Check className="size-4 text-emerald-500" /> : <Copy className="size-4" />}
-            </Button>
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="size-9 rounded-xl border border-border/50 bg-background/50 hover:bg-destructive/10 hover:text-destructive transition-all shadow-sm"
-              onClick={handleDelete}
-              title="Move widget to trash"
-            >
-              <Trash2 className="size-4" />
-            </Button>
+          <div className="flex items-center justify-between gap-2 border-t border-border/50 pt-2.5">
+            <div className="flex items-center gap-2">
+              <div className={cn(
+                "px-2 py-0.5 rounded-md text-[8px] font-black uppercase tracking-[0.12em] shadow-sm",
+                widget.type.startsWith('collection') 
+                  ? "bg-primary/10 text-primary border border-primary/20" 
+                  : "bg-indigo-500/10 text-indigo-500 border border-indigo-500/20"
+              )}>
+                {widget.type.split('.')[0] === 'collection' ? 'Collection' : 'Classic'}
+              </div>
+              {widget.dataSource.kind === 'collection' && widget.dataSource.payload?.items && (
+                <div className="flex items-center gap-1 text-[8px] font-bold text-muted-foreground/40 uppercase tracking-[0.1em]">
+                  <div className="size-1 rounded-full bg-muted-foreground/20" />
+                  <span>{widget.dataSource.payload.items.length} items</span>
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="size-9 rounded-xl border border-border/50 bg-background/50 hover:bg-primary/10 hover:text-primary transition-all shadow-sm"
+                onClick={handleCopy}
+                title="Copy widget JSON"
+              >
+                {copied ? <Check className="size-4 text-emerald-500" /> : <Copy className="size-4" />}
+              </Button>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="size-9 rounded-xl border border-border/50 bg-background/50 hover:bg-destructive/10 hover:text-destructive transition-all shadow-sm"
+                onClick={handleDelete}
+                title="Move widget to trash"
+              >
+                <Trash2 className="size-4" />
+              </Button>
+            </div>
           </div>
         </div>
       </div>

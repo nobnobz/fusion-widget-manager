@@ -278,17 +278,6 @@ export function CollectionItemEditor({
                         <Pencil className="mt-0.5 size-3 text-primary/70 shrink-0" />
                       </button>
                     )}
-
-                    <div className="mt-2 flex flex-wrap items-center gap-2">
-                      {isExpanded && (
-                        <span className="rounded-full bg-background/60 px-2.5 py-1 text-[9px] font-bold uppercase tracking-[0.16em] text-muted-foreground/70">
-                          {item.hideTitle ? 'Title hidden' : 'Title visible'}
-                        </span>
-                      )}
-                      <span className="rounded-full bg-muted/50 px-2.5 py-1 text-[9px] font-bold uppercase tracking-[0.14em] text-muted-foreground/60">
-                        {item.dataSources.length} source{item.dataSources.length === 1 ? '' : 's'}
-                      </span>
-                    </div>
                   </div>
 
                   <Button 
@@ -308,48 +297,41 @@ export function CollectionItemEditor({
                   </Button>
                 </div>
 
-                <div className="mt-3 flex items-center justify-end gap-2 border-t border-border/50 pt-2.5">
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className={cn(
-                      "size-9 rounded-xl border border-border/50 bg-background/60 transition-all",
-                      item.hideTitle ? "text-muted-foreground/50" : "text-primary bg-primary/5"
+                <div className="mt-3 flex items-center justify-between gap-2 border-t border-border/50 pt-2.5">
+                  <div className="flex items-center gap-2">
+                    {isExpanded && (
+                      <span className="rounded-full bg-background/60 px-2 py-0.5 text-[8px] font-bold uppercase tracking-[0.12em] text-muted-foreground/70 border border-border/40">
+                        {item.hideTitle ? 'Title hidden' : 'Title visible'}
+                      </span>
                     )}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onUpdate({ hideTitle: !item.hideTitle });
-                    }}
-                    title={item.hideTitle ? "Show Title" : "Hide Title"}
-                  >
-                    {item.hideTitle ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-                  </Button>
+                    <span className="rounded-full bg-muted/40 px-2 py-0.5 text-[8px] font-bold uppercase tracking-[0.12em] text-muted-foreground/60 border border-border/20">
+                      {item.dataSources.length} source{item.dataSources.length === 1 ? '' : 's'}
+                    </span>
+                  </div>
 
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="size-9 rounded-xl border border-border/50 bg-background/60 hover:bg-primary/5"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onDuplicate();
-                    }}
-                    title="Duplicate Item"
-                  >
-                    <Copy className="size-4" />
-                  </Button>
-
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="size-9 rounded-xl border border-border/50 bg-background/60 text-destructive/50 hover:text-destructive hover:bg-destructive/10"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onDelete();
-                    }}
-                    title="Delete Item"
-                  >
-                    <Trash2 className="size-4" />
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className={cn(
+                        "size-9 rounded-xl border border-border/50 bg-background/60 transition-all",
+                        item.hideTitle ? "text-muted-foreground/50" : "text-primary bg-primary/5 border-primary/20"
+                      )}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onUpdate({ hideTitle: !item.hideTitle });
+                      }}
+                      title={item.hideTitle ? "Show Title" : "Hide Title"}
+                    >
+                        {item.hideTitle ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                    </Button>
+                    <Button variant="ghost" size="icon" className="size-9 rounded-xl border border-border/50 bg-background/60 hover:bg-primary/10 transition-all" onClick={(e) => { e.stopPropagation(); onDuplicate(); }} title="Duplicate Item">
+                      <Copy className="size-4" />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="size-9 rounded-xl border border-border/50 bg-background/60 text-destructive/50 hover:text-destructive hover:bg-destructive/10 transition-all" onClick={(e) => { e.stopPropagation(); onDelete(); }} title="Delete Item">
+                      <Trash2 className="size-4" />
+                    </Button>
+                  </div>
                 </div>
               </div>
             </div>
