@@ -186,23 +186,23 @@ export function WidgetSelectionGrid({ onNewWidget, onDownload }: WidgetSelection
                 <Button
                   onClick={() => setShowImportMergeDialog(true)}
                   variant="secondary"
-                  className="h-11 max-sm:h-12 px-6 max-sm:px-4 rounded-2xl max-sm:rounded-xl font-black uppercase tracking-wider text-[10px] border border-primary/20 bg-primary/10 text-primary hover:bg-primary/20 transition-all shadow-sm order-3 flex-1 md:flex-none"
+                  className="h-11 max-sm:h-12 px-6 max-sm:px-4 rounded-2xl max-sm:rounded-xl font-black uppercase tracking-wider text-[10px] border border-border/40 bg-muted/20 text-muted-foreground hover:bg-muted/30 transition-all shadow-sm order-3 flex-1 md:flex-none"
                   title="Import JSON"
                 >
-                  <FileJson2 className="size-4 mr-2" />
+                  <FileJson2 className="size-4 mr-2 opacity-60" />
                   Import
                 </Button>
                 
                 <Button
                   onClick={() => setShowTrash(true)}
-                  variant="ghost"
-                  className="h-11 max-sm:h-12 px-6 max-sm:px-4 rounded-2xl max-sm:rounded-xl font-black uppercase tracking-wider text-[10px] border border-destructive/20 bg-destructive/10 text-destructive hover:bg-destructive/20 transition-all shadow-sm order-4 flex-1 md:flex-none relative"
+                  variant="secondary"
+                  className="h-11 max-sm:h-12 px-6 max-sm:px-4 rounded-2xl max-sm:rounded-xl font-black uppercase tracking-wider text-[10px] border border-border/40 bg-muted/20 text-muted-foreground hover:bg-muted/30 transition-all shadow-sm order-4 flex-1 md:flex-none relative"
                   title="Trash"
                 >
-                  <Trash2 className="size-4 mr-2" />
+                  <Trash2 className="size-4 mr-2 opacity-60" />
                   Trash
                   {trash.length > 0 && (
-                    <span className="absolute -top-1.5 -right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[8px] font-black text-white ring-2 ring-background animate-in zoom-in-50">
+                    <span className="absolute -top-1.5 -right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-muted-foreground/40 px-1 text-[8px] font-black text-white ring-2 ring-background animate-in zoom-in-50">
                       {trash.length}
                     </span>
                   )}
