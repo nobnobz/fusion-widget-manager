@@ -63,6 +63,8 @@ export function MainEditor() {
   const [githubTemplates, setGithubTemplates] = useState<{ name: string; download_url: string; version: string }[]>([]);
   const [isLoadingTemplates, setIsLoadingTemplates] = useState(false);
   const [selectedTemplateUrl, setSelectedTemplateUrl] = useState<string>('');
+  const [aiometadataTemplateUrl, setAiometadataTemplateUrl] = useState<string>('');
+  const [aiometadataVersion, setAiometadataVersion] = useState<string>('');
   const [isTemplatePopoverOpen, setIsTemplatePopoverOpen] = useState(false);
   const [isDraggingFile, setIsDraggingFile] = useState(false);
 
@@ -136,6 +138,22 @@ export function MainEditor() {
                 allTemplates = [...allTemplates, ...processFiles([item])];
               }
             }
+          }
+        }
+
+        // 4. Find AIOMetadata template in root (dynamic versioning)
+        const metadataFile = rootData.find((f: any) => 
+          f.type === 'file' && 
+          f.name.toLowerCase().includes('ume-aiometadata-config') && 
+          f.name.endsWith('.json')
+        );
+        
+        if (metadataFile) {
+          setAiometadataTemplateUrl(metadataFile.download_url);
+          // Extract version from filename
+          const vMatch = metadataFile.name.match(/v?(\d+(\.\d+)+)/);
+          if (vMatch) {
+            setAiometadataVersion(vMatch[0].startsWith('v') ? vMatch[0] : `v${vMatch[0]}`);
           }
         }
 
@@ -346,6 +364,34 @@ export function MainEditor() {
   };
 
 
+  const handleDownloadMetadata = async () => {
+    if (!aiometadataTemplateUrl) return;
+
+    try {
+      const response = await fetch(aiometadataTemplateUrl);
+      if (!response.ok) throw new Error('Download failed');
+      const json = await response.json();
+      
+      // Force JSON download for iOS compatibility
+      const blob = new Blob([JSON.stringify(json, null, 2)], { type: 'application/json' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      
+      // Extract original filename or use a fallback
+      const filename = aiometadataTemplateUrl.split('/').pop() || 'ume-aiometadata-config.json';
+      link.download = filename.endsWith('.json') ? filename : `${filename}.json`;
+      
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error downloading metadata template:', error);
+    }
+  };
+
+
   const handleAddFirstWidget = () => {
     clearConfig();
     setShowNewWidgetDialog(true);
@@ -407,18 +453,31 @@ export function MainEditor() {
           </p>
 
           <div className="w-full space-y-4 mb-10">
-            <div className="flex justify-between items-end px-2">
-              <div className="flex flex-col">
-                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/50 ml-1">Configuration</span>
+            <div className="flex justify-end px-2 mb-2">
+              <div className="flex items-center gap-2 w-full sm:w-auto overflow-x-auto no-scrollbar scroll-smooth justify-end">
+                <Button
+                  variant="ghost"
+                  className="h-8 rounded-xl border border-dashed border-border/60 hover:border-primary/40 hover:bg-primary/5 transition-all font-bold uppercase tracking-widest text-[9px] px-4 text-muted-foreground/60 hover:text-primary whitespace-nowrap shrink-0"
+                  onClick={handleDownloadMetadata}
+                  disabled={isLoadingTemplates || !aiometadataTemplateUrl}
+                >
+                  {isLoadingTemplates ? (
+                    <RotateCcw className="size-3 mr-2 animate-spin" />
+                  ) : (
+                    <Download className="size-3 mr-2" />
+                  )}
+                  AIOMetadata {aiometadataVersion || 'Template'}
+                </Button>
+                <div className="w-px h-3 bg-border/40 shrink-0 hidden sm:block" />
+                <Button
+                  variant="ghost"
+                  className="h-8 rounded-xl border border-dashed border-border/60 hover:border-blue-500/40 hover:bg-blue-500/5 transition-all font-bold uppercase tracking-widest text-[9px] px-4 text-muted-foreground/60 hover:text-blue-500/80 whitespace-nowrap shrink-0"
+                  onClick={() => omniFileInputRef.current?.click()}
+                >
+                  <FileJson2 className="size-3 mr-2" />
+                  Convert Omni Snapshot
+                </Button>
               </div>
-              <Button
-                variant="ghost"
-                className="h-8 rounded-xl border border-dashed border-border/60 hover:border-blue-500/40 hover:bg-blue-500/5 transition-all font-bold uppercase tracking-widest text-[9px] px-4 text-muted-foreground/60 hover:text-blue-500/80"
-                onClick={() => omniFileInputRef.current?.click()}
-              >
-                <FileJson2 className="size-3 mr-2" />
-                Convert Omni Snapshot
-              </Button>
             </div>
 
             <div
@@ -773,10 +832,11 @@ export function MainEditor() {
                 <Button 
                   variant="outline" 
                   className="w-full h-10 rounded-xl justify-center text-[10px] font-bold bg-background/50 backdrop-blur-sm"
-                  onClick={() => window.open('https://github.com/nobnobz/Omni-Template-Bot-Bid-Raiser/blob/main/ume-aiometadata-config.json', '_blank')}
+                  onClick={handleDownloadMetadata}
+                  disabled={!aiometadataTemplateUrl}
                 >
                   <Download className="size-3 mr-2" />
-                  Download AIOMetadata Template (.json)
+                  Download AIOMetadata {aiometadataVersion || 'Template'}
                 </Button>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
                   <Button 

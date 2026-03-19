@@ -5,6 +5,8 @@
 - **Premium UI Overhaul**: Implemented a modern glassmorphism design system across all components with refined typography and smooth micro-animations.
 - **Action Bar Redesign**: Iterated on the central action bar to prioritize high-value actions (New Widget, Export) with better mobile stacking.
 - **Expanded Widget View**: Optimized the responsive layout to stack configuration cards on mobile while maintaining a side-by-side view on desktop.
+- **Resource Accessibility**: Added a direct, Blob-based AIOMetadata template download with dynamic version detection (e.g., v1.6.0) and iOS JSON compatibility.
+- **Clean Header**: Removed the "Configuration" label from the welcome screen to further refine the minimalist aesthetic.
 - **UI De-cluttering**: Hidden raw Data Source URLs in the editor for a cleaner, more focused configuration experience.
 - **Trash Handling**: Redesigned the Trash modal with improved visual hierarchy and fixed the cluttered top-right action area.
 
