@@ -179,34 +179,30 @@ export function WidgetSelectionGrid({ onNewWidget, onDownload }: WidgetSelection
                   Export
                 </Button>
 
-                <div className="flex items-center bg-background/50 dark:bg-zinc-800/40 rounded-2xl max-sm:rounded-xl border border-border/20 p-1 max-sm:px-1.5 max-sm:py-1 shadow-sm order-3 max-sm:col-span-2 max-sm:justify-center max-sm:gap-2">
-                  <Button
-                    onClick={() => setShowImportMergeDialog(true)}
-                    variant="ghost"
-                    size="icon"
-                    className="size-10 max-sm:size-11 rounded-xl hover:bg-muted/50 transition-all"
-                    title="Import JSON"
-                  >
-                    <FileJson2 className="size-4 opacity-60" />
-                  </Button>
-
-                  <div className="w-[1px] h-4 bg-border/40 mx-1" />
-
-                  <Button
-                    onClick={() => setShowTrash(true)}
-                    variant="ghost"
-                    size="icon"
-                    className="size-10 max-sm:size-11 rounded-xl hover:bg-destructive/10 hover:text-destructive transition-all relative"
-                    title="Trash"
-                  >
-                    <Trash2 className="size-4 opacity-60" />
-                    {trash.length > 0 && (
-                      <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[8px] font-black text-white ring-2 ring-background animate-in zoom-in-50">
-                        {trash.length}
-                      </span>
-                    )}
-                  </Button>
-                </div>
+                <Button
+                  onClick={() => setShowImportMergeDialog(true)}
+                  variant="secondary"
+                  className="h-11 max-sm:h-12 px-6 max-sm:px-4 rounded-2xl max-sm:rounded-xl font-black uppercase tracking-wider text-[10px] border border-primary/20 bg-primary/10 text-primary hover:bg-primary/20 transition-all shadow-sm order-3 flex-1 md:flex-none"
+                  title="Import JSON"
+                >
+                  <FileJson2 className="size-4 mr-2" />
+                  Import
+                </Button>
+                
+                <Button
+                  onClick={() => setShowTrash(true)}
+                  variant="secondary"
+                  className="h-11 max-sm:h-12 px-6 max-sm:px-4 rounded-2xl max-sm:rounded-xl font-black uppercase tracking-wider text-[10px] border border-primary/20 bg-primary/10 text-primary hover:bg-primary/20 transition-all shadow-sm order-4 flex-1 md:flex-none relative"
+                  title="Trash"
+                >
+                  <Trash2 className="size-4 mr-2" />
+                  Trash
+                  {trash.length > 0 && (
+                    <span className="absolute -top-1.5 -right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[8px] font-black text-white ring-2 ring-background animate-in zoom-in-50">
+                      {trash.length}
+                    </span>
+                  )}
+                </Button>
               </div>
             </div>
           </div>
