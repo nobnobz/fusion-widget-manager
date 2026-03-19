@@ -66,6 +66,12 @@ export interface RowClassicWidget extends BaseWidget {
 
 export type Widget = CollectionRowWidget | RowClassicWidget;
 
+export interface TrashWidgetEntry {
+  widget: Widget;
+  deletedAt: string;
+  originalIndex: number;
+}
+
 export interface FusionWidgetsConfig {
   exportType: 'fusionWidgets';
   exportVersion: number;

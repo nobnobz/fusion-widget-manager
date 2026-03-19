@@ -13,7 +13,7 @@ import {
   DialogFooter,
   DialogClose
 } from '@/components/ui/dialog';
-import { FileJson2, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { AlertCircle, CheckCircle2, CloudUpload } from 'lucide-react';
 
 interface ImportMergeDialogProps {
   open: boolean;
@@ -60,15 +60,15 @@ export function ImportMergeDialog({ open, onOpenChange }: ImportMergeDialogProps
         setJsonInput('');
       }
     }}>
-      <DialogContent className="sm:max-w-[550px] rounded-[2.5rem] border border-border/40 bg-card/95 backdrop-blur-2xl shadow-2xl p-0 overflow-hidden [&>button:last-child]:top-8 [&>button:last-child]:right-8 [&>button:last-child]:size-9 [&>button:last-child]:rounded-full [&>button:last-child]:bg-muted/30 [&>button:last-child]:hover:bg-muted/50 [&>button:last-child]:transition-all [&>button:last-child]:border-none [&>button:last-child]:flex [&>button:last-child]:items-center [&>button:last-child]:justify-center">
-        <div className="p-8 pt-10">
-          <DialogHeader className="space-y-4 items-start text-left">
-            <div className="size-14 rounded-2xl bg-primary/5 border border-primary/10 flex items-center justify-center text-primary mb-2 shadow-sm">
-              <FileJson2 className="size-7" />
+      <DialogContent className="sm:max-w-[550px] rounded-[3rem] border border-border/40 bg-background/95 backdrop-blur-2xl shadow-2xl p-0 overflow-hidden [&>button:last-child]:top-8 [&>button:last-child]:right-8 [&>button:last-child]:size-10 [&>button:last-child]:rounded-2xl [&>button:last-child]:bg-muted/10 [&>button:last-child]:hover:bg-muted/20 [&>button:last-child]:transition-all [&>button:last-child]:border-none [&>button:last-child]:flex [&>button:last-child]:items-center [&>button:last-child]:justify-center">
+        <div className="p-10 pt-12">
+          <DialogHeader className="space-y-6 items-start text-left">
+            <div className="size-16 rounded-[1.5rem] bg-primary/10 border border-primary/20 flex items-center justify-center text-primary mb-2 shadow-inner">
+               <CloudUpload className="size-8" />
             </div>
-            <div className="space-y-1">
-              <DialogTitle className="text-2xl font-bold tracking-tight">Merge Import</DialogTitle>
-              <DialogDescription className="text-muted-foreground/60 text-xs font-medium leading-relaxed">
+            <div className="space-y-2">
+              <DialogTitle className="text-3xl font-black tracking-tighter">Merge Import</DialogTitle>
+              <DialogDescription className="text-muted-foreground/80 text-[13px] font-medium leading-relaxed max-w-[360px]">
                 Paste your Fusion JSON here. Existing widgets with the same title and type will be skipped automatically.
               </DialogDescription>
             </div>

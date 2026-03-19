@@ -5,6 +5,7 @@ import {
   AIOMetadataCatalog,
   CollectionItem,
   FusionWidgetsConfig,
+  TrashWidgetEntry,
   Widget,
 } from '@/lib/types/widget';
 import {
@@ -31,6 +32,7 @@ interface MergeResult {
 
 interface ConfigContextType {
   widgets: Widget[];
+  trash: TrashWidgetEntry[];
   manifestUrl: string;
   setManifestUrl: (url: string) => void;
   replacePlaceholder: boolean;
@@ -42,6 +44,8 @@ interface ConfigContextType {
   addWidget: (widget: Widget) => void;
   updateWidgetMeta: (id: string, updates: Partial<Widget>) => void;
   deleteWidget: (id: string) => void;
+  restoreWidget: (id: string) => void;
+  emptyTrash: () => void;
   duplicateWidget: (id: string) => void;
   reorderWidgets: (startIndex: number, endIndex: number) => void;
   addCollectionItem: (widgetId: string, item: CollectionItem) => void;
@@ -67,6 +71,7 @@ const ConfigContext = createContext<ConfigContextType | undefined>(undefined);
 function buildStoredState(state: AppState) {
   return {
     widgets: state.widgets,
+    trash: state.trash,
     manifestUrl: state.manifestUrl,
     replacePlaceholder: state.replacePlaceholder,
     manifestCatalogs: state.manifestCatalogs,
@@ -76,6 +81,7 @@ function buildStoredState(state: AppState) {
 
 export function ConfigProvider({ children }: { children: React.ReactNode }) {
   const [widgets, setWidgets] = useState<Widget[]>([]);
+  const [trash, setTrash] = useState<TrashWidgetEntry[]>([]);
   const [manifestUrl, setManifestUrl] = useState('');
   const [replacePlaceholder, setReplacePlaceholder] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
@@ -90,9 +96,10 @@ export function ConfigProvider({ children }: { children: React.ReactNode }) {
     try {
       const normalized = normalizeLoadedState(JSON.parse(saved));
       setWidgets(normalized.widgets);
+      setTrash(normalized.trash);
       setManifestUrl(normalized.manifestUrl);
       setReplacePlaceholder(normalized.replacePlaceholder);
-      if (normalized.widgets.length > 0) {
+      if (normalized.widgets.length > 0 || normalized.trash.length > 0) {
         setView('selection');
       }
     } catch (error) {
@@ -120,6 +127,7 @@ export function ConfigProvider({ children }: { children: React.ReactNode }) {
       JSON.stringify(
         buildStoredState({
           widgets,
+          trash,
           manifestUrl,
           replacePlaceholder,
           manifestCatalogs: [],
@@ -127,7 +135,7 @@ export function ConfigProvider({ children }: { children: React.ReactNode }) {
         })
       )
     );
-  }, [widgets, manifestUrl, replacePlaceholder]);
+  }, [widgets, trash, manifestUrl, replacePlaceholder]);
 
   useEffect(() => {
     localStorage.setItem('fusion-widget-manifest-catalogs', JSON.stringify(manifestCatalogs));
@@ -150,8 +158,8 @@ export function ConfigProvider({ children }: { children: React.ReactNode }) {
 
   const replaceConfig = useCallback((config: FusionWidgetsConfig) => {
     setWidgets(config.widgets);
-    setView(config.widgets.length > 0 ? 'selection' : 'welcome');
-  }, []);
+    setView(config.widgets.length > 0 || trash.length > 0 ? 'selection' : 'welcome');
+  }, [trash.length]);
 
   const importConfig = useCallback(
     (config: unknown) => {
@@ -259,8 +267,46 @@ export function ConfigProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const deleteWidget = useCallback((id: string) => {
+    const originalIndex = widgets.findIndex((widget) => widget.id === id);
+    if (originalIndex === -1) return;
+
+    const widgetToTrash = widgets[originalIndex];
+    if (!widgetToTrash) return;
+
     setWidgets((prev) => prev.filter((widget) => widget.id !== id));
-  }, []);
+    setTrash((prev) => [
+      {
+        widget: widgetToTrash,
+        deletedAt: new Date().toISOString(),
+        originalIndex,
+      },
+      ...prev.filter((entry) => entry.widget.id !== id),
+    ]);
+    setView('selection');
+  }, [widgets]);
+
+  const restoreWidget = useCallback((id: string) => {
+    const entry = trash.find((item) => item.widget.id === id);
+    if (!entry) return;
+
+    const restoredWidget = widgets.some((widget) => widget.id === entry.widget.id)
+      ? { ...entry.widget, id: crypto.randomUUID() }
+      : entry.widget;
+
+    setWidgets((prev) => {
+      const insertAt = Math.min(entry.originalIndex, prev.length);
+      const next = [...prev];
+      next.splice(insertAt, 0, restoredWidget);
+      return next;
+    });
+    setTrash((prev) => prev.filter((item) => item.widget.id !== id));
+    setView('selection');
+  }, [trash, widgets]);
+
+  const emptyTrash = useCallback(() => {
+    setTrash([]);
+    setView((current) => (widgets.length > 0 ? current : 'welcome'));
+  }, [widgets.length]);
 
   const duplicateWidget = useCallback((id: string) => {
     setWidgets((prev) => {
@@ -457,6 +503,7 @@ export function ConfigProvider({ children }: { children: React.ReactNode }) {
 
   const clearConfig = useCallback(() => {
     setWidgets([]);
+    setTrash([]);
     setReplacePlaceholder(false);
     setManifestContent('');
     setView('welcome');
@@ -466,6 +513,7 @@ export function ConfigProvider({ children }: { children: React.ReactNode }) {
     <ConfigContext.Provider
       value={{
         widgets,
+        trash,
         manifestUrl,
         setManifestUrl,
         replacePlaceholder,
@@ -477,6 +525,8 @@ export function ConfigProvider({ children }: { children: React.ReactNode }) {
         addWidget,
         updateWidgetMeta,
         deleteWidget,
+        restoreWidget,
+        emptyTrash,
         duplicateWidget,
         reorderWidgets,
         addCollectionItem,

@@ -118,7 +118,7 @@ export function CollectionRowEditor({ widget, searchQuery = "" }: { widget: Coll
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-top-4 duration-500">
-      <div className="flex flex-col sm:flex-row items-end gap-4">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-end gap-4">
         <div className="flex-1 space-y-2.5">
           <Label htmlFor="title" className="text-xs font-bold uppercase tracking-wider text-muted-foreground/60 ml-1">Widget Title</Label>
             <Input 

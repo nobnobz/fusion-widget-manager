@@ -6,6 +6,7 @@ import {
   MANIFEST_PLACEHOLDER,
   mergeWidgetLists,
   normalizeFusionConfigDetailed,
+  normalizeLoadedState,
   parseFusionConfig,
 } from './widget-domain';
 import type { FusionWidgetsConfig, Widget } from './types/widget';
@@ -173,6 +174,24 @@ test('mergeWidgetLists skips duplicates already present and inside the same payl
   assert.equal(result.skippedExisting, 1);
   assert.equal(result.skippedInPayload, 1);
   assert.equal(result.widgets.length, 2);
+});
+
+test('normalizeLoadedState preserves trash entries', () => {
+  const state = normalizeLoadedState({
+    widgets: [],
+    trash: [
+      {
+        widget: buildRowWidget(),
+        deletedAt: '2026-03-19T10:00:00.000Z',
+        originalIndex: 2,
+      },
+    ],
+  });
+
+  assert.equal(state.widgets.length, 0);
+  assert.equal(state.trash.length, 1);
+  assert.equal(state.trash[0]?.widget.title, 'Netflix Movies');
+  assert.equal(state.trash[0]?.originalIndex, 2);
 });
 
 test('Fusion export derives requiredAddons from collection item dataSources', () => {

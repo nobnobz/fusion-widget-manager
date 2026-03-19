@@ -230,13 +230,13 @@ export function CollectionItemEditor({
                     <div className="grid grid-cols-1 gap-4">
                       <div className="space-y-2.5">
                         <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/50 ml-1">Configuration & Preview</Label>
-                        <div className="flex items-start gap-6 p-5 bg-muted/20 dark:bg-muted/10 rounded-2xl border border-zinc-200 dark:border-border/40 shadow-sm backdrop-blur-sm">
+                        <div className="flex flex-col sm:flex-row items-stretch sm:items-start gap-6 p-5 bg-muted/20 dark:bg-muted/10 rounded-2xl border border-zinc-200 dark:border-border/40 shadow-sm backdrop-blur-sm">
                           {/* Adaptive Thumbnail */}
                           <div className={cn(
-                            "rounded-xl bg-zinc-950 border border-border/40 flex items-center justify-center relative shadow-inner overflow-hidden shrink-0 transition-all duration-500",
-                            item.layout === 'Poster' ? "aspect-[2/3] w-24" : 
-                            item.layout === 'Wide' ? "aspect-video w-40" : 
-                            "aspect-square w-28"
+                            "rounded-xl bg-zinc-950 border border-border/40 flex items-center justify-center relative shadow-inner overflow-hidden shrink-0 transition-all duration-500 mx-auto sm:mx-0",
+                            item.layout === 'Poster' ? "aspect-[2/3] w-28 sm:w-24" : 
+                            item.layout === 'Wide' ? "aspect-video w-48 sm:w-40" : 
+                            "aspect-square w-32 sm:w-28"
                           )}>
                             {item.backgroundImageURL ? (
                               // eslint-disable-next-line @next/next/no-img-element
@@ -250,10 +250,10 @@ export function CollectionItemEditor({
                             )}
                           </div>
 
-                          <div className="flex-1 flex flex-col gap-3 min-w-0">
-                            <div className="flex items-center gap-2">
+                          <div className="flex-1 flex flex-col gap-4 sm:gap-3 w-full min-w-0">
+                            <div className="flex items-center justify-center sm:justify-start">
                               {/* Premium Segmented Control */}
-                              <div className="flex items-center p-1 bg-muted/50 rounded-lg border border-border">
+                              <div className="flex flex-wrap items-center justify-center sm:justify-start p-1 bg-muted/50 rounded-lg border border-border gap-1">
                                 {[
                                   { id: 'Wide', label: 'Wide', icon: RectangleHorizontal },
                                   { id: 'Poster', label: 'Poster', icon: RectangleVertical },
@@ -264,7 +264,7 @@ export function CollectionItemEditor({
                                     type="button"
                                     onClick={() => onUpdate({ layout: opt.id as CollectionItem['layout'] })}
                                     className={cn(
-                                      "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all",
+                                      "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all min-w-[80px] sm:min-w-0 justify-center sm:justify-start",
                                       item.layout === opt.id 
                                         ? "bg-primary text-primary-foreground shadow-sm" 
                                         : "text-muted-foreground/50 hover:text-foreground hover:bg-background"
@@ -277,7 +277,7 @@ export function CollectionItemEditor({
                               </div>
                             </div>
  
-                            <div className="relative group/url">
+                            <div className="relative group/url w-full">
                               <ImageIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground/30 group-focus-within/url:text-primary transition-colors" />
                               <Input 
                                 placeholder="Image URL (https://...)" 

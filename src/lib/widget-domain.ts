@@ -3,6 +3,7 @@ import type {
   AIOMetadataCatalog,
   CollectionItem,
   FusionWidgetsConfig,
+  TrashWidgetEntry,
   Widget,
 } from './types/widget';
 
@@ -10,6 +11,7 @@ export const MANIFEST_PLACEHOLDER = 'YOUR_AIOMETADATA';
 
 export interface AppState {
   widgets: Widget[];
+  trash: TrashWidgetEntry[];
   manifestUrl: string;
   replacePlaceholder: boolean;
   manifestCatalogs: AIOMetadataCatalog[];
@@ -318,6 +320,18 @@ function normalizeWidget(input: unknown, index: number, options: NormalizeOption
   };
 }
 
+function normalizeTrashEntry(input: unknown, index: number, options: NormalizeOptions): TrashWidgetEntry {
+  const entry = asRecord(input, `trash[${index}]`);
+  return {
+    widget: normalizeWidget(entry.widget, index, options),
+    deletedAt: asOptionalString(entry.deletedAt) || new Date(0).toISOString(),
+    originalIndex:
+      typeof entry.originalIndex === 'number' && Number.isFinite(entry.originalIndex)
+        ? Math.max(0, Math.floor(entry.originalIndex))
+        : 0,
+  };
+}
+
 function repairCollectionItemIds(widget: Widget, repairs: IdRepairSummary): Widget {
   if (widget.type !== 'collection.row') return widget;
 
@@ -400,12 +414,14 @@ export function parseFusionConfig(input: unknown, options: NormalizeOptions = {}
 export function normalizeLoadedState(input: unknown, options: NormalizeOptions = {}): AppState {
   const root = asRecord(input, 'Saved state');
   const widgetsInput = Array.isArray(root.widgets) ? root.widgets : [];
+  const trashInput = Array.isArray(root.trash) ? root.trash : [];
   const normalizedWidgets = repairWidgetIds(
     widgetsInput.map((entry, index) => normalizeWidget(entry, index, options))
   );
 
   return {
     widgets: normalizedWidgets.config.widgets,
+    trash: trashInput.map((entry, index) => normalizeTrashEntry(entry, index, options)),
     manifestUrl: asOptionalString(root.manifestUrl) || '',
     replacePlaceholder: asBoolean(root.replacePlaceholder),
     manifestCatalogs: Array.isArray(root.manifestCatalogs) ? parseManifest({ catalogs: root.manifestCatalogs }) : [],
