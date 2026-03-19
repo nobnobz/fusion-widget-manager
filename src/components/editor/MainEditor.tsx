@@ -411,6 +411,25 @@ export function MainEditor() {
             <Button
               variant="ghost"
               size="icon"
+              className={cn(
+                "size-10 rounded-xl transition-all shadow-sm",
+                manifestUrl
+                  ? "bg-primary/10 text-primary hover:bg-primary/15"
+                  : "hover:bg-primary/10 hover:text-primary"
+              )}
+              onClick={() => setShowManifestModal(true)}
+              title={manifestUrl ? "Manifest synced" : "Sync manifest"}
+            >
+              <div className="relative">
+                <Globe className="size-5" />
+                {manifestUrl && (
+                  <div className="absolute -right-0.5 -top-0.5 size-2 rounded-full border border-background bg-green-500" />
+                )}
+              </div>
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
               className="size-10 rounded-xl hover:bg-primary/10 hover:text-primary transition-all shadow-sm"
               onClick={() => setShowHowToUse(true)}
               title="How to Use / Guide"
@@ -428,6 +447,15 @@ export function MainEditor() {
             </Button>
             <div className="w-px h-4 bg-border/60 mx-1" />
             <ThemeToggle />
+            <Button
+              variant="ghost"
+              size="icon"
+              className="size-10 rounded-xl hover:bg-muted/60 hover:text-foreground transition-all shadow-sm"
+              onClick={() => setShowRestartConfirm(true)}
+              title="Start over"
+            >
+              <RotateCcw className="size-5" />
+            </Button>
           </div>
 
           <div className="relative group mb-2 max-sm:mt-2">
@@ -668,33 +696,31 @@ export function MainEditor() {
                 <div className="min-w-0">
                   <h1 className="truncate text-[13px] font-black tracking-tight leading-none">Fusion Widget</h1>
                   <span className="block truncate pt-1 text-[9px] font-black uppercase tracking-[0.22em] text-primary/90">
-                    {view === 'welcome' ? 'Import or create' : 'Manager'}
+                    Manager
                   </span>
                 </div>
               </div>
 
               <div className="flex items-center gap-1">
-                {view !== 'welcome' && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className={cn(
-                      "h-9 w-9 rounded-xl border px-0 transition-all",
-                      manifestUrl
-                        ? "border-primary/20 bg-primary/10 text-primary hover:bg-primary/15"
-                        : "border-border/50 bg-background/30 text-muted-foreground/70 hover:bg-primary/5 hover:text-primary"
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className={cn(
+                    "h-9 w-9 rounded-xl border px-0 transition-all",
+                    manifestUrl
+                      ? "border-primary/20 bg-primary/10 text-primary hover:bg-primary/15"
+                      : "border-border/50 bg-background/30 text-muted-foreground/70 hover:bg-primary/5 hover:text-primary"
+                  )}
+                  onClick={() => setShowManifestModal(true)}
+                  title={manifestUrl ? "Manifest synced" : "Sync manifest"}
+                >
+                  <div className="relative">
+                    <Globe className="size-4" />
+                    {manifestUrl && (
+                      <div className="absolute -right-0.5 -top-0.5 size-2 rounded-full border border-background bg-green-500" />
                     )}
-                    onClick={() => setShowManifestModal(true)}
-                    title={manifestUrl ? "Manifest synced" : "Sync manifest"}
-                  >
-                    <div className="relative">
-                      <Globe className="size-4" />
-                      {manifestUrl && (
-                        <div className="absolute -right-0.5 -top-0.5 size-2 rounded-full border border-background bg-green-500" />
-                      )}
-                    </div>
-                  </Button>
-                )}
+                  </div>
+                </Button>
 
                 <Button
                   variant="ghost"
@@ -708,17 +734,15 @@ export function MainEditor() {
 
                 <ThemeToggle className="size-9 rounded-xl bg-background/30 dark:bg-black/20 border-border/50 shadow-none" />
 
-                {view !== 'welcome' && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="size-9 rounded-xl border border-border/50 bg-background/30 text-muted-foreground/70 hover:bg-muted/60 hover:text-foreground"
-                    onClick={() => setShowRestartConfirm(true)}
-                    title="Start over"
-                  >
-                    <RotateCcw className="size-4" />
-                  </Button>
-                )}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="size-9 rounded-xl border border-border/50 bg-background/30 text-muted-foreground/70 hover:bg-muted/60 hover:text-foreground"
+                  onClick={() => setShowRestartConfirm(true)}
+                  title="Start over"
+                >
+                  <RotateCcw className="size-4" />
+                </Button>
               </div>
             </div>
           </div>
@@ -895,7 +919,7 @@ export function MainEditor() {
                 </p>
                 <Button 
                   variant="outline" 
-                  className="w-full h-10 rounded-xl justify-center text-[10px] font-bold bg-background/50 backdrop-blur-sm"
+                  className="w-full h-11 rounded-2xl justify-center text-[10px] font-bold bg-background/60 backdrop-blur-sm shadow-sm"
                   onClick={handleDownloadMetadata}
                   disabled={!aiometadataTemplateUrl}
                 >
@@ -905,18 +929,18 @@ export function MainEditor() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
                   <Button 
                     variant="outline" 
-                    className="h-10 rounded-xl justify-center text-[10px] font-bold bg-background/50 backdrop-blur-sm"
+                    className="h-9 rounded-full justify-center text-[10px] font-semibold bg-transparent border-border/60 text-muted-foreground hover:text-primary hover:border-primary/30 hover:bg-primary/5 shadow-none"
                     onClick={() => window.open('https://aiometadatafortheweebs.midnightignite.me/configure/', '_blank')}
                   >
-                    <Globe className="size-3 mr-2 text-primary" />
+                    <Globe className="size-3 mr-2 text-primary/90" />
                     AIOMetadata (Midnight)
                   </Button>
                   <Button 
                     variant="outline" 
-                    className="h-10 rounded-xl justify-center text-[10px] font-bold bg-background/50 backdrop-blur-sm"
+                    className="h-9 rounded-full justify-center text-[10px] font-semibold bg-transparent border-border/60 text-muted-foreground hover:text-blue-600 hover:border-blue-500/30 hover:bg-blue-500/5 shadow-none"
                     onClick={() => window.open('https://aiometadata.fortheweak.cloud/configure/', '_blank')}
                   >
-                    <Globe className="size-3 mr-2 text-blue-500" />
+                    <Globe className="size-3 mr-2 text-blue-500/90" />
                     AIOMetadata (Yeb)
                   </Button>
                 </div>
