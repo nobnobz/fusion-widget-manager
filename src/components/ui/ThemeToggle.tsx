@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils";
 
 import { motion, AnimatePresence } from "framer-motion";
 
-export function ThemeToggle() {
+export function ThemeToggle({ className }: { className?: string }) {
   const { setTheme, theme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = React.useState(false);
 
@@ -32,7 +32,10 @@ export function ThemeToggle() {
       <Button 
         variant="ghost" 
         size="icon" 
-        className="size-10 rounded-2xl bg-white/5 dark:bg-black/20 border border-border/40 opacity-50"
+        className={cn(
+          "size-10 rounded-2xl bg-white/5 dark:bg-black/20 border border-border/40 opacity-50",
+          className
+        )}
       >
         <div className="size-5" />
       </Button>
@@ -47,7 +50,10 @@ export function ThemeToggle() {
         <Button 
           variant="ghost" 
           size="icon" 
-          className="size-10 rounded-2xl bg-white/5 dark:bg-black/20 border border-border/40 hover:bg-primary/5 hover:text-primary transition-all shadow-sm group relative"
+          className={cn(
+            "size-10 rounded-2xl bg-white/5 dark:bg-black/20 border border-border/40 hover:bg-primary/5 hover:text-primary transition-all shadow-sm group relative",
+            className
+          )}
         >
           <div className="relative size-5 flex items-center justify-center overflow-hidden">
             <AnimatePresence mode="wait" initial={false}>

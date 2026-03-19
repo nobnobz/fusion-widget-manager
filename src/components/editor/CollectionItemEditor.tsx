@@ -118,11 +118,11 @@ export function CollectionItemEditor({
 
   return (
     <div ref={setNodeRef} style={style} className={cn(isDragging && "z-50")}>
-      <Card className="group bg-card border border-zinc-200/80 dark:border-border shadow-[0_1px_4px_rgba(0,0,0,0.02)] dark:shadow-none rounded-xl overflow-hidden transition-all duration-300 hover:border-primary/30 hover:shadow-sm">
+      <Card className="group bg-card border border-zinc-200/80 dark:border-border shadow-[0_1px_4px_rgba(0,0,0,0.02)] dark:shadow-none rounded-xl max-sm:rounded-[1.15rem] overflow-hidden transition-all duration-300 hover:border-primary/30 hover:shadow-sm max-sm:shadow-[0_1px_3px_rgba(0,0,0,0.03)]">
         <div className="flex-1 flex flex-col min-w-0">
           {/* Header */}
           <div 
-            className="flex items-center justify-between p-3 border-b border-border/40 bg-primary/[0.02] cursor-pointer"
+            className="hidden sm:flex items-center justify-between p-3 border-b border-border/40 bg-primary/[0.02] cursor-pointer"
             onClick={onToggleExpand}
           >
             <div className="flex-1 flex items-center gap-3 min-w-0">
@@ -214,6 +214,130 @@ export function CollectionItemEditor({
             </div>
           </div>
 
+          <div
+            className="sm:hidden border-b border-border/40 bg-primary/[0.02] px-3 py-3"
+            onClick={onToggleExpand}
+          >
+            <div className="flex items-start gap-2.5">
+              <div 
+                {...attributes} 
+                {...listeners}
+                className="mt-0.5 flex size-9 items-center justify-center rounded-xl bg-background/40 text-muted-foreground/40 transition-all cursor-grab active:cursor-grabbing shrink-0"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <GripVertical className="size-4" />
+              </div>
+
+              <div className="min-w-0 flex-1">
+                <div className="flex items-start gap-2">
+                  {hasInvalidCatalog && (
+                    <AlertTriangle className="mt-0.5 size-4 text-amber-500 animate-pulse shrink-0" />
+                  )}
+
+                  <div className="min-w-0 flex-1">
+                    {isEditing ? (
+                      <Input 
+                        autoFocus
+                        value={editName}
+                        onChange={(e) => setEditName(e.target.value)}
+                        onBlur={handleTitleSubmit}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') handleTitleSubmit();
+                          if (e.key === 'Escape') {
+                            setEditName(item.name);
+                            setIsEditing(false);
+                          }
+                        }}
+                        className="h-9 py-0 px-3 text-[13px] font-bold tracking-tight bg-background/70 border-primary/30 focus:border-primary/50 focus-visible:ring-0 rounded-xl w-full"
+                        onClick={(e) => e.stopPropagation()}
+                      />
+                    ) : (
+                      <button
+                        type="button"
+                        className="flex w-full items-start gap-2 overflow-hidden text-left"
+                        onClick={startEditing}
+                      >
+                        <span className="truncate text-[15px] font-bold tracking-tight text-foreground/90 leading-tight">
+                          {item.name || "Untitled Item"}
+                        </span>
+                        <Pencil className="mt-0.5 size-3 text-primary/70 shrink-0" />
+                      </button>
+                    )}
+
+                    <div className="mt-2 flex flex-wrap items-center gap-2">
+                      <span className="rounded-full bg-background/60 px-2.5 py-1 text-[9px] font-bold uppercase tracking-[0.16em] text-muted-foreground/70">
+                        {item.hideTitle ? 'Title hidden' : 'Title visible'}
+                      </span>
+                      <span className="rounded-full bg-muted/50 px-2.5 py-1 text-[9px] font-bold uppercase tracking-[0.14em] text-muted-foreground/60">
+                        {item.dataSources.length} source{item.dataSources.length === 1 ? '' : 's'}
+                      </span>
+                    </div>
+                  </div>
+
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className={cn(
+                      "size-9 rounded-xl border border-border/50 bg-background/60 transition-all shrink-0",
+                      isExpanded ? "bg-primary/10 text-primary rotate-90 border-primary/20" : "text-muted-foreground/60"
+                    )}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onToggleExpand();
+                    }}
+                    title={isExpanded ? "Collapse Item" : "Expand Item"}
+                  >
+                    <ChevronRight className="size-4" />
+                  </Button>
+                </div>
+
+                <div className="mt-3 flex items-center justify-between gap-2 border-t border-border/50 pt-2.5">
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className={cn(
+                      "size-9 rounded-xl border border-border/50 bg-background/60 transition-all",
+                      item.hideTitle ? "text-muted-foreground/50" : "text-primary bg-primary/5"
+                    )}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onUpdate({ hideTitle: !item.hideTitle });
+                    }}
+                    title={item.hideTitle ? "Show Title" : "Hide Title"}
+                  >
+                    {item.hideTitle ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                  </Button>
+
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="size-9 rounded-xl border border-border/50 bg-background/60 hover:bg-primary/5"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDuplicate();
+                    }}
+                    title="Duplicate Item"
+                  >
+                    <Copy className="size-4" />
+                  </Button>
+
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="size-9 rounded-xl border border-border/50 bg-background/60 text-destructive/50 hover:text-destructive hover:bg-destructive/10"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDelete();
+                    }}
+                    title="Delete Item"
+                  >
+                    <Trash2 className="size-4" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <AnimatePresence initial={false}>
             {isExpanded && (
               <motion.div
@@ -224,13 +348,13 @@ export function CollectionItemEditor({
                 transition={{ duration: 0.3, ease: "easeInOut" }}
                 className="overflow-hidden"
               >
-                <div className="p-5 flex flex-col gap-6 bg-muted/20 border-t border-border">
+                <div className="p-5 max-sm:p-3.5 flex flex-col gap-6 max-sm:gap-4 bg-muted/20 max-sm:bg-muted/10 border-t border-border">
                   {/* Configuration Area */}
-                  <div className="space-y-6">
+                  <div className="space-y-6 max-sm:space-y-4">
                     <div className="grid grid-cols-1 gap-4">
-                      <div className="space-y-2.5">
-                        <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/50 ml-1">Configuration & Preview</Label>
-                        <div className="flex flex-col sm:flex-row items-stretch sm:items-start gap-6 p-5 bg-muted/20 dark:bg-muted/10 rounded-2xl border border-zinc-200 dark:border-border/40 shadow-sm backdrop-blur-sm">
+                      <div className="space-y-2.5 max-sm:space-y-2">
+                        <Label className="text-xs max-sm:text-[10px] font-bold uppercase tracking-wider text-muted-foreground/50 ml-1">Configuration & Preview</Label>
+                        <div className="flex flex-col sm:flex-row items-stretch sm:items-start gap-6 max-sm:gap-4 p-5 max-sm:p-3.5 bg-muted/20 dark:bg-muted/10 rounded-2xl max-sm:rounded-[1.15rem] border border-zinc-200 dark:border-border/40 shadow-sm backdrop-blur-sm">
                           {/* Adaptive Thumbnail */}
                           <div className={cn(
                             "rounded-xl bg-zinc-950 border border-border/40 flex items-center justify-center relative shadow-inner overflow-hidden shrink-0 transition-all duration-500 mx-auto sm:mx-0",
@@ -253,7 +377,7 @@ export function CollectionItemEditor({
                           <div className="flex-1 flex flex-col gap-4 sm:gap-3 w-full min-w-0">
                             <div className="flex items-center justify-center sm:justify-start">
                               {/* Premium Segmented Control */}
-                              <div className="flex flex-wrap items-center justify-center sm:justify-start p-1 bg-muted/50 rounded-lg border border-border gap-1">
+                              <div className="grid grid-cols-3 sm:flex flex-wrap items-center justify-center sm:justify-start p-1 bg-muted/50 rounded-lg border border-border gap-1 w-full sm:w-auto">
                                 {[
                                   { id: 'Wide', label: 'Wide', icon: RectangleHorizontal },
                                   { id: 'Poster', label: 'Poster', icon: RectangleVertical },
@@ -264,7 +388,7 @@ export function CollectionItemEditor({
                                     type="button"
                                     onClick={() => onUpdate({ layout: opt.id as CollectionItem['layout'] })}
                                     className={cn(
-                                      "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all min-w-[80px] sm:min-w-0 justify-center sm:justify-start",
+                                      "flex items-center max-sm:flex-col gap-1.5 px-3 max-sm:px-2 py-1.5 max-sm:py-2 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all min-w-[80px] max-sm:min-w-0 sm:min-w-0 justify-center sm:justify-start",
                                       item.layout === opt.id 
                                         ? "bg-primary text-primary-foreground shadow-sm" 
                                         : "text-muted-foreground/50 hover:text-foreground hover:bg-background"
@@ -281,7 +405,7 @@ export function CollectionItemEditor({
                               <ImageIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground/30 group-focus-within/url:text-primary transition-colors" />
                               <Input 
                                 placeholder="Image URL (https://...)" 
-                                className="h-10 pl-10 text-xs bg-background/50 border-zinc-200 dark:border-border/40 focus:border-primary/50 focus-visible:ring-0 rounded-xl shadow-sm dark:shadow-none backdrop-blur-sm transition-all"
+                                className="h-10 max-sm:h-11 pl-10 text-xs bg-background/50 border-zinc-200 dark:border-border/40 focus:border-primary/50 focus-visible:ring-0 rounded-xl max-sm:rounded-[1rem] shadow-sm dark:shadow-none backdrop-blur-sm transition-all"
                                 value={item.backgroundImageURL}
                                 onChange={(e) => onUpdate({ backgroundImageURL: e.target.value })}
                               />
@@ -292,20 +416,20 @@ export function CollectionItemEditor({
                     </div>
  
                     <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground/50 flex items-center gap-1.5">
+                      <div className="flex items-center justify-between max-sm:gap-3">
+                        <h4 className="text-xs max-sm:text-[10px] font-bold uppercase tracking-wider text-muted-foreground/50 flex items-center gap-1.5">
                           <Layers className="size-3" /> Data Sources
                         </h4>
                         <Button 
                           variant="outline" 
                           size="sm" 
-                          className="h-6 px-2 text-[10px] gap-1 font-bold border-border/40 bg-muted/10 hover:border-primary/50 hover:bg-primary/5 hover:text-primary transition-all rounded-lg uppercase tracking-wider backdrop-blur-sm" 
+                          className="h-7 max-sm:h-8 px-2.5 text-[10px] gap-1 font-bold border-border/40 bg-muted/10 hover:border-primary/50 hover:bg-primary/5 hover:text-primary transition-all rounded-lg max-sm:rounded-xl uppercase tracking-wider backdrop-blur-sm" 
                           onClick={(e) => { e.stopPropagation(); handleAddDataSource(); }}
                         >
                           <Plus className="size-2.5" /> New
                         </Button>
                       </div>
-                      <div className="space-y-2 pr-1">
+                      <div className="space-y-2 pr-1 max-sm:pr-0">
                         {item.dataSources.map((ds, dsIndex) => (
                           <DataSourceEditor 
                             key={dsIndex}

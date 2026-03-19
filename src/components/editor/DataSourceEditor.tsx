@@ -26,7 +26,7 @@ export function DataSourceEditor({
   );
 
   return (
-    <div className="flex items-center gap-2 p-1.5 rounded-xl bg-muted/30 border border-border group/ds hover:border-primary/30 transition-all">
+    <div className="flex items-center gap-2 max-sm:gap-2.5 p-1.5 max-sm:p-2 rounded-xl max-sm:rounded-[1rem] bg-muted/30 border border-border group/ds hover:border-primary/30 transition-all">
       <div className="flex-1 min-w-0">
         <div className="relative flex items-center min-w-0">
             {manifestCatalogs.length > 0 ? (
@@ -61,7 +61,7 @@ export function DataSourceEditor({
         </div>
       </div>
 
-      <Button variant="ghost" size="icon" className="size-8 opacity-0 group-hover/ds:opacity-100 transition-opacity rounded-lg hover:bg-destructive/10 hover:text-destructive" onClick={onDelete}>
+      <Button variant="ghost" size="icon" className="size-8 max-sm:size-9 opacity-0 group-hover/ds:opacity-100 max-sm:opacity-100 transition-opacity rounded-lg max-sm:rounded-xl hover:bg-destructive/10 hover:text-destructive" onClick={onDelete}>
         <Trash2 className="size-3.5" />
       </Button>
     </div>

@@ -117,40 +117,42 @@ export function CollectionRowEditor({ widget, searchQuery = "" }: { widget: Coll
   }
 
   return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-top-4 duration-500">
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-end gap-4">
-        <div className="flex-1 space-y-2.5">
-          <Label htmlFor="title" className="text-xs font-bold uppercase tracking-wider text-muted-foreground/60 ml-1">Widget Title</Label>
+    <div className="space-y-6 max-sm:space-y-4 animate-in fade-in slide-in-from-top-4 duration-500">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-end gap-4 max-sm:gap-3">
+        <div className="flex-1 space-y-2.5 max-sm:space-y-2">
+          <Label htmlFor="title" className="text-xs max-sm:text-[10px] font-bold uppercase tracking-wider text-muted-foreground/60 ml-1">Widget Title</Label>
             <Input 
               id="title" 
               value={widget.title} 
               onChange={(e) => updateWidgetMeta(widget.id, { title: e.target.value })} 
-              className="h-10 bg-muted/20 dark:bg-muted/10 border-zinc-200 dark:border-border/40 focus:border-primary/50 transition-all font-semibold px-4 rounded-xl shadow-sm dark:shadow-none flex-1 backdrop-blur-sm"
+              className="h-10 max-sm:h-11 bg-muted/20 dark:bg-muted/10 border-zinc-200 dark:border-border/40 focus:border-primary/50 transition-all font-semibold px-4 rounded-xl max-sm:rounded-[1rem] shadow-sm dark:shadow-none flex-1 backdrop-blur-sm"
               placeholder="e.g. Featured Content"
             />
         </div>
-        <AddItemDialog onAdd={handleAddItem} />
+        <div className="max-sm:w-full max-sm:[&>button]:w-full">
+          <AddItemDialog onAdd={handleAddItem} />
+        </div>
       </div>
 
       <div className="h-px bg-border w-full opacity-50" />
 
-      <div className="space-y-4">
-        <div className="flex items-center justify-between px-1">
-          <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground/50 flex items-center gap-2">
+      <div className="space-y-4 max-sm:space-y-3">
+        <div className="flex items-center justify-between px-1 max-sm:flex-col max-sm:items-stretch max-sm:gap-2.5 max-sm:px-0">
+          <h3 className="text-xs max-sm:text-[10px] font-bold uppercase tracking-wider text-muted-foreground/50 flex items-center gap-2">
             <ListTree className="size-3.5" />
             Items ({filteredItems.length})
           </h3>
 
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 max-sm:flex-wrap max-sm:justify-between">
             {searchQuery && (
-              <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground/50 mr-2">
+              <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground/50 mr-2 max-sm:order-3 max-sm:mr-0 max-sm:w-full">
                 Reorder disabled while searching
               </span>
             )}
             <Button 
               variant="ghost" 
               size="sm" 
-              className="h-7 px-2.5 text-xs font-bold uppercase tracking-wider text-muted-foreground/60 hover:text-primary hover:bg-primary/5 transition-all rounded-lg border border-transparent hover:border-primary/10"
+              className="h-8 max-sm:flex-1 px-2.5 text-xs max-sm:text-[10px] font-bold uppercase tracking-wider text-muted-foreground/60 hover:text-primary hover:bg-primary/5 transition-all rounded-lg max-sm:rounded-xl border border-transparent hover:border-primary/10"
               onClick={() => handleSort('asc')}
               title="Sort A-Z"
             >
@@ -160,7 +162,7 @@ export function CollectionRowEditor({ widget, searchQuery = "" }: { widget: Coll
             <Button 
               variant="ghost" 
               size="sm" 
-              className="h-7 px-2.5 text-xs font-bold uppercase tracking-wider text-muted-foreground/60 hover:text-primary hover:bg-primary/5 transition-all rounded-lg border border-transparent hover:border-primary/10"
+              className="h-8 max-sm:flex-1 px-2.5 text-xs max-sm:text-[10px] font-bold uppercase tracking-wider text-muted-foreground/60 hover:text-primary hover:bg-primary/5 transition-all rounded-lg max-sm:rounded-xl border border-transparent hover:border-primary/10"
               onClick={() => handleSort('desc')}
               title="Sort Z-A"
             >
@@ -175,7 +177,7 @@ export function CollectionRowEditor({ widget, searchQuery = "" }: { widget: Coll
           collisionDetection={closestCenter}
           onDragEnd={handleDragEnd}
         >
-          <div className="grid grid-cols-1 gap-4">
+          <div className="grid grid-cols-1 gap-4 max-sm:gap-3">
             <SortableContext 
               items={filteredItems.map(item => item.id)}
               strategy={verticalListSortingStrategy}
@@ -195,13 +197,13 @@ export function CollectionRowEditor({ widget, searchQuery = "" }: { widget: Coll
             </SortableContext>
             
             {widget.dataSource.payload.items.length === 0 && (
-              <div className="py-12 border-2 border-dashed rounded-2xl flex flex-col items-center justify-center text-muted-foreground/30 bg-muted/10 border-border">
+              <div className="py-12 max-sm:py-10 border-2 border-dashed rounded-2xl max-sm:rounded-[1.2rem] flex flex-col items-center justify-center text-muted-foreground/30 bg-muted/10 border-border">
                 <Layers className="size-10 mb-4 opacity-20" />
                 <p className="text-sm font-medium opacity-60 mb-6">This collection has no items yet</p>
                 <AddItemDialog 
                   onAdd={handleAddItem} 
                   trigger={
-                    <Button variant="outline" size="sm" className="h-9 rounded-xl font-bold px-6 text-[10px] uppercase tracking-wider">
+                    <Button variant="outline" size="sm" className="h-9 rounded-xl font-bold px-6 text-[10px] uppercase tracking-wider max-sm:h-10 max-sm:rounded-[1rem]">
                       <Plus className="size-3.5 mr-2" /> Add first item
                     </Button>
                   }

@@ -121,28 +121,28 @@ export function WidgetSelectionGrid({ onNewWidget, onDownload }: WidgetSelection
 
   return (
     <div className="flex-1 flex flex-col bg-transparent">
-      <main className="max-w-5xl mx-auto w-full px-6 py-12">
-        <div className="flex flex-col gap-3 mb-10 text-center sm:text-left">
-          <div className="flex items-center justify-center sm:justify-start gap-3">
-             <div className="size-10 rounded-2xl bg-primary/10 flex items-center justify-center shadow-inner">
+      <main className="max-w-5xl mx-auto w-full px-6 max-sm:px-4 py-12 max-sm:py-6 max-sm:pb-[calc(env(safe-area-inset-bottom)+2rem)]">
+        <div className="flex flex-col gap-3 mb-10 max-sm:mb-6 text-center sm:text-left">
+          <div className="flex items-center justify-center sm:justify-start gap-3 max-sm:gap-2.5 max-sm:justify-start">
+             <div className="size-10 max-sm:size-9 rounded-2xl max-sm:rounded-[1.1rem] bg-primary/10 flex items-center justify-center shadow-inner">
                 <FileJson2 className="size-5 text-primary" />
              </div>
-             <h1 className="text-4xl font-black tracking-tight text-foreground">Widget Manager</h1>
+             <h1 className="text-4xl max-sm:text-[1.9rem] font-black tracking-tight text-foreground leading-none">Widget Manager</h1>
           </div>
-          <p className="text-[15px] text-muted-foreground/80 font-medium max-w-2xl leading-relaxed">
+          <p className="text-[15px] max-sm:text-[13px] text-muted-foreground/80 font-medium max-w-2xl leading-relaxed max-sm:text-left">
             Organize and manage your library of Fusion widgets. Drag to reorder, click to edit.
           </p>
         </div>
 
-        <div className="mb-12">
-          <div className="p-2 rounded-[2.5rem] bg-zinc-50/50 dark:bg-zinc-900/50 border border-zinc-200/50 dark:border-border/10 shadow-[0_8px_32px_-4px_rgba(0,0,0,0.05)] backdrop-blur-2xl">
-            <div className="flex flex-col md:flex-row items-stretch md:items-center gap-2">
+        <div className="mb-12 max-sm:mb-7">
+          <div className="p-2 max-sm:p-3 rounded-[2.5rem] max-sm:rounded-[1.6rem] bg-zinc-50/50 dark:bg-zinc-900/50 border border-zinc-200/50 dark:border-border/10 shadow-[0_8px_32px_-4px_rgba(0,0,0,0.05)] max-sm:shadow-[0_10px_30px_-20px_rgba(0,0,0,0.35)] backdrop-blur-2xl">
+            <div className="flex flex-col md:flex-row items-stretch md:items-center gap-2 max-sm:gap-3">
               {/* Left Group: Search */}
               <div className="relative flex-1 group min-w-0">
-                <Search className="absolute left-5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground/30 group-focus-within:text-primary transition-colors" />
+                <Search className="absolute left-5 max-sm:left-4 top-1/2 -translate-y-1/2 size-4 text-muted-foreground/30 group-focus-within:text-primary transition-colors" />
                 <Input
                   placeholder="Search for widgets..."
-                  className="w-full h-12 pl-12 pr-10 border-none bg-transparent shadow-none focus-visible:ring-0 text-sm font-semibold tracking-tight"
+                  className="w-full h-12 max-sm:h-11 pl-12 max-sm:pl-10 pr-10 border-none bg-transparent shadow-none focus-visible:ring-0 text-sm max-sm:text-[14px] font-semibold tracking-tight"
                   value={searchQuery}
                   onChange={(event) => setSearchQuery(event.target.value)}
                 />
@@ -157,10 +157,10 @@ export function WidgetSelectionGrid({ onNewWidget, onDownload }: WidgetSelection
               </div>
 
               {/* Right Group: Priorities & Utilities */}
-              <div className="flex flex-wrap items-center gap-2 p-1 md:p-0">
+              <div className="flex flex-wrap items-center gap-2 p-1 md:p-0 max-sm:grid max-sm:grid-cols-2 max-sm:w-full max-sm:gap-2 max-sm:p-0">
                 <Button
                   onClick={handleCreateWidget}
-                  className="h-11 px-6 rounded-2xl font-black uppercase tracking-wider text-[10px] shadow-xl shadow-primary/20 bg-primary hover:bg-primary/95 text-primary-foreground transition-all active:scale-95 flex-1 md:flex-none order-1"
+                  className="h-11 max-sm:h-12 px-6 max-sm:px-4 rounded-2xl max-sm:rounded-xl font-black uppercase tracking-wider text-[10px] shadow-xl shadow-primary/20 bg-primary hover:bg-primary/95 text-primary-foreground transition-all active:scale-95 flex-1 md:flex-none order-1"
                 >
                   <Plus className="size-4 mr-2" />
                   New Widget
@@ -172,19 +172,19 @@ export function WidgetSelectionGrid({ onNewWidget, onDownload }: WidgetSelection
                     onDownload?.();
                   }}
                   variant="secondary"
-                  className="h-11 px-6 rounded-2xl font-black uppercase tracking-wider text-[10px] border border-primary/20 bg-primary/10 text-primary hover:bg-primary/20 transition-all shadow-sm order-2 flex-1 md:flex-none"
+                  className="h-11 max-sm:h-12 px-6 max-sm:px-4 rounded-2xl max-sm:rounded-xl font-black uppercase tracking-wider text-[10px] border border-primary/20 bg-primary/10 text-primary hover:bg-primary/20 transition-all shadow-sm order-2 flex-1 md:flex-none"
                   title="Export JSON"
                 >
                   <Download className="size-4 mr-2" />
                   Export
                 </Button>
 
-                <div className="flex items-center bg-background/50 dark:bg-zinc-800/40 rounded-2xl border border-border/20 p-1 shadow-sm order-3">
+                <div className="flex items-center bg-background/50 dark:bg-zinc-800/40 rounded-2xl max-sm:rounded-xl border border-border/20 p-1 max-sm:px-1.5 max-sm:py-1 shadow-sm order-3 max-sm:col-span-2 max-sm:justify-between">
                   <Button
                     onClick={() => setShowImportMergeDialog(true)}
                     variant="ghost"
                     size="icon"
-                    className="size-10 rounded-xl hover:bg-muted/50 transition-all"
+                    className="size-10 max-sm:size-11 rounded-xl hover:bg-muted/50 transition-all"
                     title="Import JSON"
                   >
                     <FileJson2 className="size-4 opacity-60" />
@@ -196,7 +196,7 @@ export function WidgetSelectionGrid({ onNewWidget, onDownload }: WidgetSelection
                     onClick={() => setShowTrash(true)}
                     variant="ghost"
                     size="icon"
-                    className="size-10 rounded-xl hover:bg-destructive/10 hover:text-destructive transition-all relative"
+                    className="size-10 max-sm:size-11 rounded-xl hover:bg-destructive/10 hover:text-destructive transition-all relative"
                     title="Trash"
                   >
                     <Trash2 className="size-4 opacity-60" />
@@ -213,7 +213,7 @@ export function WidgetSelectionGrid({ onNewWidget, onDownload }: WidgetSelection
         </div>
 
         {searchQuery && (
-          <p className="mb-4 text-xs font-medium text-muted-foreground/70">
+          <p className="mb-4 text-xs font-medium text-muted-foreground/70 max-sm:px-1">
             Reordering is disabled while search is active.
           </p>
         )}
@@ -227,7 +227,7 @@ export function WidgetSelectionGrid({ onNewWidget, onDownload }: WidgetSelection
             items={searchQuery ? filteredWidgets.map((widget) => widget.id) : widgets.map((widget) => widget.id)}
             strategy={verticalListSortingStrategy}
           >
-            <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-3 max-sm:gap-2.5">
               {filteredWidgets.map((widget) => (
                 <SortableWidget
                   key={widget.id}
@@ -241,7 +241,7 @@ export function WidgetSelectionGrid({ onNewWidget, onDownload }: WidgetSelection
               {widgets.length > 0 && (
                 <button
                   onClick={handleCreateWidget}
-                  className="w-full h-16 border-2 border-dashed border-border/40 rounded-2xl flex items-center justify-center gap-3 text-muted-foreground/40 hover:text-primary hover:border-primary/40 hover:bg-primary/5 transition-all group mt-2 bg-muted/5"
+                  className="w-full h-16 max-sm:h-14 border-2 border-dashed border-border/40 rounded-2xl max-sm:rounded-xl flex items-center justify-center gap-3 text-muted-foreground/40 hover:text-primary hover:border-primary/40 hover:bg-primary/5 transition-all group mt-2 bg-muted/5"
                 >
                   <Plus className="size-4 group-hover:scale-110 transition-transform opacity-50 group-hover:opacity-100" />
                   <span className="text-xs font-bold uppercase tracking-widest">Add another widget</span>
@@ -252,16 +252,16 @@ export function WidgetSelectionGrid({ onNewWidget, onDownload }: WidgetSelection
         </DndContext>
 
         {widgets.length === 0 && !searchQuery && (
-          <div className="py-20 text-center space-y-4">
+          <div className="py-20 max-sm:py-12 text-center space-y-4 max-sm:space-y-3">
             <p className="text-muted-foreground font-medium">
               No active widgets. Create a new one or restore one from trash.
             </p>
-            <div className="flex items-center justify-center gap-3">
-              <Button onClick={handleCreateWidget} className="rounded-xl">
+            <div className="flex items-center justify-center gap-3 max-sm:flex-col">
+              <Button onClick={handleCreateWidget} className="rounded-xl max-sm:w-full max-sm:h-11">
                 <Plus className="size-4 mr-2" />
                 New widget
               </Button>
-              <Button onClick={() => setShowTrash(true)} variant="outline" className="rounded-xl">
+              <Button onClick={() => setShowTrash(true)} variant="outline" className="rounded-xl max-sm:w-full max-sm:h-11">
                 <Trash2 className="size-4 mr-2" />
                 Open trash
               </Button>

@@ -4,9 +4,6 @@ import { ConfigProvider } from "@/context/ConfigContext";
 import { ThemeChromeSync } from "@/components/theme-chrome-sync";
 import { ThemeProvider } from "@/components/theme-provider";
 import "./globals.css";
-import IconImage from '@/../public/icon.png';
-import FaviconImage from '@/../public/favicon.png';
-
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -21,9 +18,11 @@ export const metadata: Metadata = {
   title: "Widget Manager",
   description: "A clean, visual editor for fusionWidgets JSON",
   icons: {
-    icon: IconImage.src,
-    shortcut: FaviconImage.src,
-    apple: IconImage.src,
+    icon: [
+      { url: "/icon-16.png", sizes: "16x16", type: "image/png" },
+      { url: "/icon-32.png", sizes: "32x32", type: "image/png" },
+    ],
+    apple: "/web-app-icon.png",
   },
   appleWebApp: {
     capable: true,

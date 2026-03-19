@@ -151,8 +151,8 @@ export function SortableWidget({
       ref={setNodeRef}
       style={style}
       className={cn(
-        "group relative bg-background/40 dark:bg-zinc-900/20 border border-zinc-200/50 dark:border-border/10 rounded-2xl transition-all duration-500 shadow-[0_4px_12px_-2px_rgba(0,0,0,0.03)] backdrop-blur-md",
-        isSelected ? "ring-2 ring-primary/20 shadow-2xl border-primary/40 z-20 bg-background/80" : "hover:border-primary/20 hover:shadow-lg hover:bg-background/60",
+        "group relative bg-background/40 dark:bg-zinc-900/20 border border-zinc-200/50 dark:border-border/10 rounded-2xl max-sm:rounded-[1.2rem] transition-all duration-500 shadow-[0_4px_12px_-2px_rgba(0,0,0,0.03)] max-sm:shadow-[0_1px_4px_rgba(0,0,0,0.04)] backdrop-blur-md",
+        isSelected ? "ring-2 ring-primary/20 shadow-2xl border-primary/40 z-20 bg-background/80 max-sm:ring-1 max-sm:shadow-xl" : "hover:border-primary/20 hover:shadow-lg hover:bg-background/60",
         isDragging && "opacity-50 scale-[0.98] z-50",
         isOverlay && "z-[100] scale-[1.02] shadow-2xl border-primary/40 pointer-events-none opacity-100 bg-background/90",
         (isDragging || isOverlay) && "!transition-none"
@@ -165,7 +165,7 @@ export function SortableWidget({
           isSelected ? "bg-primary/[0.03]" : "hover:bg-primary/[0.01]"
         )}
       >
-        <div className="flex items-center gap-5 flex-1 min-w-0">
+        <div className="hidden sm:flex items-center gap-5 flex-1 min-w-0">
           {/* Symmetrical Left Handle: Grip */}
           <div 
             {...attributes} 
@@ -260,6 +260,108 @@ export function SortableWidget({
             <ChevronRight className="size-4" />
           </div>
         </div>
+
+        <div className="sm:hidden flex w-full flex-col gap-3">
+          <div className="flex items-start gap-3 min-w-0">
+            <div 
+              {...attributes} 
+              {...listeners}
+              className="mt-0.5 size-9 flex items-center justify-center rounded-xl text-muted-foreground/30 hover:text-primary hover:bg-primary/10 transition-all cursor-grab active:cursor-grabbing border border-transparent hover:border-primary/10 shrink-0"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <GripVertical className="size-4" />
+            </div>
+
+            <div className="min-w-0 flex-1">
+              <div className="flex items-start gap-2">
+                {hasInvalidCatalog && (
+                  <AlertTriangle className="mt-0.5 size-4 text-amber-500 animate-pulse shrink-0" />
+                )}
+
+                <div className="min-w-0 flex-1">
+                  {isEditing ? (
+                    <Input 
+                      autoFocus
+                      value={editTitle}
+                      onChange={(e) => setEditTitle(e.target.value)}
+                      onBlur={handleTitleSubmit}
+                      onKeyDown={handleTitleKeyDown}
+                      className="h-9 py-0 px-3 text-[13px] font-bold tracking-tight bg-background/60 border-primary/20 focus:border-primary/40 focus-visible:ring-0 rounded-xl w-full backdrop-blur-sm shadow-inner"
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                  ) : (
+                    <button
+                      type="button"
+                      className="flex w-full items-start gap-2 overflow-hidden text-left"
+                      onClick={startEditing}
+                    >
+                      <h3 className="truncate text-[15px] font-black tracking-tight text-foreground leading-tight">
+                        {widget.title}
+                      </h3>
+                      <div className="mt-0.5 rounded-lg bg-primary/10 p-1 text-primary/80 shrink-0">
+                        <Pencil className="size-3" />
+                      </div>
+                    </button>
+                  )}
+
+                  <div className="mt-2 flex flex-wrap items-center gap-2">
+                    <div className={cn(
+                      "px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-[0.15em]",
+                      widget.type.startsWith('collection') 
+                        ? "bg-primary/10 text-primary border border-primary/20" 
+                        : "bg-indigo-500/10 text-indigo-500 border border-indigo-500/20"
+                    )}>
+                      {widget.type.split('.')[0] === 'collection' ? 'Collection' : 'Classic'}
+                    </div>
+                    {widget.dataSource.kind === 'collection' && widget.dataSource.payload?.items && (
+                      <div className="flex items-center gap-1.5 rounded-full bg-muted/40 px-2.5 py-1 text-[9px] font-bold uppercase tracking-[0.12em] text-muted-foreground/70">
+                        <div className="size-1 rounded-full bg-muted-foreground/30" />
+                        <span>{widget.dataSource.payload.items.length} items</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className={cn(
+                    "size-9 rounded-xl border border-border/50 bg-background/60 transition-all shadow-sm shrink-0",
+                    isSelected ? "rotate-90 bg-primary/10 text-primary border-primary/20" : "text-muted-foreground/60"
+                  )}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onSelect(widget.id);
+                  }}
+                  title={isSelected ? "Collapse widget" : "Expand widget"}
+                >
+                  <ChevronRight className="size-4" />
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-end gap-2 border-t border-border/50 pt-2.5">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="size-9 rounded-xl border border-border/50 bg-background/50 hover:bg-primary/10 hover:text-primary transition-all shadow-sm"
+              onClick={handleCopy}
+              title="Copy widget JSON"
+            >
+              {copied ? <Check className="size-4 text-emerald-500" /> : <Copy className="size-4" />}
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="size-9 rounded-xl border border-border/50 bg-background/50 hover:bg-destructive/10 hover:text-destructive transition-all shadow-sm"
+              onClick={handleDelete}
+              title="Move widget to trash"
+            >
+              <Trash2 className="size-4" />
+            </Button>
+          </div>
+        </div>
       </div>
 
       {/* Expanded Content: Inline Editor */}
@@ -273,7 +375,7 @@ export function SortableWidget({
             transition={{ duration: 0.5, ease: [0.32, 0.72, 0, 1] }}
             className="overflow-hidden"
           >
-            <div className="px-6 pb-6 pt-2 border-t border-border bg-muted/10">
+            <div className="px-6 max-sm:px-3.5 pb-6 max-sm:pb-4 pt-2 max-sm:pt-1.5 border-t border-border bg-muted/10 max-sm:bg-muted/5">
                {widget.type === 'collection.row' ? (
                  <CollectionRowEditor widget={widget} searchQuery={searchQuery} />
                ) : (

@@ -406,8 +406,8 @@ export function MainEditor() {
   const renderContent = () => {
     if (view === 'welcome') {
       return (
-        <div className="flex-1 flex flex-col items-center justify-center p-4 sm:p-8 md:p-12 animate-in fade-in duration-700 max-w-2xl mx-auto w-full relative">
-          <div className="absolute top-6 right-6 flex items-center gap-2 animate-in fade-in slide-in-from-right-4 duration-700 delay-300">
+        <div className="flex-1 flex flex-col items-center justify-center max-sm:justify-start px-4 py-6 sm:p-8 md:p-12 max-sm:pb-[calc(env(safe-area-inset-bottom)+2rem)] animate-in fade-in duration-700 max-w-2xl mx-auto w-full relative">
+          <div className="absolute top-6 right-6 hidden sm:flex items-center gap-2 animate-in fade-in slide-in-from-right-4 duration-700 delay-300">
             <Button
               variant="ghost"
               size="icon"
@@ -430,9 +430,9 @@ export function MainEditor() {
             <ThemeToggle />
           </div>
 
-          <div className="relative group mb-2">
+          <div className="relative group mb-2 max-sm:mt-2">
             <div className="absolute -inset-20 bg-primary/25 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none transform-gpu" />
-            <div className="relative size-40 sm:size-52 flex items-center justify-center rounded-full overflow-hidden select-none">
+            <div className="relative size-28 sm:size-52 flex items-center justify-center rounded-full overflow-hidden select-none">
               <Image
                 src={LogoImage}
                 alt="Clown Logo"
@@ -444,20 +444,20 @@ export function MainEditor() {
             </div>
           </div>
 
-          <h2 className="text-4xl sm:text-6xl font-black tracking-tighter mb-4 text-center">
+          <h2 className="text-3xl sm:text-6xl font-black tracking-tighter mb-3 sm:mb-4 text-center max-sm:max-w-[12ch] leading-[0.95]">
             Fusion Widget <span className="text-primary">Manager</span>
           </h2>
 
-          <p className="text-sm max-w-sm text-center mb-10 text-muted-foreground font-medium tracking-tight">
+          <p className="text-[13px] sm:text-sm max-w-sm text-center mb-6 sm:mb-10 text-muted-foreground font-medium tracking-tight leading-relaxed">
             Manage your Fusion widgets through a powerful web interface.
           </p>
 
-          <div className="w-full space-y-4 mb-10">
-            <div className="flex justify-end px-2 mb-2">
-              <div className="flex items-center gap-2 w-full sm:w-auto overflow-x-auto no-scrollbar scroll-smooth justify-end">
+          <div className="w-full space-y-4 sm:space-y-4 mb-6 sm:mb-10">
+            <div className="flex justify-start sm:justify-end px-0 sm:px-2 mb-1 sm:mb-2">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto overflow-x-auto no-scrollbar scroll-smooth justify-start sm:justify-end">
                 <Button
                   variant="ghost"
-                  className="h-8 rounded-xl border border-dashed border-border/60 hover:border-primary/40 hover:bg-primary/5 transition-all font-bold uppercase tracking-widest text-[9px] px-4 text-muted-foreground/60 hover:text-primary whitespace-nowrap shrink-0"
+                  className="h-9 sm:h-8 rounded-xl border border-dashed border-border/60 hover:border-primary/40 hover:bg-primary/5 transition-all font-bold uppercase tracking-widest text-[9px] px-4 text-muted-foreground/60 hover:text-primary whitespace-nowrap shrink-0 justify-center"
                   onClick={handleDownloadMetadata}
                   disabled={isLoadingTemplates || !aiometadataTemplateUrl}
                 >
@@ -471,7 +471,7 @@ export function MainEditor() {
                 <div className="w-px h-3 bg-border/40 shrink-0 hidden sm:block" />
                 <Button
                   variant="ghost"
-                  className="h-8 rounded-xl border border-dashed border-border/60 hover:border-blue-500/40 hover:bg-blue-500/5 transition-all font-bold uppercase tracking-widest text-[9px] px-4 text-muted-foreground/60 hover:text-blue-500/80 whitespace-nowrap shrink-0"
+                  className="h-9 sm:h-8 rounded-xl border border-dashed border-border/60 hover:border-blue-500/40 hover:bg-blue-500/5 transition-all font-bold uppercase tracking-widest text-[9px] px-4 text-muted-foreground/60 hover:text-blue-500/80 whitespace-nowrap shrink-0 justify-center"
                   onClick={() => omniFileInputRef.current?.click()}
                 >
                   <FileJson2 className="size-3 mr-2" />
@@ -494,7 +494,7 @@ export function MainEditor() {
                 onChange={(e) => setPastedJson(e.target.value)}
                 placeholder={isDraggingFile ? "Drop your JSON file here!" : "Paste your Fusion widget export or drag & drop a file here..."}
                 className={cn(
-                  "min-h-[160px] font-mono text-xs bg-muted/40 border-border/80 rounded-[2rem] p-6 focus-visible:ring-primary/20 transition-all leading-relaxed shadow-inner",
+                  "min-h-[160px] max-sm:min-h-[136px] font-mono text-xs bg-muted/40 border-border/80 rounded-[2rem] max-sm:rounded-[1.5rem] p-6 max-sm:p-4 focus-visible:ring-primary/20 transition-all leading-relaxed shadow-inner",
                   isDraggingFile && "border-primary/50 bg-primary/5 ring-4 ring-primary/10 shadow-lg shadow-primary/5"
                 )}
               />
@@ -509,30 +509,29 @@ export function MainEditor() {
             </div>
 
             {/* Primary Actions Below */}
-            <div className="flex flex-col sm:flex-row gap-4 w-full items-center justify-center">
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full items-stretch sm:items-center justify-center">
               {pastedJson.trim() ? (
                 <Button
                   onClick={handlePasteImport}
                   size="lg"
-                  className="h-14 min-w-[240px] rounded-2xl shadow-xl shadow-primary/20 animate-in zoom-in-95 duration-300 font-bold uppercase tracking-widest text-xs bg-primary hover:bg-primary/90 hover:scale-[1.02] active:scale-[0.98] transition-all relative overflow-hidden group/load"
+                  className="h-12 sm:h-14 w-full sm:min-w-[240px] rounded-[1.25rem] sm:rounded-2xl shadow-xl shadow-primary/20 animate-in zoom-in-95 duration-300 font-bold uppercase tracking-widest text-[11px] sm:text-xs bg-primary hover:bg-primary/90 hover:scale-[1.02] active:scale-[0.98] transition-all relative overflow-hidden group/load"
                 >
                   <div className="absolute inset-0 bg-gradient-to-tr from-white/10 to-transparent pointer-events-none" />
                   <ClipboardPaste className="size-5 mr-3 shrink-0" />
                   Load Configuration
                 </Button>
               ) : (
-                <>
-                  <div className="flex gap-4">
+                <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full">
                     <Button
                       variant="outline"
-                      className="flex-1 h-14 rounded-[1.25rem] border-border/80 bg-background/50 backdrop-blur-sm hover:bg-muted/80 transition-all font-bold uppercase tracking-widest text-[11px] px-8 group/btn hover:scale-[1.02] active:scale-[0.98] shadow-sm"
+                      className="flex-1 h-12 sm:h-14 rounded-[1.1rem] sm:rounded-[1.25rem] border-border/80 bg-background/50 backdrop-blur-sm hover:bg-muted/80 transition-all font-bold uppercase tracking-widest text-[10px] sm:text-[11px] px-5 sm:px-8 group/btn hover:scale-[1.02] active:scale-[0.98] shadow-sm"
                       onClick={() => fileInputRef.current?.click()}
                     >
                       <Upload className="size-4 mr-3 text-muted-foreground group-hover/btn:text-primary transition-colors shrink-0" />
                       Import Fusion JSON
                     </Button>
                     <Button
-                      className="flex-1 h-14 rounded-[1.25rem] font-bold uppercase tracking-widest text-[11px] px-8 shadow-lg shadow-primary/20 group/create relative overflow-hidden bg-primary hover:bg-primary/90 hover:scale-[1.02] active:scale-[0.98] transition-all"
+                      className="flex-1 h-12 sm:h-14 rounded-[1.1rem] sm:rounded-[1.25rem] font-bold uppercase tracking-widest text-[10px] sm:text-[11px] px-5 sm:px-8 shadow-lg shadow-primary/20 group/create relative overflow-hidden bg-primary hover:bg-primary/90 hover:scale-[1.02] active:scale-[0.98] transition-all"
                       onClick={handleAddFirstWidget}
                     >
                       <div className="absolute inset-0 bg-gradient-to-tr from-white/10 to-transparent pointer-events-none" />
@@ -541,16 +540,15 @@ export function MainEditor() {
                         Create New
                       </div>
                     </Button>
-                  </div>
-                </>
+                </div>
               )}
             </div>
 
             {/* Template Selection */}
-            <div className="flex justify-center pt-2">
+            <div className="flex justify-center pt-1 sm:pt-2">
               {githubTemplates.length > 0 ? (
-                <div className="w-full max-w-md space-y-3 animate-in fade-in slide-in-from-bottom-2 duration-500">
-                  <div className="flex items-center justify-between px-2">
+                <div className="w-full max-w-md space-y-2.5 sm:space-y-3 animate-in fade-in slide-in-from-bottom-2 duration-500">
+                  <div className="flex items-center justify-between px-1 sm:px-2">
                     <a 
                       href="https://github.com/nobnobz/Omni-Template-Bot-Bid-Raiser" 
                       target="_blank" 
@@ -561,10 +559,10 @@ export function MainEditor() {
                       <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground group-hover/tpl:text-primary">UME Templates</span>
                     </a>
                   </div>
-                  <div className="flex gap-2 p-1 rounded-2xl border border-border/60 bg-card/50 backdrop-blur-sm transition-all focus-within:border-primary/30 h-12 items-center">
+                  <div className="flex gap-2 p-1 rounded-[1.25rem] sm:rounded-2xl border border-border/60 bg-card/50 backdrop-blur-sm transition-all focus-within:border-primary/30 h-11 sm:h-12 items-center">
                     <Popover open={isTemplatePopoverOpen} onOpenChange={setIsTemplatePopoverOpen}>
                       <PopoverTrigger asChild>
-                        <button className="flex-1 h-full bg-transparent border-none focus:outline-none text-[12px] font-bold pl-3 pr-8 appearance-none cursor-pointer hover:bg-muted/10 rounded-xl transition-all text-left flex items-center justify-between group/select">
+                        <button className="flex-1 h-full bg-transparent border-none focus:outline-none text-[11px] sm:text-[12px] font-bold pl-3 pr-8 appearance-none cursor-pointer hover:bg-muted/10 rounded-xl transition-all text-left flex items-center justify-between group/select">
                           <span className="truncate">
                             {githubTemplates.find(t => t.download_url === selectedTemplateUrl)?.name || 'Select Template...'}
                           </span>
@@ -598,7 +596,7 @@ export function MainEditor() {
                       onClick={handleLoadTemplate}
                       disabled={isLoadingTemplates || !selectedTemplateUrl}
                       size="sm"
-                      className="h-10 px-6 rounded-xl font-bold uppercase tracking-widest text-[11px] shadow-sm shrink-0"
+                      className="h-9 sm:h-10 px-4 sm:px-6 rounded-xl font-bold uppercase tracking-widest text-[10px] sm:text-[11px] shadow-sm shrink-0"
                     >
                       {isLoadingTemplates ? (
                         <RotateCcw className="size-3.5 animate-spin" />
@@ -652,7 +650,7 @@ export function MainEditor() {
   };
 
   return (
-    <div className="flex min-h-screen w-full bg-background overflow-x-hidden selection:bg-primary/20">
+    <div className="flex min-h-app-screen w-full bg-background overflow-x-hidden selection:bg-primary/20">
       {/* Decorative background blobs */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
         <div className="absolute top-[-10%] left-[-10%] size-[500px] bg-primary/5 rounded-full blur-[120px] animate-pulse" />
@@ -660,9 +658,85 @@ export function MainEditor() {
       </div>
 
       <main className="flex-1 flex flex-col min-w-0 relative z-10">
+        <header className="sticky top-0 z-50 w-full px-3 pt-[calc(env(safe-area-inset-top)+0.75rem)] pb-2 sm:hidden">
+          <div className="rounded-[1.35rem] border border-border/60 bg-background/80 px-3 py-2.5 shadow-[0_10px_30px_-18px_rgba(0,0,0,0.35)] backdrop-blur-xl">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex min-w-0 items-center gap-2.5">
+                <div className="relative size-11 shrink-0 overflow-hidden rounded-2xl bg-primary/5">
+                  <Image src={LogoImage} alt="Logo" fill className="object-contain p-1" priority />
+                </div>
+                <div className="min-w-0">
+                  <h1 className="truncate text-[13px] font-black tracking-tight leading-none">Fusion Widget</h1>
+                  <span className="block truncate pt-1 text-[9px] font-black uppercase tracking-[0.22em] text-primary/90">
+                    {view === 'welcome' ? 'Import or create' : 'Manager'}
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-1">
+                {view !== 'welcome' && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className={cn(
+                      "h-9 w-9 rounded-xl border px-0 transition-all",
+                      manifestUrl
+                        ? "border-primary/20 bg-primary/10 text-primary hover:bg-primary/15"
+                        : "border-border/50 bg-background/30 text-muted-foreground/70 hover:bg-primary/5 hover:text-primary"
+                    )}
+                    onClick={() => setShowManifestModal(true)}
+                    title={manifestUrl ? "Manifest synced" : "Sync manifest"}
+                  >
+                    <div className="relative">
+                      <Globe className="size-4" />
+                      {manifestUrl && (
+                        <div className="absolute -right-0.5 -top-0.5 size-2 rounded-full border border-background bg-green-500" />
+                      )}
+                    </div>
+                  </Button>
+                )}
+
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="size-9 rounded-xl border border-border/50 bg-background/30 text-primary/80 hover:bg-primary/5 hover:text-primary"
+                  onClick={() => setShowHowToUse(true)}
+                  title="Guide"
+                >
+                  <Book className="size-4" />
+                </Button>
+
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="size-9 rounded-xl border border-border/50 bg-background/30 text-red-500/80 hover:bg-red-500/10 hover:text-red-500"
+                  onClick={() => window.open('https://ko-fi.com/botbidraiser', '_blank')}
+                  title="Support"
+                >
+                  <Heart className="size-4 fill-current" />
+                </Button>
+
+                <ThemeToggle className="size-9 rounded-xl bg-background/30 dark:bg-black/20 border-border/50 shadow-none" />
+
+                {view !== 'welcome' && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="size-9 rounded-xl border border-border/50 bg-background/30 text-muted-foreground/70 hover:bg-muted/60 hover:text-foreground"
+                    onClick={() => setShowRestartConfirm(true)}
+                    title="Start over"
+                  >
+                    <RotateCcw className="size-4" />
+                  </Button>
+                )}
+              </div>
+            </div>
+          </div>
+        </header>
+
         {/* Modern Header - Omni Style */}
         {view !== 'welcome' && (
-          <header className="sticky top-0 z-50 w-full px-4 sm:px-6 py-4">
+          <header className="sticky top-0 z-50 hidden sm:block w-full px-4 sm:px-6 py-4">
             <div className="max-w-[1400px] mx-auto">
               <div className="flex items-center justify-between h-20 px-8 rounded-3xl bg-background/60 backdrop-blur-xl border border-border shadow-md transition-all">
                 <div className="flex items-center gap-6 group/logo">
@@ -746,7 +820,7 @@ export function MainEditor() {
         </div>
 
         {/* Global Subtle Footer at the very bottom */}
-        <footer className="w-full py-12 flex flex-col items-center gap-4 mt-auto">
+        <footer className="w-full py-8 sm:py-12 pb-[calc(env(safe-area-inset-bottom)+2rem)] sm:pb-12 flex flex-col items-center gap-4 mt-auto">
           <a 
             href="https://github.com/nobnobz/fusion-widget-manager" 
             target="_blank" 

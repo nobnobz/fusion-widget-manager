@@ -22,23 +22,23 @@ export function RowClassicEditor({ widget }: { widget: RowClassicWidget }) {
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-top-4 duration-500">
+    <div className="space-y-6 max-sm:space-y-4 animate-in fade-in slide-in-from-top-4 duration-500">
       <div className="h-px bg-border w-full mb-2 opacity-50" />
 
-      <div className="grid grid-cols-1 gap-6">
+      <div className="grid grid-cols-1 gap-6 max-sm:gap-4">
         {/* General Settings */}
-        <Card className="bg-card border border-zinc-200/80 dark:border-border shadow-sm dark:shadow-none">
-          <CardHeader className="bg-muted/30 border-b py-3 px-6">
-            <CardTitle className="text-xs font-bold uppercase tracking-wider text-muted-foreground/60">General Settings</CardTitle>
+        <Card className="bg-card border border-zinc-200/80 dark:border-border shadow-sm dark:shadow-none max-sm:rounded-[1.15rem]">
+          <CardHeader className="bg-muted/30 border-b py-3 px-6 max-sm:px-4 max-sm:py-3">
+            <CardTitle className="text-xs max-sm:text-[10px] font-bold uppercase tracking-wider text-muted-foreground/60">General Settings</CardTitle>
           </CardHeader>
-          <CardContent className="p-6 space-y-4">
-            <div className="space-y-2.5">
-              <Label htmlFor="title" className="text-xs font-bold uppercase tracking-wider text-muted-foreground/60 ml-0.5">Widget Title</Label>
+          <CardContent className="p-6 max-sm:p-4 space-y-4 max-sm:space-y-3">
+            <div className="space-y-2.5 max-sm:space-y-2">
+              <Label htmlFor="title" className="text-xs max-sm:text-[10px] font-bold uppercase tracking-wider text-muted-foreground/60 ml-0.5">Widget Title</Label>
               <Input 
                 id="title" 
                 value={widget.title} 
                 onChange={(e) => updateWidgetMeta(widget.id, { title: e.target.value })} 
-                className="bg-muted/20 dark:bg-muted/10 border-zinc-200 dark:border-border/40 focus:border-primary/50 transition-all flex-1 h-10 rounded-xl backdrop-blur-sm shadow-sm dark:shadow-none"
+                className="bg-muted/20 dark:bg-muted/10 border-zinc-200 dark:border-border/40 focus:border-primary/50 transition-all flex-1 h-10 max-sm:h-11 rounded-xl max-sm:rounded-[1rem] backdrop-blur-sm shadow-sm dark:shadow-none"
               />
             </div>
           </CardContent>
@@ -46,14 +46,14 @@ export function RowClassicEditor({ widget }: { widget: RowClassicWidget }) {
       </div>
 
       {/* Data Source */}
-      <div className="max-w-3xl">
-        <Card className="bg-card border border-zinc-200/80 dark:border-border shadow-sm dark:shadow-none">
-          <CardHeader className="bg-muted/30 border-b py-3 px-6">
-            <CardTitle className="text-xs font-bold uppercase tracking-wider text-muted-foreground/60">Addon Source Configuration</CardTitle>
+      <div className="max-w-3xl max-sm:max-w-none">
+        <Card className="bg-card border border-zinc-200/80 dark:border-border shadow-sm dark:shadow-none max-sm:rounded-[1.15rem]">
+          <CardHeader className="bg-muted/30 border-b py-3 px-6 max-sm:px-4 max-sm:py-3">
+            <CardTitle className="text-xs max-sm:text-[10px] font-bold uppercase tracking-wider text-muted-foreground/60">Addon Source Configuration</CardTitle>
           </CardHeader>
-          <CardContent className="p-6 space-y-4">
+          <CardContent className="p-6 max-sm:p-4 space-y-4 max-sm:space-y-3">
             <div className="space-y-1.5">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground/40 flex items-center gap-1.5 mb-2">
+              <h4 className="text-xs max-sm:text-[10px] font-bold uppercase tracking-wider text-muted-foreground/40 flex items-center gap-1.5 mb-2">
                 <Layers className="size-3" /> Data Source
               </h4>
               <DataSourceEditor 

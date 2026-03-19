@@ -64,7 +64,7 @@ export function AddItemDialog({ onAdd, trigger }: AddItemDialogProps) {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {trigger || (
-          <Button variant="outline" size="sm" className="h-9 px-4 rounded-xl font-bold uppercase tracking-wider text-xs border-border/40 bg-muted/10 hover:bg-muted/20 transition-all text-foreground/80">
+          <Button variant="outline" size="sm" className="h-9 max-sm:h-10 w-full sm:w-auto px-4 rounded-xl max-sm:rounded-[1rem] font-bold uppercase tracking-wider text-xs max-sm:text-[10px] border-border/40 bg-muted/10 hover:bg-muted/20 transition-all text-foreground/80">
             <Plus className="size-3.5 mr-2" /> Add Item
           </Button>
         )}
