@@ -14,7 +14,6 @@ import {
   DialogClose
 } from '@/components/ui/dialog';
 import { FileJson2, AlertCircle, CheckCircle2 } from 'lucide-react';
-import { cn } from '@/lib/utils';
 
 interface ImportMergeDialogProps {
   open: boolean;
@@ -25,7 +24,12 @@ export function ImportMergeDialog({ open, onOpenChange }: ImportMergeDialogProps
   const { mergeConfig } = useConfig();
   const [jsonInput, setJsonInput] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<{ added: number, skipped: number } | null>(null);
+  const [success, setSuccess] = useState<{
+    added: number;
+    skippedExisting: number;
+    skippedInPayload: number;
+    repairedIds: { widgetIds: string[]; itemIds: string[] };
+  } | null>(null);
 
   const handleImport = () => {
     try {
@@ -40,17 +44,9 @@ export function ImportMergeDialog({ open, onOpenChange }: ImportMergeDialogProps
       setSuccess(result);
       setError(null);
       setJsonInput('');
-      
-      // Close after a short delay if it was a total success
-      setTimeout(() => {
-        if (result.added > 0 || result.skipped > 0) {
-          // Keep open if user wants to see the stats? 
-          // Actually, let's keep it open until they close it or click done
-        }
-      }, 2000);
 
-    } catch (err: any) {
-      setError(err.message || 'Failed to parse JSON');
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'Failed to parse JSON');
       setSuccess(null);
     }
   };
@@ -101,7 +97,10 @@ export function ImportMergeDialog({ open, onOpenChange }: ImportMergeDialogProps
                 <div className="flex flex-col">
                   <p className="text-xs font-bold">Import successful!</p>
                   <p className="text-[10px] font-medium opacity-60">
-                    Added: {success.added} | Skipped: {success.skipped} (Duplicates)
+                    Added: {success.added} | Existing: {success.skippedExisting} | Payload: {success.skippedInPayload}
+                  </p>
+                  <p className="text-[10px] font-medium opacity-60">
+                    Repaired IDs: {success.repairedIds.widgetIds.length + success.repairedIds.itemIds.length}
                   </p>
                 </div>
               </div>

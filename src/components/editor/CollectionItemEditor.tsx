@@ -29,6 +29,7 @@ import { cn } from '@/lib/utils';
 import { useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { DataSourceEditor } from './DataSourceEditor';
+import { MANIFEST_PLACEHOLDER } from '@/lib/config-utils';
 
 export function CollectionItemEditor({ 
   item, 
@@ -80,14 +81,13 @@ export function CollectionItemEditor({
     const newDS: AddonCatalogDataSource = {
       kind: 'addonCatalog',
       payload: {
-        addonId: 'YOUR_AIOMETADATA',
+        addonId: MANIFEST_PLACEHOLDER,
         catalogId: '',
         catalogType: 'movie'
       }
     };
     onUpdate({ 
       dataSources: [...item.dataSources, newDS],
-      dataSource: item.dataSources[0] || newDS
     });
   };
 
@@ -95,7 +95,7 @@ export function CollectionItemEditor({
     onUpdate({ dataSources: item.dataSources.filter((_, i) => i !== dsIndex) });
   };
 
-  const handleUpdateDataSource = (dsIndex: number, updates: any) => {
+  const handleUpdateDataSource = (dsIndex: number, updates: Partial<AddonCatalogDataSource['payload']>) => {
     onUpdate({
       dataSources: item.dataSources.map((ds, i) => 
         i === dsIndex ? { ...ds, payload: { ...ds.payload, ...updates } } : ds
@@ -239,6 +239,7 @@ export function CollectionItemEditor({
                             "aspect-square w-28"
                           )}>
                             {item.backgroundImageURL ? (
+                              // eslint-disable-next-line @next/next/no-img-element
                               <img 
                                 src={item.backgroundImageURL} 
                                 alt=""
@@ -261,7 +262,7 @@ export function CollectionItemEditor({
                                   <button
                                     key={opt.id}
                                     type="button"
-                                    onClick={() => onUpdate({ layout: opt.id as any })}
+                                    onClick={() => onUpdate({ layout: opt.id as CollectionItem['layout'] })}
                                     className={cn(
                                       "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all",
                                       item.layout === opt.id 

@@ -3,11 +3,9 @@
 import { useConfig } from '@/context/ConfigContext';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { ChevronRight, Hash, Type, AlertTriangle, Trash2 } from 'lucide-react';
-import { MANIFEST_PLACEHOLDER, findCatalog, resolveFusionCatalogType } from '@/lib/config-utils';
-import { cn } from '@/lib/utils';
-import { useState, useEffect } from 'react';
-import { AddonCatalogDataSource, AIOMetadataCatalog } from '@/lib/types/widget';
+import { AlertTriangle, Trash2 } from 'lucide-react';
+import { resolveFusionCatalogType } from '@/lib/config-utils';
+import { AddonCatalogDataSource } from '@/lib/types/widget';
 import { CatalogCombobox } from './CatalogCombobox';
 
 export function DataSourceEditor({ 
@@ -16,28 +14,10 @@ export function DataSourceEditor({
   onDelete 
 }: { 
   dataSource: AddonCatalogDataSource,
-  onUpdate: (updates: any) => void,
+  onUpdate: (updates: Partial<AddonCatalogDataSource['payload']>) => void,
   onDelete: () => void
 }) {
   const { manifestCatalogs } = useConfig();
-  
-  // Helper to check if a catalog ID matches our type::id format and exists in manifest
-  const getCatalogFromValue = (value: string) => {
-    return findCatalog(manifestCatalogs, value);
-  };
-
-  const currentCatalog = getCatalogFromValue(dataSource.payload.catalogId);
-  const [isManual, setIsManual] = useState(!manifestCatalogs.length);
-
-  // Update manual mode if catalogs change (e.g. after upload) or if selecting a new empty field
-  useEffect(() => {
-    if (manifestCatalogs.length > 0) {
-      const found = getCatalogFromValue(dataSource.payload.catalogId);
-      if (dataSource.payload.catalogId === '' || found) {
-        setIsManual(false);
-      }
-    }
-  }, [manifestCatalogs.length, dataSource.payload.catalogId]);
 
   const availableCatalogsForType = manifestCatalogs.filter(c => 
     dataSource.payload.catalogType === 'all' || 

@@ -5,35 +5,19 @@ import { useState, useRef, useEffect } from 'react';
 import { useConfig } from '@/context/ConfigContext';
 import { WidgetSelectionGrid } from './WidgetSelectionGrid';
 import { ManifestModal } from './ManifestModal';
-import { CollectionRowEditor } from './CollectionRowEditor';
-import { RowClassicEditor } from './RowClassicEditor';
 import { Button } from '@/components/ui/button';
 import {
   FileJson2,
   Upload,
   Plus,
-  Settings,
-  Settings2,
-  Table2,
-  RefreshCw,
   RotateCcw,
   Download,
   Check,
-  X,
   Github,
   Heart,
   ChevronDown,
-  ChevronRight,
   Book,
   ClipboardPaste,
-  Copy,
-  Menu,
-  Wand2,
-  Search,
-  Zap,
-  Layout,
-  Layers,
-  Component,
   Globe
 } from 'lucide-react';
 import Image from 'next/image';
@@ -51,20 +35,14 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
-  DialogFooter,
-  DialogClose
 } from '@/components/ui/dialog';
 import { NewWidgetDialog } from './NewWidgetDialog';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
 
 export function MainEditor() {
-  const [selectedWidgetId, setSelectedWidgetId] = useState<string | null>(null);
   const [showManifestModal, setShowManifestModal] = useState(false);
-  const [showSettings, setShowSettings] = useState(false);
   const [showRestartConfirm, setShowRestartConfirm] = useState(false);
-  const [showPreview, setShowPreview] = useState(false);
-  const [copied, setCopied] = useState(false);
   const [pastedJson, setPastedJson] = useState('');
   const [showNewWidgetDialog, setShowNewWidgetDialog] = useState(false);
   const [showHowToUse, setShowHowToUse] = useState(false);
@@ -94,17 +72,12 @@ export function MainEditor() {
 
 
   const {
-    widgets,
-    exportConfig,
     importConfig,
     view,
     setView,
     clearConfig,
-    exportOmniConfig,
     manifestUrl
   } = useConfig();
-
-  const [exportMode, setExportMode] = useState<'fusion' | 'omni'>('fusion');
 
   // Fetch GitHub templates on mount
   useEffect(() => {
@@ -197,9 +170,6 @@ export function MainEditor() {
       if (!response.ok) throw new Error('Failed to load template');
       const json = await response.json();
 
-      // Clear current config before loading template
-      clearConfig();
-
       if (json.exportType === 'fusionWidgets' || Array.isArray(json.widgets)) {
         importConfig(json);
       } else {
@@ -209,56 +179,15 @@ export function MainEditor() {
       }
 
       setShowManifestModal(true);
-    } catch (error) {
-      setAlertDialog({
-        isOpen: true,
-        title: 'Loading Failed',
+      } catch {
+        setAlertDialog({
+          isOpen: true,
+          title: 'Loading Failed',
         message: 'Could not load the selected GitHub template.',
         variant: 'danger'
       });
     } finally {
       setIsLoadingTemplates(false);
-    }
-  };
-
-
-
-  const selectedWidget = widgets.find(w => w.id === selectedWidgetId);
-
-  const handleExport = () => {
-    try {
-      const config = exportMode === 'fusion' ? exportConfig() : exportOmniConfig();
-      // Use application/octet-stream for iOS to prevent .txt extension being added
-      const blob = new Blob([JSON.stringify(config, null, 2)], { type: 'application/octet-stream' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = exportMode === 'fusion' ? 'widgets.json' : 'omni-snapshot.json';
-      a.click();
-      URL.revokeObjectURL(url);
-    } catch (err: any) {
-      setAlertDialog({
-        isOpen: true,
-        title: 'Export Failed',
-        message: err.message || 'An unexpected error occurred during export.',
-        variant: 'danger'
-      });
-    }
-  };
-
-  const handleCopy = () => {
-    try {
-      const config = exportMode === 'fusion' ? exportConfig() : exportOmniConfig();
-      navigator.clipboard.writeText(JSON.stringify(config, null, 2));
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch (err: any) {
-      setAlertDialog({
-        isOpen: true,
-        title: 'Export Failed',
-        message: err.message || 'An unexpected error occurred during copy.',
-        variant: 'danger'
-      });
     }
   };
 
@@ -312,7 +241,7 @@ export function MainEditor() {
         const fusionConfig = convertOmniToFusion(json);
         importConfig(fusionConfig);
         setShowManifestModal(true);
-      } catch (err) {
+      } catch {
         setAlertDialog({
           isOpen: true,
           title: 'Conversion Failed',
@@ -371,7 +300,7 @@ export function MainEditor() {
             // Unknown format, just put it in the box
             setPastedJson(content);
           }
-        } catch (err) {
+        } catch {
           setAlertDialog({
             isOpen: true,
             title: 'Invalid File',
@@ -422,8 +351,7 @@ export function MainEditor() {
     setShowNewWidgetDialog(true);
   };
 
-  const onWidgetCreated = (id: string) => {
-    setSelectedWidgetId(id);
+  const onWidgetCreated = () => {
     setShowManifestModal(true);
 
   };
@@ -655,12 +583,7 @@ export function MainEditor() {
     if (view === 'selection' || view === 'editor') {
       return (
         <WidgetSelectionGrid
-          onSelectWidget={(id) => {
-            setSelectedWidgetId(id);
-          }}
-          onOpenManifest={() => setShowManifestModal(true)}
           onNewWidget={() => setShowNewWidgetDialog(true)}
-          onDownload={() => setShowPreview(true)}
         />
 
       );
@@ -793,81 +716,10 @@ export function MainEditor() {
         isOpen={showManifestModal}
         onOpenChange={setShowManifestModal}
       />
-
-      {/* Compact Preview Modal */}
-      <Dialog open={showPreview} onOpenChange={setShowPreview}>
-        <DialogContent className="max-w-2xl bg-white/95 dark:bg-black/90 backdrop-blur-2xl border-border/40 rounded-[2rem] p-0 overflow-hidden shadow-2xl [&>button:last-child]:top-6 [&>button:last-child]:right-6 [&>button:last-child]:size-8 [&>button:last-child]:rounded-full [&>button:last-child]:bg-muted/30 [&>button:last-child]:hover:bg-muted/50 [&>button:last-child]:transition-all [&>button:last-child]:border-none [&>button:last-child]:flex [&>button:last-child]:items-center [&>button:last-child]:justify-center">
-          <DialogHeader className="p-6 pb-0">
-            <div className="flex items-center justify-between">
-              <div>
-                <DialogTitle className="text-xl font-bold tracking-tight">Export JSON</DialogTitle>
-                <DialogDescription className="text-xs font-medium opacity-50">
-                  {exportMode === 'fusion' ? 'Fusion Widgets Format' : 'Omni Snapshot Format'}
-                </DialogDescription>
-              </div>
-              <div className="flex bg-muted/20 p-1 rounded-xl mr-12">
-                <button
-                  onClick={() => setExportMode('fusion')}
-                  className={cn(
-                    "px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all",
-                    exportMode === 'fusion' ? "bg-primary text-primary-foreground shadow-sm" : "opacity-40 hover:opacity-70"
-                  )}
-                >
-                  Fusion
-                </button>
-                <button
-                  onClick={() => setExportMode('omni')}
-                  className={cn(
-                    "px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all",
-                    exportMode === 'omni' ? "bg-primary text-primary-foreground shadow-sm" : "opacity-40 hover:opacity-70"
-                  )}
-                >
-                  Omni
-                </button>
-              </div>
-            </div>
-          </DialogHeader>
-          <div className="p-6 pt-4">
-            <div className="relative group bg-muted/20 rounded-xl border border-border/10 overflow-hidden">
-              <Textarea
-                readOnly
-                value={(() => {
-                  try {
-                    return JSON.stringify(exportMode === 'fusion' ? exportConfig() : exportOmniConfig(), null, 2);
-                  } catch (err: any) {
-                    return `Error: ${err.message}`;
-                  }
-                })()}
-                className="w-full h-[300px] font-mono text-[11px] bg-transparent border-none p-5 focus-visible:ring-0 resize-none custom-scrollbar leading-relaxed scrollbar-thin"
-              />
-            </div>
-          </div>
-
-          <div className="px-6 py-4 bg-muted/5 border-t border-border/40 flex items-center justify-end gap-3">
-            <Button
-              variant="secondary"
-              size="sm"
-              className="h-9 w-40 px-0 rounded-xl bg-muted/40 hover:bg-muted/60 text-muted-foreground text-[11px] font-bold uppercase tracking-wider transition-all border-none shrink-0"
-              onClick={handleExport}
-            >
-              <Download className="size-3.5 mr-1.5" />
-              Download JSON
-            </Button>
-            <Button
-              size="sm"
-              className="h-9 w-40 px-0 rounded-xl shadow-lg shadow-primary/20 text-[11px] font-bold uppercase tracking-wider transition-all shrink-0"
-              onClick={handleCopy}
-            >
-              {copied ? <Check className="size-3.5 mr-1.5" /> : <Copy className="size-3.5 mr-1.5" />}
-              {copied ? 'Copied' : 'Copy JSON'}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
       <NewWidgetDialog
         isOpen={showNewWidgetDialog}
         onOpenChange={setShowNewWidgetDialog}
-        onCreated={onWidgetCreated}
+        onCreated={() => onWidgetCreated()}
       />
 
       <ConfirmationDialog

@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit",
+    "test": "node --no-warnings --experimental-strip-types --loader ./test/node-ts-loader.mjs --test src/lib/**/*.test.ts"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useRef, useEffect, useMemo } from 'react';
-import { Search, ChevronDown, Check, Hash, X, AlertTriangle } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useMemo, useState } from 'react';
+import { Search, ChevronDown, Check, X, AlertTriangle } from 'lucide-react';
+import { motion } from 'framer-motion';
 import * as Popover from '@radix-ui/react-popover';
 import { cn } from '@/lib/utils';
 import { AIOMetadataCatalog } from '@/lib/types/widget';
@@ -40,15 +40,18 @@ export function CatalogCombobox({
     );
   }, [options, search]);
 
-  // Reset search when opening
-  useEffect(() => {
-    if (isOpen) setSearch('');
-  }, [isOpen]);
-
   const isInvalid = !selectedOption && value !== '';
 
   return (
-    <Popover.Root open={isOpen} onOpenChange={setIsOpen}>
+    <Popover.Root
+      open={isOpen}
+      onOpenChange={(open) => {
+        setIsOpen(open);
+        if (open) {
+          setSearch('');
+        }
+      }}
+    >
       <Popover.Trigger asChild>
         <button
           type="button"

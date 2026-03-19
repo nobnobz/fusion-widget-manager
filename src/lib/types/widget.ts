@@ -24,7 +24,6 @@ export interface CollectionItem {
   hideTitle: boolean;
   layout: 'Wide' | 'Poster' | 'Square';
   backgroundImageURL: string;
-  dataSource: AddonCatalogDataSource;
   dataSources: AddonCatalogDataSource[];
 }
 

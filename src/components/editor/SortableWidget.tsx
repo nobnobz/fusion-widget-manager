@@ -2,32 +2,20 @@
 
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { GripVertical, Copy, Trash2, Box, Layers, ChevronRight, Check, Pencil, AlertTriangle, Package } from 'lucide-react';
+import { GripVertical, Copy, Trash2, ChevronRight, Check, Pencil, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Widget } from '@/lib/types/widget';
+import { AddonCatalogDataSource, Widget } from '@/lib/types/widget';
 import { useConfig } from '@/context/ConfigContext';
 import { 
   processWidgetWithManifest, 
   convertEditorWidgetToFusionWidget,
-  MANIFEST_PLACEHOLDER 
 } from '@/lib/config-utils';
 import { useState }
  from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ConfirmationDialog } from '@/components/ui/ConfirmationDialog';
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogDescription,
-  DialogFooter,
-  DialogClose
-} from '@/components/ui/dialog';
 
 import { CollectionRowEditor } from './CollectionRowEditor';
 import { RowClassicEditor } from './RowClassicEditor';
@@ -36,7 +24,6 @@ interface SortableWidgetProps {
   widget: Widget;
   isSelected: boolean;
   onSelect: (id: string) => void;
-  onDelete: (id: string) => void;
   isOverlay?: boolean;
   searchQuery?: string;
 }
@@ -45,7 +32,6 @@ export function SortableWidget({
   widget, 
   isSelected, 
   onSelect, 
-  onDelete,
   isOverlay = false,
   searchQuery = ""
 }: SortableWidgetProps) {
@@ -53,15 +39,14 @@ export function SortableWidget({
     id: widget.id,
   });
 
-  const { deleteWidget, updateWidget, manifestUrl, replacePlaceholder, manifestCatalogs } = useConfig();
+  const { deleteWidget, updateWidgetMeta, manifestUrl, replacePlaceholder, manifestCatalogs } = useConfig();
   const [copied, setCopied] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(widget.title);
 
   const hasInvalidCatalog = (() => {
-    /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-    const checkDS = (ds: any) => {
+    const checkDS = (ds: AddonCatalogDataSource) => {
       if (!ds.payload?.addonId?.toUpperCase().includes('AIOMETADATA')) return false;
       // If catalogId is missing or empty, it's invalid
       if (!ds.payload?.catalogId || ds.payload.catalogId === '') return true;
@@ -102,15 +87,16 @@ export function SortableWidget({
       const fusionWidget = convertEditorWidgetToFusionWidget(normalized, manifestUrl);
 
       // 3. Collect required addons for this single widget
-      const addonsSet = new Set<string>();
-      if (fusionWidget.type === 'row.classic' && fusionWidget.dataSource?.payload?.addonId?.startsWith('http')) {
-        addonsSet.add(fusionWidget.dataSource.payload.addonId);
-      } else if (fusionWidget.type === 'collection.row' && Array.isArray(fusionWidget.dataSource?.payload?.items)) {
-        /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-        fusionWidget.dataSource.payload.items.forEach((item: any) => {
-          if (item.dataSource?.payload?.addonId?.startsWith('http')) {
-            addonsSet.add(item.dataSource.payload.addonId);
-          }
+    const addonsSet = new Set<string>();
+    if (fusionWidget.type === 'row.classic' && fusionWidget.dataSource?.payload?.addonId?.startsWith('http')) {
+      addonsSet.add(fusionWidget.dataSource.payload.addonId);
+    } else if (fusionWidget.type === 'collection.row' && Array.isArray(fusionWidget.dataSource?.payload?.items)) {
+        fusionWidget.dataSource.payload.items.forEach((item: { dataSources: Array<{ payload: { addonId: string } }> }) => {
+          item.dataSources.forEach((dataSource) => {
+            if (dataSource.payload.addonId.startsWith('http')) {
+              addonsSet.add(dataSource.payload.addonId);
+            }
+          });
         });
       }
 
@@ -125,8 +111,8 @@ export function SortableWidget({
       navigator.clipboard.writeText(widgetJson);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    } catch (err: any) {
-      alert(err.message || "Failed to copy widget. Please ensure a catalog is selected.");
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "Failed to copy widget. Please ensure a catalog is selected.");
     }
   };
 
@@ -154,7 +140,7 @@ export function SortableWidget({
 
   const handleTitleSubmit = () => {
     if (editTitle.trim() && editTitle !== widget.title) {
-      updateWidget(widget.id, { title: editTitle.trim() });
+      updateWidgetMeta(widget.id, { title: editTitle.trim() });
     }
     setIsEditing(false);
   };
@@ -165,11 +151,6 @@ export function SortableWidget({
       setEditTitle(widget.title);
       setIsEditing(false);
     }
-  };
-
-  const getWidgetIcon = () => {
-    if (widget.type === 'collection.row') return <Box className="size-4" />;
-    return <Layers className="size-4" />;
   };
 
   return (

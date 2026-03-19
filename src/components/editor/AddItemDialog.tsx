@@ -12,10 +12,11 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Plus, Image as ImageIcon, RectangleHorizontal, RectangleVertical, Square, Layers } from 'lucide-react';
+import { Plus, RectangleHorizontal, RectangleVertical, Square, Layers } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { CollectionItem, AddonCatalogDataSource } from '@/lib/types/widget';
 import { DataSourceEditor } from './DataSourceEditor';
+import { MANIFEST_PLACEHOLDER } from '@/lib/config-utils';
 
 interface AddItemDialogProps {
   onAdd: (item: CollectionItem) => void;
@@ -30,7 +31,7 @@ export function AddItemDialog({ onAdd, trigger }: AddItemDialogProps) {
   const [dataSources, setDataSources] = useState<AddonCatalogDataSource[]>([
     {
       kind: 'addonCatalog',
-      payload: { addonId: 'YOUR_AIOMETADATA', catalogId: '', catalogType: 'movie' }
+      payload: { addonId: MANIFEST_PLACEHOLDER, catalogId: '', catalogType: 'movie' }
     }
   ]);
 
@@ -43,7 +44,6 @@ export function AddItemDialog({ onAdd, trigger }: AddItemDialogProps) {
       hideTitle: false,
       layout: layout,
       backgroundImageURL: backgroundImageURL.trim(),
-      dataSource: dataSources[0],
       dataSources: dataSources
     };
     
@@ -55,7 +55,7 @@ export function AddItemDialog({ onAdd, trigger }: AddItemDialogProps) {
     setDataSources([
       {
         kind: 'addonCatalog',
-        payload: { addonId: 'YOUR_AIOMETADATA', catalogId: '', catalogType: 'movie' }
+        payload: { addonId: MANIFEST_PLACEHOLDER, catalogId: '', catalogType: 'movie' }
       }
     ]);
   };
@@ -110,7 +110,7 @@ export function AddItemDialog({ onAdd, trigger }: AddItemDialogProps) {
               ].map((opt) => (
                 <button
                   key={opt.id}
-                  onClick={() => setLayout(opt.id as any)}
+                  onClick={() => setLayout(opt.id as 'Wide' | 'Poster' | 'Square')}
                   className={cn(
                     "flex flex-col items-center justify-center gap-2 p-3 rounded-xl border transition-all",
                     layout === opt.id 

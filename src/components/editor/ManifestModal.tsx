@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -15,6 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ConfirmationDialog } from '@/components/ui/ConfirmationDialog';
 import { Loader2, Globe, Sparkles } from 'lucide-react';
+import { AIOMetadataCatalog } from '@/lib/types/widget';
 
 
 interface ManifestModalProps {
@@ -23,7 +23,7 @@ interface ManifestModalProps {
 }
 
 export function ManifestModal({ isOpen, onOpenChange }: ManifestModalProps) {
-  const { manifestUrl, setManifestUrl, fetchManifest, bulkUpdateManifest, setView, importManifest } = useConfig();
+  const { manifestUrl, setManifestUrl, fetchManifest, syncManifest, setView, importManifest } = useConfig();
   const [url, setUrl] = useState(manifestUrl);
   const [isLoading, setIsLoading] = useState(false);
   const [isManual, setIsManual] = useState(false);
@@ -74,12 +74,11 @@ export function ManifestModal({ isOpen, onOpenChange }: ManifestModalProps) {
     }
   };
 
-  /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-  const handleSyncSuccess = (catalogs: any[], syncUrl: string) => {
+  const handleSyncSuccess = (catalogs: AIOMetadataCatalog[], syncUrl: string) => {
     setManifestUrl(syncUrl);
     // Auto-update placeholders after fetching
     try {
-      bulkUpdateManifest(catalogs, syncUrl, true);
+      syncManifest(catalogs, syncUrl, true);
       setView('selection');
       onOpenChange(false);
     } catch (bulkErr: unknown) {
@@ -199,4 +198,3 @@ export function ManifestModal({ isOpen, onOpenChange }: ManifestModalProps) {
     </Dialog>
   );
 }
-

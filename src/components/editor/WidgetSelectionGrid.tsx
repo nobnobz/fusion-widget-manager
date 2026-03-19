@@ -1,148 +1,125 @@
 "use client";
 
+import { useMemo, useState } from 'react';
 import { useConfig } from '@/context/ConfigContext';
 import { SortableWidget } from './SortableWidget';
 import { Button } from '@/components/ui/button';
-import { Plus, Download, Check, Copy, RotateCcw, Search, Globe, LayoutGrid, List, FileJson2 } from 'lucide-react';
-import { ThemeToggle } from '@/components/ui/ThemeToggle';
+import { Plus, Download, Check, Copy, Search, FileJson2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { CollectionItemEditor } from './CollectionItemEditor';
-import { AddItemDialog } from './AddItemDialog';
-import { ConfirmationDialog } from '@/components/ui/ConfirmationDialog';
-
 import { Textarea } from '@/components/ui/textarea';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
-  DialogFooter,
-  DialogClose
 } from '@/components/ui/dialog';
-import { useState, useMemo } from 'react';
 import { Input } from '@/components/ui/input';
 import { NewWidgetDialog } from './NewWidgetDialog';
 import { ImportMergeDialog } from './ImportMergeDialog';
 import {
   DndContext,
   closestCenter,
+  DragEndEvent,
   KeyboardSensor,
   PointerSensor,
   useSensor,
   useSensors,
-  DragEndEvent,
 } from '@dnd-kit/core';
 import {
-  arrayMove,
   SortableContext,
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 
 interface WidgetSelectionGridProps {
-  onSelectWidget: (id: string) => void;
-  onOpenManifest?: () => void;
   onNewWidget?: () => void;
   onDownload?: () => void;
 }
 
-
-export function WidgetSelectionGrid({ onSelectWidget, onOpenManifest, onNewWidget, onDownload }: WidgetSelectionGridProps) {
-
-  const { widgets, setView, addWidget, exportConfig, exportOmniConfig, manifestUrl, clearConfig, reorderWidgets } = useConfig();
-  const [showRestartConfirm, setShowRestartConfirm] = useState(false);
+export function WidgetSelectionGrid({ onNewWidget, onDownload }: WidgetSelectionGridProps) {
+  const { widgets, exportConfig, exportOmniConfig, reorderWidgets } = useConfig();
   const [exportMode, setExportMode] = useState<'fusion' | 'omni'>('fusion');
-
-
-  const sensors = useSensors(
-
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 8,
-      },
-    }),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
-  );
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [showPreview, setShowPreview] = useState(false);
   const [showNewWidgetDialog, setShowNewWidgetDialog] = useState(false);
   const [showImportMergeDialog, setShowImportMergeDialog] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: 8 },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   const filteredWidgets = useMemo(() => {
-    const q = searchQuery.toLowerCase();
-    return widgets.filter(w => {
-      // Search in widget title and type
-      const matchWidget = w.title.toLowerCase().includes(q) || w.type.toLowerCase().includes(q);
-      if (matchWidget) return true;
+    const query = searchQuery.toLowerCase();
+    return widgets.filter((widget) => {
+      if (widget.title.toLowerCase().includes(query) || widget.type.toLowerCase().includes(query)) {
+        return true;
+      }
 
-      // Search in collection items if it's a collection row
-      if (w.type === 'collection.row' && w.dataSource.kind === 'collection') {
-        const items = w.dataSource.payload.items || [];
-        return items.some(item =>
-          (item.name || "").toLowerCase().includes(q) ||
-          item.id?.toLowerCase().includes(q)
+      if (widget.type === 'collection.row') {
+        return widget.dataSource.payload.items.some(
+          (item) => item.name.toLowerCase().includes(query) || item.id.toLowerCase().includes(query)
         );
       }
+
       return false;
     });
   }, [widgets, searchQuery]);
 
-  const handleExport = () => {
-    setShowPreview(true);
-  };
+  const previewContent = useMemo(() => {
+    if (!showPreview) return '';
+    try {
+      const config = exportMode === 'fusion' ? exportConfig() : exportOmniConfig();
+      return JSON.stringify(config, null, 2);
+    } catch (error) {
+      return `Error: ${error instanceof Error ? error.message : 'Export failed.'}`;
+    }
+  }, [exportConfig, exportMode, exportOmniConfig, showPreview]);
 
   const handleCreateWidget = () => {
+    if (onNewWidget) {
+      onNewWidget();
+      return;
+    }
     setShowNewWidgetDialog(true);
   };
 
-  const [copied, setCopied] = useState(false);
-
   const handleCopy = () => {
-    try {
-      const config = exportMode === 'fusion' ? exportConfig() : exportOmniConfig();
-      navigator.clipboard.writeText(JSON.stringify(config, null, 2));
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch (err: any) {
-      alert(err.message || 'Export failed');
-    }
+    navigator.clipboard.writeText(previewContent);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
-
   const handleDownload = () => {
-    try {
-      const config = exportMode === 'fusion' ? exportConfig() : exportOmniConfig();
-      // Use application/octet-stream for iOS to prevent .txt extension being added
-      const blob = new Blob([JSON.stringify(config, null, 2)], { type: 'application/octet-stream' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = exportMode === 'fusion' ? 'fusion-widgets.json' : 'omni-snapshot.json';
-      a.click();
-      URL.revokeObjectURL(url);
-    } catch (err: any) {
-      alert(err.message || 'Export failed');
-    }
+    const blob = new Blob([previewContent], { type: 'application/octet-stream' });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = exportMode === 'fusion' ? 'fusion-widgets.json' : 'omni-snapshot.json';
+    anchor.click();
+    URL.revokeObjectURL(url);
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
+    if (searchQuery) return;
 
     const { active, over } = event;
+    if (!over || active.id === over.id) return;
 
-    if (over && active.id !== over.id) {
-      const oldIndex = widgets.findIndex((w) => w.id === active.id);
-      const newIndex = widgets.findIndex((w) => w.id === over.id);
-      reorderWidgets(oldIndex, newIndex);
-    }
+    const oldIndex = widgets.findIndex((widget) => widget.id === active.id);
+    const newIndex = widgets.findIndex((widget) => widget.id === over.id);
+    reorderWidgets(oldIndex, newIndex);
   };
 
   return (
     <div className="flex-1 flex flex-col bg-transparent">
-      {/* Selection Content Container */}
       <main className="max-w-5xl mx-auto w-full px-6 py-12">
         <div className="flex flex-col gap-2 mb-12 text-center sm:text-left">
           <h1 className="text-4xl font-extrabold tracking-tight text-foreground">Widget Manager</h1>
@@ -151,7 +128,6 @@ export function WidgetSelectionGrid({ onSelectWidget, onOpenManifest, onNewWidge
           </p>
         </div>
 
-        {/* Action Bar - Modern Search & Filter */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-10 p-2 rounded-2xl bg-muted/20 dark:bg-muted/10 border border-zinc-200 dark:border-border/40 shadow-sm backdrop-blur-md">
           <div className="relative w-full sm:max-w-md group">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-muted-foreground/50 group-focus-within:text-primary transition-colors" />
@@ -159,13 +135,13 @@ export function WidgetSelectionGrid({ onSelectWidget, onOpenManifest, onNewWidge
               placeholder="Search for widgets or types..."
               className="pl-11 h-10 border-none bg-transparent shadow-none focus-visible:ring-0 text-sm font-medium"
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(event) => setSearchQuery(event.target.value)}
             />
           </div>
 
           <div className="flex items-center gap-2">
             <Button
-              onClick={onNewWidget}
+              onClick={handleCreateWidget}
               size="sm"
               className="h-9 px-4 rounded-xl font-bold uppercase tracking-wider text-[10px] shadow-lg shadow-primary/20 bg-primary hover:bg-primary/90 text-primary-foreground transition-all active:scale-95"
             >
@@ -184,7 +160,10 @@ export function WidgetSelectionGrid({ onSelectWidget, onOpenManifest, onNewWidge
             </Button>
 
             <Button
-              onClick={onDownload}
+              onClick={() => {
+                setShowPreview(true);
+                onDownload?.();
+              }}
               variant="outline"
               size="sm"
               className="h-9 px-4 rounded-xl font-bold uppercase tracking-wider text-[10px] border-border/60 bg-muted/5 hover:bg-muted/20 hover:border-primary/30 hover:text-primary transition-all backdrop-blur-sm shadow-sm"
@@ -195,8 +174,11 @@ export function WidgetSelectionGrid({ onSelectWidget, onOpenManifest, onNewWidge
           </div>
         </div>
 
-
-
+        {searchQuery && (
+          <p className="mb-4 text-xs font-medium text-muted-foreground/70">
+            Reordering is disabled while search is active.
+          </p>
+        )}
 
         <DndContext
           sensors={sensors}
@@ -204,7 +186,7 @@ export function WidgetSelectionGrid({ onSelectWidget, onOpenManifest, onNewWidge
           onDragEnd={handleDragEnd}
         >
           <SortableContext
-            items={widgets.map(w => w.id)}
+            items={searchQuery ? filteredWidgets.map((widget) => widget.id) : widgets.map((widget) => widget.id)}
             strategy={verticalListSortingStrategy}
           >
             <div className="flex flex-col gap-3">
@@ -214,7 +196,6 @@ export function WidgetSelectionGrid({ onSelectWidget, onOpenManifest, onNewWidge
                   widget={widget}
                   isSelected={expandedId === widget.id}
                   onSelect={(id) => setExpandedId(expandedId === id ? null : id)}
-                  onDelete={() => { }} // context handles it
                   searchQuery={searchQuery}
                 />
               ))}
@@ -240,11 +221,9 @@ export function WidgetSelectionGrid({ onSelectWidget, onOpenManifest, onNewWidge
       <NewWidgetDialog
         isOpen={showNewWidgetDialog}
         onOpenChange={setShowNewWidgetDialog}
-        onCreated={(id) => {
-          setExpandedId(id);
-        }}
+        onCreated={(id) => setExpandedId(id)}
       />
-      {/* Compact Export Dialog */}
+
       <Dialog open={showPreview} onOpenChange={setShowPreview}>
         <DialogContent className="max-w-2xl p-0 overflow-hidden">
           <DialogHeader className="p-6 pb-0">
@@ -259,8 +238,8 @@ export function WidgetSelectionGrid({ onSelectWidget, onOpenManifest, onNewWidge
                 <button
                   onClick={() => setExportMode('fusion')}
                   className={cn(
-                    "px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all",
-                    exportMode === 'fusion' ? "bg-primary text-primary-foreground shadow-sm" : "opacity-40 hover:opacity-70"
+                    'px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all',
+                    exportMode === 'fusion' ? 'bg-primary text-primary-foreground shadow-sm' : 'opacity-40 hover:opacity-70'
                   )}
                 >
                   Fusion
@@ -268,8 +247,8 @@ export function WidgetSelectionGrid({ onSelectWidget, onOpenManifest, onNewWidge
                 <button
                   onClick={() => setExportMode('omni')}
                   className={cn(
-                    "px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all",
-                    exportMode === 'omni' ? "bg-primary text-primary-foreground shadow-sm" : "opacity-40 hover:opacity-70"
+                    'px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all',
+                    exportMode === 'omni' ? 'bg-primary text-primary-foreground shadow-sm' : 'opacity-40 hover:opacity-70'
                   )}
                 >
                   Omni
@@ -281,20 +260,13 @@ export function WidgetSelectionGrid({ onSelectWidget, onOpenManifest, onNewWidge
             <div className="relative group bg-muted/30 rounded-xl border border-border overflow-hidden">
               <Textarea
                 readOnly
-                value={(() => {
-                  try {
-                    return JSON.stringify(exportMode === 'fusion' ? exportConfig() : exportOmniConfig(), null, 2);
-                  } catch (err: any) {
-                    return `Error: ${err.message}`;
-                  }
-                })()}
+                value={previewContent}
                 className="w-full h-[320px] font-mono text-xs bg-transparent border-none p-5 focus-visible:ring-0 resize-none custom-scrollbar leading-relaxed"
               />
             </div>
           </div>
 
           <div className="px-6 py-4 bg-muted/5 border-t border-border/40 flex items-center justify-end gap-3">
-
             <Button
               variant="secondary"
               size="sm"
@@ -308,6 +280,7 @@ export function WidgetSelectionGrid({ onSelectWidget, onOpenManifest, onNewWidge
               size="sm"
               className="h-9 w-40 px-0 rounded-xl shadow-lg shadow-primary/20 text-[11px] font-bold uppercase tracking-wider transition-all shrink-0"
               onClick={handleCopy}
+              disabled={previewContent.startsWith('Error:')}
             >
               {copied ? <Check className="size-3.5 mr-1.5" /> : <Copy className="size-3.5 mr-1.5" />}
               {copied ? 'Copied' : 'Copy JSON'}
@@ -315,16 +288,6 @@ export function WidgetSelectionGrid({ onSelectWidget, onOpenManifest, onNewWidge
           </div>
         </DialogContent>
       </Dialog>
-
-      <ConfirmationDialog
-        isOpen={showRestartConfirm}
-        onOpenChange={setShowRestartConfirm}
-        title="Go to Start Page?"
-        description="Are you sure you want to go back to the welcome screen? All your current widgets will remain safely stored."
-        confirmText="Go back"
-        onConfirm={() => setView('welcome')}
-      />
-
       <ImportMergeDialog
         open={showImportMergeDialog}
         onOpenChange={setShowImportMergeDialog}

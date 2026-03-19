@@ -3,14 +3,11 @@
 import { useState } from 'react';
 import { useConfig } from '@/context/ConfigContext';
 import { CollectionRowWidget, CollectionItem } from '@/lib/types/widget';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Plus, ListTree, Layers, SortAsc, SortDesc } from 'lucide-react';
 
-import { cn } from '@/lib/utils';
 import { CollectionItemEditor } from './CollectionItemEditor';
 import { AddItemDialog } from './AddItemDialog';
 import { 
@@ -23,14 +20,19 @@ import {
   DragEndEvent,
 } from '@dnd-kit/core';
 import {
-  arrayMove,
   SortableContext,
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 
 export function CollectionRowEditor({ widget, searchQuery = "" }: { widget: CollectionRowWidget, searchQuery?: string }) {
-  const { updateWidget } = useConfig();
+  const {
+    addCollectionItem,
+    reorderCollectionItems,
+    removeCollectionItem,
+    updateCollectionItem,
+    updateWidgetMeta,
+  } = useConfig();
   const [expandedItemId, setExpandedItemId] = useState<string | null>(null);
 
   const filteredItems = widget.dataSource.payload.items.filter(item => {
@@ -50,32 +52,12 @@ export function CollectionRowEditor({ widget, searchQuery = "" }: { widget: Coll
     })
   );
 
-  const handleUpdate = (updates: any) => {
-    updateWidget(widget.id, updates);
-  };
-
   const handleAddItem = (newItem: CollectionItem) => {
-    handleUpdate({
-      dataSource: {
-        ...widget.dataSource,
-        payload: {
-          ...widget.dataSource.payload,
-          items: [...widget.dataSource.payload.items, newItem]
-        }
-      }
-    });
+    addCollectionItem(widget.id, newItem);
   };
 
   const handleDeleteItem = (itemId: string) => {
-    handleUpdate({
-      dataSource: {
-        ...widget.dataSource,
-        payload: {
-          ...widget.dataSource.payload,
-          items: widget.dataSource.payload.items.filter(item => item.id !== itemId)
-        }
-      }
-    });
+    removeCollectionItem(widget.id, itemId);
   };
 
   const handleDuplicateItem = (itemId: string) => {
@@ -85,7 +67,7 @@ export function CollectionRowEditor({ widget, searchQuery = "" }: { widget: Coll
     const copy = { ...original, id: crypto.randomUUID(), name: `${original.name} (Copy)` };
     const nextItems = [...widget.dataSource.payload.items];
     nextItems.splice(index + 1, 0, copy);
-    handleUpdate({
+    updateWidgetMeta(widget.id, {
       dataSource: {
         ...widget.dataSource,
         payload: {
@@ -97,17 +79,7 @@ export function CollectionRowEditor({ widget, searchQuery = "" }: { widget: Coll
   };
 
   const handleUpdateItem = (itemId: string, updates: Partial<CollectionItem>) => {
-    handleUpdate({
-      dataSource: {
-        ...widget.dataSource,
-        payload: {
-          ...widget.dataSource.payload,
-          items: widget.dataSource.payload.items.map(item => 
-            item.id === itemId ? { ...item, ...updates } : item
-          )
-        }
-      }
-    });
+    updateCollectionItem(widget.id, itemId, updates);
   };
   
   const handleSort = (direction: 'asc' | 'desc') => {
@@ -119,7 +91,7 @@ export function CollectionRowEditor({ widget, searchQuery = "" }: { widget: Coll
         : nameB.localeCompare(nameA);
     });
 
-    handleUpdate({
+    updateWidgetMeta(widget.id, {
       dataSource: {
         ...widget.dataSource,
         payload: {
@@ -132,21 +104,15 @@ export function CollectionRowEditor({ widget, searchQuery = "" }: { widget: Coll
 
 
   function handleDragEnd(event: DragEndEvent) {
+    if (searchQuery) return;
+
     const { active, over } = event;
 
     if (over && active.id !== over.id) {
       const oldIndex = widget.dataSource.payload.items.findIndex((item) => item.id === active.id);
       const newIndex = widget.dataSource.payload.items.findIndex((item) => item.id === over.id);
       
-      handleUpdate({
-        dataSource: {
-          ...widget.dataSource,
-          payload: {
-            ...widget.dataSource.payload,
-            items: arrayMove(widget.dataSource.payload.items, oldIndex, newIndex)
-          }
-        }
-      });
+      reorderCollectionItems(widget.id, oldIndex, newIndex);
     }
   }
 
@@ -158,7 +124,7 @@ export function CollectionRowEditor({ widget, searchQuery = "" }: { widget: Coll
             <Input 
               id="title" 
               value={widget.title} 
-              onChange={(e) => handleUpdate({ title: e.target.value })} 
+              onChange={(e) => updateWidgetMeta(widget.id, { title: e.target.value })} 
               className="h-10 bg-muted/20 dark:bg-muted/10 border-zinc-200 dark:border-border/40 focus:border-primary/50 transition-all font-semibold px-4 rounded-xl shadow-sm dark:shadow-none flex-1 backdrop-blur-sm"
               placeholder="e.g. Featured Content"
             />
@@ -176,6 +142,11 @@ export function CollectionRowEditor({ widget, searchQuery = "" }: { widget: Coll
           </h3>
 
           <div className="flex items-center gap-1">
+            {searchQuery && (
+              <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground/50 mr-2">
+                Reorder disabled while searching
+              </span>
+            )}
             <Button 
               variant="ghost" 
               size="sm" 

@@ -16,6 +16,8 @@ import { Label } from '@/components/ui/label';
 import { Box, Layers, Plus, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useConfig } from '@/context/ConfigContext';
+import { MANIFEST_PLACEHOLDER } from '@/lib/config-utils';
+import { Widget } from '@/lib/types/widget';
 
 interface NewWidgetDialogProps {
   isOpen: boolean;
@@ -32,14 +34,21 @@ export function NewWidgetDialog({ isOpen, onOpenChange, onCreated }: NewWidgetDi
     if (!title.trim()) return;
 
     const id = crypto.randomUUID();
-    const newWidget = {
-      id,
-      title: title.trim(),
-      type: type,
-      dataSource: type === 'collection.row' 
-        ? { kind: 'collection' as const, payload: { items: [] } }
-        : { kind: 'addonCatalog' as const, payload: { addonId: 'YOUR_AIOMETADATA', catalogId: '', type: 'movie' } },
-      ...(type === 'row.classic' && {
+    const newWidget: Widget = type === 'collection.row'
+      ? {
+          id,
+          title: title.trim(),
+          type,
+          dataSource: { kind: 'collection', payload: { items: [] } },
+        }
+      : {
+          id,
+          title: title.trim(),
+          type,
+          dataSource: {
+            kind: 'addonCatalog',
+            payload: { addonId: MANIFEST_PLACEHOLDER, catalogId: '', catalogType: 'movie' },
+          },
         cacheTTL: 1800,
         limit: 20,
         presentation: {
@@ -47,10 +56,8 @@ export function NewWidgetDialog({ isOpen, onOpenChange, onCreated }: NewWidgetDi
           cardStyle: 'medium' as const,
           badges: { providers: false, ratings: true }
         }
-      })
-    };
+      };
 
-    // @ts-expect-error - newWidget properties are validated by processWidgetWithManifest
     addWidget(newWidget);
     onCreated(id);
     onOpenChange(false);
