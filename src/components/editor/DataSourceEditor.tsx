@@ -10,20 +10,15 @@ import { CatalogCombobox } from './CatalogCombobox';
 export function DataSourceEditor({ 
   dataSource, 
   onUpdate, 
-  onDelete 
+  onDelete,
+  disabledCatalogIds = []
 }: { 
   dataSource: AddonCatalogDataSource,
   onUpdate: (updates: Partial<AddonCatalogDataSource['payload']>) => void,
-  onDelete: () => void
+  onDelete: () => void,
+  disabledCatalogIds?: string[]
 }) {
   const { manifestCatalogs } = useConfig();
-
-  const availableCatalogsForType = manifestCatalogs.filter(c => 
-    dataSource.payload.catalogType === 'all' || 
-    c.type === dataSource.payload.catalogType || 
-    c.displayType === dataSource.payload.catalogType ||
-    !dataSource.payload.catalogType
-  );
 
   return (
     <div className="flex items-center gap-2 max-sm:gap-2.5 p-1.5 max-sm:p-2 rounded-xl max-sm:rounded-[1rem] bg-muted/30 border border-border group/ds hover:border-primary/30 transition-all">
@@ -32,8 +27,9 @@ export function DataSourceEditor({
             {manifestCatalogs.length > 0 ? (
               <div className="flex-1 flex items-center min-w-0">
                 <CatalogCombobox 
-                  options={availableCatalogsForType}
+                  options={manifestCatalogs}
                   value={dataSource.payload.catalogId}
+                  disabledValues={disabledCatalogIds}
                   onChange={(combinedId) => {
                       const selected = manifestCatalogs.find(c => `${c.type}::${c.id}` === combinedId);
                       if (selected) {

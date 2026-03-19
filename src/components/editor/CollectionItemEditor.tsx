@@ -50,12 +50,16 @@ export function CollectionItemEditor({
   const { manifestCatalogs } = useConfig();
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState(item.name);
+  const selectedCatalogIds = useMemo(
+    () => item.dataSources.map((ds) => ds.payload.catalogId).filter(Boolean),
+    [item.dataSources]
+  );
   
   const hasInvalidCatalog = useMemo(() => {
     return item.dataSources.some(ds => {
       const { addonId, catalogId } = ds.payload || {};
       if (!addonId?.toUpperCase().includes('AIOMETADATA')) return false;
-      if (!catalogId) return false;
+      if (!catalogId || catalogId === '') return true;
       
       return !findCatalog(manifestCatalogs, catalogId);
     });
@@ -96,12 +100,23 @@ export function CollectionItemEditor({
   };
 
   const handleUpdateDataSource = (dsIndex: number, updates: Partial<AddonCatalogDataSource['payload']>) => {
+    const nextCatalogId = updates.catalogId?.trim();
+    if (
+      nextCatalogId &&
+      item.dataSources.some((ds, i) => i !== dsIndex && ds.payload.catalogId === nextCatalogId)
+    ) {
+      return;
+    }
+
     onUpdate({
       dataSources: item.dataSources.map((ds, i) => 
         i === dsIndex ? { ...ds, payload: { ...ds.payload, ...updates } } : ds
       )
     });
   };
+
+  const canAddAnotherDataSource =
+    manifestCatalogs.length === 0 || selectedCatalogIds.length < manifestCatalogs.length;
 
   const handleTitleSubmit = () => {
     if (editName.trim() && editName !== item.name) {
@@ -424,6 +439,7 @@ export function CollectionItemEditor({
                           variant="outline" 
                           size="sm" 
                           className="h-7 max-sm:h-8 px-2.5 text-[10px] gap-1 font-bold border-border/40 bg-muted/10 hover:border-primary/50 hover:bg-primary/5 hover:text-primary transition-all rounded-lg max-sm:rounded-xl uppercase tracking-wider backdrop-blur-sm" 
+                          disabled={!canAddAnotherDataSource}
                           onClick={(e) => { e.stopPropagation(); handleAddDataSource(); }}
                         >
                           <Plus className="size-2.5" /> New
@@ -434,6 +450,10 @@ export function CollectionItemEditor({
                           <DataSourceEditor 
                             key={dsIndex}
                             dataSource={ds}
+                            disabledCatalogIds={item.dataSources
+                              .filter((_, index) => index !== dsIndex)
+                              .map((source) => source.payload.catalogId)
+                              .filter(Boolean)}
                             onUpdate={(updates) => handleUpdateDataSource(dsIndex, updates)}
                             onDelete={() => handleDeleteDataSource(dsIndex)}
                           />

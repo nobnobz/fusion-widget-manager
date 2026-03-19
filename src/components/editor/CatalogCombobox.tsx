@@ -12,6 +12,7 @@ interface CatalogComboboxProps {
   options: AIOMetadataCatalog[];
   value: string;
   onChange: (value: string) => void;
+  disabledValues?: string[];
   placeholder?: string;
   className?: string;
 }
@@ -20,11 +21,13 @@ export function CatalogCombobox({
   options,
   value,
   onChange,
+  disabledValues = [],
   placeholder = "Select catalog...",
   className
 }: CatalogComboboxProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState('');
+  const disabledValueSet = useMemo(() => new Set(disabledValues), [disabledValues]);
 
   const selectedOption = useMemo(() => {
     return findCatalog(options, value);
@@ -122,18 +125,25 @@ export function CatalogCombobox({
                 filteredOptions.map((option) => {
                   const combinedId = `${option.type}::${option.id}`;
                   const isSelected = combinedId === value;
+                  const isDisabled = !isSelected && disabledValueSet.has(combinedId);
                   
                   return (
                     <button
                       key={combinedId}
                       type="button"
+                      disabled={isDisabled}
                       onClick={() => {
+                        if (isDisabled) return;
                         onChange(combinedId);
                         setIsOpen(false);
                       }}
                       className={cn(
                         "w-full flex items-center justify-between px-3 py-2 rounded-lg text-left text-xs transition-all mb-0.5 last:mb-0",
-                        isSelected ? "bg-primary text-primary-foreground" : "hover:bg-muted text-foreground"
+                        isSelected
+                          ? "bg-primary text-primary-foreground"
+                          : isDisabled
+                            ? "text-muted-foreground/30 cursor-not-allowed opacity-50"
+                            : "hover:bg-muted text-foreground"
                       )}
                     >
                       <div className="flex flex-col gap-0.5">

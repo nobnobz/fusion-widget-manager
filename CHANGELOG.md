@@ -1,5 +1,21 @@
 # Changelog
 ...
+
+## [0.1.3] - 2026-03-19
+### Added
+- **Dedicated Web App Icon**: Added a high-resolution, wavy-background icon for PWA/Apple devices.
+- **Optimized Favicons**: Replaced the large, blurry favicon with optimized 16x16 and 32x32 PNGs for sharper browser tab display.
+
+### Changed
+- **Mobile Grid Overhaul**: Refined the utility row into a balanced 2x2 grid for "New Widget", "Export", "Import", and "Trash".
+- **Visual Feedback**: Applied a reddish, "destructive" theme to the Trash buttons to improve contrast and clarity.
+- **Mobile Action Layout**: Right-aligned the action buttons (Eye, Copy, Trash) in collection items for a more professional, right-anchored feel.
+- **Header Refinement**: Reclaimed vertical space in the mobile header by removing the heart (support) icon.
+
+### Fixed
+- **Widget Card Formatting**: Resolved a critical layout issue on mobile where overlapping desktop and mobile blocks caused shifted content.
+- **File Asset Cleanup**: Removed unused/legacy icon files and fixed metadata references.
+
 ## [0.1.2] - 2026-03-19
 ### Changed
 - **Premium UI Overhaul**: Implemented a modern glassmorphism design system across all components with refined typography and smooth micro-animations.
