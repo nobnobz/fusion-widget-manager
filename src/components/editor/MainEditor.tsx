@@ -661,9 +661,9 @@ export function MainEditor() {
         <header className="sticky top-0 z-50 w-full px-3 pt-[calc(env(safe-area-inset-top)+0.75rem)] pb-2 sm:hidden">
           <div className="rounded-[1.35rem] border border-border/60 bg-background/80 px-3 py-2.5 shadow-[0_10px_30px_-18px_rgba(0,0,0,0.35)] backdrop-blur-xl">
             <div className="flex items-center justify-between gap-3">
-              <div className="flex min-w-0 items-center gap-2.5">
-                <div className="relative size-11 shrink-0 overflow-hidden rounded-2xl bg-primary/5">
-                  <Image src={LogoImage} alt="Logo" fill className="object-contain p-1" priority />
+              <div className="flex min-w-0 items-center gap-3">
+                <div className="relative size-14 shrink-0 overflow-hidden">
+                  <Image src={LogoImage} alt="Logo" fill className="object-contain drop-shadow-sm" priority />
                 </div>
                 <div className="min-w-0">
                   <h1 className="truncate text-[13px] font-black tracking-tight leading-none">Fusion Widget</h1>
