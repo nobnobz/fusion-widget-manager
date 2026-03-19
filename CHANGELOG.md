@@ -1,5 +1,17 @@
 # Changelog
 ...
+## [0.1.2] - 2026-03-19
+### Changed
+- **Premium UI Overhaul**: Implemented a modern glassmorphism design system across all components with refined typography and smooth micro-animations.
+- **Action Bar Redesign**: Iterated on the central action bar to prioritize high-value actions (New Widget, Export) with better mobile stacking.
+- **Expanded Widget View**: Optimized the responsive layout to stack configuration cards on mobile while maintaining a side-by-side view on desktop.
+- **UI De-cluttering**: Hidden raw Data Source URLs in the editor for a cleaner, more focused configuration experience.
+- **Trash Handling**: Redesigned the Trash modal with improved visual hierarchy and fixed the cluttered top-right action area.
+
+### Fixed
+- **Mobile Overflow**: Fixed horizontal overflow issues in the aspect ratio selection (Wide/Poster/Square) on small screens.
+- **Responsive Alignment**: Standardized label and button positioning to prevent "weird" floating alignments in the expanded widget view on mobile.
+
 ## [0.1.1] - 2026-03-18
 ### Fixed
 - **Omni Sorting**: Replaced heuristic sorting with precise iteration using decoded `subgroup_order._data` for perfect item sequences.
