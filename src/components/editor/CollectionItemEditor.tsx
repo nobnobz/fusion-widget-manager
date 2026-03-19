@@ -144,7 +144,7 @@ export function CollectionItemEditor({
             <div 
                 {...attributes} 
                 {...listeners}
-                className="text-muted-foreground/30 hover:text-primary hover:bg-primary/5 transition-all cursor-grab active:cursor-grabbing p-1.5 rounded-lg shrink-0"
+                className="text-muted-foreground/30 hover:text-primary hover:bg-primary/5 transition-all cursor-grab active:cursor-grabbing p-1.5 rounded-lg shrink-0 touch-none select-none"
                 onClick={(e) => e.stopPropagation()}
               >
                 <GripVertical className="size-3.5" />
@@ -237,7 +237,7 @@ export function CollectionItemEditor({
               <div 
                 {...attributes} 
                 {...listeners}
-                className="mt-0.5 flex size-9 items-center justify-center rounded-xl bg-background/40 text-muted-foreground/40 transition-all cursor-grab active:cursor-grabbing shrink-0"
+                className="mt-0.5 flex size-9 items-center justify-center rounded-xl bg-background/40 text-muted-foreground/40 transition-all cursor-grab active:cursor-grabbing shrink-0 touch-none select-none"
                 onClick={(e) => e.stopPropagation()}
               >
                 <GripVertical className="size-4" />

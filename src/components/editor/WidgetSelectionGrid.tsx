@@ -23,6 +23,7 @@ import {
   DragEndEvent,
   KeyboardSensor,
   PointerSensor,
+  TouchSensor,
   useSensor,
   useSensors,
 } from '@dnd-kit/core';
@@ -50,7 +51,10 @@ export function WidgetSelectionGrid({ onNewWidget, onDownload }: WidgetSelection
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
-      activationConstraint: { distance: 8 },
+      activationConstraint: { distance: 5 },
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: { distance: 5 },
     }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,

@@ -170,7 +170,7 @@ export function SortableWidget({
           <div 
             {...attributes} 
             {...listeners}
-            className="size-10 flex items-center justify-center rounded-xl text-muted-foreground/20 hover:text-primary hover:bg-primary/10 transition-all cursor-grab active:cursor-grabbing border border-transparent hover:border-primary/10 shrink-0 shadow-sm"
+            className="size-10 flex items-center justify-center rounded-xl text-muted-foreground/20 hover:text-primary hover:bg-primary/10 transition-all cursor-grab active:cursor-grabbing border border-transparent hover:border-primary/10 shrink-0 shadow-sm touch-none select-none"
             onClick={(e) => e.stopPropagation()}
           >
             <GripVertical className="size-4" />
@@ -266,7 +266,7 @@ export function SortableWidget({
             <div 
               {...attributes} 
               {...listeners}
-              className="mt-0.5 size-9 flex items-center justify-center rounded-xl text-muted-foreground/30 hover:text-primary hover:bg-primary/10 transition-all cursor-grab active:cursor-grabbing border border-transparent hover:border-primary/10 shrink-0"
+              className="mt-0.5 size-9 flex items-center justify-center rounded-xl text-muted-foreground/30 hover:text-primary hover:bg-primary/10 transition-all cursor-grab active:cursor-grabbing border border-transparent hover:border-primary/10 shrink-0 touch-none select-none"
               onClick={(e) => e.stopPropagation()}
             >
               <GripVertical className="size-4" />

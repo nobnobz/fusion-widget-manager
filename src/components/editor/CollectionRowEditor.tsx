@@ -15,6 +15,7 @@ import {
   closestCenter,
   KeyboardSensor,
   PointerSensor,
+  TouchSensor,
   useSensor,
   useSensors,
   DragEndEvent,
@@ -43,6 +44,11 @@ export function CollectionRowEditor({ widget, searchQuery = "" }: { widget: Coll
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 5,
+      },
+    }),
+    useSensor(TouchSensor, {
       activationConstraint: {
         distance: 5,
       },
