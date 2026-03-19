@@ -559,10 +559,10 @@ export function MainEditor() {
                       <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground group-hover/tpl:text-primary">UME Templates</span>
                     </a>
                   </div>
-                  <div className="flex gap-2 p-1 rounded-[1.25rem] sm:rounded-2xl border border-border/60 bg-card/50 backdrop-blur-sm transition-all focus-within:border-primary/30 h-11 sm:h-12 items-center">
+                  <div className="flex gap-1.5 sm:gap-2 p-1 rounded-[1.25rem] sm:rounded-2xl border border-border/60 bg-card/50 backdrop-blur-sm transition-all focus-within:border-primary/30 h-11 sm:h-12 items-center">
                     <Popover open={isTemplatePopoverOpen} onOpenChange={setIsTemplatePopoverOpen}>
                       <PopoverTrigger asChild>
-                        <button className="flex-1 h-full bg-transparent border-none focus:outline-none text-[11px] sm:text-[12px] font-bold pl-3 pr-8 appearance-none cursor-pointer hover:bg-muted/10 rounded-xl transition-all text-left flex items-center justify-between group/select">
+                        <button className="flex-1 h-full min-w-0 bg-transparent border-none focus:outline-none text-[11px] sm:text-[12px] font-bold pl-3 pr-4 sm:pr-8 appearance-none cursor-pointer hover:bg-muted/10 rounded-xl transition-all text-left flex items-center justify-between group/select">
                           <span className="truncate">
                             {githubTemplates.find(t => t.download_url === selectedTemplateUrl)?.name || 'Select Template...'}
                           </span>
@@ -596,13 +596,13 @@ export function MainEditor() {
                       onClick={handleLoadTemplate}
                       disabled={isLoadingTemplates || !selectedTemplateUrl}
                       size="sm"
-                      className="h-9 sm:h-10 px-4 sm:px-6 rounded-xl font-bold uppercase tracking-widest text-[10px] sm:text-[11px] shadow-sm shrink-0"
+                      className="h-9 sm:h-10 min-w-[118px] sm:min-w-0 px-3.5 sm:px-6 rounded-xl font-bold uppercase tracking-[0.16em] sm:tracking-widest text-[10px] sm:text-[11px] shadow-sm shrink-0"
                     >
                       {isLoadingTemplates ? (
                         <RotateCcw className="size-3.5 animate-spin" />
                       ) : (
                         <>
-                          <Download className="size-3.5 mr-2" />
+                          <Download className="size-3.5 mr-1.5 sm:mr-2" />
                           Load
                         </>
                       )}

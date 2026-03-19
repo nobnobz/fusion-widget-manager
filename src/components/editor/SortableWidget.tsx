@@ -262,7 +262,7 @@ export function SortableWidget({
         </div>
 
         <div className="sm:hidden flex w-full flex-col gap-2.5">
-          <div className="flex items-start gap-2.5 min-w-0">
+          <div className="flex items-center gap-2.5 min-w-0">
             <div 
               {...attributes} 
               {...listeners}
@@ -272,10 +272,10 @@ export function SortableWidget({
               <GripVertical className="size-4" />
             </div>
 
-            <div className="min-w-0 flex-1 pt-0.5">
-              <div className="flex items-start gap-1.5">
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-1.5">
                 {hasInvalidCatalog && (
-                  <AlertTriangle className="mt-0.5 size-4 text-amber-500 animate-pulse shrink-0" />
+                  <AlertTriangle className="size-4 text-amber-500 animate-pulse shrink-0" />
                 )}
 
                 <div className="min-w-0 flex-1">
@@ -292,13 +292,13 @@ export function SortableWidget({
                   ) : (
                     <button
                       type="button"
-                      className="flex w-full items-center gap-1.5 overflow-hidden text-left"
+                      className="flex w-full items-center gap-1.5 overflow-hidden text-left py-0.5"
                       onClick={startEditing}
                     >
-                      <h3 className="truncate text-[14.5px] font-extrabold tracking-[-0.02em] text-foreground/95 leading-[1.15]">
+                      <h3 className="truncate text-[14px] font-bold tracking-[-0.015em] text-foreground/95 leading-[1.15]">
                         {widget.title}
                       </h3>
-                      <Pencil className="size-3 text-primary/45 shrink-0" />
+                      <Pencil className="size-3 text-primary/40 shrink-0" />
                     </button>
                   )}
                 </div>
