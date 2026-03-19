@@ -280,9 +280,11 @@ export function CollectionItemEditor({
                     )}
 
                     <div className="mt-2 flex flex-wrap items-center gap-2">
-                      <span className="rounded-full bg-background/60 px-2.5 py-1 text-[9px] font-bold uppercase tracking-[0.16em] text-muted-foreground/70">
-                        {item.hideTitle ? 'Title hidden' : 'Title visible'}
-                      </span>
+                      {isExpanded && (
+                        <span className="rounded-full bg-background/60 px-2.5 py-1 text-[9px] font-bold uppercase tracking-[0.16em] text-muted-foreground/70">
+                          {item.hideTitle ? 'Title hidden' : 'Title visible'}
+                        </span>
+                      )}
                       <span className="rounded-full bg-muted/50 px-2.5 py-1 text-[9px] font-bold uppercase tracking-[0.14em] text-muted-foreground/60">
                         {item.dataSources.length} source{item.dataSources.length === 1 ? '' : 's'}
                       </span>
