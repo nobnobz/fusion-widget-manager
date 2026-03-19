@@ -706,16 +706,6 @@ export function MainEditor() {
                   <Book className="size-4" />
                 </Button>
 
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="size-9 rounded-xl border border-border/50 bg-background/30 text-red-500/80 hover:bg-red-500/10 hover:text-red-500"
-                  onClick={() => window.open('https://ko-fi.com/botbidraiser', '_blank')}
-                  title="Support"
-                >
-                  <Heart className="size-4 fill-current" />
-                </Button>
-
                 <ThemeToggle className="size-9 rounded-xl bg-background/30 dark:bg-black/20 border-border/50 shadow-none" />
 
                 {view !== 'welcome' && (
