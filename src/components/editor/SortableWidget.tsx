@@ -227,8 +227,8 @@ export function SortableWidget({
           </div>
         </div>
 
-        {/* Right: Actions & Expand */}
-        <div className="flex items-center gap-4 shrink-0">
+        {/* Right: Actions & Expand - Desktop Only */}
+        <div className="hidden sm:flex items-center gap-4 shrink-0">
           <div className={cn(
             "flex items-center gap-1.5 transition-all duration-500 mr-2",
             isSelected ? "opacity-100 translate-x-0" : "opacity-0 translate-x-4 group-hover:opacity-100 group-hover:translate-x-0 pointer-events-none group-hover:pointer-events-auto"

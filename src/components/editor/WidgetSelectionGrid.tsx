@@ -179,7 +179,7 @@ export function WidgetSelectionGrid({ onNewWidget, onDownload }: WidgetSelection
                   Export
                 </Button>
 
-                <div className="flex items-center bg-background/50 dark:bg-zinc-800/40 rounded-2xl max-sm:rounded-xl border border-border/20 p-1 max-sm:px-1.5 max-sm:py-1 shadow-sm order-3 max-sm:col-span-2 max-sm:justify-between">
+                <div className="flex items-center bg-background/50 dark:bg-zinc-800/40 rounded-2xl max-sm:rounded-xl border border-border/20 p-1 max-sm:px-1.5 max-sm:py-1 shadow-sm order-3 max-sm:col-span-2 max-sm:justify-center max-sm:gap-2">
                   <Button
                     onClick={() => setShowImportMergeDialog(true)}
                     variant="ghost"
