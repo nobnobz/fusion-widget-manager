@@ -191,8 +191,8 @@ export function WidgetSelectionGrid({ onNewWidget, onDownload }: WidgetSelection
                 
                 <Button
                   onClick={() => setShowTrash(true)}
-                  variant="secondary"
-                  className="h-11 max-sm:h-12 px-6 max-sm:px-4 rounded-2xl max-sm:rounded-xl font-black uppercase tracking-wider text-[10px] border border-primary/20 bg-primary/10 text-primary hover:bg-primary/20 transition-all shadow-sm order-4 flex-1 md:flex-none relative"
+                  variant="ghost"
+                  className="h-11 max-sm:h-12 px-6 max-sm:px-4 rounded-2xl max-sm:rounded-xl font-black uppercase tracking-wider text-[10px] border border-destructive/20 bg-destructive/10 text-destructive hover:bg-destructive/20 transition-all shadow-sm order-4 flex-1 md:flex-none relative"
                   title="Trash"
                 >
                   <Trash2 className="size-4 mr-2" />
