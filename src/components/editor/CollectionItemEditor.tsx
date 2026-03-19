@@ -291,7 +291,7 @@ export function CollectionItemEditor({
                   </Button>
                 </div>
 
-                <div className="mt-3 flex items-center justify-between gap-2 border-t border-border/50 pt-2.5">
+                <div className="mt-3 flex items-center justify-end gap-2 border-t border-border/50 pt-2.5">
                   <Button 
                     variant="ghost" 
                     size="icon" 
