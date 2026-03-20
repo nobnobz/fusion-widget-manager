@@ -1,5 +1,12 @@
 # Changelog
 ...
+## [0.1.4] - 2026-03-20
+### Changed
+- **Renamed "Row" to "Classic Row"**: Improved clarity in the widget creation dialog and list view.
+- **Updated Descriptions**: 
+  - "Classic Row" now says: "Show a single catalog on your homescreen."
+  - "Collection" now says: "Create collection with different catalogs and custom images."
+- **Badge Label**: Updated the "Classic" badge label to "Classic Row" for consistency across the application.
 
 ## [0.1.3] - 2026-03-19
 ### Added

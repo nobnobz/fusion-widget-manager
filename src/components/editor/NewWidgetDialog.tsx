@@ -118,7 +118,7 @@ export function NewWidgetDialog({ isOpen, onOpenChange, onCreated }: NewWidgetDi
                   </div>
                   <div className="text-left">
                     <p className="font-bold text-sm">Collection</p>
-                    <p className="text-xs text-muted-foreground/60 font-medium leading-tight mt-1">Manual items with custom metadata</p>
+                    <p className="text-xs text-muted-foreground/60 font-medium leading-tight mt-1">Create collection with different catalogs and custom images.</p>
                   </div>
                   {type === 'collection.row' && (
                     <div className="absolute top-4 right-4 animate-in fade-in zoom-in">
@@ -144,8 +144,8 @@ export function NewWidgetDialog({ isOpen, onOpenChange, onCreated }: NewWidgetDi
                     <Layers className="size-5" />
                   </div>
                   <div className="text-left">
-                    <p className="font-bold text-sm">Row</p>
-                    <p className="text-xs text-muted-foreground/60 font-medium leading-tight mt-1">Dynamic stream from single catalog</p>
+                    <p className="font-bold text-sm">Classic Row</p>
+                    <p className="text-xs text-muted-foreground/60 font-medium leading-tight mt-1">Show a single catalog on your homescreen.</p>
                   </div>
                   {type === 'row.classic' && (
                     <div className="absolute top-4 right-4 animate-in fade-in zoom-in">

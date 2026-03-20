@@ -127,11 +127,8 @@ export function WidgetSelectionGrid({ onNewWidget, onDownload }: WidgetSelection
     <div className="flex-1 flex flex-col bg-transparent">
       <main className="max-w-5xl mx-auto w-full px-6 max-sm:px-4 py-12 max-sm:py-6 max-sm:pb-[calc(env(safe-area-inset-bottom)+2rem)]">
         <div className="flex flex-col gap-3 mb-10 max-sm:mb-6 text-center sm:text-left">
-          <div className="flex items-center justify-center sm:justify-start gap-3 max-sm:gap-2.5 max-sm:justify-start">
-             <div className="size-10 max-sm:size-9 rounded-2xl max-sm:rounded-[1.1rem] bg-primary/10 flex items-center justify-center shadow-inner">
-                <FileJson2 className="size-5 text-primary" />
-             </div>
-             <h1 className="text-4xl max-sm:text-[1.9rem] font-black tracking-tight text-foreground leading-none">Widget Manager</h1>
+          <div className="flex items-center justify-center sm:justify-start max-sm:justify-start">
+            <h1 className="text-4xl max-sm:text-[1.9rem] font-black tracking-tight text-foreground leading-none">Widget Manager</h1>
           </div>
           <p className="text-[15px] max-sm:text-[13px] text-muted-foreground/80 font-medium max-w-2xl leading-relaxed max-sm:text-left">
             Organize and manage your library of Fusion widgets. Drag to reorder, click to edit.

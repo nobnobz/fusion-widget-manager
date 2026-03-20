@@ -411,25 +411,6 @@ export function MainEditor() {
             <Button
               variant="ghost"
               size="icon"
-              className={cn(
-                "size-10 rounded-xl transition-all shadow-sm",
-                manifestUrl
-                  ? "bg-primary/10 text-primary hover:bg-primary/15"
-                  : "hover:bg-primary/10 hover:text-primary"
-              )}
-              onClick={() => setShowManifestModal(true)}
-              title={manifestUrl ? "Manifest synced" : "Sync manifest"}
-            >
-              <div className="relative">
-                <Globe className="size-5" />
-                {manifestUrl && (
-                  <div className="absolute -right-0.5 -top-0.5 size-2 rounded-full border border-background bg-green-500" />
-                )}
-              </div>
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
               className="size-10 rounded-xl hover:bg-primary/10 hover:text-primary transition-all shadow-sm"
               onClick={() => setShowHowToUse(true)}
               title="How to Use / Guide"
@@ -447,15 +428,6 @@ export function MainEditor() {
             </Button>
             <div className="w-px h-4 bg-border/60 mx-1" />
             <ThemeToggle />
-            <Button
-              variant="ghost"
-              size="icon"
-              className="size-10 rounded-xl hover:bg-muted/60 hover:text-foreground transition-all shadow-sm"
-              onClick={() => setShowRestartConfirm(true)}
-              title="Start over"
-            >
-              <RotateCcw className="size-5" />
-            </Button>
           </div>
 
           <div className="relative group mb-2 max-sm:mt-2">
@@ -687,62 +659,66 @@ export function MainEditor() {
 
       <main className="flex-1 flex flex-col min-w-0 relative z-10">
         <header className="sticky top-0 z-50 w-full px-3 pt-[calc(env(safe-area-inset-top)+0.75rem)] pb-2 sm:hidden">
-          <div className="rounded-[1.35rem] border border-border/60 bg-background/80 px-3 py-2.5 shadow-[0_10px_30px_-18px_rgba(0,0,0,0.35)] backdrop-blur-xl">
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex min-w-0 items-center gap-3">
-                <div className="relative size-14 shrink-0 overflow-hidden">
+          <div className="rounded-[1.6rem] border border-border/60 bg-background/80 px-4 py-3 shadow-[0_10px_30px_-18px_rgba(0,0,0,0.35)] backdrop-blur-xl">
+            <div className="flex items-center justify-between gap-3.5">
+              <div className="flex min-w-0 items-center gap-2.5">
+                <div className="relative size-12 shrink-0 overflow-hidden">
                   <Image src={LogoImage} alt="Logo" fill className="object-contain drop-shadow-sm" priority />
                 </div>
-                <div className="min-w-0">
-                  <h1 className="truncate text-[13px] font-black tracking-tight leading-none">Fusion Widget</h1>
-                  <span className="block truncate pt-1 text-[9px] font-black uppercase tracking-[0.22em] text-primary/90">
+                <div className="flex min-w-[8.75rem] shrink-0 flex-col -space-y-0.5">
+                  <h1 className="whitespace-nowrap text-sm font-black tracking-tight leading-none">Fusion Widget</h1>
+                  <span className="whitespace-nowrap pt-1 text-[11px] font-black uppercase tracking-[0.16em] text-primary/90 leading-none">
                     Manager
                   </span>
                 </div>
               </div>
 
               <div className="flex items-center gap-1">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className={cn(
-                    "h-9 w-9 rounded-xl border px-0 transition-all",
-                    manifestUrl
-                      ? "border-primary/20 bg-primary/10 text-primary hover:bg-primary/15"
-                      : "border-border/50 bg-background/30 text-muted-foreground/70 hover:bg-primary/5 hover:text-primary"
-                  )}
-                  onClick={() => setShowManifestModal(true)}
-                  title={manifestUrl ? "Manifest synced" : "Sync manifest"}
-                >
-                  <div className="relative">
-                    <Globe className="size-4" />
-                    {manifestUrl && (
-                      <div className="absolute -right-0.5 -top-0.5 size-2 rounded-full border border-background bg-green-500" />
+                {view !== 'welcome' && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className={cn(
+                      "h-8 w-8 rounded-lg border px-0 transition-all",
+                      manifestUrl
+                        ? "border-primary/20 bg-primary/10 text-primary hover:bg-primary/15"
+                        : "border-border/50 bg-background/30 text-muted-foreground/70 hover:bg-primary/5 hover:text-primary"
                     )}
-                  </div>
-                </Button>
+                    onClick={() => setShowManifestModal(true)}
+                    title={manifestUrl ? "Manifest synced" : "Sync manifest"}
+                  >
+                    <div className="relative">
+                      <Globe className="size-3.5" />
+                      {manifestUrl && (
+                        <div className="absolute -right-0.5 -top-0.5 size-2 rounded-full border border-background bg-green-500" />
+                      )}
+                    </div>
+                  </Button>
+                )}
 
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="size-9 rounded-xl border border-border/50 bg-background/30 text-primary/80 hover:bg-primary/5 hover:text-primary"
+                  className="size-8 rounded-lg border border-border/50 bg-background/30 text-primary/80 hover:bg-primary/5 hover:text-primary"
                   onClick={() => setShowHowToUse(true)}
                   title="Guide"
                 >
-                  <Book className="size-4" />
+                  <Book className="size-3.5" />
                 </Button>
 
-                <ThemeToggle className="size-9 rounded-xl bg-background/30 dark:bg-black/20 border-border/50 shadow-none" />
+                <ThemeToggle className="size-8 rounded-lg bg-background/30 dark:bg-black/20 border-border/50 shadow-none" />
 
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="size-9 rounded-xl border border-border/50 bg-background/30 text-muted-foreground/70 hover:bg-muted/60 hover:text-foreground"
-                  onClick={() => setShowRestartConfirm(true)}
-                  title="Start over"
-                >
-                  <RotateCcw className="size-4" />
-                </Button>
+                {view !== 'welcome' && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="size-8 rounded-lg border border-border/50 bg-background/30 text-muted-foreground/70 hover:bg-muted/60 hover:text-foreground"
+                    onClick={() => setShowRestartConfirm(true)}
+                    title="Start over"
+                  >
+                    <RotateCcw className="size-3.5" />
+                  </Button>
+                )}
               </div>
             </div>
           </div>
@@ -752,28 +728,25 @@ export function MainEditor() {
         {view !== 'welcome' && (
           <header className="sticky top-0 z-50 hidden sm:block w-full px-4 sm:px-6 py-4">
             <div className="max-w-[1400px] mx-auto">
-              <div className="flex items-center justify-between h-20 px-8 rounded-3xl bg-background/60 backdrop-blur-xl border border-border shadow-md transition-all">
-                <div className="flex items-center gap-6 group/logo">
-                  <div className="size-16 sm:size-20 relative flex items-center justify-center overflow-hidden transition-all duration-500 group-hover/logo:scale-110 group-hover/logo:rotate-3">
+              <div className="flex items-center justify-between gap-4 lg:gap-6 h-20 px-4 lg:px-8 rounded-3xl bg-background/60 backdrop-blur-xl border border-border shadow-md transition-all overflow-hidden">
+                <div className="flex min-w-0 items-center gap-3 lg:gap-6 group/logo">
+                  <div className="size-14 lg:size-20 relative flex shrink-0 items-center justify-center overflow-hidden transition-all duration-500 group-hover/logo:scale-110 group-hover/logo:rotate-3">
                     <Image src={LogoImage} alt="Logo" fill className="object-contain drop-shadow-sm" priority />
                   </div>
-                  <div className="flex flex-col -space-y-1">
-                    <h1 className="text-base font-black tracking-tight leading-none">Fusion Widget</h1>
-                    <span className="text-[12px] font-black tracking-[0.2em] text-primary uppercase opacity-90">Manager</span>
+                  <div className="flex min-w-[9.5rem] shrink-0 flex-col -space-y-1">
+                    <h1 className="whitespace-nowrap text-sm lg:text-base font-black tracking-tight leading-none">Fusion Widget</h1>
+                    <span className="whitespace-nowrap text-[11px] lg:text-[12px] font-black tracking-[0.16em] lg:tracking-[0.2em] text-primary uppercase opacity-90">Manager</span>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-1">
-                  {/* Removed standalone icon here */}
-
-
-                  <div className="w-px h-4 bg-border/60 mx-1" />
+                <div className="flex shrink-0 items-center gap-0.5 lg:gap-1">
+                  <div className="hidden xl:block w-px h-4 bg-border/60 mx-1" />
 
                   <Button
                     variant="ghost"
                     size="sm"
                     className={cn(
-                      "h-9 px-0 w-9 sm:w-auto sm:px-4 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all",
+                      "h-9 w-9 xl:w-auto px-0 xl:px-4 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all",
                       manifestUrl
                         ? "bg-primary/10 text-primary hover:bg-primary/15 border border-primary/20"
                         : "hover:bg-primary/5 hover:text-primary text-muted-foreground/70"
@@ -781,12 +754,12 @@ export function MainEditor() {
                     onClick={() => setShowManifestModal(true)}
                   >
                     <div className="relative">
-                      <Globe className={cn("size-4 sm:mr-2.5", manifestUrl && "text-primary")} />
+                      <Globe className={cn("size-4 xl:mr-2.5", manifestUrl && "text-primary")} />
                       {manifestUrl && (
-                        <div className="absolute -top-0.5 -right-0.5 sm:right-2 sm:top-0 size-2 bg-green-500 rounded-full border-2 border-background animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.5)]" />
+                        <div className="absolute -top-0.5 -right-0.5 xl:right-2 xl:top-0 size-2 bg-green-500 rounded-full border-2 border-background animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.5)]" />
                       )}
                     </div>
-                    <span className="hidden sm:inline">
+                    <span className="hidden xl:inline">
                       {manifestUrl ? 'Synced' : 'Sync'}
                     </span>
                   </Button>
@@ -794,31 +767,31 @@ export function MainEditor() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-8 px-0 w-8 sm:w-auto sm:px-3 rounded-lg text-[10px] font-bold uppercase tracking-wider hover:bg-primary/5 hover:text-primary transition-all text-primary/70"
+                    className="h-8 w-8 xl:w-auto px-0 xl:px-3 rounded-lg text-[10px] font-bold uppercase tracking-wider hover:bg-primary/5 hover:text-primary transition-all text-primary/70"
                     onClick={() => setShowHowToUse(true)}
                   >
-                    <Book className="size-3.5 sm:mr-2" />
-                    <span className="hidden sm:inline">Guide</span>
+                    <Book className="size-3.5 xl:mr-2" />
+                    <span className="hidden xl:inline">Guide</span>
                   </Button>
 
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-8 px-0 w-8 sm:w-auto sm:px-3 rounded-lg text-[10px] font-bold uppercase tracking-wider hover:bg-red-500/5 hover:text-red-500 transition-all text-red-500/70"
+                    className="h-8 w-8 xl:w-auto px-0 xl:px-3 rounded-lg text-[10px] font-bold uppercase tracking-wider hover:bg-red-500/5 hover:text-red-500 transition-all text-red-500/70"
                     onClick={() => window.open('https://ko-fi.com/botbidraiser', '_blank')}
                   >
-                    <Heart className="size-3.5 sm:mr-2 fill-current" />
-                    <span className="hidden sm:inline">Support</span>
+                    <Heart className="size-3.5 xl:mr-2 fill-current" />
+                    <span className="hidden xl:inline">Support</span>
                   </Button>
 
-                  <div className="w-[1px] h-4 bg-border mx-2" />
+                  <div className="w-[1px] h-4 bg-border mx-1 lg:mx-2" />
 
-                  <ThemeToggle />
+                  <ThemeToggle className="size-8 lg:size-10 rounded-lg lg:rounded-2xl" />
 
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="size-8 rounded-lg opacity-60 hover:opacity-100 transition-all"
+                    className="size-8 rounded-lg opacity-60 hover:opacity-100 transition-all shrink-0"
                     onClick={() => setShowRestartConfirm(true)}
                   >
                     <RotateCcw className="size-4" />
@@ -847,7 +820,7 @@ export function MainEditor() {
           
           <div className="flex flex-col items-center gap-1 opacity-20 select-none hover:opacity-50 transition-opacity">
             <div className="flex items-center gap-2 text-[8px] font-mono tracking-[0.2em] font-medium uppercase text-muted-foreground/80">
-              <span>V0.1.3</span>
+              <span>V0.1.4</span>
               <span className="size-1 rounded-full bg-foreground/20" />
               <span>BY BOT-BID-RAISER</span>
             </div>

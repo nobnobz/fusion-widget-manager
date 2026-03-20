@@ -215,7 +215,7 @@ export function SortableWidget({
                   ? "bg-primary/10 text-primary border border-primary/20" 
                   : "bg-indigo-500/10 text-indigo-500 border border-indigo-500/20"
               )}>
-                {widget.type.split('.')[0] === 'collection' ? 'Collection' : 'Classic'}
+                {widget.type.split('.')[0] === 'collection' ? 'Collection' : 'Classic Row'}
               </div>
               {widget.dataSource.kind === 'collection' && widget.dataSource.payload?.items && (
                 <div className="flex items-center gap-1.5 text-[9px] font-bold text-muted-foreground/40 uppercase tracking-[0.1em]">
@@ -328,7 +328,7 @@ export function SortableWidget({
                 "text-[9px] font-black uppercase tracking-[0.18em]",
                 widget.type.startsWith('collection') ? "text-primary/90" : "text-indigo-500/90"
               )}>
-                {widget.type.split('.')[0] === 'collection' ? 'Collection' : 'Classic'}
+                {widget.type.split('.')[0] === 'collection' ? 'Collection' : 'Classic Row'}
               </span>
               {widget.dataSource.kind === 'collection' && widget.dataSource.payload?.items && (
                 <div className="flex items-center gap-2">
