@@ -781,7 +781,7 @@ export function MainEditor() {
                     onClick={() => window.open('https://ko-fi.com/botbidraiser', '_blank')}
                   >
                     <Heart className="size-3.5 xl:mr-2 fill-current" />
-                    <span className="hidden xl:inline">Support</span>
+                    <span className="hidden xl:inline">Support My Work</span>
                   </Button>
 
                   <div className="w-[1px] h-4 bg-border mx-1 lg:mx-2" />

@@ -72,6 +72,14 @@ export interface TrashWidgetEntry {
   originalIndex: number;
 }
 
+export interface TrashCollectionItemEntry {
+  widgetId: string;
+  widgetTitle: string;
+  item: CollectionItem;
+  deletedAt: string;
+  originalIndex: number;
+}
+
 export interface FusionWidgetsConfig {
   exportType: 'fusionWidgets';
   exportVersion: number;

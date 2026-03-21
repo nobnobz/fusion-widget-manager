@@ -39,7 +39,17 @@ interface WidgetSelectionGridProps {
 }
 
 export function WidgetSelectionGrid({ onNewWidget, onDownload }: WidgetSelectionGridProps) {
-  const { widgets, trash, exportConfig, exportOmniConfig, reorderWidgets, restoreWidget, emptyTrash } = useConfig();
+  const {
+    widgets,
+    trash,
+    itemTrash,
+    exportConfig,
+    exportOmniConfig,
+    reorderWidgets,
+    restoreWidget,
+    restoreCollectionItem,
+    emptyTrash,
+  } = useConfig();
   const [exportMode, setExportMode] = useState<'fusion' | 'omni'>('fusion');
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -48,6 +58,8 @@ export function WidgetSelectionGrid({ onNewWidget, onDownload }: WidgetSelection
   const [showImportMergeDialog, setShowImportMergeDialog] = useState(false);
   const [showTrash, setShowTrash] = useState(false);
   const [copied, setCopied] = useState(false);
+  const trashCount = trash.length + itemTrash.length;
+  const hasTrash = trashCount > 0;
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -87,6 +99,46 @@ export function WidgetSelectionGrid({ onNewWidget, onDownload }: WidgetSelection
       return `Error: ${error instanceof Error ? error.message : 'Export failed.'}`;
     }
   }, [exportConfig, exportMode, exportOmniConfig, showPreview]);
+
+  const trashEntries = useMemo(() => {
+    const widgetEntries = trash.map((entry) => ({
+      kind: 'widget' as const,
+      key: `widget-${entry.widget.id}-${entry.deletedAt}`,
+      deletedAt: entry.deletedAt,
+      typeLabel: 'widget',
+      typeClassName: "bg-indigo-500/10 text-indigo-500 border border-indigo-500/20",
+      title: entry.widget.title,
+      subtitle: '',
+      canRestore: true,
+      restoreLabel: 'Restore',
+      onRestore: () => restoreWidget(entry.widget.id),
+    }));
+
+    const itemEntries = itemTrash.map((entry) => {
+      const parentExists = widgets.some((widget) => widget.id === entry.widgetId && widget.type === 'collection.row');
+      return {
+        kind: 'item' as const,
+        key: `item-${entry.widgetId}-${entry.item.id}-${entry.deletedAt}`,
+        deletedAt: entry.deletedAt,
+        typeLabel: 'item',
+        typeClassName: "bg-primary/10 text-primary border border-primary/20",
+        title: entry.item.name,
+        subtitle: `From ${entry.widgetTitle}`,
+        canRestore: parentExists,
+        restoreLabel: parentExists ? 'Restore' : 'Restore widget first',
+        onRestore: () => restoreCollectionItem(entry.widgetId, entry.item.id),
+      };
+    });
+
+    return [...widgetEntries, ...itemEntries].sort((a, b) => {
+      const kindRank = a.kind === b.kind ? 0 : a.kind === 'widget' ? -1 : 1;
+      if (kindRank !== 0) {
+        return kindRank;
+      }
+
+      return new Date(b.deletedAt).getTime() - new Date(a.deletedAt).getTime();
+    });
+  }, [itemTrash, restoreCollectionItem, restoreWidget, trash, widgets]);
 
   const handleCreateWidget = () => {
     if (onNewWidget) {
@@ -193,14 +245,19 @@ export function WidgetSelectionGrid({ onNewWidget, onDownload }: WidgetSelection
                 <Button
                   onClick={() => setShowTrash(true)}
                   variant="secondary"
-                  className="h-11 max-sm:h-12 px-6 max-sm:px-4 rounded-2xl max-sm:rounded-xl font-black uppercase tracking-wider text-[10px] border border-border/40 bg-muted/20 text-muted-foreground hover:bg-muted/30 transition-all shadow-sm order-4 flex-1 md:flex-none relative"
+                  className={cn(
+                    "h-11 max-sm:h-12 px-6 max-sm:px-4 rounded-2xl max-sm:rounded-xl font-black uppercase tracking-wider text-[10px] transition-all shadow-sm order-4 flex-1 md:flex-none relative",
+                    hasTrash
+                      ? "border border-destructive/20 bg-destructive/10 text-destructive hover:bg-destructive/15 shadow-destructive/10"
+                      : "border border-border/40 bg-muted/20 text-muted-foreground hover:bg-muted/30"
+                  )}
                   title="Trash"
                 >
-                  <Trash2 className="size-4 mr-2 opacity-60" />
+                  <Trash2 className={cn("size-4 mr-2", hasTrash ? "opacity-90" : "opacity-60")} />
                   Trash
-                  {trash.length > 0 && (
-                    <span className="absolute -top-1.5 -right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-muted-foreground/40 px-1 text-[8px] font-black text-white ring-2 ring-background animate-in zoom-in-50">
-                      {trash.length}
+                  {hasTrash && (
+                    <span className="absolute -top-1.5 -right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[8px] font-black text-destructive-foreground ring-2 ring-background animate-in zoom-in-50">
+                      {trashCount}
                     </span>
                   )}
                 </Button>
@@ -359,7 +416,7 @@ export function WidgetSelectionGrid({ onNewWidget, onDownload }: WidgetSelection
                 Trash
               </DialogTitle>
               <DialogDescription className="text-[13px] font-medium leading-relaxed max-w-md mt-1">
-                Deleted widgets stay here in local storage until you restore them or empty the trash.
+                Deleted widgets and collection items stay here in local storage until you restore them or empty the trash.
               </DialogDescription>
             </div>
           </DialogHeader>
@@ -367,9 +424,9 @@ export function WidgetSelectionGrid({ onNewWidget, onDownload }: WidgetSelection
           <div className="px-8 pb-8">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/50">
-                Deleted ({trash.length})
+                Deleted ({trashCount})
               </h3>
-              {trash.length > 0 && (
+              {hasTrash && (
                 <Button
                   variant="ghost"
                   size="sm"
@@ -382,7 +439,7 @@ export function WidgetSelectionGrid({ onNewWidget, onDownload }: WidgetSelection
               )}
             </div>
 
-            {trash.length === 0 ? (
+            {!hasTrash ? (
               <div className="rounded-3xl border border-dashed border-border/40 bg-muted/5 py-16 text-center">
                 <div className="flex flex-col items-center gap-4">
                   <div className="rounded-2xl bg-muted/10 p-4">
@@ -395,33 +452,46 @@ export function WidgetSelectionGrid({ onNewWidget, onDownload }: WidgetSelection
               </div>
             ) : (
               <div className="flex max-h-[440px] flex-col gap-3 overflow-y-auto pr-2 custom-scrollbar">
-                {trash.map((entry) => (
+                {trashEntries.map((entry) => (
                   <div
-                    key={`${entry.widget.id}-${entry.deletedAt}`}
+                    key={entry.key}
                     className="group flex items-center justify-between gap-4 rounded-3xl border border-border/40 bg-muted/5 px-6 py-5 hover:bg-muted/10 hover:border-border/60 transition-all duration-300 backdrop-blur-sm"
                   >
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 mb-1">
-                        <span className="text-[10px] font-black uppercase tracking-wider text-primary opacity-60">
-                          {entry.widget.type.split('.').pop()}
+                        <span className={cn(
+                          "inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.15em] shadow-sm",
+                          entry.typeClassName
+                        )}>
+                          {entry.typeLabel}
                         </span>
-                        <div className="size-1 rounded-full bg-border" />
-                        <span className="text-[9px] font-bold text-muted-foreground/50">
-                          {new Date(entry.deletedAt).toLocaleDateString()} at {new Date(entry.deletedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        </span>
+                        {entry.subtitle && (
+                          <>
+                            <div className="size-1 rounded-full bg-border" />
+                            <span className="truncate text-[9px] font-bold text-muted-foreground/60">
+                              {entry.subtitle}
+                            </span>
+                          </>
+                        )}
                       </div>
                       <p className="truncate text-base font-bold text-foreground tracking-tight group-hover:text-primary transition-colors">
-                        {entry.widget.title}
+                        {entry.title}
                       </p>
                     </div>
                     <Button
                       size="sm"
                       variant="outline"
-                      className="rounded-2xl shrink-0 h-9 px-5 border-border/60 bg-background/50 text-[11px] font-black uppercase tracking-widest hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all active:scale-95 shadow-sm"
-                      onClick={() => restoreWidget(entry.widget.id)}
+                      className={cn(
+                        "rounded-2xl shrink-0 h-9 px-5 border-border/60 bg-background/50 text-[11px] font-black uppercase tracking-widest transition-all shadow-sm",
+                        entry.canRestore
+                          ? "hover:bg-primary hover:text-primary-foreground hover:border-primary active:scale-95"
+                          : "text-muted-foreground/40"
+                      )}
+                      onClick={entry.onRestore}
+                      disabled={!entry.canRestore}
                     >
                       <RotateCcw className="size-3.5 mr-2" />
-                      Restore
+                      {entry.restoreLabel}
                     </Button>
                   </div>
                 ))}

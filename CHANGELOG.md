@@ -1,6 +1,12 @@
 # Changelog
 
 ## [0.1.5] - 2026-03-21
+### Added
+- **Collection Item Trash**: Introduced a trash system for individual collection items.
+  - Deleted items are now moved to a new `itemTrash` storage instead of being permanently removed.
+  - Items can be restored back to their original parent widget with their original order preserved.
+  - Unified Trash UI now shows both deleted widgets and individual items.
+
 ### Fixed
 - **Missing Items**: Bug fixes for missing items in certain configurations.
 - **Widget Recognition**: Improved logic for recognizing missing widgets properly.

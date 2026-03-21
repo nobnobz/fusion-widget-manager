@@ -194,6 +194,43 @@ test('normalizeLoadedState preserves trash entries', () => {
   assert.equal(state.trash[0]?.originalIndex, 2);
 });
 
+test('normalizeLoadedState preserves collection item trash entries', () => {
+  const state = normalizeLoadedState({
+    widgets: [],
+    itemTrash: [
+      {
+        widgetId: 'collection-1',
+        widgetTitle: 'Collection',
+        item: {
+          id: 'item-99',
+          name: 'Action',
+          hideTitle: false,
+          layout: 'Wide',
+          backgroundImageURL: '',
+          dataSources: [
+            {
+              kind: 'addonCatalog',
+              payload: {
+                addonId: 'https://example.com/manifest.json',
+                catalogId: 'movie::catalog-one',
+                catalogType: 'movie',
+              },
+            },
+          ],
+        },
+        deletedAt: '2026-03-20T10:00:00.000Z',
+        originalIndex: 1,
+      },
+    ],
+  });
+
+  assert.equal(state.itemTrash.length, 1);
+  assert.equal(state.itemTrash[0]?.widgetId, 'collection-1');
+  assert.equal(state.itemTrash[0]?.widgetTitle, 'Collection');
+  assert.equal(state.itemTrash[0]?.item.name, 'Action');
+  assert.equal(state.itemTrash[0]?.originalIndex, 1);
+});
+
 test('Fusion export derives requiredAddons from collection item dataSources', () => {
   const config = buildConfig([
     buildCollectionWidget({

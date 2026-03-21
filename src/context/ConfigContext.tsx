@@ -5,6 +5,7 @@ import {
   AIOMetadataCatalog,
   CollectionItem,
   FusionWidgetsConfig,
+  TrashCollectionItemEntry,
   TrashWidgetEntry,
   Widget,
 } from '@/lib/types/widget';
@@ -33,6 +34,7 @@ interface MergeResult {
 interface ConfigContextType {
   widgets: Widget[];
   trash: TrashWidgetEntry[];
+  itemTrash: TrashCollectionItemEntry[];
   manifestUrl: string;
   setManifestUrl: (url: string) => void;
   replacePlaceholder: boolean;
@@ -51,6 +53,7 @@ interface ConfigContextType {
   addCollectionItem: (widgetId: string, item: CollectionItem) => void;
   updateCollectionItem: (widgetId: string, itemId: string, updates: Partial<CollectionItem>) => void;
   removeCollectionItem: (widgetId: string, itemId: string) => void;
+  restoreCollectionItem: (widgetId: string, itemId: string) => void;
   reorderCollectionItems: (widgetId: string, startIndex: number, endIndex: number) => void;
   syncManifest: (providedCatalogs?: AIOMetadataCatalog[], providedUrl?: string, providedReplace?: boolean) => void;
   clearConfig: () => void;
@@ -72,6 +75,7 @@ function buildStoredState(state: AppState) {
   return {
     widgets: state.widgets,
     trash: state.trash,
+    itemTrash: state.itemTrash,
     manifestUrl: state.manifestUrl,
     replacePlaceholder: state.replacePlaceholder,
     manifestCatalogs: state.manifestCatalogs,
@@ -82,6 +86,7 @@ function buildStoredState(state: AppState) {
 export function ConfigProvider({ children }: { children: React.ReactNode }) {
   const [widgets, setWidgets] = useState<Widget[]>([]);
   const [trash, setTrash] = useState<TrashWidgetEntry[]>([]);
+  const [itemTrash, setItemTrash] = useState<TrashCollectionItemEntry[]>([]);
   const [manifestUrl, setManifestUrl] = useState('');
   const [replacePlaceholder, setReplacePlaceholder] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
@@ -97,9 +102,10 @@ export function ConfigProvider({ children }: { children: React.ReactNode }) {
       const normalized = normalizeLoadedState(JSON.parse(saved));
       setWidgets(normalized.widgets);
       setTrash(normalized.trash);
+      setItemTrash(normalized.itemTrash);
       setManifestUrl(normalized.manifestUrl);
       setReplacePlaceholder(normalized.replacePlaceholder);
-      if (normalized.widgets.length > 0 || normalized.trash.length > 0) {
+      if (normalized.widgets.length > 0 || normalized.trash.length > 0 || normalized.itemTrash.length > 0) {
         setView('selection');
       }
     } catch (error) {
@@ -128,6 +134,7 @@ export function ConfigProvider({ children }: { children: React.ReactNode }) {
         buildStoredState({
           widgets,
           trash,
+          itemTrash,
           manifestUrl,
           replacePlaceholder,
           manifestCatalogs: [],
@@ -135,7 +142,7 @@ export function ConfigProvider({ children }: { children: React.ReactNode }) {
         })
       )
     );
-  }, [widgets, trash, manifestUrl, replacePlaceholder]);
+  }, [widgets, trash, itemTrash, manifestUrl, replacePlaceholder]);
 
   useEffect(() => {
     localStorage.setItem('fusion-widget-manifest-catalogs', JSON.stringify(manifestCatalogs));
@@ -158,8 +165,8 @@ export function ConfigProvider({ children }: { children: React.ReactNode }) {
 
   const replaceConfig = useCallback((config: FusionWidgetsConfig) => {
     setWidgets(config.widgets);
-    setView(config.widgets.length > 0 || trash.length > 0 ? 'selection' : 'welcome');
-  }, [trash.length]);
+    setView(config.widgets.length > 0 || trash.length > 0 || itemTrash.length > 0 ? 'selection' : 'welcome');
+  }, [itemTrash.length, trash.length]);
 
   const importConfig = useCallback(
     (config: unknown) => {
@@ -305,6 +312,7 @@ export function ConfigProvider({ children }: { children: React.ReactNode }) {
 
   const emptyTrash = useCallback(() => {
     setTrash([]);
+    setItemTrash([]);
     setView((current) => (widgets.length > 0 ? current : 'welcome'));
   }, [widgets.length]);
 
@@ -394,11 +402,66 @@ export function ConfigProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const removeCollectionItem = useCallback((widgetId: string, itemId: string) => {
+    const widget = widgets.find((entry) => entry.id === widgetId && entry.type === 'collection.row');
+    if (!widget || widget.type !== 'collection.row') return;
+
+    const originalIndex = widget.dataSource.payload.items.findIndex((item) => item.id === itemId);
+    if (originalIndex === -1) return;
+
+    const itemToTrash = widget.dataSource.payload.items[originalIndex];
+    if (!itemToTrash) return;
+
+    setWidgets((prev) =>
+      prev.map((entry) => {
+        if (entry.id !== widgetId || entry.type !== 'collection.row') {
+          return entry;
+        }
+
+        return {
+          ...entry,
+          dataSource: {
+            ...entry.dataSource,
+            payload: {
+              ...entry.dataSource.payload,
+              items: entry.dataSource.payload.items.filter((item) => item.id !== itemId),
+            },
+          },
+        };
+      })
+    );
+    setItemTrash((prev) => [
+      {
+        widgetId,
+        widgetTitle: widget.title,
+        item: itemToTrash,
+        deletedAt: new Date().toISOString(),
+        originalIndex,
+      },
+      ...prev.filter((entry) => !(entry.widgetId === widgetId && entry.item.id === itemId)),
+    ]);
+    setView('selection');
+  }, [widgets]);
+
+  const restoreCollectionItem = useCallback((widgetId: string, itemId: string) => {
+    const entry = itemTrash.find((item) => item.widgetId === widgetId && item.item.id === itemId);
+    if (!entry) return;
+
+    const parentWidget = widgets.find((widget) => widget.id === widgetId && widget.type === 'collection.row');
+    if (!parentWidget || parentWidget.type !== 'collection.row') return;
+
+    const restoredItem = parentWidget.dataSource.payload.items.some((item) => item.id === entry.item.id)
+      ? { ...entry.item, id: crypto.randomUUID() }
+      : entry.item;
+
     setWidgets((prev) =>
       prev.map((widget) => {
         if (widget.id !== widgetId || widget.type !== 'collection.row') {
           return widget;
         }
+
+        const insertAt = Math.min(entry.originalIndex, widget.dataSource.payload.items.length);
+        const items = [...widget.dataSource.payload.items];
+        items.splice(insertAt, 0, restoredItem);
 
         return {
           ...widget,
@@ -406,13 +469,15 @@ export function ConfigProvider({ children }: { children: React.ReactNode }) {
             ...widget.dataSource,
             payload: {
               ...widget.dataSource.payload,
-              items: widget.dataSource.payload.items.filter((item) => item.id !== itemId),
+              items,
             },
           },
         };
       })
     );
-  }, []);
+    setItemTrash((prev) => prev.filter((item) => !(item.widgetId === widgetId && item.item.id === itemId)));
+    setView('selection');
+  }, [itemTrash, widgets]);
 
   const reorderCollectionItems = useCallback((widgetId: string, startIndex: number, endIndex: number) => {
     if (startIndex < 0 || endIndex < 0 || startIndex === endIndex) {
@@ -504,6 +569,7 @@ export function ConfigProvider({ children }: { children: React.ReactNode }) {
   const clearConfig = useCallback(() => {
     setWidgets([]);
     setTrash([]);
+    setItemTrash([]);
     setReplacePlaceholder(false);
     setManifestContent('');
     setView('welcome');
@@ -514,6 +580,7 @@ export function ConfigProvider({ children }: { children: React.ReactNode }) {
       value={{
         widgets,
         trash,
+        itemTrash,
         manifestUrl,
         setManifestUrl,
         replacePlaceholder,
@@ -532,6 +599,7 @@ export function ConfigProvider({ children }: { children: React.ReactNode }) {
         addCollectionItem,
         updateCollectionItem,
         removeCollectionItem,
+        restoreCollectionItem,
         reorderCollectionItems,
         syncManifest,
         clearConfig,
