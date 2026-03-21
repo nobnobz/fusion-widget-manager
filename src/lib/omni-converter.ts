@@ -95,15 +95,38 @@ export function normalizeOmniSnapshot(snapshot: any): NormalizedOmniModel {
   const mainGroupOrder = values.main_group_order || [];
   const mainCatalogGroups = values.main_catalog_groups || {};
   const subgroupOrder = values.subgroup_order || {};
-  
+
+  const orderedGroupIds: string[] = [];
+  const seenGroupIds = new Set<string>();
+
   mainGroupOrder.forEach((groupId: string) => {
+    if (!groupId || seenGroupIds.has(groupId)) return;
+    seenGroupIds.add(groupId);
+    orderedGroupIds.push(groupId);
+  });
+
+  Object.keys(mainCatalogGroups).forEach((groupId) => {
+    if (!groupId || seenGroupIds.has(groupId)) return;
+    seenGroupIds.add(groupId);
+    orderedGroupIds.push(groupId);
+  });
+
+  orderedGroupIds.forEach((groupId: string) => {
     const group = mainCatalogGroups[groupId];
     if (group) {
+      const subgroupNames = Array.isArray(group.subgroupNames)
+        ? group.subgroupNames
+        : Array.isArray(group.catalog_group_order)
+          ? group.catalog_group_order
+          : Array.isArray(group.subgroup_order)
+            ? group.subgroup_order
+            : [];
+
       mainGroups.push({
         id: groupId,
         name: group.name || 'Untitled Group',
         posterType: group.posterType || group.poster_type || 'poster',
-        subgroups: subgroupOrder[groupId] || group.catalog_group_order || group.subgroup_order || group.subgroupNames || []
+        subgroups: subgroupNames
       });
     }
 
@@ -168,6 +191,20 @@ function getCatalogType(normalizedId: string): string {
   else if (normalizedId.startsWith('anime::')) guessedType = 'series'; // Typically anime maps to series in Fusion
   
   return resolveFusionCatalogType(normalizedId, guessedType);
+}
+
+function isInternalOmniCatalogId(omniId: string): boolean {
+  const trimmed = String(omniId || '').trim().toLowerCase();
+  if (!trimmed) return false;
+
+  const separatorIndex = trimmed.indexOf(':');
+  const catalogKey = separatorIndex >= 0 ? trimmed.slice(separatorIndex + 1) : trimmed;
+
+  return (
+    catalogKey.startsWith('omni.ai.search.') ||
+    catalogKey === 'aisearch.top' ||
+    /^aisearch\.home\.\d+\.(movie|series|anime)$/.test(catalogKey)
+  );
 }
 
 /**
@@ -261,6 +298,9 @@ export function convertOmniToFusion(snapshot: any): FusionWidgetsConfig {
   standaloneCatalogs.forEach(omniId => {
     // 1. Filter out structural catalogs (top row items not in groups)
     if (model.hiddenCatalogIds.includes(omniId)) return;
+
+    // 1b. Skip internal helper catalogs that Omni keeps in ordering fields.
+    if (isInternalOmniCatalogId(omniId)) return;
     
     // 2. Heuristic: filter out catalogs with clear structural names
     const customName = model.customNames[omniId] || '';

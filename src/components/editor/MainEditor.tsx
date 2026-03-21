@@ -820,7 +820,7 @@ export function MainEditor() {
           
           <div className="flex flex-col items-center gap-1 opacity-20 select-none hover:opacity-50 transition-opacity">
             <div className="flex items-center gap-2 text-[8px] font-mono tracking-[0.2em] font-medium uppercase text-muted-foreground/80">
-              <span>V0.1.4</span>
+              <span>V0.1.5</span>
               <span className="size-1 rounded-full bg-foreground/20" />
               <span>BY BOT-BID-RAISER</span>
             </div>

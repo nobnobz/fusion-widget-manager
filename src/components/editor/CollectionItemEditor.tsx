@@ -8,7 +8,6 @@ import { useConfig } from '@/context/ConfigContext';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { findCatalog } from '@/lib/config-utils';
 import { 
   Trash2, 
   Copy, 
@@ -30,6 +29,7 @@ import { useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { DataSourceEditor } from './DataSourceEditor';
 import { MANIFEST_PLACEHOLDER } from '@/lib/config-utils';
+import { countInvalidCatalogsInItem } from '@/lib/catalog-validation';
 
 export function CollectionItemEditor({ 
   item, 
@@ -55,15 +55,11 @@ export function CollectionItemEditor({
     [item.dataSources]
   );
   
-  const hasInvalidCatalog = useMemo(() => {
-    return item.dataSources.some(ds => {
-      const { addonId, catalogId } = ds.payload || {};
-      if (!addonId?.toUpperCase().includes('AIOMETADATA')) return false;
-      if (!catalogId || catalogId === '') return true;
-      
-      return !findCatalog(manifestCatalogs, catalogId);
-    });
-  }, [item.dataSources, manifestCatalogs]);
+  const invalidCatalogCount = useMemo(
+    () => countInvalidCatalogsInItem(item, manifestCatalogs),
+    [item, manifestCatalogs]
+  );
+  const hasInvalidCatalog = invalidCatalogCount > 0;
 
   const {
     attributes,
@@ -310,6 +306,14 @@ export function CollectionItemEditor({
                     <span className="text-[9px] font-bold uppercase tracking-[0.14em] text-muted-foreground/50">
                       {item.dataSources.length} Source{item.dataSources.length === 1 ? '' : 's'}
                     </span>
+                    {hasInvalidCatalog && (
+                      <>
+                        <div className="size-1 rounded-full bg-amber-500/70" />
+                        <span className="text-[9px] font-bold uppercase tracking-[0.14em] text-amber-500">
+                          {invalidCatalogCount} Invalid
+                        </span>
+                      </>
+                    )}
                   </div>
 
                   <div className="flex items-center gap-2">

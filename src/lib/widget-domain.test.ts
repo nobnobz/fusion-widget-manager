@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { exportConfigToFusion } from './config-utils';
-import { convertFusionToOmni, validateOmniExport } from './omni-converter';
+import { convertFusionToOmni, convertOmniToFusion, validateOmniExport } from './omni-converter';
 import {
   MANIFEST_PLACEHOLDER,
   mergeWidgetLists,
@@ -289,4 +289,168 @@ test('standalone rows are representable in Omni export', () => {
   assert.equal(typeof snapshot, 'object');
   assert.ok(Array.isArray(snapshot.includedKeys));
   assert.ok(snapshot.values);
+});
+
+test('convertOmniToFusion keeps valid standalone rows', () => {
+  const converted = convertOmniToFusion({
+    values: {
+      main_group_order: [],
+      main_catalog_groups: {},
+      catalog_groups: {},
+      selected_catalogs: ['movie:catalog-one'],
+      catalog_ordering: [],
+      custom_catalog_names: {
+        'movie:catalog-one': 'Catalog One',
+      },
+      catalog_group_image_urls: {},
+      landscape_catalogs: [],
+      small_catalogs: [],
+      top_row_catalogs: [],
+      small_toprow_catalogs: [],
+    },
+  });
+
+  assert.equal(converted.widgets.length, 1);
+  assert.equal(converted.widgets[0]?.type, 'row.classic');
+  assert.equal(converted.widgets[0]?.title, 'Catalog One');
+});
+
+test('convertOmniToFusion excludes internal omni helper catalogs from standalone rows', () => {
+  const converted = convertOmniToFusion({
+    values: {
+      main_group_order: ['group-1'],
+      main_catalog_groups: {
+        'group-1': {
+          name: 'Movies',
+          posterType: 'Landscape',
+          subgroupNames: ['Netflix'],
+        },
+      },
+      subgroup_order: {},
+      catalog_groups: {
+        Netflix: ['movie:streaming.nfx'],
+      },
+      selected_catalogs: ['series:aisearch.home.1.series', 'movie:aisearch.home.0.movie'],
+      catalog_ordering: [
+        'series:top-10-tv-shows-this-week-series',
+        'movie:top-movies-of-the-week-movie',
+        'movie:top-10-movie',
+        'movie:omni.ai.search.catalog.movie',
+        'series:omni.ai.search.catalog.series',
+        'movie:aisearch.top',
+        'series:aisearch.top',
+        'movie:aisearch.home.0.movie',
+        'series:aisearch.home.1.series',
+      ],
+      custom_catalog_names: {},
+      catalog_group_image_urls: {},
+      landscape_catalogs: ['movie:omni.ai.search.catalog.movie'],
+      small_catalogs: [],
+      top_row_catalogs: [
+        'movie:top-10-movie',
+        'movie:top-movies-of-the-week-movie',
+        'series:top-10-tv-shows-this-week-series',
+      ],
+      small_toprow_catalogs: [],
+    },
+  });
+
+  assert.deepEqual(
+    converted.widgets.map((widget) => widget.title),
+    ['Movies']
+  );
+});
+
+test('convertOmniToFusion keeps all subgroupNames when subgroup_order is partial', () => {
+  const converted = convertOmniToFusion({
+    values: {
+      main_group_order: ['group-1'],
+      main_catalog_groups: {
+        'group-1': {
+          name: 'Steaming Services',
+          posterType: 'Landscape',
+          subgroupNames: ['Starz', 'Apple TV', 'Disney+', 'Peacock ', 'Prime ', 'Netflix', 'Discovery +', 'Hulu', 'HBO', 'Paramount', 'TLC'],
+        },
+      },
+      subgroup_order: {
+        'group-1': ['Disney+', 'Netflix', 'HBO', 'Discovery +', 'Paramont', 'Prime '],
+      },
+      catalog_groups: {
+        Starz: ['series:stz'],
+        'Apple TV': ['series:atp'],
+        'Disney+': ['series:dnp'],
+        'Peacock ': ['series:pcp'],
+        'Prime ': ['series:amp'],
+        Netflix: ['series:nfx'],
+        'Discovery +': ['series:discovery-tv-series'],
+        Hulu: ['series:streaming.hlu'],
+        HBO: ['series:hbm'],
+        Paramount: ['series:pplus'],
+        TLC: ['series:tlc-network-series'],
+      },
+      selected_catalogs: [],
+      catalog_ordering: [],
+      custom_catalog_names: {},
+      catalog_group_image_urls: {},
+      landscape_catalogs: [],
+      small_catalogs: [],
+      top_row_catalogs: [],
+      small_toprow_catalogs: [],
+    },
+  });
+
+  assert.equal(converted.widgets.length, 1);
+  const widget = converted.widgets[0];
+  if (!widget || widget.type !== 'collection.row') {
+    throw new Error('Expected collection widget.');
+  }
+
+  assert.deepEqual(
+    widget.dataSource.payload.items.map((item) => item.name),
+    ['Disney+', 'Netflix', 'HBO', 'Discovery +', 'Prime ', 'Starz', 'Apple TV', 'Peacock ', 'Hulu', 'Paramount', 'TLC']
+  );
+});
+
+test('convertOmniToFusion appends main catalog groups missing from main_group_order', () => {
+  const converted = convertOmniToFusion({
+    values: {
+      main_group_order: ['services', 'movies'],
+      main_catalog_groups: {
+        collections: {
+          name: 'Collections ',
+          posterType: 'Poster',
+          subgroupNames: ['Marvel'],
+        },
+        movies: {
+          name: 'Movies',
+          posterType: 'Landscape',
+          subgroupNames: ['Horror'],
+        },
+        services: {
+          name: 'Steaming Services',
+          posterType: 'Landscape',
+          subgroupNames: ['Netflix'],
+        },
+      },
+      subgroup_order: {},
+      catalog_groups: {
+        Marvel: ['movie:marvel-movies-mdblist-movie'],
+        Horror: ['movie:latest-hd-horror-movies-top-rated-from-1980-to-today-movie'],
+        Netflix: ['series:nfx'],
+      },
+      selected_catalogs: [],
+      catalog_ordering: [],
+      custom_catalog_names: {},
+      catalog_group_image_urls: {},
+      landscape_catalogs: [],
+      small_catalogs: [],
+      top_row_catalogs: [],
+      small_toprow_catalogs: [],
+    },
+  });
+
+  assert.deepEqual(
+    converted.widgets.map((widget) => widget.title),
+    ['Steaming Services', 'Movies', 'Collections ']
+  );
 });

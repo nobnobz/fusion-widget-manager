@@ -6,12 +6,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { GripVertical, Copy, Trash2, ChevronRight, Check, Pencil, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { AddonCatalogDataSource, Widget } from '@/lib/types/widget';
+import { Widget } from '@/lib/types/widget';
 import { useConfig } from '@/context/ConfigContext';
 import { 
   processWidgetWithManifest, 
   convertEditorWidgetToFusionWidget,
 } from '@/lib/config-utils';
+import { countInvalidCatalogsInWidget } from '@/lib/catalog-validation';
 import { useState }
  from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -43,24 +44,8 @@ export function SortableWidget({
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(widget.title);
 
-  const hasInvalidCatalog = (() => {
-    const checkDS = (ds: AddonCatalogDataSource) => {
-      if (!ds.payload?.addonId?.toUpperCase().includes('AIOMETADATA')) return false;
-      // If catalogId is missing or empty, it's invalid
-      if (!ds.payload?.catalogId || ds.payload.catalogId === '') return true;
-      return !manifestCatalogs.some(c => `${c.type}::${c.id}` === ds.payload.catalogId);
-    };
-
-    if (widget.type === 'collection.row') {
-      return widget.dataSource.payload.items.some(item => 
-        item.dataSources.some(checkDS)
-      );
-    }
-    if (widget.type === 'row.classic') {
-      return checkDS(widget.dataSource);
-    }
-    return false;
-  })();
+  const invalidCatalogCount = countInvalidCatalogsInWidget(widget, manifestCatalogs);
+  const hasInvalidCatalog = invalidCatalogCount > 0;
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -223,6 +208,12 @@ export function SortableWidget({
                   <span>{widget.dataSource.payload.items.length} items</span>
                 </div>
               )}
+              {hasInvalidCatalog && (
+                <div className="flex items-center gap-1.5 text-[9px] font-bold text-amber-500 uppercase tracking-[0.1em]">
+                  <div className="size-1 rounded-full bg-amber-500/60" />
+                  <span>{invalidCatalogCount} invalid</span>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -335,6 +326,14 @@ export function SortableWidget({
                   <div className="size-1 rounded-full bg-border" />
                   <span className="text-[9px] font-bold uppercase tracking-[0.14em] text-muted-foreground/70">
                     {widget.dataSource.payload.items.length} Items
+                  </span>
+                </div>
+              )}
+              {hasInvalidCatalog && (
+                <div className="flex items-center gap-2">
+                  <div className="size-1 rounded-full bg-amber-500/70" />
+                  <span className="text-[9px] font-bold uppercase tracking-[0.14em] text-amber-500">
+                    {invalidCatalogCount} Invalid
                   </span>
                 </div>
               )}
