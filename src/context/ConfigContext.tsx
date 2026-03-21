@@ -56,6 +56,7 @@ interface ConfigContextType {
   restoreCollectionItem: (widgetId: string, itemId: string) => void;
   reorderCollectionItems: (widgetId: string, startIndex: number, endIndex: number) => void;
   syncManifest: (providedCatalogs?: AIOMetadataCatalog[], providedUrl?: string, providedReplace?: boolean) => void;
+  disconnectManifest: () => void;
   clearConfig: () => void;
   isDragging: boolean;
   setIsDragging: (isDragging: boolean) => void;
@@ -566,6 +567,13 @@ export function ConfigProvider({ children }: { children: React.ReactNode }) {
     return catalogs;
   }, []);
 
+  const disconnectManifest = useCallback(() => {
+    setManifestUrl('');
+    setManifestCatalogs([]);
+    setManifestContent('');
+    setReplacePlaceholder(false);
+  }, []);
+
   const clearConfig = useCallback(() => {
     setWidgets([]);
     setTrash([]);
@@ -602,6 +610,7 @@ export function ConfigProvider({ children }: { children: React.ReactNode }) {
         restoreCollectionItem,
         reorderCollectionItems,
         syncManifest,
+        disconnectManifest,
         clearConfig,
         isDragging,
         setIsDragging,

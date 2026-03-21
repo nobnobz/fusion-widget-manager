@@ -60,15 +60,15 @@ export function ImportMergeDialog({ open, onOpenChange }: ImportMergeDialogProps
         setJsonInput('');
       }
     }}>
-      <DialogContent className="sm:max-w-[550px] rounded-[3rem] border border-border/40 bg-background/95 backdrop-blur-2xl shadow-2xl p-0 overflow-hidden max-sm:w-[calc(100vw-1rem)] max-sm:max-w-[calc(100vw-1rem)] max-sm:rounded-[1.9rem] [&>button:last-child]:top-8 [&>button:last-child]:right-8 [&>button:last-child]:size-10 [&>button:last-child]:rounded-2xl [&>button:last-child]:bg-muted/10 [&>button:last-child]:hover:bg-muted/20 [&>button:last-child]:transition-all [&>button:last-child]:border-none [&>button:last-child]:flex [&>button:last-child]:items-center [&>button:last-child]:justify-center max-sm:[&>button:last-child]:top-4 max-sm:[&>button:last-child]:right-4 max-sm:[&>button:last-child]:size-9 max-sm:[&>button:last-child]:rounded-xl">
-        <div className="p-10 pt-12 max-sm:p-5 max-sm:pt-6">
-          <DialogHeader className="space-y-6 items-start text-left">
-            <div className="size-16 rounded-[1.5rem] bg-primary/10 border border-primary/20 flex items-center justify-center text-primary mb-2 shadow-inner max-sm:size-12 max-sm:rounded-[1rem]">
-               <CloudUpload className="size-8 max-sm:size-6" />
+      <DialogContent className="sm:max-w-[550px] rounded-[2.5rem] border border-border/40 bg-background/95 backdrop-blur-2xl shadow-2xl p-0 overflow-hidden max-sm:w-[calc(100vw-1rem)] max-sm:max-w-[calc(100vw-1rem)] max-sm:rounded-[1.9rem] [&>button:last-child]:top-8 [&>button:last-child]:right-8 [&>button:last-child]:size-9 [&>button:last-child]:rounded-full [&>button:last-child]:bg-muted/30 [&>button:last-child]:hover:bg-muted/50 [&>button:last-child]:transition-all [&>button:last-child]:border-none [&>button:last-child]:flex [&>button:last-child]:items-center [&>button:last-child]:justify-center max-sm:[&>button:last-child]:top-4 max-sm:[&>button:last-child]:right-4">
+        <div className="p-8 pt-10 max-sm:p-5 max-sm:pt-6">
+          <DialogHeader className="space-y-4 items-start text-left">
+            <div className="size-14 rounded-2xl bg-primary/5 border border-primary/10 flex items-center justify-center text-primary mb-2 shadow-sm max-sm:size-12 max-sm:rounded-[1rem]">
+               <CloudUpload className="size-7 max-sm:size-6" />
             </div>
-            <div className="space-y-2">
-              <DialogTitle className="text-3xl font-black tracking-tighter max-sm:text-2xl">Merge Import</DialogTitle>
-              <DialogDescription className="text-muted-foreground/80 text-[13px] font-medium leading-relaxed max-w-[360px] max-sm:text-xs max-sm:max-w-none">
+            <div className="space-y-1">
+              <DialogTitle className="text-2xl font-black tracking-tight max-sm:text-xl">Merge Import</DialogTitle>
+              <DialogDescription className="text-muted-foreground/60 text-xs font-medium leading-relaxed max-w-[360px] max-sm:text-[11px] max-sm:max-w-none">
                 Paste your Fusion JSON here. Existing widgets with the same title and type will be skipped automatically.
               </DialogDescription>
             </div>

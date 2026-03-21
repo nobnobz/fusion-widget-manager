@@ -7,7 +7,8 @@ import {
   DialogHeader, 
   DialogTitle, 
   DialogTrigger,
-  DialogFooter
+  DialogFooter,
+  DialogDescription
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -69,35 +70,47 @@ export function AddItemDialog({ onAdd, trigger }: AddItemDialogProps) {
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md p-0 overflow-hidden max-sm:w-[calc(100vw-1rem)] max-sm:max-w-[calc(100vw-1rem)] max-sm:rounded-[1.75rem]">
-        <DialogHeader className="p-6 pb-0 max-sm:p-4 max-sm:pb-0">
-          <DialogTitle className="text-xl font-bold tracking-tight max-sm:text-lg">Add New Item</DialogTitle>
-          <p className="text-xs text-muted-foreground/60 font-medium max-sm:text-[11px]">Configure a new entry for your collection.</p>
+      <DialogContent className="sm:max-w-[560px] rounded-[2.5rem] border border-border/40 bg-background/95 p-0 overflow-hidden shadow-2xl backdrop-blur-2xl max-sm:w-[calc(100vw-1rem)] max-sm:max-w-[calc(100vw-1rem)] max-sm:rounded-[1.9rem] [&>button:last-child]:top-8 [&>button:last-child]:right-8 [&>button:last-child]:size-9 [&>button:last-child]:rounded-full [&>button:last-child]:bg-muted/30 [&>button:last-child]:hover:bg-muted/50 [&>button:last-child]:transition-all [&>button:last-child]:border-none [&>button:last-child]:flex [&>button:last-child]:items-center [&>button:last-child]:justify-center max-sm:[&>button:last-child]:top-4 max-sm:[&>button:last-child]:right-4">
+        <div className="p-8 pt-10 max-sm:p-5 max-sm:pt-6">
+          <DialogHeader className="space-y-4 items-start text-left">
+            <div className="size-14 rounded-2xl bg-primary/5 border border-primary/10 flex items-center justify-center text-primary shadow-sm max-sm:size-12 max-sm:rounded-[1rem]">
+              <Plus className="size-7 max-sm:size-6" />
+            </div>
+            <div className="space-y-1">
+              <DialogTitle className="text-2xl font-black tracking-tight max-sm:text-xl">Add New Item</DialogTitle>
+              <DialogDescription className="text-muted-foreground/60 text-xs font-medium leading-relaxed max-w-[360px] max-sm:text-[11px] max-sm:max-w-none">
+                Configure a new entry for your collection.
+              </DialogDescription>
+            </div>
         </DialogHeader>
         
-        <div className="p-6 space-y-5 max-sm:p-4 max-sm:space-y-4">
+        <div className="space-y-5 py-8 max-sm:space-y-4 max-sm:py-6">
           <div className="space-y-2.5">
             <Label htmlFor="item-title" className="text-xs font-bold uppercase tracking-wider text-muted-foreground/50 ml-1">Item Title</Label>
-            <Input
-              id="item-title"
-              placeholder="e.g. Inception"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="h-10 max-sm:h-11 bg-background border-border focus:border-primary/50 rounded-xl max-sm:rounded-[1rem] font-semibold"
-              autoFocus
-              onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
-            />
+            <div className="relative group rounded-2xl border border-border/10 bg-muted/20 p-1 transition-all focus-within:border-primary/30">
+              <Input
+                id="item-title"
+                placeholder="e.g. Inception"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="h-11 max-sm:h-11 bg-transparent border-none focus-visible:ring-0 rounded-xl max-sm:rounded-[1rem] font-semibold px-4"
+                autoFocus
+                onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
+              />
+            </div>
           </div>
 
           <div className="space-y-2.5">
             <Label htmlFor="item-url" className="text-xs font-bold uppercase tracking-wider text-muted-foreground/50 ml-1">Image URL</Label>
-            <Input
-              id="item-url"
-              placeholder="https://..."
-              value={backgroundImageURL}
-              onChange={(e) => setBackgroundImageURL(e.target.value)}
-              className="h-10 max-sm:h-11 bg-background border-border focus:border-primary/50 rounded-xl max-sm:rounded-[1rem] px-4 font-mono text-xs"
-            />
+            <div className="relative group rounded-2xl border border-border/10 bg-muted/20 p-1 transition-all focus-within:border-primary/30">
+              <Input
+                id="item-url"
+                placeholder="https://..."
+                value={backgroundImageURL}
+                onChange={(e) => setBackgroundImageURL(e.target.value)}
+                className="h-11 max-sm:h-11 bg-transparent border-none focus-visible:ring-0 rounded-xl max-sm:rounded-[1rem] px-4 font-mono text-xs"
+              />
+            </div>
           </div>
           
           <div className="space-y-3">
@@ -139,24 +152,23 @@ export function AddItemDialog({ onAdd, trigger }: AddItemDialogProps) {
           </div>
         </div>
         
-        <DialogFooter className="px-6 py-4 bg-muted/30 border-t border-border flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3 max-sm:px-4 max-sm:py-4">
+        <DialogFooter className="flex-col sm:flex-row gap-3 sm:gap-4 mt-4">
           <Button 
             variant="ghost" 
             onClick={() => setOpen(false)}
-            size="sm"
-            className="h-10 max-sm:h-11 w-full sm:w-auto px-6 rounded-xl max-sm:rounded-[1rem] text-xs font-bold uppercase tracking-wider"
+            className="w-full sm:flex-1 h-11 sm:h-12 rounded-xl max-sm:rounded-[1rem] font-bold uppercase tracking-wider text-xs text-muted-foreground/40 hover:text-muted-foreground hover:bg-muted/30 transition-all"
           >
             Cancel
           </Button>
           <Button 
             onClick={handleAdd}
             disabled={!name.trim()}
-            size="sm"
-            className="h-10 max-sm:h-11 w-full sm:w-auto px-6 rounded-xl max-sm:rounded-[1rem] font-bold uppercase tracking-wider text-xs shadow-lg shadow-primary/20 bg-primary hover:bg-primary/90 text-primary-foreground transition-all active:scale-95"
+            className="w-full sm:flex-1 h-11 sm:h-12 rounded-xl max-sm:rounded-[1rem] font-bold uppercase tracking-wider text-xs shadow-lg shadow-primary/20 bg-primary hover:bg-primary/90 text-primary-foreground transition-all active:scale-95"
           >
             Create Item
           </Button>
         </DialogFooter>
+        </div>
       </DialogContent>
     </Dialog>
   );

@@ -4,7 +4,7 @@ import { useMemo, useState } from 'react';
 import { useConfig } from '@/context/ConfigContext';
 import { SortableWidget } from './SortableWidget';
 import { Button } from '@/components/ui/button';
-import { Plus, Download, Check, Copy, Search, FileJson2, Trash2, RotateCcw } from 'lucide-react';
+import { Plus, Download, Check, Copy, Search, FileJson2, Trash2, RotateCcw, Globe, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Textarea } from '@/components/ui/textarea';
 import {
@@ -36,13 +36,15 @@ import {
 interface WidgetSelectionGridProps {
   onNewWidget?: () => void;
   onDownload?: () => void;
+  onSyncManifest?: () => void;
 }
 
-export function WidgetSelectionGrid({ onNewWidget, onDownload }: WidgetSelectionGridProps) {
+export function WidgetSelectionGrid({ onNewWidget, onDownload, onSyncManifest }: WidgetSelectionGridProps) {
   const {
     widgets,
     trash,
     itemTrash,
+    manifestUrl,
     exportConfig,
     exportOmniConfig,
     reorderWidgets,
@@ -188,14 +190,57 @@ export function WidgetSelectionGrid({ onNewWidget, onDownload }: WidgetSelection
         </div>
 
         <div className="mb-12 max-sm:mb-7">
+          {!manifestUrl && (
+            <div className="mb-4 rounded-[1.75rem] border border-border/40 bg-muted/10 px-5 py-4 shadow-sm max-sm:mb-3 max-sm:rounded-[1.3rem] max-sm:px-4 dark:border-amber-500/15 dark:bg-amber-500/[0.06]">
+              <div className="flex items-center justify-between gap-4 max-sm:flex-col max-sm:items-stretch">
+                <div className="flex items-start gap-3">
+                  <div className="rounded-xl bg-amber-500/10 p-2 text-amber-600 dark:bg-amber-500/12 dark:text-amber-500">
+                    <AlertTriangle className="size-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[11px] font-black uppercase tracking-[0.16em] text-amber-700/85 dark:text-amber-500/90">
+                      AIOMetadata not synced
+                    </p>
+                    <p className="mt-1 text-sm font-medium leading-relaxed text-foreground/72 max-sm:text-[13px] dark:text-zinc-300/78">
+                      Sync a manifest URL to validate catalogs and replace AIOMetadata placeholders before export.
+                    </p>
+                  </div>
+                </div>
+
+                <Button
+                  onClick={onSyncManifest}
+                  variant="secondary"
+                  className="h-10 shrink-0 rounded-2xl border border-amber-500/20 bg-background/70 px-4 text-[10px] font-black uppercase tracking-wider text-amber-700 shadow-sm transition-all hover:bg-amber-500/10 hover:border-amber-500/35 max-sm:w-full dark:bg-zinc-950/60 dark:text-amber-500 dark:hover:bg-amber-500/12 dark:hover:border-amber-500/30"
+                >
+                  <Globe className="size-4 mr-2" />
+                  Sync Manifest
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {hasTrash && (
+            <div className="mb-4 flex justify-end pr-2 max-sm:mb-3 max-sm:pr-3">
+              <Button
+                onClick={() => setShowTrash(true)}
+                variant="secondary"
+                className="h-10 rounded-2xl border border-destructive/20 bg-destructive/10 px-4 text-[10px] font-black uppercase tracking-wider text-destructive shadow-sm transition-all hover:bg-destructive/15 hover:shadow-destructive/10 max-sm:h-10 max-sm:w-full max-sm:justify-center dark:border-destructive/25 dark:bg-destructive/12 dark:hover:bg-destructive/16"
+                title="Trash"
+              >
+                <Trash2 className="mr-2 size-4 opacity-90" />
+                Trash ({trashCount})
+              </Button>
+            </div>
+          )}
+
           <div className="p-2 max-sm:p-3 rounded-[2.5rem] max-sm:rounded-[1.6rem] bg-zinc-50/50 dark:bg-zinc-900/50 border border-zinc-200/50 dark:border-border/10 shadow-[0_8px_32px_-4px_rgba(0,0,0,0.05)] max-sm:shadow-[0_10px_30px_-20px_rgba(0,0,0,0.35)] backdrop-blur-2xl">
             <div className="flex flex-col md:flex-row items-stretch md:items-center gap-2 max-sm:gap-3">
               {/* Left Group: Search */}
-              <div className="relative flex-1 group min-w-0">
+              <div className="relative flex-1 group min-w-0 rounded-[2rem] max-sm:rounded-[1.25rem]">
                 <Search className="absolute left-5 max-sm:left-4 top-1/2 -translate-y-1/2 size-4 text-muted-foreground/30 group-focus-within:text-primary transition-colors" />
                 <Input
                   placeholder="Search for widgets..."
-                  className="w-full h-12 max-sm:h-11 pl-12 max-sm:pl-10 pr-10 border-none bg-transparent shadow-none focus-visible:ring-0 text-sm max-sm:text-[14px] font-semibold tracking-tight"
+                  className="w-full h-12 max-sm:h-11 pl-12 max-sm:pl-10 pr-10 rounded-[2rem] max-sm:rounded-[1.25rem] border-none bg-transparent shadow-none focus-visible:ring-0 text-sm max-sm:text-[14px] font-semibold tracking-tight"
                   value={searchQuery}
                   onChange={(event) => setSearchQuery(event.target.value)}
                 />
@@ -220,46 +265,46 @@ export function WidgetSelectionGrid({ onNewWidget, onDownload }: WidgetSelection
                 </Button>
 
                 <Button
-                  onClick={() => {
-                    setShowPreview(true);
-                    onDownload?.();
-                  }}
+                  onClick={onSyncManifest}
                   variant="secondary"
-                  className="h-11 max-sm:h-12 px-6 max-sm:px-4 rounded-2xl max-sm:rounded-xl font-black uppercase tracking-wider text-[10px] border border-primary/20 bg-primary/10 text-primary hover:bg-primary/20 transition-all shadow-sm order-2 flex-1 md:flex-none"
-                  title="Export JSON"
+                  className={cn(
+                    "h-11 max-sm:h-12 px-6 max-sm:px-4 rounded-2xl max-sm:rounded-xl font-black uppercase tracking-wider text-[10px] transition-all shadow-sm order-2 flex-1 md:flex-none relative",
+                    manifestUrl
+                      ? "border border-primary/20 bg-primary/10 text-primary hover:bg-primary/15 dark:border-primary/25 dark:bg-primary/12 dark:hover:bg-primary/16"
+                      : "border border-border/40 bg-muted/20 text-muted-foreground hover:bg-muted/30 dark:border-white/10 dark:bg-zinc-950/65 dark:text-zinc-300/80 dark:hover:bg-zinc-900/85"
+                  )}
+                  title={manifestUrl ? "Manifest synced" : "Sync manifest"}
                 >
-                  <Download className="size-4 mr-2" />
-                  Export
+                  <div className="relative mr-2">
+                    <Globe className="size-4" />
+                    {manifestUrl && (
+                      <div className="absolute -right-0.5 -top-0.5 size-2 rounded-full border border-background bg-green-500" />
+                    )}
+                  </div>
+                  {manifestUrl ? 'Synced' : 'Sync Manifest'}
                 </Button>
 
                 <Button
                   onClick={() => setShowImportMergeDialog(true)}
                   variant="secondary"
-                  className="h-11 max-sm:h-12 px-6 max-sm:px-4 rounded-2xl max-sm:rounded-xl font-black uppercase tracking-wider text-[10px] border border-border/40 bg-muted/20 text-muted-foreground hover:bg-muted/30 transition-all shadow-sm order-3 flex-1 md:flex-none"
+                  className="h-11 max-sm:h-12 px-6 max-sm:px-4 rounded-2xl max-sm:rounded-xl font-black uppercase tracking-wider text-[10px] border border-border/40 bg-muted/20 text-muted-foreground hover:bg-muted/30 transition-all shadow-sm order-3 flex-1 md:flex-none dark:border-white/10 dark:bg-zinc-950/65 dark:text-zinc-300/80 dark:hover:bg-zinc-900/85"
                   title="Import JSON"
                 >
                   <FileJson2 className="size-4 mr-2 opacity-60" />
                   Import
                 </Button>
-                
+
                 <Button
-                  onClick={() => setShowTrash(true)}
+                  onClick={() => {
+                    setShowPreview(true);
+                    onDownload?.();
+                  }}
                   variant="secondary"
-                  className={cn(
-                    "h-11 max-sm:h-12 px-6 max-sm:px-4 rounded-2xl max-sm:rounded-xl font-black uppercase tracking-wider text-[10px] transition-all shadow-sm order-4 flex-1 md:flex-none relative",
-                    hasTrash
-                      ? "border border-destructive/20 bg-destructive/10 text-destructive hover:bg-destructive/15 shadow-destructive/10"
-                      : "border border-border/40 bg-muted/20 text-muted-foreground hover:bg-muted/30"
-                  )}
-                  title="Trash"
+                  className="h-11 max-sm:h-12 px-6 max-sm:px-4 rounded-2xl max-sm:rounded-xl font-black uppercase tracking-wider text-[10px] border border-primary/20 bg-primary/10 text-primary hover:bg-primary/20 transition-all shadow-sm order-4 flex-1 md:flex-none dark:border-primary/25 dark:bg-primary/12 dark:hover:bg-primary/18"
+                  title="Export JSON"
                 >
-                  <Trash2 className={cn("size-4 mr-2", hasTrash ? "opacity-90" : "opacity-60")} />
-                  Trash
-                  {hasTrash && (
-                    <span className="absolute -top-1.5 -right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[8px] font-black text-destructive-foreground ring-2 ring-background animate-in zoom-in-50">
-                      {trashCount}
-                    </span>
-                  )}
+                  <Download className="size-4 mr-2" />
+                  Export
                 </Button>
               </div>
             </div>
@@ -337,21 +382,27 @@ export function WidgetSelectionGrid({ onNewWidget, onDownload }: WidgetSelection
       />
 
       <Dialog open={showPreview} onOpenChange={setShowPreview}>
-        <DialogContent className="max-w-2xl p-0 overflow-hidden">
-          <DialogHeader className="p-6 pb-0">
-            <div className="flex items-center justify-between">
-              <div>
-                <DialogTitle className="text-xl font-bold tracking-tight">Export JSON</DialogTitle>
-                <DialogDescription className="text-xs font-medium opacity-50">
-                  {exportMode === 'fusion' ? 'Fusion Widgets Format' : 'Omni Snapshot Format'}
+        <DialogContent className="max-w-2xl rounded-[2.5rem] border border-border/40 bg-background/95 p-0 overflow-hidden shadow-2xl backdrop-blur-2xl max-sm:w-[calc(100vw-1rem)] max-sm:max-w-[calc(100vw-1rem)] max-sm:rounded-[1.9rem] [&>button:last-child]:top-8 [&>button:last-child]:right-8 [&>button:last-child]:size-9 [&>button:last-child]:rounded-full [&>button:last-child]:bg-muted/30 [&>button:last-child]:hover:bg-muted/50 [&>button:last-child]:transition-all [&>button:last-child]:border-none [&>button:last-child]:flex [&>button:last-child]:items-center [&>button:last-child]:justify-center max-sm:[&>button:last-child]:top-4 max-sm:[&>button:last-child]:right-4">
+          <div className="p-8 pt-10 max-sm:p-5 max-sm:pt-6">
+            <DialogHeader className="space-y-4 items-start text-left">
+              <div className="size-14 rounded-2xl bg-primary/5 border border-primary/10 flex items-center justify-center text-primary shadow-sm max-sm:size-12 max-sm:rounded-[1rem]">
+                <FileJson2 className="size-7 max-sm:size-6" />
+              </div>
+              <div className="space-y-1">
+                <DialogTitle className="text-2xl font-black tracking-tight max-sm:text-xl">Export JSON</DialogTitle>
+                <DialogDescription className="text-muted-foreground/60 text-xs font-medium leading-relaxed max-w-[360px] max-sm:text-[11px] max-sm:max-w-none">
+                  {exportMode === 'fusion' ? 'Preview your Fusion widget export before copying or downloading it.' : 'Preview your Omni snapshot export before copying or downloading it.'}
                 </DialogDescription>
               </div>
-              <div className="flex bg-muted/20 p-1 rounded-xl mr-12">
+            </DialogHeader>
+
+            <div className="mt-6 flex justify-end max-sm:mt-5 max-sm:justify-start">
+              <div className="flex rounded-2xl border border-border/10 bg-muted/20 p-1">
                 <button
                   onClick={() => setExportMode('fusion')}
                   className={cn(
-                    'px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all',
-                    exportMode === 'fusion' ? 'bg-primary text-primary-foreground shadow-sm' : 'opacity-40 hover:opacity-70'
+                    'px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all',
+                    exportMode === 'fusion' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground/45 hover:text-muted-foreground/80'
                   )}
                 >
                   Fusion
@@ -359,44 +410,43 @@ export function WidgetSelectionGrid({ onNewWidget, onDownload }: WidgetSelection
                 <button
                   onClick={() => setExportMode('omni')}
                   className={cn(
-                    'px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all',
-                    exportMode === 'omni' ? 'bg-primary text-primary-foreground shadow-sm' : 'opacity-40 hover:opacity-70'
+                    'px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all',
+                    exportMode === 'omni' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground/45 hover:text-muted-foreground/80'
                   )}
                 >
                   Omni
                 </button>
               </div>
             </div>
-          </DialogHeader>
-          <div className="p-6 pt-4">
-            <div className="relative group bg-muted/30 rounded-xl border border-border overflow-hidden">
+
+            <div className="mt-5">
+              <div className="relative group rounded-2xl border border-border/10 bg-muted/20 p-1 overflow-hidden">
               <Textarea
                 readOnly
                 value={previewContent}
-                className="w-full h-[320px] font-mono text-xs bg-transparent border-none p-5 focus-visible:ring-0 resize-none custom-scrollbar leading-relaxed"
+                className="h-[320px] w-full resize-none border-none bg-transparent p-5 font-mono text-xs leading-relaxed focus-visible:ring-0 custom-scrollbar"
               />
+              </div>
             </div>
-          </div>
 
-          <div className="px-6 py-4 bg-muted/5 border-t border-border/40 flex items-center justify-end gap-3">
-            <Button
-              variant="secondary"
-              size="sm"
-              className="h-9 w-40 px-0 rounded-xl bg-muted/40 hover:bg-muted/60 text-muted-foreground text-[11px] font-bold uppercase tracking-wider transition-all border-none shrink-0"
-              onClick={handleDownload}
-            >
-              <Download className="size-3.5 mr-1.5" />
-              Download JSON
-            </Button>
-            <Button
-              size="sm"
-              className="h-9 w-40 px-0 rounded-xl shadow-lg shadow-primary/20 text-[11px] font-bold uppercase tracking-wider transition-all shrink-0"
-              onClick={handleCopy}
-              disabled={previewContent.startsWith('Error:')}
-            >
-              {copied ? <Check className="size-3.5 mr-1.5" /> : <Copy className="size-3.5 mr-1.5" />}
-              {copied ? 'Copied' : 'Copy JSON'}
-            </Button>
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-end">
+              <Button
+                variant="secondary"
+                className="h-11 rounded-xl max-sm:rounded-[1rem] px-6 text-[11px] font-bold uppercase tracking-wider transition-all sm:w-44"
+                onClick={handleDownload}
+              >
+                <Download className="size-3.5 mr-1.5" />
+                Download JSON
+              </Button>
+              <Button
+                className="h-11 rounded-xl max-sm:rounded-[1rem] px-6 text-[11px] font-bold uppercase tracking-wider shadow-lg shadow-primary/20 transition-all sm:w-44"
+                onClick={handleCopy}
+                disabled={previewContent.startsWith('Error:')}
+              >
+                {copied ? <Check className="size-3.5 mr-1.5" /> : <Copy className="size-3.5 mr-1.5" />}
+                {copied ? 'Copied' : 'Copy JSON'}
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
@@ -406,22 +456,22 @@ export function WidgetSelectionGrid({ onNewWidget, onDownload }: WidgetSelection
       />
 
       <Dialog open={showTrash} onOpenChange={setShowTrash}>
-        <DialogContent className="max-w-2xl p-0 overflow-hidden border-border/40 shadow-2xl backdrop-blur-xl bg-background/95">
-          <DialogHeader className="p-8 pb-4">
+        <DialogContent className="max-w-2xl p-0 overflow-hidden border-border/40 shadow-2xl backdrop-blur-xl bg-background/95 dark:border-white/10 dark:bg-zinc-950/95 max-sm:w-[calc(100vw-1rem)] max-sm:max-w-[calc(100vw-1rem)] max-sm:rounded-[1.9rem] [&>button:last-child]:top-8 [&>button:last-child]:right-8 [&>button:last-child]:size-9 [&>button:last-child]:rounded-full [&>button:last-child]:bg-muted/30 [&>button:last-child]:hover:bg-muted/50 [&>button:last-child]:transition-all [&>button:last-child]:border-none [&>button:last-child]:flex [&>button:last-child]:items-center [&>button:last-child]:justify-center max-sm:[&>button:last-child]:top-4 max-sm:[&>button:last-child]:right-4">
+          <DialogHeader className="p-8 pb-4 max-sm:p-5 max-sm:pt-6 max-sm:pb-3">
             <div className="flex flex-col gap-1">
-              <DialogTitle className="text-2xl font-black tracking-tight flex items-center gap-3">
-                <div className="rounded-xl bg-destructive/10 p-2.5">
-                  <Trash2 className="size-5 text-destructive" />
-                </div>
+              <div className="mb-2 flex size-14 items-center justify-center self-start rounded-2xl border border-destructive/10 bg-destructive/10 text-destructive shadow-sm transition-all animate-in zoom-in-75 duration-300 dark:border-destructive/15 dark:bg-destructive/15 max-sm:size-12 max-sm:rounded-[1rem]">
+                <Trash2 className="size-7 max-sm:size-6" />
+              </div>
+              <DialogTitle className="text-2xl font-black tracking-tight max-sm:text-xl">
                 Trash
               </DialogTitle>
-              <DialogDescription className="text-[13px] font-medium leading-relaxed max-w-md mt-1">
+              <DialogDescription className="text-[13px] font-medium leading-relaxed text-muted-foreground/72 max-w-md mt-1 max-sm:text-[12px]">
                 Deleted widgets and collection items stay here in local storage until you restore them or empty the trash.
               </DialogDescription>
             </div>
           </DialogHeader>
 
-          <div className="px-8 pb-8">
+          <div className="px-8 pb-8 max-sm:px-5 max-sm:pb-5">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/50">
                 Deleted ({trashCount})
@@ -430,7 +480,7 @@ export function WidgetSelectionGrid({ onNewWidget, onDownload }: WidgetSelection
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-8 px-3 rounded-lg text-[10px] font-bold uppercase tracking-widest text-destructive hover:bg-destructive/10 hover:text-destructive transition-all active:scale-95"
+                  className="h-8 px-3 rounded-lg text-[10px] font-bold uppercase tracking-widest text-destructive hover:bg-destructive/10 hover:text-destructive transition-all active:scale-95 dark:hover:bg-destructive/12"
                   onClick={emptyTrash}
                 >
                   <Trash2 className="size-3 mr-1.5 opacity-70" />
@@ -440,12 +490,12 @@ export function WidgetSelectionGrid({ onNewWidget, onDownload }: WidgetSelection
             </div>
 
             {!hasTrash ? (
-              <div className="rounded-3xl border border-dashed border-border/40 bg-muted/5 py-16 text-center">
+              <div className="rounded-3xl border border-dashed border-border/40 bg-muted/5 py-16 text-center dark:border-white/10 dark:bg-zinc-900/55">
                 <div className="flex flex-col items-center gap-4">
-                  <div className="rounded-2xl bg-muted/10 p-4">
-                    <Trash2 className="size-8 text-muted-foreground/20" />
+                  <div className="rounded-2xl bg-muted/10 p-4 dark:bg-white/[0.04]">
+                    <Trash2 className="size-8 text-muted-foreground/20 dark:text-zinc-500/40" />
                   </div>
-                  <p className="text-sm font-semibold text-muted-foreground/40 uppercase tracking-widest">
+                  <p className="text-sm font-semibold text-muted-foreground/40 uppercase tracking-widest dark:text-zinc-500/70">
                     Trash is empty
                   </p>
                 </div>
@@ -455,12 +505,12 @@ export function WidgetSelectionGrid({ onNewWidget, onDownload }: WidgetSelection
                 {trashEntries.map((entry) => (
                   <div
                     key={entry.key}
-                    className="group flex items-center justify-between gap-4 rounded-3xl border border-border/40 bg-muted/5 px-6 py-5 hover:bg-muted/10 hover:border-border/60 transition-all duration-300 backdrop-blur-sm"
+                    className="group flex items-center justify-between gap-4 rounded-3xl border border-border/40 bg-muted/5 px-6 py-5 hover:bg-muted/10 hover:border-border/60 transition-all duration-300 backdrop-blur-sm dark:border-white/10 dark:bg-zinc-900/50 dark:hover:bg-zinc-900/75 dark:hover:border-white/15"
                   >
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 mb-1">
                         <span className={cn(
-                          "inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.15em] shadow-sm",
+                          "inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.15em] shadow-sm dark:shadow-none",
                           entry.typeClassName
                         )}>
                           {entry.typeLabel}
@@ -468,13 +518,13 @@ export function WidgetSelectionGrid({ onNewWidget, onDownload }: WidgetSelection
                         {entry.subtitle && (
                           <>
                             <div className="size-1 rounded-full bg-border" />
-                            <span className="truncate text-[9px] font-bold text-muted-foreground/60">
+                            <span className="truncate text-[9px] font-bold text-muted-foreground/60 dark:text-zinc-400/75">
                               {entry.subtitle}
                             </span>
                           </>
                         )}
                       </div>
-                      <p className="truncate text-base font-bold text-foreground tracking-tight group-hover:text-primary transition-colors">
+                      <p className="truncate text-base font-bold text-foreground tracking-tight group-hover:text-primary transition-colors dark:text-zinc-100 dark:group-hover:text-primary/90">
                         {entry.title}
                       </p>
                     </div>
@@ -482,10 +532,10 @@ export function WidgetSelectionGrid({ onNewWidget, onDownload }: WidgetSelection
                       size="sm"
                       variant="outline"
                       className={cn(
-                        "rounded-2xl shrink-0 h-9 px-5 border-border/60 bg-background/50 text-[11px] font-black uppercase tracking-widest transition-all shadow-sm",
+                        "rounded-2xl shrink-0 h-9 px-5 border-border/60 bg-background/50 text-[11px] font-black uppercase tracking-widest transition-all shadow-sm dark:border-white/10 dark:bg-zinc-950/75 dark:text-zinc-100",
                         entry.canRestore
-                          ? "hover:bg-primary hover:text-primary-foreground hover:border-primary active:scale-95"
-                          : "text-muted-foreground/40"
+                          ? "hover:bg-primary hover:text-primary-foreground hover:border-primary active:scale-95 dark:hover:bg-primary dark:hover:text-primary-foreground dark:hover:border-primary"
+                          : "text-muted-foreground/40 dark:text-zinc-500/60"
                       )}
                       onClick={entry.onRestore}
                       disabled={!entry.canRestore}

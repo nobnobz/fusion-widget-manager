@@ -60,7 +60,7 @@ export function DataSourceEditor({
       <Button
         variant="ghost"
         size="icon"
-        className="size-8 max-sm:size-9 opacity-70 text-muted-foreground/60 transition-all rounded-lg max-sm:rounded-xl hover:opacity-100 hover:bg-destructive/10 hover:text-destructive"
+        className="size-8 max-sm:size-9 rounded-lg max-sm:rounded-xl border border-border/40 bg-background/55 text-destructive/55 shadow-sm transition-all hover:border-destructive/20 hover:bg-destructive/10 hover:text-destructive dark:border-white/10 dark:bg-zinc-950/70 dark:text-destructive/75 dark:hover:border-destructive/20 dark:hover:bg-destructive/12"
         onClick={onDelete}
         title="Delete data source"
       >

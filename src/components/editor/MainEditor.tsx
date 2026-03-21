@@ -18,7 +18,7 @@ import {
   ChevronDown,
   Book,
   ClipboardPaste,
-  Globe
+  Globe,
 } from 'lucide-react';
 import Image from 'next/image';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
@@ -413,7 +413,7 @@ export function MainEditor() {
               size="icon"
               className="size-10 rounded-xl hover:bg-primary/10 hover:text-primary transition-all shadow-sm"
               onClick={() => setShowHowToUse(true)}
-              title="How to Use / Guide"
+              title="How To Use"
             >
               <Book className="size-5" />
             </Button>
@@ -641,6 +641,7 @@ export function MainEditor() {
       return (
         <WidgetSelectionGrid
           onNewWidget={() => setShowNewWidgetDialog(true)}
+          onSyncManifest={() => setShowManifestModal(true)}
         />
 
       );
@@ -674,36 +675,24 @@ export function MainEditor() {
               </div>
 
               <div className="flex items-center gap-1">
-                {view !== 'welcome' && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className={cn(
-                      "h-8 w-8 rounded-lg border px-0 transition-all",
-                      manifestUrl
-                        ? "border-primary/20 bg-primary/10 text-primary hover:bg-primary/15"
-                        : "border-border/50 bg-background/30 text-muted-foreground/70 hover:bg-primary/5 hover:text-primary"
-                    )}
-                    onClick={() => setShowManifestModal(true)}
-                    title={manifestUrl ? "Manifest synced" : "Sync manifest"}
-                  >
-                    <div className="relative">
-                      <Globe className="size-3.5" />
-                      {manifestUrl && (
-                        <div className="absolute -right-0.5 -top-0.5 size-2 rounded-full border border-background bg-green-500" />
-                      )}
-                    </div>
-                  </Button>
-                )}
-
                 <Button
                   variant="ghost"
                   size="icon"
                   className="size-8 rounded-lg border border-border/50 bg-background/30 text-primary/80 hover:bg-primary/5 hover:text-primary"
                   onClick={() => setShowHowToUse(true)}
-                  title="Guide"
+                  title="How To Use"
                 >
                   <Book className="size-3.5" />
+                </Button>
+
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="size-8 rounded-lg border border-border/50 bg-background/30 text-red-500/75 hover:bg-red-500/5 hover:text-red-500"
+                  onClick={() => window.open('https://ko-fi.com/botbidraiser', '_blank')}
+                  title="Support My Work"
+                >
+                  <Heart className="size-3.5 fill-current" />
                 </Button>
 
                 <ThemeToggle className="size-8 rounded-lg bg-background/30 dark:bg-black/20 border-border/50 shadow-none" />
@@ -745,43 +734,21 @@ export function MainEditor() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className={cn(
-                      "h-9 w-9 xl:w-auto px-0 xl:px-4 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all",
-                      manifestUrl
-                        ? "bg-primary/10 text-primary hover:bg-primary/15 border border-primary/20"
-                        : "hover:bg-primary/5 hover:text-primary text-muted-foreground/70"
-                    )}
-                    onClick={() => setShowManifestModal(true)}
-                  >
-                    <div className="relative">
-                      <Globe className={cn("size-4 xl:mr-2.5", manifestUrl && "text-primary")} />
-                      {manifestUrl && (
-                        <div className="absolute -top-0.5 -right-0.5 xl:right-2 xl:top-0 size-2 bg-green-500 rounded-full border-2 border-background animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.5)]" />
-                      )}
-                    </div>
-                    <span className="hidden xl:inline">
-                      {manifestUrl ? 'Synced' : 'Sync'}
-                    </span>
-                  </Button>
-
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 w-8 xl:w-auto px-0 xl:px-3 rounded-lg text-[10px] font-bold uppercase tracking-wider hover:bg-primary/5 hover:text-primary transition-all text-primary/70"
+                    className="h-9 w-auto px-3.5 rounded-xl border border-transparent bg-background/0 text-[10px] font-bold uppercase tracking-wider text-primary/70 transition-all hover:border-primary/10 hover:bg-primary/5 hover:text-primary shrink-0"
                     onClick={() => setShowHowToUse(true)}
                   >
-                    <Book className="size-3.5 xl:mr-2" />
-                    <span className="hidden xl:inline">Guide</span>
+                    <Book className="size-3.5 mr-2" />
+                    <span>How To Use</span>
                   </Button>
 
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-8 w-8 xl:w-auto px-0 xl:px-3 rounded-lg text-[10px] font-bold uppercase tracking-wider hover:bg-red-500/5 hover:text-red-500 transition-all text-red-500/70"
+                    className="h-9 w-auto px-3.5 rounded-xl border border-transparent bg-background/0 text-[10px] font-bold uppercase tracking-wider text-red-500/70 transition-all hover:border-red-500/10 hover:bg-red-500/5 hover:text-red-500 shrink-0"
                     onClick={() => window.open('https://ko-fi.com/botbidraiser', '_blank')}
                   >
-                    <Heart className="size-3.5 xl:mr-2 fill-current" />
-                    <span className="hidden xl:inline">Support My Work</span>
+                    <Heart className="size-3.5 mr-2 fill-current" />
+                    <span>Support My Work</span>
                   </Button>
 
                   <div className="w-[1px] h-4 bg-border mx-1 lg:mx-2" />
@@ -791,7 +758,7 @@ export function MainEditor() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="size-8 rounded-lg opacity-60 hover:opacity-100 transition-all shrink-0"
+                    className="size-8 rounded-lg border border-transparent bg-background/0 text-muted-foreground/65 hover:border-border/40 hover:bg-background/30 hover:text-foreground transition-all shrink-0"
                     onClick={() => setShowRestartConfirm(true)}
                   >
                     <RotateCcw className="size-4" />
@@ -820,7 +787,7 @@ export function MainEditor() {
           
           <div className="flex flex-col items-center gap-1 opacity-20 select-none hover:opacity-50 transition-opacity">
             <div className="flex items-center gap-2 text-[8px] font-mono tracking-[0.2em] font-medium uppercase text-muted-foreground/80">
-              <span>V0.1.5</span>
+              <span>V0.1.6</span>
               <span className="size-1 rounded-full bg-foreground/20" />
               <span>BY BOT-BID-RAISER</span>
             </div>
@@ -869,79 +836,119 @@ export function MainEditor() {
       {/* How To Use Dialog */}
       <Dialog open={showHowToUse} onOpenChange={setShowHowToUse}>
         <DialogContent className="max-w-2xl bg-white/95 dark:bg-black/90 backdrop-blur-2xl border-border/40 rounded-[2.5rem] p-0 overflow-hidden shadow-2xl [&>button:last-child]:top-6 [&>button:last-child]:right-6 [&>button:last-child]:size-8 [&>button:last-child]:rounded-full [&>button:last-child]:bg-muted/30 [&>button:last-child]:hover:bg-muted/50 [&>button:last-child]:border-none">
-          <DialogHeader className="p-8 pb-4">
-            <div className="flex items-center gap-4 mb-2">
-              <div className="size-12 rounded-2xl bg-primary/10 flex items-center justify-center border border-primary/20">
-                <Book className="size-6 text-primary" />
-              </div>
-              <div>
-                <DialogTitle className="text-2xl font-bold tracking-tight">How to Use & Guide</DialogTitle>
-                <DialogDescription className="text-xs font-medium opacity-50">
-                  Step-by-step setup for Fusion Widget Manager
-                </DialogDescription>
-              </div>
+          <DialogHeader className="space-y-4 p-8 pb-4 max-sm:p-5 max-sm:pt-6 max-sm:pb-3">
+            <div className="size-14 rounded-2xl bg-primary/5 border border-primary/10 flex items-center justify-center text-primary shadow-sm max-sm:size-12 max-sm:rounded-[1rem]">
+              <Book className="size-7 max-sm:size-6" />
+            </div>
+            <div className="space-y-1">
+              <DialogTitle className="text-2xl font-black tracking-tight max-sm:text-xl">
+                How To Use
+              </DialogTitle>
+              <DialogDescription className="max-w-[520px] text-[13px] font-medium leading-relaxed text-muted-foreground/62 max-sm:max-w-none max-sm:text-[11px]">
+                Step-by-step setup for Fusion Widget Manager.
+              </DialogDescription>
             </div>
           </DialogHeader>
           
-          <div className="px-8 pb-8 overflow-y-auto max-h-[60vh] custom-scrollbar">
-            <div className="space-y-7">
-              <section className="space-y-3">
-                <h3 className="text-[15px] font-black uppercase tracking-widest text-primary/90">1. AIOMetadata Setup</h3>
-                <p className="text-[13px] text-muted-foreground/90 leading-relaxed">
-                  First, download the template and upload it to your AIOMetadata instance. Then add the addon to Fusion.
-                </p>
-                <Button 
-                  variant="outline" 
-                  className="w-full h-11 rounded-2xl justify-center text-[10px] font-bold bg-background/60 backdrop-blur-sm shadow-sm"
-                  onClick={handleDownloadMetadata}
-                  disabled={!aiometadataTemplateUrl}
-                >
-                  <Download className="size-3 mr-2" />
-                  Download AIOMetadata {aiometadataVersion || 'Template'}
-                </Button>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
-                  <Button 
-                    variant="outline" 
-                    className="h-9 rounded-full justify-center text-[10px] font-semibold bg-transparent border-border/60 text-muted-foreground hover:text-primary hover:border-primary/30 hover:bg-primary/5 shadow-none"
-                    onClick={() => window.open('https://aiometadatafortheweebs.midnightignite.me/configure/', '_blank')}
-                  >
-                    <Globe className="size-3 mr-2 text-primary/90" />
-                    AIOMetadata (Midnight)
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    className="h-9 rounded-full justify-center text-[10px] font-semibold bg-transparent border-border/60 text-muted-foreground hover:text-blue-600 hover:border-blue-500/30 hover:bg-blue-500/5 shadow-none"
-                    onClick={() => window.open('https://aiometadata.fortheweak.cloud/configure/', '_blank')}
-                  >
-                    <Globe className="size-3 mr-2 text-blue-500/90" />
-                    AIOMetadata (Yeb)
-                  </Button>
+          <div className="max-h-[60vh] overflow-y-auto px-8 pb-8 custom-scrollbar max-sm:px-5 max-sm:pb-5">
+            <div className="mx-auto max-w-[680px] space-y-3.5">
+              <section className="rounded-[1.55rem] border border-border/10 bg-white/[0.02] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] max-sm:rounded-[1.2rem] max-sm:p-4">
+                <div className="flex items-start gap-4">
+                  <div className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-[12px] font-black text-primary shadow-sm max-sm:size-9 max-sm:text-[11px]">
+                    1
+                  </div>
+                  <div className="min-w-0 flex-1 space-y-3">
+                    <div className="space-y-1">
+                      <p className="text-[10px] font-black uppercase tracking-[0.14em] text-primary/70">Get started</p>
+                      <h3 className="text-[1.1rem] font-bold tracking-tight max-sm:text-[1rem]">AIOMetadata Setup</h3>
+                    </div>
+                    <p className="text-[14px] font-medium leading-7 text-muted-foreground/78 max-sm:text-[13px] max-sm:leading-6">
+                      First, download the template and upload it to your AIOMetadata instance. Then add the addon to Fusion.
+                    </p>
+                    <Button 
+                      variant="outline" 
+                      className="h-10 w-full justify-center rounded-full border-border/30 bg-transparent text-[11px] font-semibold text-muted-foreground/80 hover:text-primary hover:border-primary/30 hover:bg-primary/5 shadow-none"
+                      onClick={handleDownloadMetadata}
+                      disabled={!aiometadataTemplateUrl}
+                    >
+                      <Download className="size-3 mr-2 text-primary/90" />
+                      Download AIOMetadata {aiometadataVersion || 'Template'}
+                    </Button>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-0.5">
+                      <Button 
+                        variant="outline" 
+                        className="h-10 rounded-full justify-center text-[11px] font-semibold bg-transparent border-border/30 text-muted-foreground/80 hover:text-primary hover:border-primary/30 hover:bg-primary/5 shadow-none"
+                        onClick={() => window.open('https://aiometadatafortheweebs.midnightignite.me/configure/', '_blank')}
+                      >
+                        <Globe className="size-3 mr-2 text-primary/90" />
+                        AIOMetadata (Midnight)
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        className="h-10 rounded-full justify-center text-[11px] font-semibold bg-transparent border-border/30 text-muted-foreground/80 hover:text-blue-600 hover:border-blue-500/30 hover:bg-blue-500/5 shadow-none"
+                        onClick={() => window.open('https://aiometadata.fortheweak.cloud/configure/', '_blank')}
+                      >
+                        <Globe className="size-3 mr-2 text-blue-500/90" />
+                        AIOMetadata (Yeb)
+                      </Button>
+                    </div>
+                  </div>
                 </div>
               </section>
 
-              <section className="space-y-3">
-                <h3 className="text-[15px] font-black uppercase tracking-widest text-primary/90">2. Import Configuration</h3>
-                <p className="text-[13px] text-muted-foreground/90 leading-relaxed">
-                  Start by dragging in an Omni or Fusion snapshot, pasting existing Fusion JSON, selecting a <strong>UME Template</strong>, or starting from scratch.
-                </p>
+              <section className="rounded-[1.55rem] border border-border/10 bg-white/[0.02] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] max-sm:rounded-[1.2rem] max-sm:p-4">
+                <div className="flex items-start gap-4">
+                  <div className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-[12px] font-black text-primary shadow-sm max-sm:size-9 max-sm:text-[11px]">
+                    2
+                  </div>
+                  <div className="min-w-0 flex-1 space-y-3">
+                    <div className="space-y-1">
+                      <p className="text-[10px] font-black uppercase tracking-[0.14em] text-primary/70">Bring data in</p>
+                      <h3 className="text-[1.1rem] font-bold tracking-tight max-sm:text-[1rem]">Import Configuration</h3>
+                    </div>
+                    <p className="text-[14px] font-medium leading-7 text-muted-foreground/78 max-sm:text-[13px] max-sm:leading-6">
+                      Start by dragging in an Omni or Fusion snapshot, pasting existing Fusion JSON, selecting a <strong>UME Template</strong>, or starting from scratch.
+                    </p>
+                  </div>
+                </div>
               </section>
 
-              <section className="space-y-3">
-                <h3 className="text-[15px] font-black uppercase tracking-widest text-primary/90">3. Syncing Catalogs</h3>
-                <p className="text-[13px] text-muted-foreground/90 leading-relaxed">
-                  Paste your <strong>AIOMetadata Manifest URL</strong> when prompted. This ensures your catalogs are correctly mapped to your widgets.
-                </p>
+              <section className="rounded-[1.55rem] border border-border/10 bg-white/[0.02] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] max-sm:rounded-[1.2rem] max-sm:p-4">
+                <div className="flex items-start gap-4">
+                  <div className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-[12px] font-black text-primary shadow-sm max-sm:size-9 max-sm:text-[11px]">
+                    3
+                  </div>
+                  <div className="min-w-0 flex-1 space-y-3">
+                    <div className="space-y-1">
+                      <p className="text-[10px] font-black uppercase tracking-[0.14em] text-primary/70">Connect catalogs</p>
+                      <h3 className="text-[1.1rem] font-bold tracking-tight max-sm:text-[1rem]">Sync Catalogs</h3>
+                    </div>
+                    <p className="text-[14px] font-medium leading-7 text-muted-foreground/78 max-sm:text-[13px] max-sm:leading-6">
+                      Paste your <strong>AIOMetadata Manifest URL</strong> when prompted. This ensures your catalogs are correctly mapped to your widgets.
+                    </p>
+                  </div>
+                </div>
               </section>
 
-              <section className="space-y-3">
-                <h3 className="text-[15px] font-black uppercase tracking-widest text-primary/90">4. Personalize & Export</h3>
-                <p className="text-[13px] text-muted-foreground/90 leading-relaxed">
-                  Edit your widgets, then use <strong>Export</strong> and <strong>Copy the widget to your clipboard</strong>. You can paste the text of the .JSON in Fusion under <strong>Widgets → Import Widgets</strong> to import the new widgets.
-                </p>
-                <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4">
-                  <p className="text-[11px] font-semibold text-blue-500/90 leading-relaxed">
-                    <strong>Note:</strong> You can also export configurations for Omni snapshots if needed.
-                  </p>
+              <section className="rounded-[1.55rem] border border-border/10 bg-white/[0.02] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] max-sm:rounded-[1.2rem] max-sm:p-4">
+                <div className="flex items-start gap-4">
+                  <div className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-[12px] font-black text-primary shadow-sm max-sm:size-9 max-sm:text-[11px]">
+                    4
+                  </div>
+                  <div className="min-w-0 flex-1 space-y-3">
+                    <div className="space-y-1">
+                      <p className="text-[10px] font-black uppercase tracking-[0.14em] text-primary/70">Finish up</p>
+                      <h3 className="text-[1.1rem] font-bold tracking-tight max-sm:text-[1rem]">Personalize &amp; Export</h3>
+                    </div>
+                    <p className="text-[14px] font-medium leading-7 text-muted-foreground/78 max-sm:text-[13px] max-sm:leading-6">
+                      Edit your widgets, then use <strong>Export</strong> and <strong>Copy the widget to your clipboard</strong>. You can paste the text of the .JSON in Fusion under <strong>Widgets → Import Widgets</strong> to import the new widgets.
+                    </p>
+                    <div className="rounded-2xl border border-blue-500/20 bg-blue-500/[0.1] px-5 py-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+                      <p className="text-[12px] font-semibold leading-6 text-blue-500/90 max-sm:text-[11px]">
+                        <strong>Note:</strong> You can also export configurations for Omni snapshots if needed.
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </section>
             </div>

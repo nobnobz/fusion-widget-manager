@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.1.6] - 2026-03-21
+### Changed
+- **UI Refinements & Polish**:
+  - Added a "Support My Work" button to the mobile header for better visibility.
+  - Completely redesigned the "How To Use" guide with a modern, card-based layout and improved typography.
+  - Refined the main action bar and utility buttons (Export, Trash, Import) for a more consistent aesthetic.
+  - Improved touch targets and spacing in dialogs for better mobile usability.
+- **Manifest Sync Improvements**:
+  - Introduced **Manual JSON Mode** in the Manifest Modal, allowing users to paste manifest data directly if the URL fetch fails.
+  - Enhanced visual feedback and status indicators during the manifest synchronization process.
+
+### Fixed
+- **Responsive Layouts**: Fixed minor alignment issues in the widget grid and editor views on small screens.
+- **Icon Consistency**: Standardized icon sizes and weights across all navigation and action elements.
+
 ## [0.1.5] - 2026-03-21
 ### Added
 - **Collection Item Trash**: Introduced a trash system for individual collection items.

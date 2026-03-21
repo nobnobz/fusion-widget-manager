@@ -23,12 +23,13 @@ interface ManifestModalProps {
 }
 
 export function ManifestModal({ isOpen, onOpenChange }: ManifestModalProps) {
-  const { manifestUrl, setManifestUrl, fetchManifest, syncManifest, setView, importManifest } = useConfig();
+  const { manifestUrl, setManifestUrl, fetchManifest, syncManifest, setView, importManifest, disconnectManifest } = useConfig();
   const [url, setUrl] = useState(manifestUrl);
   const [isLoading, setIsLoading] = useState(false);
   const [isManual, setIsManual] = useState(false);
   const [manualJson, setManualJson] = useState('');
   const [error, setError] = useState<{ title: string; message: string; isCors?: boolean } | null>(null);
+  const [showDisconnectConfirm, setShowDisconnectConfirm] = useState(false);
 
   // Update local URL state when context changes or modal opens
   useEffect(() => {
@@ -37,6 +38,7 @@ export function ManifestModal({ isOpen, onOpenChange }: ManifestModalProps) {
       setIsManual(false);
       setManualJson('');
       setError(null);
+      setShowDisconnectConfirm(false);
     }
   }, [isOpen, manifestUrl]);
 
@@ -99,7 +101,7 @@ export function ManifestModal({ isOpen, onOpenChange }: ManifestModalProps) {
             <Sparkles className="size-7 max-sm:size-6" />
           </div>
           <div className="space-y-1">
-            <DialogTitle className="text-2xl font-bold tracking-tight max-sm:text-xl">
+            <DialogTitle className="text-2xl font-black tracking-tight max-sm:text-xl">
               {isManual ? 'Manual Manifest Sync' : 'AIOMetadata Setup'}
             </DialogTitle>
             <DialogDescription className="text-muted-foreground/60 text-xs font-medium leading-relaxed max-sm:text-[11px]">
@@ -113,16 +115,38 @@ export function ManifestModal({ isOpen, onOpenChange }: ManifestModalProps) {
         <div className="py-6 max-sm:py-5">
           {!isManual ? (
             <div className="space-y-4">
-              <div className="relative group bg-muted/20 rounded-2xl border border-border/10 focus-within:border-primary/30 transition-all p-1">
-                <div className="relative flex items-center">
-                  <Globe className="absolute left-3.5 size-4 text-muted-foreground/30 group-focus-within:text-primary transition-colors" />
-                  <Input
-                    placeholder="https://aiometadata.fortheweak.cloud/manifest.json"
-                    className="pl-11 h-12 max-sm:h-11 bg-transparent border-none focus-visible:ring-0 transition-all font-medium text-sm max-sm:text-[13px]"
-                    value={url}
-                    onChange={(e) => setUrl(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && handleLoad()}
-                  />
+              {manifestUrl && (
+                <div className="flex items-center justify-between gap-3 rounded-2xl border border-primary/10 bg-primary/5 px-4 py-3 max-sm:flex-col max-sm:items-stretch">
+                  <div className="min-w-0">
+                    <p className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.16em] text-primary/80">
+                      <span className="size-1.5 rounded-full bg-green-500/90 shadow-[0_0_6px_rgba(34,197,94,0.28)]" />
+                      Currently synced
+                    </p>
+                  </div>
+
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-9 shrink-0 rounded-xl px-3 text-[10px] font-bold uppercase tracking-widest text-destructive hover:bg-destructive/10 hover:text-destructive"
+                    onClick={() => setShowDisconnectConfirm(true)}
+                  >
+                    Disconnect
+                  </Button>
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <div className="relative group bg-muted/20 rounded-2xl border border-border/10 focus-within:border-primary/30 transition-all p-1">
+                  <div className="relative flex items-center">
+                    <Globe className="absolute left-3.5 size-4 text-muted-foreground/30 group-focus-within:text-primary transition-colors" />
+                    <Input
+                      placeholder="https://aiometadata.fortheweak.cloud/manifest.json"
+                      className="pl-11 h-12 max-sm:h-11 bg-transparent border-none focus-visible:ring-0 transition-all font-medium text-sm max-sm:text-[13px]"
+                      value={url}
+                      onChange={(e) => setUrl(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && handleLoad()}
+                    />
+                  </div>
                 </div>
               </div>
               
@@ -180,7 +204,7 @@ export function ManifestModal({ isOpen, onOpenChange }: ManifestModalProps) {
             {isLoading ? (
               <Loader2 className="size-4 animate-spin" />
             ) : (
-              isManual ? "Import JSON" : "Connect & Sync"
+              isManual ? "Import JSON" : manifestUrl ? "Update Sync" : "Connect & Sync"
             )}
           </Button>
         </DialogFooter>
@@ -194,6 +218,21 @@ export function ManifestModal({ isOpen, onOpenChange }: ManifestModalProps) {
         variant="danger"
         confirmText="Retry"
         onConfirm={() => setError(null)}
+      />
+
+      <ConfirmationDialog
+        isOpen={showDisconnectConfirm}
+        onOpenChange={setShowDisconnectConfirm}
+        title="Disconnect Sync?"
+        description="The synced AIOMetadata URL will be removed. Existing widgets stay as they are, but catalog validation and placeholder replacement will stop until you sync again."
+        variant="danger"
+        confirmText="Disconnect"
+        onConfirm={() => {
+          disconnectManifest();
+          setUrl('');
+          setIsManual(false);
+          setManualJson('');
+        }}
       />
     </Dialog>
   );

@@ -220,14 +220,11 @@ export function SortableWidget({
 
         {/* Right: Actions & Expand - Desktop Only */}
         <div className="hidden sm:flex items-center gap-4 shrink-0">
-          <div className={cn(
-            "flex items-center gap-1.5 transition-all duration-500 mr-2",
-            isSelected ? "opacity-100 translate-x-0" : "opacity-0 translate-x-4 group-hover:opacity-100 group-hover:translate-x-0 pointer-events-none group-hover:pointer-events-auto"
-          )}>
+          <div className="flex items-center gap-1.5 mr-2">
             <Button 
               variant="ghost" 
               size="icon" 
-              className="size-10 rounded-2xl hover:bg-primary/10 hover:text-primary transition-all opacity-40 hover:opacity-100 border border-transparent hover:border-primary/10 shadow-sm"
+              className="size-10 rounded-2xl border border-border/40 bg-background/60 text-muted-foreground/60 shadow-sm transition-all hover:border-primary/20 hover:bg-primary/5 hover:text-primary dark:border-white/10 dark:bg-zinc-950/70 dark:text-zinc-300/75 dark:hover:border-primary/20 dark:hover:bg-primary/10 dark:hover:text-primary/90"
               onClick={handleCopy}
               title="Copy widget JSON"
             >
@@ -236,7 +233,7 @@ export function SortableWidget({
             <Button 
               variant="ghost" 
               size="icon" 
-              className="size-10 rounded-2xl hover:bg-destructive/10 hover:text-destructive transition-all opacity-40 hover:opacity-100 border border-transparent hover:border-destructive/10 shadow-sm"
+              className="size-10 rounded-2xl border border-border/40 bg-background/60 text-destructive/55 shadow-sm transition-all hover:border-destructive/20 hover:bg-destructive/8 hover:text-destructive dark:border-white/10 dark:bg-zinc-950/70 dark:text-destructive/75 dark:hover:border-destructive/20 dark:hover:bg-destructive/12 dark:hover:text-destructive"
               onClick={handleDelete}
               title="Move widget to trash"
             >
@@ -245,8 +242,8 @@ export function SortableWidget({
           </div>
 
           <div className={cn(
-            "size-10 flex items-center justify-center rounded-xl bg-muted/5 text-muted-foreground/20 transition-all duration-500 shadow-sm border border-transparent",
-            isSelected ? "rotate-90 bg-primary/10 text-primary opacity-100 border-primary/10" : "group-hover:text-primary/40 group-hover:bg-primary/5"
+            "size-10 flex items-center justify-center rounded-xl bg-muted/5 text-muted-foreground/20 transition-all duration-500 shadow-sm border border-transparent dark:bg-zinc-950/55 dark:text-zinc-500/70 dark:border-white/5",
+            isSelected ? "rotate-90 bg-primary/10 text-primary opacity-100 border-primary/10 dark:bg-primary/15 dark:border-primary/20" : "group-hover:text-primary/40 group-hover:bg-primary/5 dark:group-hover:bg-primary/10 dark:group-hover:text-primary/70"
           )}>
             <ChevronRight className="size-4" />
           </div>

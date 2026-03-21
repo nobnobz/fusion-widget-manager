@@ -189,8 +189,8 @@ export function CollectionItemEditor({
                 variant="ghost" 
                 size="icon" 
                 className={cn(
-                  "size-8 rounded-lg transition-all",
-                  isExpanded ? "bg-primary/10 text-primary rotate-90" : "text-muted-foreground/40 hover:bg-primary/5 hover:text-primary"
+                  "size-8 rounded-xl border border-border/40 bg-background/55 shadow-sm transition-all dark:border-white/10 dark:bg-zinc-950/70",
+                  isExpanded ? "bg-primary/10 text-primary rotate-90 border-primary/20 dark:bg-primary/12 dark:border-primary/25" : "text-muted-foreground/55 hover:bg-primary/5 hover:text-primary hover:border-primary/20 dark:text-zinc-300/75 dark:hover:bg-primary/10 dark:hover:text-primary/90 dark:hover:border-primary/20"
                 )}
                 onClick={(e) => {
                   e.stopPropagation();
@@ -205,8 +205,8 @@ export function CollectionItemEditor({
                 variant="ghost" 
                 size="icon" 
                 className={cn(
-                  "size-8 rounded-lg transition-all",
-                  item.hideTitle ? "text-muted-foreground/40" : "text-primary bg-primary/5"
+                  "size-8 rounded-xl border border-border/40 bg-background/55 shadow-sm transition-all dark:border-white/10 dark:bg-zinc-950/70",
+                  item.hideTitle ? "text-muted-foreground/50 hover:bg-primary/5 hover:text-primary hover:border-primary/20 dark:text-zinc-300/75 dark:hover:bg-primary/10 dark:hover:text-primary/90 dark:hover:border-primary/20" : "text-primary bg-primary/5 border-primary/20 dark:bg-primary/12 dark:border-primary/25"
                 )}
                 onClick={(e) => {
                    e.stopPropagation();
@@ -216,10 +216,10 @@ export function CollectionItemEditor({
               >
                   {item.hideTitle ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
               </Button>
-              <Button variant="ghost" size="icon" className="size-8 rounded-lg hover:bg-primary/5" onClick={(e) => { e.stopPropagation(); onDuplicate(); }} title="Duplicate Item">
+              <Button variant="ghost" size="icon" className="size-8 rounded-xl border border-border/40 bg-background/55 text-muted-foreground/55 shadow-sm transition-all hover:border-primary/20 hover:bg-primary/5 hover:text-primary dark:border-white/10 dark:bg-zinc-950/70 dark:text-zinc-300/75 dark:hover:border-primary/20 dark:hover:bg-primary/10 dark:hover:text-primary/90" onClick={(e) => { e.stopPropagation(); onDuplicate(); }} title="Duplicate Item">
                 <Copy className="size-3.5" />
               </Button>
-              <Button variant="ghost" size="icon" className="size-8 rounded-lg text-destructive/40 hover:text-destructive hover:bg-destructive/10" onClick={(e) => { e.stopPropagation(); onDelete(); }} title="Delete Item">
+              <Button variant="ghost" size="icon" className="size-8 rounded-xl border border-border/40 bg-background/55 text-destructive/55 shadow-sm transition-all hover:border-destructive/20 hover:text-destructive hover:bg-destructive/10 dark:border-white/10 dark:bg-zinc-950/70 dark:text-destructive/75 dark:hover:border-destructive/20 dark:hover:bg-destructive/12" onClick={(e) => { e.stopPropagation(); onDelete(); }} title="Delete Item">
                 <Trash2 className="size-3.5" />
               </Button>
             </div>
@@ -321,8 +321,8 @@ export function CollectionItemEditor({
                       variant="ghost" 
                       size="icon" 
                       className={cn(
-                        "size-9 rounded-xl border border-border/50 bg-background/60 transition-all",
-                        item.hideTitle ? "text-muted-foreground/50" : "text-primary bg-primary/5 border-primary/20"
+                        "size-9 rounded-xl border border-border/50 bg-background/60 transition-all shadow-sm dark:border-white/10 dark:bg-zinc-950/70",
+                        item.hideTitle ? "text-muted-foreground/50 hover:bg-primary/5 hover:text-primary dark:text-zinc-300/75 dark:hover:bg-primary/10 dark:hover:text-primary/90" : "text-primary bg-primary/5 border-primary/20 dark:bg-primary/12 dark:border-primary/25"
                       )}
                       onClick={(e) => {
                         e.stopPropagation();
@@ -332,10 +332,10 @@ export function CollectionItemEditor({
                     >
                         {item.hideTitle ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
                     </Button>
-                    <Button variant="ghost" size="icon" className="size-9 rounded-xl border border-border/50 bg-background/60 hover:bg-primary/10 transition-all" onClick={(e) => { e.stopPropagation(); onDuplicate(); }} title="Duplicate Item">
+                    <Button variant="ghost" size="icon" className="size-9 rounded-xl border border-border/50 bg-background/60 text-muted-foreground/60 hover:border-primary/20 hover:bg-primary/10 hover:text-primary transition-all shadow-sm dark:border-white/10 dark:bg-zinc-950/70 dark:text-zinc-300/75 dark:hover:border-primary/20 dark:hover:bg-primary/10 dark:hover:text-primary/90" onClick={(e) => { e.stopPropagation(); onDuplicate(); }} title="Duplicate Item">
                       <Copy className="size-4" />
                     </Button>
-                    <Button variant="ghost" size="icon" className="size-9 rounded-xl border border-border/50 bg-background/60 text-destructive/50 hover:text-destructive hover:bg-destructive/10 transition-all" onClick={(e) => { e.stopPropagation(); onDelete(); }} title="Delete Item">
+                    <Button variant="ghost" size="icon" className="size-9 rounded-xl border border-border/50 bg-background/60 text-destructive/55 hover:border-destructive/20 hover:text-destructive hover:bg-destructive/10 transition-all shadow-sm dark:border-white/10 dark:bg-zinc-950/70 dark:text-destructive/75 dark:hover:border-destructive/20 dark:hover:bg-destructive/12" onClick={(e) => { e.stopPropagation(); onDelete(); }} title="Delete Item">
                       <Trash2 className="size-4" />
                     </Button>
                   </div>
