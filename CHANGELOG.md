@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.7] - 2026-03-22
+### Added
+- **AIOSTREAMS Template Support**:
+  - Added a direct download button for the latest UME AIOSTREAMS template.
+  - Implemented dynamic version detection for AIOSTREAMS templates from the GitHub repository.
+  - Improved layout of the template action bar for better alignment on different screen sizes.
+
 ## [0.1.6] - 2026-03-21
 ### Changed
 - **UI Refinements & Polish**:

@@ -65,6 +65,10 @@ export function MainEditor() {
   const [selectedTemplateUrl, setSelectedTemplateUrl] = useState<string>('');
   const [aiometadataTemplateUrl, setAiometadataTemplateUrl] = useState<string>('');
   const [aiometadataVersion, setAiometadataVersion] = useState<string>('');
+  const [aiometadataFilename, setAiometadataFilename] = useState<string>('ume-aiometadata-config.json');
+  const [aiostreamsTemplateUrl, setAiostreamsTemplateUrl] = useState<string>('');
+  const [aiostreamsVersion, setAiostreamsVersion] = useState<string>('');
+  const [aiostreamsFilename, setAiostreamsFilename] = useState<string>('ume-aiostreams-template.json');
   const [isTemplatePopoverOpen, setIsTemplatePopoverOpen] = useState(false);
   const [isDraggingFile, setIsDraggingFile] = useState(false);
 
@@ -87,6 +91,44 @@ export function MainEditor() {
       setIsLoadingTemplates(true);
       try {
         const baseUrl = 'https://api.github.com/repos/nobnobz/Omni-Template-Bot-Bid-Raiser/contents';
+
+        const extractVersion = (filename: string) => {
+          const versionMatch = filename.match(/v?(\d+(?:\.\d+)+)/i);
+          if (!versionMatch) return '';
+
+          return versionMatch[0].startsWith('v') ? versionMatch[0] : `v${versionMatch[0]}`;
+        };
+
+        const compareVersions = (left: string, right: string) => {
+          const normalize = (value: string) =>
+            value.replace(/^v/i, '').split('.').map((part) => Number.parseInt(part, 10) || 0);
+
+          const leftParts = normalize(left);
+          const rightParts = normalize(right);
+          const maxLength = Math.max(leftParts.length, rightParts.length);
+
+          for (let index = 0; index < maxLength; index += 1) {
+            const difference = (leftParts[index] || 0) - (rightParts[index] || 0);
+            if (difference !== 0) return difference;
+          }
+
+          return 0;
+        };
+
+        const findLatestRootTemplate = (files: any[], matcher: (file: any) => boolean) => {
+          const matches = files.filter((file: any) => matcher(file));
+          if (matches.length === 0) return null;
+
+          return matches.reduce((latest: any, current: any) => {
+            const latestVersion = extractVersion(latest.name);
+            const currentVersion = extractVersion(current.name);
+
+            if (!latestVersion) return current;
+            if (!currentVersion) return latest;
+
+            return compareVersions(currentVersion, latestVersion) > 0 ? current : latest;
+          });
+        };
         
         const processFiles = (files: any[]) => {
           return files
@@ -95,11 +137,7 @@ export function MainEditor() {
               (file.name.includes('ume-omni-template') || file.name.includes('omni-snapshot'))
             )
             .map((file: any) => {
-              // Extract version: look for vX.X.X or just X.X.X
-              const versionMatch = file.name.match(/v?(\d+(\.\d+)+)/);
-              const version = versionMatch 
-                ? (versionMatch[0].startsWith('v') ? versionMatch[0] : `v${versionMatch[0]}`) 
-                : 'Latest';
+              const version = extractVersion(file.name) || 'Latest';
 
               return {
                 name: `UME Fusion Template ${version}`,
@@ -142,7 +180,7 @@ export function MainEditor() {
         }
 
         // 4. Find AIOMetadata template in root (dynamic versioning)
-        const metadataFile = rootData.find((f: any) => 
+        const metadataFile = findLatestRootTemplate(rootData, (f: any) =>
           f.type === 'file' && 
           f.name.toLowerCase().includes('ume-aiometadata-config') && 
           f.name.endsWith('.json')
@@ -150,15 +188,24 @@ export function MainEditor() {
         
         if (metadataFile) {
           setAiometadataTemplateUrl(metadataFile.download_url);
-          // Extract version from filename
-          const vMatch = metadataFile.name.match(/v?(\d+(\.\d+)+)/);
-          if (vMatch) {
-            setAiometadataVersion(vMatch[0].startsWith('v') ? vMatch[0] : `v${vMatch[0]}`);
-          }
+          setAiometadataVersion(extractVersion(metadataFile.name));
+          setAiometadataFilename(metadataFile.name);
+        }
+
+        const aiostreamsFile = findLatestRootTemplate(rootData, (f: any) =>
+          f.type === 'file' &&
+          f.name.toLowerCase().startsWith('ume-aiostreams-template') &&
+          f.name.endsWith('.json')
+        );
+
+        if (aiostreamsFile) {
+          setAiostreamsTemplateUrl(aiostreamsFile.download_url);
+          setAiostreamsVersion(extractVersion(aiostreamsFile.name));
+          setAiostreamsFilename(aiostreamsFile.name);
         }
 
         // Sort by version (newest first)
-        allTemplates.sort((a, b) => b.version.localeCompare(a.version, undefined, { numeric: true, sensitivity: 'base' }));
+        allTemplates.sort((a, b) => compareVersions(b.version, a.version));
 
         // Deduplicate
         const uniqueTemplates = allTemplates.filter((v, i, a) => 
@@ -364,11 +411,11 @@ export function MainEditor() {
   };
 
 
-  const handleDownloadMetadata = async () => {
-    if (!aiometadataTemplateUrl) return;
+  const downloadTemplateFile = async (templateUrl: string, filename: string) => {
+    if (!templateUrl) return;
 
     try {
-      const response = await fetch(aiometadataTemplateUrl);
+      const response = await fetch(templateUrl);
       if (!response.ok) throw new Error('Download failed');
       const json = await response.json();
       
@@ -378,8 +425,6 @@ export function MainEditor() {
       const link = document.createElement('a');
       link.href = url;
       
-      // Extract original filename or use a fallback
-      const filename = aiometadataTemplateUrl.split('/').pop() || 'ume-aiometadata-config.json';
       link.download = filename.endsWith('.json') ? filename : `${filename}.json`;
       
       document.body.appendChild(link);
@@ -387,8 +432,16 @@ export function MainEditor() {
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
     } catch (error) {
-      console.error('Error downloading metadata template:', error);
+      console.error('Error downloading template:', error);
     }
+  };
+
+  const handleDownloadMetadata = async () => {
+    await downloadTemplateFile(aiometadataTemplateUrl, aiometadataFilename);
+  };
+
+  const handleDownloadAiostreams = async () => {
+    await downloadTemplateFile(aiostreamsTemplateUrl, aiostreamsFilename);
   };
 
 
@@ -467,6 +520,20 @@ export function MainEditor() {
                     <Download className="size-3 mr-2" />
                   )}
                   AIOMetadata {aiometadataVersion || 'Template'}
+                </Button>
+                <div className="w-px h-3 bg-border/40 shrink-0 hidden sm:block" />
+                <Button
+                  variant="ghost"
+                  className="h-9 sm:h-8 rounded-xl border border-dashed border-border/60 hover:border-primary/40 hover:bg-primary/5 transition-all font-bold uppercase tracking-widest text-[9px] px-4 text-muted-foreground/60 hover:text-primary whitespace-nowrap shrink-0 justify-center"
+                  onClick={handleDownloadAiostreams}
+                  disabled={isLoadingTemplates || !aiostreamsTemplateUrl}
+                >
+                  {isLoadingTemplates ? (
+                    <RotateCcw className="size-3 mr-2 animate-spin" />
+                  ) : (
+                    <Download className="size-3 mr-2" />
+                  )}
+                  AIOSTREAMS {aiostreamsVersion || 'Template'}
                 </Button>
                 <div className="w-px h-3 bg-border/40 shrink-0 hidden sm:block" />
                 <Button
@@ -787,7 +854,7 @@ export function MainEditor() {
           
           <div className="flex flex-col items-center gap-1 opacity-20 select-none hover:opacity-50 transition-opacity">
             <div className="flex items-center gap-2 text-[8px] font-mono tracking-[0.2em] font-medium uppercase text-muted-foreground/80">
-              <span>V0.1.6</span>
+              <span>V0.1.7</span>
               <span className="size-1 rounded-full bg-foreground/20" />
               <span>BY BOT-BID-RAISER</span>
             </div>
