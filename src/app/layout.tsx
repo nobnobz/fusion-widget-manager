@@ -4,6 +4,11 @@ import { ConfigProvider } from "@/context/ConfigContext";
 import { ThemeChromeSync } from "@/components/theme-chrome-sync";
 import { ThemeProvider } from "@/components/theme-provider";
 import "./globals.css";
+
+const isGithubActions = process.env.GITHUB_ACTIONS === "true";
+const basePath = isGithubActions ? "/fusion-widget-manager" : "";
+const withBasePath = (path: string) => `${basePath}${path}`;
+
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -19,10 +24,11 @@ export const metadata: Metadata = {
   description: "A clean, visual editor for fusionWidgets JSON",
   icons: {
     icon: [
-      { url: "/icon-16.png", sizes: "16x16", type: "image/png" },
-      { url: "/icon-32.png", sizes: "32x32", type: "image/png" },
+      { url: withBasePath("/favicon.ico"), sizes: "32x32", type: "image/x-icon" },
+      { url: withBasePath("/icon-16.png"), sizes: "16x16", type: "image/png" },
+      { url: withBasePath("/icon-32.png"), sizes: "32x32", type: "image/png" },
     ],
-    apple: "/web-app-icon.png",
+    apple: withBasePath("/web-app-icon.png"),
   },
   appleWebApp: {
     capable: true,
