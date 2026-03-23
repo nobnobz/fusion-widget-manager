@@ -135,13 +135,16 @@ export function ManifestModal({ isOpen, onOpenChange }: ManifestModalProps) {
                 </div>
               )}
 
-              <div className="space-y-2">
-                <div className="relative group bg-muted/20 rounded-2xl border border-border/10 focus-within:border-primary/30 transition-all p-1">
-                  <div className="relative flex items-center">
-                    <Globe className="absolute left-3.5 size-4 text-muted-foreground/30 group-focus-within:text-primary transition-colors" />
+              <div className="space-y-2.5">
+                <p className="px-1 text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground/55">
+                  Manifest URL
+                </p>
+                <div className="relative group rounded-[1.6rem] border border-zinc-200/90 bg-white/92 p-1.5 shadow-[0_14px_30px_-24px_rgba(15,23,42,0.18)] transition-all hover:border-zinc-300/90 focus-within:border-primary/35 focus-within:bg-white dark:border-border/40 dark:bg-background/74 dark:hover:border-border/55 dark:focus-within:bg-background">
+                  <div className="relative flex items-center rounded-[1.2rem] bg-zinc-50/85 dark:bg-muted/[0.16]">
+                    <Globe className="absolute left-3.5 size-4 text-muted-foreground/40 group-focus-within:text-primary/80 dark:text-muted-foreground/28 transition-colors" />
                     <Input
                       placeholder="https://aiometadata.fortheweak.cloud/manifest.json"
-                      className="pl-11 h-12 max-sm:h-11 bg-transparent border-none focus-visible:ring-0 transition-all font-medium text-sm max-sm:text-[13px]"
+                      className="pl-11 pr-4 h-12 max-sm:h-11 bg-transparent border-none text-foreground/88 placeholder:text-muted-foreground/40 focus-visible:ring-0 transition-all font-medium text-sm max-sm:text-[13px] dark:text-foreground/84 dark:placeholder:text-muted-foreground/34"
                       value={url}
                       onChange={(e) => setUrl(e.target.value)}
                       onKeyDown={(e) => e.key === 'Enter' && handleLoad()}

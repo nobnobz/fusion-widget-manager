@@ -112,6 +112,8 @@ export function ManagerSwitcher({
               <a
                 key={manager.id}
                 href={manager.href}
+                target="_blank"
+                rel="noopener noreferrer"
                 className="flex items-start gap-3 rounded-[1.2rem] px-3.5 py-3 transition-all hover:bg-muted/40 hover:text-foreground"
               >
                 <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-2xl border border-border/50 bg-background/80 text-muted-foreground/70">

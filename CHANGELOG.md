@@ -1,5 +1,33 @@
 # Changelog
 
+## [0.2.0] - 2026-03-23
+### UI Polish
+- **Welcome Screen Overhaul**: Redesigned the desktop layout and hero section proportions for better visual balance.
+- **Compact Utility Bar**: Streamlined the top utility bar to harmonize with the centered layout.
+- **Composition Stiffening**: Tightened the hero layout by moving the mascot closer to the main heading.
+- **Enhanced Resources**: Visually reworked the "Additional Resources" section with integrated, compact pills and improved hierarchy.
+- **Action Refinement**: Subtly softened the primary buttons ("Import Fusion JSON", "Create New") for a cleaner look.
+- **Layout Balancing**: Improved the spatial arrangement of the textarea, CTA row, and "UME Templates" on desktop.
+
+### Manifest Sync UX
+- **Redesigned Status Area**: Introduced a fixed status area above the toolbar with clearly distinct "Not synced" and "Synced" states.
+- **Toolbar De-cluttering**: Removed the redundant "Sync Manifest" button from the toolbar.
+- **Extended Actionability**: Added direct "Refresh" and "Edit" actions directly into the "Synced" status banner.
+- **Improved Feedback**: Standardized the refresh animation duration for better visual confirmation.
+- **Banner Refinement**:
+  - Updated "Not synced" status to a calm, uniform amber design.
+  - Aligned "Synced" status with a matching flat, soft aesthetic.
+  - Refined typography and iconography for a more subtle status display.
+- **Status Clarity**: Removed host-specific details from the "Synced" banner to focus on the core status.
+
+### Modal Improvements
+- **AIOMetadata Setup**: Overhauled the setup modal for improved clarity and flow.
+- **Better URL Inputs**: Redesigned the manifest URL field as a clearly editable input with improved light-mode visibility.
+- **Surface Integration**: Matched input styling with the modal design while maintaining clear interactability.
+
+### Navigation
+- **Manager Switcher**: Updated the Omni Manager switcher to open in a new tab for seamless context switching.
+
 ## [0.1.7] - 2026-03-22
 ### Added
 - **AIOSTREAMS Template Support**:

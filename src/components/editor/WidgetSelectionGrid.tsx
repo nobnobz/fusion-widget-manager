@@ -4,7 +4,7 @@ import { useMemo, useState } from 'react';
 import { useConfig } from '@/context/ConfigContext';
 import { SortableWidget } from './SortableWidget';
 import { Button } from '@/components/ui/button';
-import { Plus, Download, Check, Copy, Search, FileJson2, Trash2, RotateCcw, Globe, AlertTriangle } from 'lucide-react';
+import { Plus, Download, Check, Copy, Search, FileJson2, Trash2, RotateCcw, Globe, AlertTriangle, Pencil } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Textarea } from '@/components/ui/textarea';
 import {
@@ -17,6 +17,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { NewWidgetDialog } from './NewWidgetDialog';
 import { ImportMergeDialog } from './ImportMergeDialog';
+import { ConfirmationDialog } from '@/components/ui/ConfirmationDialog';
 import {
   DndContext,
   closestCenter,
@@ -45,6 +46,8 @@ export function WidgetSelectionGrid({ onNewWidget, onDownload, onSyncManifest }:
     trash,
     itemTrash,
     manifestUrl,
+    fetchManifest,
+    syncManifest,
     exportConfig,
     exportOmniConfig,
     reorderWidgets,
@@ -60,8 +63,12 @@ export function WidgetSelectionGrid({ onNewWidget, onDownload, onSyncManifest }:
   const [showImportMergeDialog, setShowImportMergeDialog] = useState(false);
   const [showTrash, setShowTrash] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [isRefreshingManifest, setIsRefreshingManifest] = useState(false);
+  const [manifestActionError, setManifestActionError] = useState<string | null>(null);
   const trashCount = trash.length + itemTrash.length;
   const hasTrash = trashCount > 0;
+  const isManifestSynced = Boolean(manifestUrl);
+  const isManualManifest = manifestUrl.startsWith('manual://');
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -177,6 +184,31 @@ export function WidgetSelectionGrid({ onNewWidget, onDownload, onSyncManifest }:
     reorderWidgets(oldIndex, newIndex);
   };
 
+  const handleRefreshManifest = async () => {
+    if (!manifestUrl) {
+      onSyncManifest?.();
+      return;
+    }
+
+    if (isManualManifest) {
+      onSyncManifest?.();
+      return;
+    }
+
+    setIsRefreshingManifest(true);
+    try {
+      const [catalogs] = await Promise.all([
+        fetchManifest(manifestUrl),
+        new Promise((resolve) => setTimeout(resolve, 650)),
+      ]);
+      syncManifest(catalogs, manifestUrl, true);
+    } catch {
+      setManifestActionError('The manifest could not be refreshed. Check the URL or reconnect the sync.');
+    } finally {
+      setIsRefreshingManifest(false);
+    }
+  };
+
   return (
     <div className="flex-1 flex flex-col bg-transparent">
       <main className="max-w-5xl mx-auto w-full px-6 max-sm:px-4 py-12 max-sm:py-6 max-sm:pb-[calc(env(safe-area-inset-bottom)+2rem)]">
@@ -190,34 +222,86 @@ export function WidgetSelectionGrid({ onNewWidget, onDownload, onSyncManifest }:
         </div>
 
         <div className="mb-12 max-sm:mb-7">
-          {!manifestUrl && (
-            <div className="mb-4 rounded-[1.75rem] border border-border/40 bg-muted/10 px-5 py-4 shadow-sm max-sm:mb-3 max-sm:rounded-[1.3rem] max-sm:px-4 dark:border-amber-500/15 dark:bg-amber-500/[0.06]">
-              <div className="flex items-center justify-between gap-4 max-sm:flex-col max-sm:items-stretch">
-                <div className="flex items-start gap-3">
-                  <div className="rounded-xl bg-amber-500/10 p-2 text-amber-600 dark:bg-amber-500/12 dark:text-amber-500">
+          <div
+            className={cn(
+              "mb-4 rounded-[1.75rem] px-5 shadow-sm max-sm:mb-3 max-sm:rounded-[1.3rem] max-sm:px-4",
+              isManifestSynced
+                ? "border border-emerald-200/75 bg-emerald-50/65 py-3.5 shadow-[0_12px_32px_-28px_rgba(15,23,42,0.16)] dark:border-emerald-500/22 dark:bg-emerald-500/[0.08]"
+                : "border border-amber-200/70 bg-amber-50/70 py-4 shadow-[0_12px_32px_-28px_rgba(15,23,42,0.16)] dark:border-amber-500/20 dark:bg-amber-500/[0.08]"
+            )}
+          >
+            <div className="flex items-center justify-between gap-4 max-sm:flex-col max-sm:items-stretch">
+              <div className="flex items-start gap-3">
+                {isManifestSynced ? (
+                  <div className="flex size-10 items-center justify-center rounded-xl border border-emerald-200/65 bg-emerald-100/65 shadow-[inset_0_1px_0_rgba(255,255,255,0.35)] dark:border-emerald-500/16 dark:bg-emerald-500/12">
+                    <span className="size-2 rounded-full bg-emerald-600/85 dark:bg-emerald-300/88" />
+                  </div>
+                ) : (
+                  <div className="rounded-xl border border-amber-200/70 bg-amber-100/80 p-2 text-amber-700/90 shadow-[inset_0_1px_0_rgba(255,255,255,0.4)] dark:border-amber-500/18 dark:bg-amber-500/14 dark:text-amber-300/92">
                     <AlertTriangle className="size-4" />
                   </div>
-                  <div className="min-w-0">
-                    <p className="text-[11px] font-black uppercase tracking-[0.16em] text-amber-700/85 dark:text-amber-500/90">
-                      AIOMetadata not synced
-                    </p>
-                    <p className="mt-1 text-sm font-medium leading-relaxed text-foreground/72 max-sm:text-[13px] dark:text-zinc-300/78">
-                      Sync a manifest URL to validate catalogs and replace AIOMetadata placeholders before export.
-                    </p>
-                  </div>
-                </div>
+                )}
 
-                <Button
-                  onClick={onSyncManifest}
-                  variant="secondary"
-                  className="h-10 shrink-0 rounded-2xl border border-amber-500/20 bg-background/70 px-4 text-[10px] font-black uppercase tracking-wider text-amber-700 shadow-sm transition-all hover:bg-amber-500/10 hover:border-amber-500/35 max-sm:w-full dark:bg-zinc-950/60 dark:text-amber-500 dark:hover:bg-amber-500/12 dark:hover:border-amber-500/30"
-                >
-                  <Globe className="size-4 mr-2" />
-                  Sync Manifest
-                </Button>
+                <div className="min-w-0">
+                  <p
+                    className={cn(
+                      "text-[11px] font-black uppercase tracking-[0.16em]",
+                      isManifestSynced
+                        ? "text-emerald-800/85 dark:text-emerald-200/92"
+                        : "text-stone-900/80 dark:text-amber-200/90"
+                    )}
+                  >
+                    {isManifestSynced ? 'AIOMetadata synced' : 'AIOMetadata not synced'}
+                  </p>
+                  <p
+                    className={cn(
+                      "mt-1 text-sm font-medium leading-relaxed max-sm:text-[13px]",
+                      isManifestSynced
+                        ? "text-stone-900/72 dark:text-zinc-300/80"
+                        : "text-stone-900/72 dark:text-zinc-300/80"
+                    )}
+                  >
+                    {isManifestSynced
+                      ? 'Catalog validation and placeholder replacement are active.'
+                      : 'Sync a manifest URL to validate catalogs and replace AIOMetadata placeholders before export.'}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 max-sm:grid max-sm:grid-cols-2 max-sm:w-full">
+                {isManifestSynced ? (
+                  <>
+                    <Button
+                      onClick={handleRefreshManifest}
+                      variant="secondary"
+                      disabled={isRefreshingManifest}
+                      className="h-9 shrink-0 rounded-2xl border border-emerald-300/75 bg-white/80 px-4 text-[10px] font-black uppercase tracking-wider text-stone-900/80 shadow-[0_10px_24px_-20px_rgba(15,23,42,0.2)] transition-all hover:bg-emerald-50/90 hover:border-emerald-400/60 hover:text-stone-900/88 max-sm:w-full dark:border-emerald-500/24 dark:bg-zinc-950/60 dark:text-emerald-200/90 dark:hover:bg-emerald-500/12 dark:hover:border-emerald-500/34"
+                    >
+                      <RotateCcw className={cn("size-4 mr-2 text-emerald-700/90 dark:text-emerald-300/92", isRefreshingManifest && "animate-spin")} />
+                      Refresh
+                    </Button>
+                    <Button
+                      onClick={onSyncManifest}
+                      variant="secondary"
+                      className="h-9 shrink-0 rounded-2xl border border-border/45 bg-white/65 px-4 text-[10px] font-black uppercase tracking-wider text-foreground/78 shadow-sm transition-all hover:bg-muted/40 hover:border-border/65 max-sm:w-full dark:border-white/10 dark:bg-zinc-950/60 dark:text-zinc-300/80 dark:hover:bg-zinc-900/85"
+                    >
+                      <Pencil className="size-4 mr-2" />
+                      Edit
+                    </Button>
+                  </>
+                ) : (
+                  <Button
+                    onClick={onSyncManifest}
+                    variant="secondary"
+                    className="h-10 shrink-0 rounded-2xl border border-amber-300/70 bg-white/80 px-4 text-[10px] font-black uppercase tracking-wider text-stone-900/80 shadow-[0_10px_24px_-20px_rgba(15,23,42,0.2)] transition-all hover:bg-amber-50/90 hover:border-amber-400/60 hover:text-stone-900/88 max-sm:w-full max-sm:col-span-2 dark:border-amber-500/24 dark:bg-zinc-950/60 dark:text-amber-200/90 dark:hover:bg-amber-500/12 dark:hover:border-amber-500/34"
+                  >
+                    <Globe className="size-4 mr-2 text-amber-700/90 dark:text-amber-300/92" />
+                    Sync Manifest
+                  </Button>
+                )}
               </div>
             </div>
-          )}
+          </div>
 
           {hasTrash && (
             <div className="mb-4 flex justify-end pr-2 max-sm:mb-3 max-sm:pr-3">
@@ -255,7 +339,7 @@ export function WidgetSelectionGrid({ onNewWidget, onDownload, onSyncManifest }:
               </div>
 
               {/* Right Group: Priorities & Utilities */}
-              <div className="flex flex-wrap items-center gap-2 p-1 md:p-0 max-sm:grid max-sm:grid-cols-2 max-sm:w-full max-sm:gap-2 max-sm:p-0">
+              <div className="flex flex-wrap items-center gap-2 p-1 md:p-0 max-sm:grid max-sm:grid-cols-3 max-sm:w-full max-sm:gap-2 max-sm:p-0">
                 <Button
                   onClick={handleCreateWidget}
                   className="h-11 max-sm:h-12 px-6 max-sm:px-4 rounded-2xl max-sm:rounded-xl font-black uppercase tracking-wider text-[10px] shadow-xl shadow-primary/20 bg-primary hover:bg-primary/95 text-primary-foreground transition-all active:scale-95 flex-1 md:flex-none order-1"
@@ -265,29 +349,9 @@ export function WidgetSelectionGrid({ onNewWidget, onDownload, onSyncManifest }:
                 </Button>
 
                 <Button
-                  onClick={onSyncManifest}
-                  variant="secondary"
-                  className={cn(
-                    "h-11 max-sm:h-12 px-6 max-sm:px-4 rounded-2xl max-sm:rounded-xl font-black uppercase tracking-wider text-[10px] transition-all shadow-sm order-2 flex-1 md:flex-none relative",
-                    manifestUrl
-                      ? "border border-primary/20 bg-primary/10 text-primary hover:bg-primary/15 dark:border-primary/25 dark:bg-primary/12 dark:hover:bg-primary/16"
-                      : "border border-border/40 bg-muted/20 text-muted-foreground hover:bg-muted/30 dark:border-white/10 dark:bg-zinc-950/65 dark:text-zinc-300/80 dark:hover:bg-zinc-900/85"
-                  )}
-                  title={manifestUrl ? "Manifest synced" : "Sync manifest"}
-                >
-                  <div className="relative mr-2">
-                    <Globe className="size-4" />
-                    {manifestUrl && (
-                      <div className="absolute -right-0.5 -top-0.5 size-2 rounded-full border border-background bg-green-500" />
-                    )}
-                  </div>
-                  {manifestUrl ? 'Synced' : 'Sync Manifest'}
-                </Button>
-
-                <Button
                   onClick={() => setShowImportMergeDialog(true)}
                   variant="secondary"
-                  className="h-11 max-sm:h-12 px-6 max-sm:px-4 rounded-2xl max-sm:rounded-xl font-black uppercase tracking-wider text-[10px] border border-border/40 bg-muted/20 text-muted-foreground hover:bg-muted/30 transition-all shadow-sm order-3 flex-1 md:flex-none dark:border-white/10 dark:bg-zinc-950/65 dark:text-zinc-300/80 dark:hover:bg-zinc-900/85"
+                  className="h-11 max-sm:h-12 px-6 max-sm:px-4 rounded-2xl max-sm:rounded-xl font-black uppercase tracking-wider text-[10px] border border-border/40 bg-muted/20 text-muted-foreground hover:bg-muted/30 transition-all shadow-sm order-2 flex-1 md:flex-none dark:border-white/10 dark:bg-zinc-950/65 dark:text-zinc-300/80 dark:hover:bg-zinc-900/85"
                   title="Import JSON"
                 >
                   <FileJson2 className="size-4 mr-2 opacity-60" />
@@ -300,7 +364,7 @@ export function WidgetSelectionGrid({ onNewWidget, onDownload, onSyncManifest }:
                     onDownload?.();
                   }}
                   variant="secondary"
-                  className="h-11 max-sm:h-12 px-6 max-sm:px-4 rounded-2xl max-sm:rounded-xl font-black uppercase tracking-wider text-[10px] border border-primary/20 bg-primary/10 text-primary hover:bg-primary/20 transition-all shadow-sm order-4 flex-1 md:flex-none dark:border-primary/25 dark:bg-primary/12 dark:hover:bg-primary/18"
+                  className="h-11 max-sm:h-12 px-6 max-sm:px-4 rounded-2xl max-sm:rounded-xl font-black uppercase tracking-wider text-[10px] border border-primary/20 bg-primary/10 text-primary hover:bg-primary/20 transition-all shadow-sm order-3 flex-1 md:flex-none dark:border-primary/25 dark:bg-primary/12 dark:hover:bg-primary/18"
                   title="Export JSON"
                 >
                   <Download className="size-4 mr-2" />
@@ -550,6 +614,19 @@ export function WidgetSelectionGrid({ onNewWidget, onDownload, onSyncManifest }:
           </div>
         </DialogContent>
       </Dialog>
+
+      <ConfirmationDialog
+        isOpen={!!manifestActionError}
+        onOpenChange={(open) => !open && setManifestActionError(null)}
+        title="Manifest Refresh Failed"
+        description={manifestActionError || ''}
+        variant="danger"
+        confirmText="Retry"
+        onConfirm={() => {
+          setManifestActionError(null);
+          void handleRefreshManifest();
+        }}
+      />
     </div>
   );
 }

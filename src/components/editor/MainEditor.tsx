@@ -370,33 +370,33 @@ export function MainEditor() {
   const renderContent = () => {
     if (view === 'welcome') {
       return (
-        <div className="flex-1 flex flex-col items-center justify-center max-sm:justify-start px-4 py-6 sm:p-8 md:p-12 max-sm:pb-[calc(env(safe-area-inset-bottom)+2rem)] animate-in fade-in duration-700 max-w-2xl mx-auto w-full relative">
-          <div className="absolute top-6 right-6 hidden sm:flex items-center gap-1.5 animate-in fade-in slide-in-from-right-4 duration-700 delay-300">
-            <ManagerSwitcher currentManager="fusion" />
+        <div className="flex-1 flex flex-col items-center justify-center max-sm:justify-start px-4 py-6 sm:px-8 sm:py-8 md:px-12 md:py-10 max-sm:pb-[calc(env(safe-area-inset-bottom)+2rem)] animate-in fade-in duration-700 max-w-2xl md:max-w-[46rem] lg:max-w-[49rem] mx-auto w-full relative">
+          <div className="absolute top-5 right-5 hidden sm:flex items-center gap-1 animate-in fade-in slide-in-from-right-4 duration-700 delay-300">
+            <ManagerSwitcher currentManager="fusion" className="h-9 rounded-[1.15rem] px-3 text-[13px] shadow-xs" />
             <div className="w-px h-4 bg-border/45 mx-0.5" />
             <Button
               variant="ghost"
               size="icon"
-              className="size-10 rounded-xl hover:bg-primary/10 hover:text-primary transition-all shadow-sm"
+              className="size-9 rounded-[1.15rem] hover:bg-primary/10 hover:text-primary transition-all shadow-sm"
               onClick={() => setShowHowToUse(true)}
               title="How To Use"
             >
-              <Book className="size-5" />
+              <Book className="size-4.5" />
             </Button>
             <Button
               variant="ghost"
               size="icon"
-              className="size-10 rounded-xl hover:bg-red-500/10 hover:text-red-500 transition-all shadow-sm"
+              className="size-9 rounded-[1.15rem] hover:bg-red-500/10 hover:text-red-500 transition-all shadow-sm"
               onClick={() => window.open('https://ko-fi.com/botbidraiser', '_blank')}
               title="Support My Work"
             >
-              <Heart className="size-5" />
+              <Heart className="size-4.5" />
             </Button>
             <div className="w-px h-4 bg-border/45 mx-0.5" />
-            <ThemeToggle />
+            <ThemeToggle className="size-9 rounded-[1.15rem]" />
           </div>
 
-          <div className="relative group mb-2 max-sm:mt-2">
+          <div className="relative group mb-0 sm:-mb-4 max-sm:mt-2">
             <div className="absolute -inset-20 bg-primary/25 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none transform-gpu" />
             <div className="relative size-28 sm:size-52 flex items-center justify-center rounded-full overflow-hidden select-none">
               <Image
@@ -420,15 +420,15 @@ export function MainEditor() {
 
           <div className="w-full space-y-4 sm:space-y-4 mb-6 sm:mb-10">
             <div className="flex justify-start sm:justify-end px-0 sm:px-2 mb-1 sm:mb-2">
-              <div className="flex flex-col items-start gap-1.5 w-full sm:w-auto">
-                <div className="px-1 sm:px-0 text-[9px] font-bold uppercase tracking-[0.18em] text-muted-foreground/45">
-                  Additional Ressources
+              <div className="flex flex-col items-start gap-1 w-full sm:w-auto">
+                <div className="px-1 sm:px-0 text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.12em] text-muted-foreground/58">
+                  Additional Resources
                 </div>
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto overflow-x-auto no-scrollbar scroll-smooth justify-start sm:justify-end">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-1.5 w-full sm:w-auto overflow-x-auto no-scrollbar scroll-smooth justify-start sm:justify-end">
                 <Button
                   type="button"
                   variant="ghost"
-                  className="h-9 sm:h-8 rounded-xl border border-dashed border-border/60 hover:border-primary/40 hover:bg-primary/5 transition-all font-bold uppercase tracking-widest text-[9px] px-4 text-muted-foreground/60 hover:text-primary whitespace-nowrap shrink-0 justify-center"
+                  className="h-9 sm:h-[2.2rem] rounded-[1rem] border border-border/65 bg-background/65 hover:border-primary/35 hover:bg-primary/[0.04] transition-all font-bold uppercase tracking-[0.14em] text-[9px] px-3.5 sm:px-3 text-muted-foreground/68 hover:text-primary whitespace-nowrap shrink-0 justify-center shadow-[0_10px_24px_-22px_rgba(15,23,42,0.28)]"
                   onClick={handleDownloadMetadata}
                   disabled={isLoadingTemplates || !aiometadataTemplate}
                 >
@@ -439,11 +439,10 @@ export function MainEditor() {
                   )}
                   {formatTemplateLabel('AIOMetadata', aiometadataTemplate ?? undefined)}
                 </Button>
-                <div className="w-px h-3 bg-border/40 shrink-0 hidden sm:block" />
                 <Button
                   type="button"
                   variant="ghost"
-                  className="h-9 sm:h-8 rounded-xl border border-dashed border-border/60 hover:border-primary/40 hover:bg-primary/5 transition-all font-bold uppercase tracking-widest text-[9px] px-4 text-muted-foreground/60 hover:text-primary whitespace-nowrap shrink-0 justify-center"
+                  className="h-9 sm:h-[2.2rem] rounded-[1rem] border border-border/65 bg-background/65 hover:border-primary/35 hover:bg-primary/[0.04] transition-all font-bold uppercase tracking-[0.14em] text-[9px] px-3.5 sm:px-3 text-muted-foreground/68 hover:text-primary whitespace-nowrap shrink-0 justify-center shadow-[0_10px_24px_-22px_rgba(15,23,42,0.28)]"
                   onClick={handleDownloadAiostreams}
                   disabled={isLoadingTemplates || !aiostreamsTemplate}
                 >
@@ -454,11 +453,10 @@ export function MainEditor() {
                   )}
                   {formatTemplateLabel('AIOSTREAMS', aiostreamsTemplate ?? undefined)}
                 </Button>
-                <div className="w-px h-3 bg-border/40 shrink-0 hidden sm:block" />
                 <Button
                   type="button"
                   variant="ghost"
-                  className="h-9 sm:h-8 rounded-xl border border-dashed border-border/60 hover:border-blue-500/40 hover:bg-blue-500/5 transition-all font-bold uppercase tracking-widest text-[9px] px-4 text-muted-foreground/60 hover:text-blue-500/80 whitespace-nowrap shrink-0 justify-center"
+                  className="h-9 sm:h-[2.2rem] rounded-[1rem] border border-border/65 bg-background/65 hover:border-blue-500/35 hover:bg-blue-500/[0.04] transition-all font-bold uppercase tracking-[0.14em] text-[9px] px-3.5 sm:px-3 text-muted-foreground/68 hover:text-blue-500/80 whitespace-nowrap shrink-0 justify-center shadow-[0_10px_24px_-22px_rgba(15,23,42,0.28)]"
                   onClick={() => omniFileInputRef.current?.click()}
                 >
                   <FileJson2 className="size-3 mr-2" />
@@ -482,7 +480,7 @@ export function MainEditor() {
                 onChange={(e) => setPastedJson(e.target.value)}
                 placeholder={isDraggingFile ? "Drop your JSON file here!" : "Paste your Fusion widget export or drag & drop a file here..."}
                 className={cn(
-                  "min-h-[160px] max-sm:min-h-[136px] font-mono text-xs bg-muted/40 border-border/80 rounded-[2rem] max-sm:rounded-[1.5rem] p-6 max-sm:p-4 focus-visible:ring-primary/20 transition-all leading-relaxed shadow-inner",
+                  "min-h-[148px] max-sm:min-h-[136px] font-mono text-xs bg-muted/40 border-border/80 rounded-[2rem] max-sm:rounded-[1.5rem] p-5 max-sm:p-4 focus-visible:ring-primary/20 transition-all leading-relaxed shadow-inner",
                   isDraggingFile && "border-primary/50 bg-primary/5 ring-4 ring-primary/10 shadow-lg shadow-primary/5"
                 )}
               />
@@ -497,12 +495,12 @@ export function MainEditor() {
             </div>
 
             {/* Primary Actions Below */}
-            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full items-stretch sm:items-center justify-center">
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-3 w-full sm:max-w-[38rem] sm:mx-auto items-stretch sm:items-center justify-center">
               {pastedJson.trim() ? (
                 <Button
                   onClick={handlePasteImport}
                   size="lg"
-                  className="h-12 sm:h-14 w-full sm:min-w-[240px] rounded-[1.25rem] sm:rounded-2xl shadow-xl shadow-primary/20 animate-in zoom-in-95 duration-300 font-bold uppercase tracking-widest text-[11px] sm:text-xs bg-primary hover:bg-primary/90 hover:scale-[1.02] active:scale-[0.98] transition-all relative overflow-hidden group/load"
+                  className="h-12 sm:h-[3.05rem] w-full sm:min-w-[224px] rounded-[1.25rem] sm:rounded-[1.3rem] shadow-lg shadow-primary/12 animate-in zoom-in-95 duration-300 font-bold uppercase tracking-[0.14em] text-[11px] sm:text-[10px] bg-primary hover:bg-primary/90 hover:scale-[1.01] active:scale-[0.98] transition-all relative overflow-hidden group/load"
                 >
                   <div className="absolute inset-0 bg-gradient-to-tr from-white/10 to-transparent pointer-events-none" />
                   <ClipboardPaste className="size-5 mr-3 shrink-0" />
@@ -512,14 +510,14 @@ export function MainEditor() {
                 <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full">
                     <Button
                       variant="outline"
-                      className="flex-1 h-12 sm:h-14 rounded-[1.1rem] sm:rounded-[1.25rem] border-border/80 bg-background/50 backdrop-blur-sm hover:bg-muted/80 transition-all font-bold uppercase tracking-widest text-[10px] sm:text-[11px] px-5 sm:px-8 group/btn hover:scale-[1.02] active:scale-[0.98] shadow-sm"
+                      className="flex-1 h-12 sm:h-[3.05rem] rounded-[1.1rem] sm:rounded-[1.2rem] border-border/75 bg-background/62 backdrop-blur-sm hover:bg-muted/70 transition-all font-bold uppercase tracking-[0.14em] text-[10px] sm:text-[10px] px-5 sm:px-5.5 group/btn hover:scale-[1.01] active:scale-[0.98] shadow-[0_12px_26px_-24px_rgba(15,23,42,0.26)]"
                       onClick={() => fileInputRef.current?.click()}
                     >
-                      <Upload className="size-4 mr-3 text-muted-foreground group-hover/btn:text-primary transition-colors shrink-0" />
+                      <Upload className="size-4 mr-3 text-muted-foreground/72 group-hover/btn:text-primary transition-colors shrink-0" />
                       Import Fusion JSON
                     </Button>
                     <Button
-                      className="flex-1 h-12 sm:h-14 rounded-[1.1rem] sm:rounded-[1.25rem] font-bold uppercase tracking-widest text-[10px] sm:text-[11px] px-5 sm:px-8 shadow-lg shadow-primary/20 group/create relative overflow-hidden bg-primary hover:bg-primary/90 hover:scale-[1.02] active:scale-[0.98] transition-all"
+                      className="flex-1 h-12 sm:h-[3.05rem] rounded-[1.1rem] sm:rounded-[1.2rem] font-bold uppercase tracking-[0.14em] text-[10px] sm:text-[10px] px-5 sm:px-5.5 shadow-lg shadow-primary/12 group/create relative overflow-hidden bg-primary hover:bg-primary/90 hover:scale-[1.01] active:scale-[0.98] transition-all"
                       onClick={handleAddFirstWidget}
                     >
                       <div className="absolute inset-0 bg-gradient-to-tr from-white/10 to-transparent pointer-events-none" />
@@ -533,24 +531,24 @@ export function MainEditor() {
             </div>
 
             {/* Template Selection */}
-            <div className="flex justify-center pt-1 sm:pt-2">
+            <div className="flex justify-center pt-0.5 sm:pt-1">
               {githubTemplates.length > 0 ? (
-                <div className="w-full max-w-md space-y-2.5 sm:space-y-3 animate-in fade-in slide-in-from-bottom-2 duration-500">
-                  <div className="flex items-center justify-between px-1 sm:px-2">
+                <div className="w-full max-w-md sm:max-w-[38rem] rounded-[1.5rem] border border-border/45 bg-background/35 px-3 py-3 sm:px-3.5 sm:py-3.5 shadow-[0_16px_40px_-34px_rgba(15,23,42,0.24)] backdrop-blur-sm space-y-2 sm:space-y-2.5 animate-in fade-in slide-in-from-bottom-2 duration-500">
+                  <div className="flex items-center justify-between px-1">
                     <a 
                       href="https://github.com/nobnobz/Omni-Template-Bot-Bid-Raiser" 
                       target="_blank" 
                       rel="noopener noreferrer" 
-                      className="flex items-center gap-2 opacity-60 hover:opacity-100 hover:text-primary transition-all group/tpl"
+                      className="flex items-center gap-2 opacity-70 hover:opacity-100 hover:text-primary transition-all group/tpl"
                     >
                       <Github className="size-3.5 text-primary group-hover/tpl:scale-110 transition-transform" />
-                      <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground group-hover/tpl:text-primary">UME Templates</span>
+                      <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground group-hover/tpl:text-primary">UME Templates</span>
                     </a>
                   </div>
-                  <div className="flex gap-1.5 sm:gap-2 p-1 rounded-[1.25rem] sm:rounded-2xl border border-border/60 bg-card/50 backdrop-blur-sm transition-all focus-within:border-primary/30 h-11 sm:h-12 items-center">
+                  <div className="flex gap-1.5 sm:gap-2 p-1 rounded-[1.25rem] sm:rounded-[1.35rem] border border-border/60 bg-card/55 backdrop-blur-sm transition-all focus-within:border-primary/30 h-11 sm:h-[3.05rem] items-center">
                     <Popover open={isTemplatePopoverOpen} onOpenChange={setIsTemplatePopoverOpen}>
                       <PopoverTrigger asChild>
-                        <button className="flex-1 h-full min-w-0 bg-transparent border-none focus:outline-none text-[11px] sm:text-[12px] font-bold pl-3 pr-4 sm:pr-8 appearance-none cursor-pointer hover:bg-muted/10 rounded-xl transition-all text-left flex items-center justify-between group/select">
+                        <button className="flex-1 h-full min-w-0 bg-transparent border-none focus:outline-none text-[11px] sm:text-[12px] font-bold pl-3 pr-4 sm:pr-7 appearance-none cursor-pointer hover:bg-muted/10 rounded-xl transition-all text-left flex items-center justify-between group/select">
                           <span className="truncate">
                             {selectedTemplate ? formatTemplateLabel('UME Fusion Template', selectedTemplate) : 'Select Template...'}
                           </span>
@@ -584,7 +582,7 @@ export function MainEditor() {
                       onClick={handleLoadTemplate}
                       disabled={isLoadingTemplates || !selectedTemplateUrl}
                       size="sm"
-                      className="h-9 sm:h-10 min-w-[118px] sm:min-w-0 px-3.5 sm:px-6 rounded-xl font-bold uppercase tracking-[0.16em] sm:tracking-widest text-[10px] sm:text-[11px] shadow-sm shrink-0"
+                      className="h-9 sm:h-[2.7rem] min-w-[110px] sm:min-w-[120px] px-3.5 sm:px-5 rounded-xl font-bold uppercase tracking-[0.14em] text-[10px] sm:text-[10px] shadow-sm shrink-0"
                     >
                       {isLoadingTemplates ? (
                         <RotateCcw className="size-3.5 animate-spin" />
@@ -785,7 +783,7 @@ export function MainEditor() {
           
           <div className="flex flex-col items-center gap-1 opacity-20 select-none hover:opacity-50 transition-opacity">
             <div className="flex items-center gap-2 text-[8px] font-mono tracking-[0.2em] font-medium uppercase text-muted-foreground/80">
-              <span>V0.1.7</span>
+              <span>V0.2.0</span>
               <span className="size-1 rounded-full bg-foreground/20" />
               <span>BY BOT-BID-RAISER</span>
             </div>
