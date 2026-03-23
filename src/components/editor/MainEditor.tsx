@@ -86,8 +86,7 @@ export function MainEditor() {
     importConfig,
     view,
     setView,
-    clearConfig,
-    manifestUrl
+    clearConfig
   } = useConfig();
 
   // Fetch GitHub templates on mount

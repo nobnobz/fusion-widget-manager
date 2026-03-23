@@ -94,7 +94,6 @@ export function normalizeOmniSnapshot(snapshot: any): NormalizedOmniModel {
   const mainGroups: NormalizedOmniMainGroup[] = [];
   const mainGroupOrder = values.main_group_order || [];
   const mainCatalogGroups = values.main_catalog_groups || {};
-  const subgroupOrder = values.subgroup_order || {};
 
   const orderedGroupIds: string[] = [];
   const seenGroupIds = new Set<string>();
