@@ -13,6 +13,7 @@ import {
   RotateCcw,
   Download,
   Check,
+  Copy,
   Github,
   Heart,
   ChevronDown,
@@ -22,6 +23,7 @@ import {
 } from 'lucide-react';
 import Image from 'next/image';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
+import { ManagerSwitcher } from '@/components/ui/ManagerSwitcher';
 import LogoImage from '@/../public/branding/clown_logo.png';
 import { convertOmniToFusion } from '@/lib/omni-converter';
 
@@ -35,9 +37,15 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
+  DialogFooter,
 } from '@/components/ui/dialog';
 import { NewWidgetDialog } from './NewWidgetDialog';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import {
+  fetchTemplateRepository,
+  formatTemplateLabel,
+  type RepositoryTemplate,
+} from '@/lib/template-repository';
 
 
 export function MainEditor() {
@@ -60,17 +68,14 @@ export function MainEditor() {
     confirmText: 'CONTINUE'
   });
 
-  const [githubTemplates, setGithubTemplates] = useState<{ name: string; download_url: string; version: string }[]>([]);
+  const [githubTemplates, setGithubTemplates] = useState<RepositoryTemplate[]>([]);
   const [isLoadingTemplates, setIsLoadingTemplates] = useState(false);
   const [selectedTemplateUrl, setSelectedTemplateUrl] = useState<string>('');
-  const [aiometadataTemplateUrl, setAiometadataTemplateUrl] = useState<string>('');
-  const [aiometadataVersion, setAiometadataVersion] = useState<string>('');
-  const [aiometadataFilename, setAiometadataFilename] = useState<string>('ume-aiometadata-config.json');
-  const [aiostreamsTemplateUrl, setAiostreamsTemplateUrl] = useState<string>('');
-  const [aiostreamsVersion, setAiostreamsVersion] = useState<string>('');
-  const [aiostreamsFilename, setAiostreamsFilename] = useState<string>('ume-aiostreams-template.json');
+  const [aiometadataTemplate, setAiometadataTemplate] = useState<RepositoryTemplate | null>(null);
+  const [aiostreamsTemplate, setAiostreamsTemplate] = useState<RepositoryTemplate | null>(null);
   const [isTemplatePopoverOpen, setIsTemplatePopoverOpen] = useState(false);
   const [isDraggingFile, setIsDraggingFile] = useState(false);
+  const [showAiostreamsActions, setShowAiostreamsActions] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -90,132 +95,11 @@ export function MainEditor() {
     const fetchTemplates = async () => {
       setIsLoadingTemplates(true);
       try {
-        const baseUrl = 'https://api.github.com/repos/nobnobz/Omni-Template-Bot-Bid-Raiser/contents';
-
-        const extractVersion = (filename: string) => {
-          const versionMatch = filename.match(/v?(\d+(?:\.\d+)+)/i);
-          if (!versionMatch) return '';
-
-          return versionMatch[0].startsWith('v') ? versionMatch[0] : `v${versionMatch[0]}`;
-        };
-
-        const compareVersions = (left: string, right: string) => {
-          const normalize = (value: string) =>
-            value.replace(/^v/i, '').split('.').map((part) => Number.parseInt(part, 10) || 0);
-
-          const leftParts = normalize(left);
-          const rightParts = normalize(right);
-          const maxLength = Math.max(leftParts.length, rightParts.length);
-
-          for (let index = 0; index < maxLength; index += 1) {
-            const difference = (leftParts[index] || 0) - (rightParts[index] || 0);
-            if (difference !== 0) return difference;
-          }
-
-          return 0;
-        };
-
-        const findLatestRootTemplate = (files: any[], matcher: (file: any) => boolean) => {
-          const matches = files.filter((file: any) => matcher(file));
-          if (matches.length === 0) return null;
-
-          return matches.reduce((latest: any, current: any) => {
-            const latestVersion = extractVersion(latest.name);
-            const currentVersion = extractVersion(current.name);
-
-            if (!latestVersion) return current;
-            if (!currentVersion) return latest;
-
-            return compareVersions(currentVersion, latestVersion) > 0 ? current : latest;
-          });
-        };
-        
-        const processFiles = (files: any[]) => {
-          return files
-            .filter((file: any) => 
-              file.name.endsWith('.json') && 
-              (file.name.includes('ume-omni-template') || file.name.includes('omni-snapshot'))
-            )
-            .map((file: any) => {
-              const version = extractVersion(file.name) || 'Latest';
-
-              return {
-                name: `UME Fusion Template ${version}`,
-                download_url: file.download_url,
-                version: version
-              };
-            });
-        };
-
-        // 1. Fetch root
-        const rootResponse = await fetch(baseUrl);
-        if (!rootResponse.ok) throw new Error('Failed to fetch root templates');
-        const rootData = await rootResponse.json();
-        
-        let allTemplates = processFiles(rootData);
-
-        // 2. Identify "Older Versions" folder
-        const olderFolder = rootData.find((f: any) => 
-          f.type === 'dir' && (f.name === 'Older Versions' || f.name === 'Older%20Versions')
-        );
-        
-        if (olderFolder) {
-          const olderResponse = await fetch(`${baseUrl}/Older%20Versions`);
-          if (olderResponse.ok) {
-            const olderData = await olderResponse.json();
-            
-            // 3. Recursive check for subdirectories (v1.6.0, etc)
-            for (const item of olderData) {
-              if (item.type === 'dir') {
-                const subResponse = await fetch(item.url);
-                if (subResponse.ok) {
-                  const subData = await subResponse.json();
-                  allTemplates = [...allTemplates, ...processFiles(subData)];
-                }
-              } else if (item.type === 'file' && item.name.endsWith('.json')) {
-                allTemplates = [...allTemplates, ...processFiles([item])];
-              }
-            }
-          }
-        }
-
-        // 4. Find AIOMetadata template in root (dynamic versioning)
-        const metadataFile = findLatestRootTemplate(rootData, (f: any) =>
-          f.type === 'file' && 
-          f.name.toLowerCase().includes('ume-aiometadata-config') && 
-          f.name.endsWith('.json')
-        );
-        
-        if (metadataFile) {
-          setAiometadataTemplateUrl(metadataFile.download_url);
-          setAiometadataVersion(extractVersion(metadataFile.name));
-          setAiometadataFilename(metadataFile.name);
-        }
-
-        const aiostreamsFile = findLatestRootTemplate(rootData, (f: any) =>
-          f.type === 'file' &&
-          f.name.toLowerCase().startsWith('ume-aiostreams-template') &&
-          f.name.endsWith('.json')
-        );
-
-        if (aiostreamsFile) {
-          setAiostreamsTemplateUrl(aiostreamsFile.download_url);
-          setAiostreamsVersion(extractVersion(aiostreamsFile.name));
-          setAiostreamsFilename(aiostreamsFile.name);
-        }
-
-        // Sort by version (newest first)
-        allTemplates.sort((a, b) => compareVersions(b.version, a.version));
-
-        // Deduplicate
-        const uniqueTemplates = allTemplates.filter((v, i, a) => 
-          a.findIndex(t => t.version === v.version) === i
-        );
-
-        setGithubTemplates(uniqueTemplates);
-        if (uniqueTemplates.length > 0) {
-          setSelectedTemplateUrl(uniqueTemplates[0].download_url);
-        }
+        const repository = await fetchTemplateRepository();
+        setGithubTemplates(repository.fusionTemplates);
+        setAiometadataTemplate(repository.aiometadataTemplate ?? null);
+        setAiostreamsTemplate(repository.aiostreamsTemplate ?? null);
+        setSelectedTemplateUrl(repository.defaultFusionTemplate?.rawUrl ?? '');
       } catch (error) {
         console.error('Error fetching GitHub templates:', error);
       } finally {
@@ -411,11 +295,11 @@ export function MainEditor() {
   };
 
 
-  const downloadTemplateFile = async (templateUrl: string, filename: string) => {
-    if (!templateUrl) return;
+  const downloadTemplateFile = async (template: RepositoryTemplate | null) => {
+    if (!template?.rawUrl) return;
 
     try {
-      const response = await fetch(templateUrl);
+      const response = await fetch(template.rawUrl);
       if (!response.ok) throw new Error('Download failed');
       const json = await response.json();
       
@@ -425,7 +309,7 @@ export function MainEditor() {
       const link = document.createElement('a');
       link.href = url;
       
-      link.download = filename.endsWith('.json') ? filename : `${filename}.json`;
+      link.download = template.filename.endsWith('.json') ? template.filename : `${template.filename}.json`;
       
       document.body.appendChild(link);
       link.click();
@@ -437,12 +321,39 @@ export function MainEditor() {
   };
 
   const handleDownloadMetadata = async () => {
-    await downloadTemplateFile(aiometadataTemplateUrl, aiometadataFilename);
+    await downloadTemplateFile(aiometadataTemplate);
   };
 
-  const handleDownloadAiostreams = async () => {
-    await downloadTemplateFile(aiostreamsTemplateUrl, aiostreamsFilename);
+  const handleDownloadAiostreams = () => {
+    if (!aiostreamsTemplate) return;
+    setShowAiostreamsActions(true);
   };
+
+  const handleCopyAiostreamsUrl = async () => {
+    if (!aiostreamsTemplate?.rawUrl) return;
+
+    try {
+      await navigator.clipboard.writeText(aiostreamsTemplate.rawUrl);
+      setAlertDialog({
+        isOpen: true,
+        title: 'URL Copied',
+        message: 'The raw GitHub URL for the UME AIOStreams template has been copied to your clipboard.',
+        variant: 'info',
+        confirmText: 'CONTINUE'
+      });
+      setShowAiostreamsActions(false);
+    } catch {
+      setAlertDialog({
+        isOpen: true,
+        title: 'Clipboard Failed',
+        message: 'The raw GitHub URL could not be copied to your clipboard.',
+        variant: 'danger',
+        confirmText: 'CONTINUE'
+      });
+    }
+  };
+
+  const selectedTemplate = githubTemplates.find((template) => template.rawUrl === selectedTemplateUrl);
 
 
   const handleAddFirstWidget = () => {
@@ -460,7 +371,9 @@ export function MainEditor() {
     if (view === 'welcome') {
       return (
         <div className="flex-1 flex flex-col items-center justify-center max-sm:justify-start px-4 py-6 sm:p-8 md:p-12 max-sm:pb-[calc(env(safe-area-inset-bottom)+2rem)] animate-in fade-in duration-700 max-w-2xl mx-auto w-full relative">
-          <div className="absolute top-6 right-6 hidden sm:flex items-center gap-2 animate-in fade-in slide-in-from-right-4 duration-700 delay-300">
+          <div className="absolute top-6 right-6 hidden sm:flex items-center gap-1.5 animate-in fade-in slide-in-from-right-4 duration-700 delay-300">
+            <ManagerSwitcher currentManager="fusion" />
+            <div className="w-px h-4 bg-border/45 mx-0.5" />
             <Button
               variant="ghost"
               size="icon"
@@ -479,7 +392,7 @@ export function MainEditor() {
             >
               <Heart className="size-5" />
             </Button>
-            <div className="w-px h-4 bg-border/60 mx-1" />
+            <div className="w-px h-4 bg-border/45 mx-0.5" />
             <ThemeToggle />
           </div>
 
@@ -507,36 +420,43 @@ export function MainEditor() {
 
           <div className="w-full space-y-4 sm:space-y-4 mb-6 sm:mb-10">
             <div className="flex justify-start sm:justify-end px-0 sm:px-2 mb-1 sm:mb-2">
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto overflow-x-auto no-scrollbar scroll-smooth justify-start sm:justify-end">
+              <div className="flex flex-col items-start gap-1.5 w-full sm:w-auto">
+                <div className="px-1 sm:px-0 text-[9px] font-bold uppercase tracking-[0.18em] text-muted-foreground/45">
+                  Additional Ressources
+                </div>
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto overflow-x-auto no-scrollbar scroll-smooth justify-start sm:justify-end">
                 <Button
+                  type="button"
                   variant="ghost"
                   className="h-9 sm:h-8 rounded-xl border border-dashed border-border/60 hover:border-primary/40 hover:bg-primary/5 transition-all font-bold uppercase tracking-widest text-[9px] px-4 text-muted-foreground/60 hover:text-primary whitespace-nowrap shrink-0 justify-center"
                   onClick={handleDownloadMetadata}
-                  disabled={isLoadingTemplates || !aiometadataTemplateUrl}
+                  disabled={isLoadingTemplates || !aiometadataTemplate}
                 >
                   {isLoadingTemplates ? (
                     <RotateCcw className="size-3 mr-2 animate-spin" />
                   ) : (
                     <Download className="size-3 mr-2" />
                   )}
-                  AIOMetadata {aiometadataVersion || 'Template'}
+                  {formatTemplateLabel('AIOMetadata', aiometadataTemplate ?? undefined)}
                 </Button>
                 <div className="w-px h-3 bg-border/40 shrink-0 hidden sm:block" />
                 <Button
+                  type="button"
                   variant="ghost"
                   className="h-9 sm:h-8 rounded-xl border border-dashed border-border/60 hover:border-primary/40 hover:bg-primary/5 transition-all font-bold uppercase tracking-widest text-[9px] px-4 text-muted-foreground/60 hover:text-primary whitespace-nowrap shrink-0 justify-center"
                   onClick={handleDownloadAiostreams}
-                  disabled={isLoadingTemplates || !aiostreamsTemplateUrl}
+                  disabled={isLoadingTemplates || !aiostreamsTemplate}
                 >
                   {isLoadingTemplates ? (
                     <RotateCcw className="size-3 mr-2 animate-spin" />
                   ) : (
                     <Download className="size-3 mr-2" />
                   )}
-                  AIOSTREAMS {aiostreamsVersion || 'Template'}
+                  {formatTemplateLabel('AIOSTREAMS', aiostreamsTemplate ?? undefined)}
                 </Button>
                 <div className="w-px h-3 bg-border/40 shrink-0 hidden sm:block" />
                 <Button
+                  type="button"
                   variant="ghost"
                   className="h-9 sm:h-8 rounded-xl border border-dashed border-border/60 hover:border-blue-500/40 hover:bg-blue-500/5 transition-all font-bold uppercase tracking-widest text-[9px] px-4 text-muted-foreground/60 hover:text-blue-500/80 whitespace-nowrap shrink-0 justify-center"
                   onClick={() => omniFileInputRef.current?.click()}
@@ -544,6 +464,7 @@ export function MainEditor() {
                   <FileJson2 className="size-3 mr-2" />
                   Convert Omni Snapshot
                 </Button>
+                </div>
               </div>
             </div>
 
@@ -631,7 +552,7 @@ export function MainEditor() {
                       <PopoverTrigger asChild>
                         <button className="flex-1 h-full min-w-0 bg-transparent border-none focus:outline-none text-[11px] sm:text-[12px] font-bold pl-3 pr-4 sm:pr-8 appearance-none cursor-pointer hover:bg-muted/10 rounded-xl transition-all text-left flex items-center justify-between group/select">
                           <span className="truncate">
-                            {githubTemplates.find(t => t.download_url === selectedTemplateUrl)?.name || 'Select Template...'}
+                            {selectedTemplate ? formatTemplateLabel('UME Fusion Template', selectedTemplate) : 'Select Template...'}
                           </span>
                           <ChevronDown className={cn("size-3.5 text-muted-foreground/50 group-hover/select:text-primary transition-all shrink-0", isTemplatePopoverOpen && "rotate-180 text-primary")} />
                         </button>
@@ -640,20 +561,20 @@ export function MainEditor() {
                         <div className="flex flex-col gap-0.5 max-h-[160px] overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-muted-foreground/20 hover:scrollbar-thumb-muted-foreground/40 scrollbar-track-transparent">
                           {githubTemplates.map((template) => (
                             <button
-                              key={template.download_url}
+                              key={template.rawUrl}
                               onClick={() => {
-                                setSelectedTemplateUrl(template.download_url);
+                                setSelectedTemplateUrl(template.rawUrl);
                                 setIsTemplatePopoverOpen(false);
                               }}
                               className={cn(
                                 "w-full px-4 py-3 rounded-xl text-[12px] font-bold text-left transition-all flex items-center justify-between group",
-                                selectedTemplateUrl === template.download_url
+                                selectedTemplateUrl === template.rawUrl
                                   ? "bg-primary/10 text-primary"
                                   : "hover:bg-muted/50 text-muted-foreground/70 hover:text-foreground"
                               )}
                             >
-                              <span className="truncate">{template.name}</span>
-                              {selectedTemplateUrl === template.download_url && <Check className="size-3.5 shrink-0" />}
+                              <span className="truncate">{formatTemplateLabel('UME Fusion Template', template)}</span>
+                              {selectedTemplateUrl === template.rawUrl && <Check className="size-3.5 shrink-0" />}
                             </button>
                           ))}
                         </div>
@@ -742,6 +663,16 @@ export function MainEditor() {
               </div>
 
               <div className="flex items-center gap-1">
+                {view === 'welcome' && (
+                  <>
+                    <ManagerSwitcher
+                      currentManager="fusion"
+                      className="h-8 rounded-xl px-2.5 text-[11px] shadow-none"
+                    />
+                    <div className="w-px h-3 bg-border/45 mx-0.5" />
+                  </>
+                )}
+
                 <Button
                   variant="ghost"
                   size="icon"
@@ -900,6 +831,54 @@ export function MainEditor() {
         onConfirm={() => { }}
       />
 
+      <Dialog open={showAiostreamsActions} onOpenChange={setShowAiostreamsActions}>
+        <DialogContent
+          overlayClassName="z-[70]"
+          className="z-[71] sm:max-w-[420px] rounded-[2.25rem] border border-border/40 bg-card/95 p-0 backdrop-blur-2xl shadow-2xl overflow-hidden max-sm:w-[calc(100vw-1rem)] max-sm:max-w-[calc(100vw-1rem)] [&>button:last-child]:hidden"
+        >
+          <div className="p-8 pt-10 max-sm:p-5 max-sm:pt-6">
+            <DialogHeader className="space-y-4 items-start text-left">
+              <div className="size-14 rounded-2xl border border-primary/10 bg-primary/5 text-primary shadow-sm flex items-center justify-center max-sm:size-12 max-sm:rounded-[1rem]">
+                <Download className="size-7 max-sm:size-6" />
+              </div>
+              <div className="space-y-1">
+                <DialogTitle className="text-2xl font-bold tracking-tight max-sm:text-xl">
+                  {formatTemplateLabel('UME AIOStreams Template', aiostreamsTemplate ?? undefined)}
+                </DialogTitle>
+                <DialogDescription className="text-muted-foreground/60 text-xs font-medium leading-relaxed max-sm:text-[11px]">
+                  Choose whether you want to copy the raw GitHub URL or download the JSON file directly.
+                </DialogDescription>
+              </div>
+            </DialogHeader>
+
+            <DialogFooter className="flex-col gap-3 mt-8">
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full h-11 rounded-xl font-bold uppercase tracking-wider text-xs border-border/40 bg-transparent hover:border-primary/30 hover:bg-primary/5"
+                onClick={handleCopyAiostreamsUrl}
+                disabled={!aiostreamsTemplate?.rawUrl}
+              >
+                <Copy className="size-4 mr-2" />
+                Copy URL
+              </Button>
+              <Button
+                type="button"
+                className="w-full h-11 rounded-xl font-bold uppercase tracking-wider text-xs shadow-lg shadow-primary/20"
+                onClick={async () => {
+                  await downloadTemplateFile(aiostreamsTemplate);
+                  setShowAiostreamsActions(false);
+                }}
+                disabled={!aiostreamsTemplate}
+              >
+                <Download className="size-4 mr-2" />
+                Download
+              </Button>
+            </DialogFooter>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* How To Use Dialog */}
       <Dialog open={showHowToUse} onOpenChange={setShowHowToUse}>
         <DialogContent className="max-w-2xl bg-white/95 dark:bg-black/90 backdrop-blur-2xl border-border/40 rounded-[2.5rem] p-0 overflow-hidden shadow-2xl [&>button:last-child]:top-6 [&>button:last-child]:right-6 [&>button:last-child]:size-8 [&>button:last-child]:rounded-full [&>button:last-child]:bg-muted/30 [&>button:last-child]:hover:bg-muted/50 [&>button:last-child]:border-none">
@@ -936,10 +915,10 @@ export function MainEditor() {
                       variant="outline" 
                       className="h-10 w-full justify-center rounded-full border-border/30 bg-transparent text-[11px] font-semibold text-muted-foreground/80 hover:text-primary hover:border-primary/30 hover:bg-primary/5 shadow-none"
                       onClick={handleDownloadMetadata}
-                      disabled={!aiometadataTemplateUrl}
+                      disabled={!aiometadataTemplate}
                     >
                       <Download className="size-3 mr-2 text-primary/90" />
-                      Download AIOMetadata {aiometadataVersion || 'Template'}
+                      {formatTemplateLabel('Download AIOMetadata', aiometadataTemplate ?? undefined)}
                     </Button>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-0.5">
                       <Button 
