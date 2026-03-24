@@ -513,14 +513,14 @@ export function MainEditor() {
                 <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full">
                     <Button
                       variant="outline"
-                      className="flex-1 h-12 sm:h-[3.05rem] rounded-[1.1rem] sm:rounded-[1.2rem] border-border/75 bg-background/62 backdrop-blur-sm hover:bg-muted/70 transition-all font-bold uppercase tracking-[0.14em] text-[10px] sm:text-[10px] px-5 sm:px-5.5 group/btn hover:scale-[1.01] active:scale-[0.98] shadow-[0_12px_26px_-24px_rgba(15,23,42,0.26)]"
+                      className="flex-1 h-[3.2rem] sm:h-[3.05rem] rounded-[1.15rem] sm:rounded-[1.2rem] border-border/75 bg-background/62 backdrop-blur-sm hover:bg-muted/70 transition-all font-bold uppercase tracking-[0.14em] text-[10px] sm:text-[10px] px-5 sm:px-5.5 group/btn hover:scale-[1.01] active:scale-[0.98] shadow-[0_12px_26px_-24px_rgba(15,23,42,0.26)]"
                       onClick={() => fileInputRef.current?.click()}
                     >
                       <Upload className="size-4 mr-3 text-muted-foreground/72 group-hover/btn:text-primary transition-colors shrink-0" />
                       Import Fusion JSON
                     </Button>
                     <Button
-                      className="flex-1 h-12 sm:h-[3.05rem] rounded-[1.1rem] sm:rounded-[1.2rem] font-bold uppercase tracking-[0.14em] text-[10px] sm:text-[10px] px-5 sm:px-5.5 shadow-lg shadow-primary/12 group/create relative overflow-hidden bg-primary hover:bg-primary/90 hover:scale-[1.01] active:scale-[0.98] transition-all"
+                      className="flex-1 h-[3.2rem] sm:h-[3.05rem] rounded-[1.15rem] sm:rounded-[1.2rem] font-bold uppercase tracking-[0.14em] text-[10px] sm:text-[10px] px-5 sm:px-5.5 shadow-lg shadow-primary/12 group/create relative overflow-hidden bg-primary hover:bg-primary/90 hover:scale-[1.01] active:scale-[0.98] transition-all"
                       onClick={handleAddFirstWidget}
                     >
                       <div className="absolute inset-0 bg-gradient-to-tr from-white/10 to-transparent pointer-events-none" />
@@ -585,7 +585,7 @@ export function MainEditor() {
                       onClick={handleLoadTemplate}
                       disabled={isLoadingTemplates || !selectedTemplateUrl}
                       size="sm"
-                      className="h-9 sm:h-[2.7rem] min-w-[110px] sm:min-w-[120px] px-3.5 sm:px-5 rounded-xl font-bold uppercase tracking-[0.14em] text-[10px] sm:text-[10px] shadow-sm shrink-0"
+                      className="h-11 sm:h-[2.7rem] min-w-[118px] sm:min-w-[120px] px-4 sm:px-5 rounded-[1.05rem] sm:rounded-xl font-bold uppercase tracking-[0.14em] text-[10px] sm:text-[10px] shadow-sm shrink-0"
                     >
                       {isLoadingTemplates ? (
                         <RotateCcw className="size-3.5 animate-spin" />
