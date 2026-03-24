@@ -978,8 +978,8 @@ export function MainEditor() {
 
       {/* How To Use Dialog */}
       <Dialog open={showHowToUse} onOpenChange={setShowHowToUse}>
-        <DialogContent className="max-w-2xl bg-white/95 dark:bg-black/90 backdrop-blur-2xl border-border/40 rounded-[2.5rem] p-0 overflow-hidden shadow-2xl [&>button:last-child]:top-6 [&>button:last-child]:right-6 [&>button:last-child]:size-8 [&>button:last-child]:rounded-full [&>button:last-child]:bg-muted/30 [&>button:last-child]:hover:bg-muted/50 [&>button:last-child]:border-none">
-          <DialogHeader className="space-y-4 p-8 pb-4 max-sm:p-5 max-sm:pt-6 max-sm:pb-3">
+        <DialogContent className="max-w-2xl bg-white/95 dark:bg-black/90 backdrop-blur-2xl border-border/40 rounded-[2.5rem] p-0 overflow-hidden shadow-2xl max-sm:w-[calc(100vw-1.25rem)] max-sm:max-w-[calc(100vw-1.25rem)] max-sm:rounded-[2rem] [&>button:last-child]:top-6 [&>button:last-child]:right-6 [&>button:last-child]:size-8 [&>button:last-child]:rounded-full [&>button:last-child]:bg-muted/30 [&>button:last-child]:hover:bg-muted/50 [&>button:last-child]:border-none max-sm:[&>button:last-child]:top-4 max-sm:[&>button:last-child]:right-4 max-sm:[&>button:last-child]:size-9 max-sm:[&>button:last-child]:border max-sm:[&>button:last-child]:border-border/50 max-sm:[&>button:last-child]:bg-background/85">
+          <DialogHeader className="space-y-4 p-8 pb-4 max-sm:px-4 max-sm:pb-3 max-sm:pt-4">
             <div className="size-14 rounded-2xl bg-primary/5 border border-primary/10 flex items-center justify-center text-primary shadow-sm max-sm:size-12 max-sm:rounded-[1rem]">
               <Book className="size-7 max-sm:size-6" />
             </div>
@@ -993,14 +993,14 @@ export function MainEditor() {
             </div>
           </DialogHeader>
           
-          <div className="max-h-[60vh] overflow-y-auto px-8 pb-8 custom-scrollbar max-sm:px-5 max-sm:pb-5">
-            <div className="mx-auto max-w-[680px] space-y-3.5">
-              <section className="rounded-[1.55rem] border border-border/10 bg-white/[0.02] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] max-sm:rounded-[1.2rem] max-sm:p-4">
+          <div className="max-h-[60vh] overflow-y-auto px-8 pb-8 custom-scrollbar max-sm:px-4 max-sm:pb-4">
+            <div className="mx-auto max-w-[680px] space-y-3.5 max-sm:space-y-3">
+              <section className="rounded-[1.55rem] border border-border/45 bg-background/78 p-5 shadow-[0_18px_45px_-38px_rgba(15,23,42,0.22)] max-sm:rounded-[1.2rem] max-sm:px-4 max-sm:py-3.5">
                 <div className="flex items-start gap-4">
-                  <div className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-[12px] font-black text-primary shadow-sm max-sm:size-9 max-sm:text-[11px]">
+                  <div className="flex size-10 shrink-0 items-center justify-center rounded-2xl border border-primary/12 bg-primary/10 text-[12px] font-black text-primary shadow-sm max-sm:size-8 max-sm:text-[11px]">
                     1
                   </div>
-                  <div className="min-w-0 flex-1 space-y-3">
+                  <div className="min-w-0 flex-1 space-y-3 max-sm:space-y-2.5">
                     <div className="space-y-1">
                       <p className="text-[10px] font-black uppercase tracking-[0.14em] text-primary/70">Get started</p>
                       <h3 className="text-[1.1rem] font-bold tracking-tight max-sm:text-[1rem]">AIOMetadata Setup</h3>
@@ -1010,41 +1010,49 @@ export function MainEditor() {
                     </p>
                     <Button 
                       variant="outline" 
-                      className="h-10 w-full justify-center rounded-full border-border/30 bg-transparent text-[11px] font-semibold text-muted-foreground/80 hover:text-primary hover:border-primary/30 hover:bg-primary/5 shadow-none"
+                      className="h-11 w-full justify-start rounded-[1.1rem] border-border/45 bg-background/72 px-3.5 text-[11px] font-semibold text-foreground/78 hover:text-primary hover:border-primary/30 hover:bg-primary/5 shadow-[0_10px_24px_-24px_rgba(15,23,42,0.22)]"
                       onClick={handleDownloadMetadata}
                       disabled={!aiometadataTemplate}
                     >
-                      <Download className="size-3 mr-2 text-primary/90" />
-                      {formatTemplateLabel('Download AIOMetadata', aiometadataTemplate ?? undefined)}
+                      <span className="mr-3 flex size-8 shrink-0 items-center justify-center rounded-xl border border-primary/12 bg-primary/6 text-primary">
+                        <Download className="size-3.5" />
+                      </span>
+                      <span className="truncate text-left">
+                        {formatTemplateLabel('Download AIOMetadata', aiometadataTemplate ?? undefined)}
+                      </span>
                     </Button>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-0.5">
                       <Button 
                         variant="outline" 
-                        className="h-10 rounded-full justify-center text-[11px] font-semibold bg-transparent border-border/30 text-muted-foreground/80 hover:text-primary hover:border-primary/30 hover:bg-primary/5 shadow-none"
+                        className="h-11 rounded-[1.1rem] justify-start border-border/45 bg-background/72 px-3.5 text-[11px] font-semibold text-foreground/78 hover:text-primary hover:border-primary/30 hover:bg-primary/5 shadow-[0_10px_24px_-24px_rgba(15,23,42,0.22)]"
                         onClick={() => window.open('https://aiometadatafortheweebs.midnightignite.me/configure/', '_blank')}
                       >
-                        <Globe className="size-3 mr-2 text-primary/90" />
-                        AIOMetadata (Midnight)
+                        <span className="mr-3 flex size-8 shrink-0 items-center justify-center rounded-xl border border-primary/12 bg-primary/6 text-primary">
+                          <Globe className="size-3.5" />
+                        </span>
+                        <span className="truncate text-left">AIOMetadata (Midnight)</span>
                       </Button>
                       <Button 
                         variant="outline" 
-                        className="h-10 rounded-full justify-center text-[11px] font-semibold bg-transparent border-border/30 text-muted-foreground/80 hover:text-blue-600 hover:border-blue-500/30 hover:bg-blue-500/5 shadow-none"
+                        className="h-11 rounded-[1.1rem] justify-start border-border/45 bg-background/72 px-3.5 text-[11px] font-semibold text-foreground/78 hover:text-primary hover:border-primary/30 hover:bg-primary/5 shadow-[0_10px_24px_-24px_rgba(15,23,42,0.22)]"
                         onClick={() => window.open('https://aiometadata.fortheweak.cloud/configure/', '_blank')}
                       >
-                        <Globe className="size-3 mr-2 text-blue-500/90" />
-                        AIOMetadata (Yeb)
+                        <span className="mr-3 flex size-8 shrink-0 items-center justify-center rounded-xl border border-primary/12 bg-primary/6 text-primary">
+                          <Globe className="size-3.5" />
+                        </span>
+                        <span className="truncate text-left">AIOMetadata (Yeb)</span>
                       </Button>
                     </div>
                   </div>
                 </div>
               </section>
 
-              <section className="rounded-[1.55rem] border border-border/10 bg-white/[0.02] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] max-sm:rounded-[1.2rem] max-sm:p-4">
+              <section className="rounded-[1.55rem] border border-border/45 bg-background/78 p-5 shadow-[0_18px_45px_-38px_rgba(15,23,42,0.22)] max-sm:rounded-[1.2rem] max-sm:px-4 max-sm:py-3.5">
                 <div className="flex items-start gap-4">
-                  <div className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-[12px] font-black text-primary shadow-sm max-sm:size-9 max-sm:text-[11px]">
+                  <div className="flex size-10 shrink-0 items-center justify-center rounded-2xl border border-primary/12 bg-primary/10 text-[12px] font-black text-primary shadow-sm max-sm:size-8 max-sm:text-[11px]">
                     2
                   </div>
-                  <div className="min-w-0 flex-1 space-y-3">
+                  <div className="min-w-0 flex-1 space-y-3 max-sm:space-y-2.5">
                     <div className="space-y-1">
                       <p className="text-[10px] font-black uppercase tracking-[0.14em] text-primary/70">Bring data in</p>
                       <h3 className="text-[1.1rem] font-bold tracking-tight max-sm:text-[1rem]">Import Configuration</h3>
@@ -1056,12 +1064,12 @@ export function MainEditor() {
                 </div>
               </section>
 
-              <section className="rounded-[1.55rem] border border-border/10 bg-white/[0.02] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] max-sm:rounded-[1.2rem] max-sm:p-4">
+              <section className="rounded-[1.55rem] border border-border/45 bg-background/78 p-5 shadow-[0_18px_45px_-38px_rgba(15,23,42,0.22)] max-sm:rounded-[1.2rem] max-sm:px-4 max-sm:py-3.5">
                 <div className="flex items-start gap-4">
-                  <div className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-[12px] font-black text-primary shadow-sm max-sm:size-9 max-sm:text-[11px]">
+                  <div className="flex size-10 shrink-0 items-center justify-center rounded-2xl border border-primary/12 bg-primary/10 text-[12px] font-black text-primary shadow-sm max-sm:size-8 max-sm:text-[11px]">
                     3
                   </div>
-                  <div className="min-w-0 flex-1 space-y-3">
+                  <div className="min-w-0 flex-1 space-y-3 max-sm:space-y-2.5">
                     <div className="space-y-1">
                       <p className="text-[10px] font-black uppercase tracking-[0.14em] text-primary/70">Connect catalogs</p>
                       <h3 className="text-[1.1rem] font-bold tracking-tight max-sm:text-[1rem]">Sync Catalogs</h3>
@@ -1073,12 +1081,12 @@ export function MainEditor() {
                 </div>
               </section>
 
-              <section className="rounded-[1.55rem] border border-border/10 bg-white/[0.02] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] max-sm:rounded-[1.2rem] max-sm:p-4">
+              <section className="rounded-[1.55rem] border border-border/45 bg-background/78 p-5 shadow-[0_18px_45px_-38px_rgba(15,23,42,0.22)] max-sm:rounded-[1.2rem] max-sm:px-4 max-sm:py-3.5">
                 <div className="flex items-start gap-4">
-                  <div className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-[12px] font-black text-primary shadow-sm max-sm:size-9 max-sm:text-[11px]">
+                  <div className="flex size-10 shrink-0 items-center justify-center rounded-2xl border border-primary/12 bg-primary/10 text-[12px] font-black text-primary shadow-sm max-sm:size-8 max-sm:text-[11px]">
                     4
                   </div>
-                  <div className="min-w-0 flex-1 space-y-3">
+                  <div className="min-w-0 flex-1 space-y-3 max-sm:space-y-2.5">
                     <div className="space-y-1">
                       <p className="text-[10px] font-black uppercase tracking-[0.14em] text-primary/70">Finish up</p>
                       <h3 className="text-[1.1rem] font-bold tracking-tight max-sm:text-[1rem]">Personalize &amp; Export</h3>
@@ -1086,7 +1094,7 @@ export function MainEditor() {
                     <p className="text-[14px] font-medium leading-7 text-muted-foreground/78 max-sm:text-[13px] max-sm:leading-6">
                       Edit your widgets, then use <strong>Export</strong> and <strong>Copy the widget to your clipboard</strong>. You can paste the text of the .JSON in Fusion under <strong>Widgets → Import Widgets</strong> to import the new widgets.
                     </p>
-                    <div className="rounded-2xl border border-blue-500/20 bg-blue-500/[0.1] px-5 py-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+                    <div className="rounded-2xl border border-blue-500/20 bg-blue-500/[0.1] px-5 py-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] max-sm:px-4 max-sm:py-3">
                       <p className="text-[12px] font-semibold leading-6 text-blue-500/90 max-sm:text-[11px]">
                         <strong>Note:</strong> You can also export configurations for Omni snapshots if needed.
                       </p>
@@ -1097,9 +1105,9 @@ export function MainEditor() {
             </div>
           </div>
 
-          <div className="p-8 bg-muted/5 border-t border-border/40 flex justify-end">
+          <div className="flex justify-end border-t border-border/40 bg-muted/5 p-8 max-sm:px-4 max-sm:py-4">
             <Button 
-              className="h-12 px-10 rounded-xl font-bold uppercase tracking-widest text-[11px] shadow-lg shadow-primary/20"
+              className="h-12 px-10 rounded-xl font-bold uppercase tracking-widest text-[11px] shadow-lg shadow-primary/20 max-sm:w-full max-sm:rounded-[1rem]"
               onClick={() => setShowHowToUse(false)}
             >
               Understood
