@@ -1,78 +1,174 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
+  FALLBACK_TEMPLATE_URLS,
   fetchTemplateRepository,
   requiresDownloadActionPrompt,
   type FetchLike,
 } from './template-repository';
 
-function createMockFetch(responses: Record<string, unknown>): FetchLike {
+interface MockResponseConfig {
+  json?: unknown;
+  ok?: boolean;
+  text?: string;
+}
+
+function createMockFetch(
+  responses: Record<string, unknown | MockResponseConfig>,
+  requests: string[] = [],
+): FetchLike {
   return async (input: string) => {
+    requests.push(input);
+
     if (!(input in responses)) {
       throw new Error(`Unexpected fetch: ${input}`);
     }
 
     const payload = responses[input];
+    const isConfiguredResponse = payload !== null
+      && typeof payload === 'object'
+      && !Array.isArray(payload)
+      && ('ok' in payload || 'json' in payload || 'text' in payload);
+
+    const responseConfig = isConfiguredResponse
+      ? payload as MockResponseConfig
+      : { json: payload };
+
+    const jsonPayload = responseConfig.json;
+    const textPayload = responseConfig.text ?? (
+      typeof jsonPayload === 'string' ? jsonPayload : JSON.stringify(jsonPayload)
+    );
+
     return {
-      ok: true,
+      ok: responseConfig.ok ?? true,
       async json() {
-        return payload;
+        return jsonPayload;
       },
       async text() {
-        return typeof payload === 'string' ? payload : JSON.stringify(payload);
+        return textPayload;
       },
     };
   };
 }
 
-test('fetchTemplateRepository prefers versions from JSON content and falls back to filenames', async () => {
+test('fetchTemplateRepository uses the manifest as the primary source when it is valid', async () => {
+  const requests: string[] = [];
   const fetch = createMockFetch({
+    'https://api.test/manifest.json': {
+      generatedAt: '2026-03-24T18:19:31.633Z',
+      templates: [
+        {
+          id: 'ume-omni-template-v2.1.1.json',
+          name: 'UME Omni Template v2.1.1',
+          url: 'https://raw.test/ume-omni-template-v2.1.1.json',
+          version: 'v2.1.1',
+          isDefault: true,
+        },
+        {
+          id: 'ume-omni-template-v2.0.0.json',
+          name: 'UME Omni Template v2.0.0',
+          url: 'https://raw.test/ume-omni-template-v2.0.0.json',
+          version: '2.0.0',
+        },
+        {
+          id: 'ume-aiometadata-config-v2.1.json',
+          name: 'UME AIOMetadata Config v2.1',
+          url: 'https://raw.test/ume-aiometadata-config-v2.1.json',
+          version: 'v2.1',
+        },
+        {
+          id: 'ume-aiometadata-catalogs-only-v2.1.json',
+          name: 'UME AIOMetadata Catalogs Only v2.1',
+          url: 'https://raw.test/ume-aiometadata-catalogs-only-v2.1.json',
+          version: 'v2.1',
+        },
+        {
+          id: 'ume-aiostreams-template-v1.7.json',
+          name: 'UME AIOStreams Template v1.7',
+          url: 'https://raw.test/ume-aiostreams-template-v1.7.json',
+          version: '1.7',
+        },
+      ],
+    },
+  }, requests);
+
+  const repository = await fetchTemplateRepository(
+    fetch,
+    'https://api.test/root',
+    'https://api.test/manifest.json',
+  );
+
+  assert.equal(repository.defaultFusionTemplate?.rawUrl, 'https://raw.test/ume-omni-template-v2.1.1.json');
+  assert.deepEqual(
+    repository.fusionTemplates.map((template) => template.version),
+    ['v2.1.1', 'v2.0.0'],
+  );
+  assert.equal(repository.aiometadataTemplate?.rawUrl, 'https://raw.test/ume-aiometadata-config-v2.1.json');
+  assert.equal(repository.aiometadataCatalogsOnlyTemplate?.rawUrl, 'https://raw.test/ume-aiometadata-catalogs-only-v2.1.json');
+  assert.equal(repository.aiostreamsTemplate?.rawUrl, 'https://raw.test/ume-aiostreams-template-v1.7.json');
+  assert.deepEqual(requests, ['https://api.test/manifest.json']);
+});
+
+test('fetchTemplateRepository supplements missing manifest kinds from the repository scan before fixed fallbacks', async () => {
+  const fetch = createMockFetch({
+    'https://api.test/manifest.json': {
+      templates: [
+        {
+          id: 'ume-omni-template-v2.1.1.json',
+          name: 'UME Omni Template v2.1.1',
+          url: 'https://raw.test/ume-omni-template-v2.1.1.json',
+          version: 'v2.1.1',
+          isDefault: true,
+        },
+      ],
+    },
     'https://api.test/root': [
       {
-        name: 'ume-omni-template-v1.0.0.json',
-        path: 'ume-omni-template-v1.0.0.json',
+        name: 'ume-aiometadata-config-v2.1.json',
+        path: 'ume-aiometadata-config-v2.1.json',
         type: 'file',
-        url: 'https://api.test/root/ume-omni-template-v1.0.0.json',
-        download_url: 'https://raw.test/fusion.json',
+        url: 'https://api.test/root/ume-aiometadata-config-v2.1.json',
+        download_url: 'https://raw.test/ume-aiometadata-config-v2.1.json',
       },
       {
-        name: 'ume-aiometadata-config-v1.5.0.json',
-        path: 'ume-aiometadata-config-v1.5.0.json',
+        name: 'ume-aiometadata-catalogs-only-v2.1.json',
+        path: 'ume-aiometadata-catalogs-only-v2.1.json',
         type: 'file',
-        url: 'https://api.test/root/ume-aiometadata-config-v1.5.0.json',
-        download_url: 'https://raw.test/aiometadata.json',
+        url: 'https://api.test/root/ume-aiometadata-catalogs-only-v2.1.json',
+        download_url: 'https://raw.test/ume-aiometadata-catalogs-only-v2.1.json',
       },
       {
-        name: 'ume-aiometadata-catalogs-only-v1.4.0.json',
-        path: 'ume-aiometadata-catalogs-only-v1.4.0.json',
-        type: 'file',
-        url: 'https://api.test/root/ume-aiometadata-catalogs-only-v1.4.0.json',
-        download_url: 'https://raw.test/aiometadata-catalogs-only.json',
-      },
-      {
-        name: 'ume-aiostreams-template-latest.json',
-        path: 'ume-aiostreams-template-latest.json',
+        name: 'ume-aiostreams-template-v1.7.json',
+        path: 'ume-aiostreams-template-v1.7.json',
         type: 'file',
         url: 'https://api.test/file/aiostreams.json',
-        download_url: 'https://raw.test/aiostreams.json',
+        download_url: 'https://raw.test/ume-aiostreams-template-v1.7.json',
       },
     ],
     'https://api.test/file/aiostreams.json': {
       encoding: 'base64',
-      content: Buffer.from(JSON.stringify({ version: '2.1.1' }), 'utf8').toString('base64'),
+      content: Buffer.from(JSON.stringify({ version: '1.7.0' }), 'utf8').toString('base64'),
     },
   });
 
-  const repository = await fetchTemplateRepository(fetch, 'https://api.test/root');
+  const repository = await fetchTemplateRepository(
+    fetch,
+    'https://api.test/root',
+    'https://api.test/manifest.json',
+  );
 
-  assert.equal(repository.defaultFusionTemplate?.version, 'v1.0.0');
-  assert.equal(repository.aiometadataTemplate?.version, 'v1.5.0');
-  assert.equal(repository.aiometadataCatalogsOnlyTemplate?.version, 'v1.4.0');
-  assert.equal(repository.aiostreamsTemplate?.version, 'v2.1.1');
+  assert.equal(repository.defaultFusionTemplate?.rawUrl, 'https://raw.test/ume-omni-template-v2.1.1.json');
+  assert.equal(repository.aiometadataTemplate?.rawUrl, 'https://raw.test/ume-aiometadata-config-v2.1.json');
+  assert.equal(repository.aiometadataCatalogsOnlyTemplate?.rawUrl, 'https://raw.test/ume-aiometadata-catalogs-only-v2.1.json');
+  assert.equal(repository.aiostreamsTemplate?.rawUrl, 'https://raw.test/ume-aiostreams-template-v1.7.json');
 });
 
-test('fetchTemplateRepository chooses the newest actual version instead of the root file', async () => {
+test('fetchTemplateRepository falls back to the repository scan when the manifest is invalid', async () => {
   const fetch = createMockFetch({
+    'https://api.test/manifest.json': {
+      generatedAt: '2026-03-24T18:19:31.633Z',
+      templates: {},
+    },
     'https://api.test/root': [
       {
         name: 'ume-omni-template.json',
@@ -122,12 +218,38 @@ test('fetchTemplateRepository chooses the newest actual version instead of the r
     },
   });
 
-  const repository = await fetchTemplateRepository(fetch, 'https://api.test/root');
+  const repository = await fetchTemplateRepository(
+    fetch,
+    'https://api.test/root',
+    'https://api.test/manifest.json',
+  );
 
   assert.equal(repository.defaultFusionTemplate?.rawUrl, 'https://raw.test/fusion-v2.1.0.json');
   assert.equal(repository.defaultFusionTemplate?.version, 'v2.1.0');
   assert.equal(repository.aiostreamsTemplate?.rawUrl, 'https://raw.test/aiostreams-root.json');
   assert.equal(repository.aiostreamsTemplate?.version, 'v2.1.1');
+});
+
+test('fetchTemplateRepository falls back to fixed URLs when manifest and repository scan both fail', async () => {
+  const fetch = createMockFetch({
+    'https://api.test/manifest.json': {
+      ok: false,
+    },
+    'https://api.test/root': {
+      ok: false,
+    },
+  });
+
+  const repository = await fetchTemplateRepository(
+    fetch,
+    'https://api.test/root',
+    'https://api.test/manifest.json',
+  );
+
+  assert.equal(repository.defaultFusionTemplate?.rawUrl, FALLBACK_TEMPLATE_URLS.fusion);
+  assert.equal(repository.aiometadataTemplate?.rawUrl, FALLBACK_TEMPLATE_URLS.aiometadata);
+  assert.equal(repository.aiometadataCatalogsOnlyTemplate?.rawUrl, FALLBACK_TEMPLATE_URLS['aiometadata-catalogs-only']);
+  assert.equal(repository.aiostreamsTemplate?.rawUrl, FALLBACK_TEMPLATE_URLS.aiostreams);
 });
 
 test('requiresDownloadActionPrompt only prompts for AIOStreams templates', () => {
@@ -137,52 +259,11 @@ test('requiresDownloadActionPrompt only prompts for AIOStreams templates', () =>
   assert.equal(requiresDownloadActionPrompt('aiostreams'), true);
 });
 
-test('AIOMetadata keeps using the filename even if the file content has a different version', async () => {
+test('AIOStreams falls back to raw JSON when the repository scan content API version lookup fails', async () => {
   const fetch = createMockFetch({
-    'https://api.test/root': [
-      {
-        name: 'ume-aiometadata-config-v2.1.json',
-        path: 'ume-aiometadata-config-v2.1.json',
-        type: 'file',
-        url: 'https://api.test/file/aiometadata.json',
-        download_url: 'https://raw.test/aiometadata.json',
-      },
-    ],
-  });
-
-  const repository = await fetchTemplateRepository(fetch, 'https://api.test/root');
-
-  assert.equal(repository.aiometadataTemplate?.version, 'v2.1');
-});
-
-test('AIOMetadata catalogs-only templates are tracked separately from the full config template', async () => {
-  const fetch = createMockFetch({
-    'https://api.test/root': [
-      {
-        name: 'ume-aiometadata-config-v2.1.json',
-        path: 'ume-aiometadata-config-v2.1.json',
-        type: 'file',
-        url: 'https://api.test/file/aiometadata-full.json',
-        download_url: 'https://raw.test/aiometadata-full.json',
-      },
-      {
-        name: 'ume-aiometadata-catalogs-only-v2.3.json',
-        path: 'ume-aiometadata-catalogs-only-v2.3.json',
-        type: 'file',
-        url: 'https://api.test/file/aiometadata-catalogs-only.json',
-        download_url: 'https://raw.test/aiometadata-catalogs-only.json',
-      },
-    ],
-  });
-
-  const repository = await fetchTemplateRepository(fetch, 'https://api.test/root');
-
-  assert.equal(repository.aiometadataTemplate?.filename, 'ume-aiometadata-config-v2.1.json');
-  assert.equal(repository.aiometadataCatalogsOnlyTemplate?.filename, 'ume-aiometadata-catalogs-only-v2.3.json');
-});
-
-test('AIOStreams falls back to raw JSON when the GitHub contents API version lookup fails', async () => {
-  const fetch = createMockFetch({
+    'https://api.test/manifest.json': {
+      ok: false,
+    },
     'https://api.test/root': [
       {
         name: 'ume-aiostreams-template-v1.7.json',
@@ -199,7 +280,11 @@ test('AIOStreams falls back to raw JSON when the GitHub contents API version loo
     'https://raw.test/aiostreams.json': '{"version":"2.1.1",}',
   });
 
-  const repository = await fetchTemplateRepository(fetch, 'https://api.test/root');
+  const repository = await fetchTemplateRepository(
+    fetch,
+    'https://api.test/root',
+    'https://api.test/manifest.json',
+  );
 
   assert.equal(repository.aiostreamsTemplate?.version, 'v2.1.1');
 });

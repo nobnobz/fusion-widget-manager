@@ -91,7 +91,7 @@ export function MainEditor() {
     clearConfig
   } = useConfig();
 
-  // Fetch GitHub templates on mount
+  // Fetch UME templates on mount
   useEffect(() => {
     const fetchTemplates = async () => {
       setIsLoadingTemplates(true);
@@ -103,7 +103,7 @@ export function MainEditor() {
         setAiostreamsTemplate(repository.aiostreamsTemplate ?? null);
         setSelectedTemplateUrl(repository.defaultFusionTemplate?.rawUrl ?? '');
       } catch (error) {
-        console.error('Error fetching GitHub templates:', error);
+        console.error('Error fetching UME templates:', error);
       } finally {
         setIsLoadingTemplates(false);
       }
@@ -134,7 +134,7 @@ export function MainEditor() {
         setAlertDialog({
           isOpen: true,
           title: 'Loading Failed',
-        message: 'Could not load the selected GitHub template.',
+        message: 'Could not load the selected UME template.',
         variant: 'danger'
       });
     } finally {
@@ -340,7 +340,7 @@ export function MainEditor() {
       setAlertDialog({
         isOpen: true,
         title: 'URL Copied',
-        message: 'The raw GitHub URL for the UME AIOStreams template has been copied to your clipboard.',
+        message: 'The template URL for the UME AIOStreams template has been copied to your clipboard.',
         variant: 'info',
         confirmText: 'CONTINUE'
       });
@@ -349,7 +349,7 @@ export function MainEditor() {
       setAlertDialog({
         isOpen: true,
         title: 'Clipboard Failed',
-        message: 'The raw GitHub URL could not be copied to your clipboard.',
+        message: 'The template URL could not be copied to your clipboard.',
         variant: 'danger',
         confirmText: 'CONTINUE'
       });
@@ -607,10 +607,10 @@ export function MainEditor() {
                   <Github className={cn("size-4 text-primary/80", isLoadingTemplates && "animate-pulse")} />
                   <div className="flex flex-col items-start gap-0">
                     <span className="text-[10px] font-bold uppercase tracking-widest text-primary/80">
-                      {isLoadingTemplates ? 'Fetching Templates...' : 'GitHub Templates'}
+                      {isLoadingTemplates ? 'Fetching Templates...' : 'UME Templates'}
                     </span>
                     <span className="text-[8px] text-muted-foreground/60 font-medium leading-none">
-                      {isLoadingTemplates ? 'Checking repository...' : 'No templates found in repository'}
+                      {isLoadingTemplates ? 'Checking template sources...' : 'No templates available'}
                     </span>
                   </div>
                 </Button>
@@ -943,7 +943,7 @@ export function MainEditor() {
                   {formatTemplateLabel('UME AIOStreams Template', aiostreamsTemplate ?? undefined)}
                 </DialogTitle>
                 <DialogDescription className="text-muted-foreground/60 text-xs font-medium leading-relaxed max-sm:text-[11px]">
-                  Choose whether you want to copy the raw GitHub URL or download the JSON file directly.
+                  Choose whether you want to copy the template URL or download the JSON file directly.
                 </DialogDescription>
               </div>
             </DialogHeader>

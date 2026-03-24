@@ -1,3 +1,6 @@
+export const TEMPLATE_MANIFEST_URL =
+  'https://raw.githubusercontent.com/nobnobz/Omni-Template-Bot-Bid-Raiser/main/template-manifest.json';
+
 export const TEMPLATE_REPOSITORY_CONTENTS_URL =
   'https://api.github.com/repos/nobnobz/Omni-Template-Bot-Bid-Raiser/contents';
 
@@ -6,12 +9,21 @@ const TEMPLATE_REPOSITORY_RAW_BASE_URL =
 
 export type TemplateKind = 'fusion' | 'aiometadata' | 'aiometadata-catalogs-only' | 'aiostreams';
 
+export const FALLBACK_TEMPLATE_URLS: Record<TemplateKind, string> = {
+  fusion: `${TEMPLATE_REPOSITORY_RAW_BASE_URL}/ume-omni-template-v2.1.1.json`,
+  aiometadata: `${TEMPLATE_REPOSITORY_RAW_BASE_URL}/ume-aiometadata-config-v2.1.json`,
+  'aiometadata-catalogs-only': `${TEMPLATE_REPOSITORY_RAW_BASE_URL}/ume-aiometadata-catalogs-only-v2.1.json`,
+  aiostreams: `${TEMPLATE_REPOSITORY_RAW_BASE_URL}/ume-aiostreams-template-v1.7.json`,
+};
+
 export interface RepositoryTemplate {
   kind: TemplateKind;
   filename: string;
   path: string;
   rawUrl: string;
+  sourcePriority?: number;
   version: string;
+  isDefault?: boolean;
 }
 
 interface GithubContentsEntry {
@@ -31,6 +43,14 @@ interface FetchResponseLike {
 interface GithubFileResponse {
   content?: string;
   encoding?: string;
+}
+
+interface TemplateManifestEntry {
+  id: string;
+  isDefault?: boolean;
+  name: string;
+  url: string;
+  version?: string;
 }
 
 export type FetchLike = (input: string, init?: RequestInit) => Promise<FetchResponseLike>;
@@ -109,14 +129,66 @@ export function formatTemplateLabel(prefix: string, template?: Pick<RepositoryTe
 export async function fetchTemplateRepository(
   fetchImpl: FetchLike = fetch,
   repositoryContentsUrl = TEMPLATE_REPOSITORY_CONTENTS_URL,
+  manifestUrl = TEMPLATE_MANIFEST_URL,
 ): Promise<TemplateRepositorySnapshot> {
-  const files = await collectRepositoryFiles(fetchImpl, repositoryContentsUrl);
-  const relevantFiles = files.filter((file) => getTemplateKind(file.name) !== null);
-  const hydratedTemplates = await Promise.all(
-    relevantFiles.map(async (file) => hydrateRepositoryTemplate(fetchImpl, file)),
-  );
-  const templates = hydratedTemplates.filter((template): template is RepositoryTemplate => template !== null);
+  const manifestTemplates = await fetchTemplatesFromManifest(fetchImpl, manifestUrl);
+  const manifestSnapshot = buildTemplateRepositorySnapshot(manifestTemplates ?? []);
 
+  let repositoryTemplates: RepositoryTemplate[] = [];
+  if (!manifestTemplates || isSnapshotMissingRelevantTemplates(manifestSnapshot)) {
+    repositoryTemplates = await fetchTemplatesFromRepositoryScan(fetchImpl, repositoryContentsUrl);
+  }
+
+  const combinedTemplates = mergeTemplateCollections(manifestTemplates ?? [], repositoryTemplates);
+  const combinedSnapshot = buildTemplateRepositorySnapshot(combinedTemplates);
+  const fallbackTemplates = buildFallbackTemplates(getMissingTemplateKinds(combinedSnapshot));
+
+  return buildTemplateRepositorySnapshot(mergeTemplateCollections(combinedTemplates, fallbackTemplates));
+}
+
+async function fetchTemplatesFromManifest(
+  fetchImpl: FetchLike,
+  manifestUrl: string,
+): Promise<RepositoryTemplate[] | null> {
+  try {
+    const response = await fetchImpl(manifestUrl);
+    if (!response.ok) {
+      return null;
+    }
+
+    const payload = await response.json();
+    if (!isTemplateManifestPayload(payload)) {
+      return null;
+    }
+
+    const templates = payload.templates
+      .map((entry) => normalizeManifestTemplate(entry))
+      .filter((template): template is RepositoryTemplate => template !== null);
+
+    return templates.length > 0 ? templates : null;
+  } catch {
+    return null;
+  }
+}
+
+async function fetchTemplatesFromRepositoryScan(
+  fetchImpl: FetchLike,
+  repositoryContentsUrl: string,
+): Promise<RepositoryTemplate[]> {
+  try {
+    const files = await collectRepositoryFiles(fetchImpl, repositoryContentsUrl);
+    const relevantFiles = files.filter((file) => getTemplateKind(file.name) !== null);
+    const hydratedTemplates = await Promise.all(
+      relevantFiles.map(async (file) => hydrateRepositoryTemplate(fetchImpl, file)),
+    );
+
+    return hydratedTemplates.filter((template): template is RepositoryTemplate => template !== null);
+  } catch {
+    return [];
+  }
+}
+
+function buildTemplateRepositorySnapshot(templates: RepositoryTemplate[]): TemplateRepositorySnapshot {
   const fusionTemplates = dedupeTemplatesByVersion(
     sortTemplatesNewestFirst(templates.filter((template) => template.kind === 'fusion')),
   );
@@ -130,12 +202,89 @@ export async function fetchTemplateRepository(
     templates.filter((template) => template.kind === 'aiostreams'),
   );
 
+  const explicitDefaultFusionTemplates = fusionTemplates.filter((template) => template.isDefault);
+
   return {
     fusionTemplates,
-    defaultFusionTemplate: fusionTemplates[0],
+    defaultFusionTemplate: explicitDefaultFusionTemplates[0] ?? fusionTemplates[0],
     aiometadataTemplate: aiometadataTemplates[0],
     aiometadataCatalogsOnlyTemplate: aiometadataCatalogsOnlyTemplates[0],
     aiostreamsTemplate: aiostreamsTemplates[0],
+  };
+}
+
+function isSnapshotMissingRelevantTemplates(snapshot: TemplateRepositorySnapshot): boolean {
+  return !snapshot.defaultFusionTemplate
+    || !snapshot.aiometadataTemplate
+    || !snapshot.aiometadataCatalogsOnlyTemplate
+    || !snapshot.aiostreamsTemplate;
+}
+
+function getMissingTemplateKinds(snapshot: TemplateRepositorySnapshot): TemplateKind[] {
+  const missingKinds: TemplateKind[] = [];
+
+  if (!snapshot.defaultFusionTemplate) {
+    missingKinds.push('fusion');
+  }
+
+  if (!snapshot.aiometadataTemplate) {
+    missingKinds.push('aiometadata');
+  }
+
+  if (!snapshot.aiometadataCatalogsOnlyTemplate) {
+    missingKinds.push('aiometadata-catalogs-only');
+  }
+
+  if (!snapshot.aiostreamsTemplate) {
+    missingKinds.push('aiostreams');
+  }
+
+  return missingKinds;
+}
+
+function mergeTemplateCollections(...collections: RepositoryTemplate[][]): RepositoryTemplate[] {
+  const merged: RepositoryTemplate[] = [];
+  const seen = new Set<string>();
+
+  for (const collection of collections) {
+    for (const template of collection) {
+      const identity = getTemplateIdentity(template);
+      if (seen.has(identity)) {
+        continue;
+      }
+
+      seen.add(identity);
+      merged.push(template);
+    }
+  }
+
+  return merged;
+}
+
+function getTemplateIdentity(template: RepositoryTemplate): string {
+  return template.rawUrl || [template.kind, template.path, template.version].join('|');
+}
+
+function buildFallbackTemplates(missingKinds: TemplateKind[]): RepositoryTemplate[] {
+  return missingKinds
+    .map((kind) => [kind, FALLBACK_TEMPLATE_URLS[kind]] as const)
+    .map(([kind, rawUrl]) => buildFallbackTemplate(kind, rawUrl))
+    .filter((template): template is RepositoryTemplate => template !== null);
+}
+
+function buildFallbackTemplate(kind: TemplateKind, rawUrl: string): RepositoryTemplate | null {
+  const filename = extractFilename(rawUrl);
+  if (!filename) {
+    return null;
+  }
+
+  return {
+    kind,
+    filename,
+    path: `fallback/${filename}`,
+    rawUrl,
+    sourcePriority: 2,
+    version: extractVersionFromFilename(filename),
   };
 }
 
@@ -181,6 +330,7 @@ async function hydrateRepositoryTemplate(
     filename: file.name,
     path: file.path || file.name,
     rawUrl,
+    sourcePriority: 1,
     version,
   };
 }
@@ -248,25 +398,75 @@ function buildRawUrl(file: GithubContentsEntry): string {
   return normalizedPath ? `${TEMPLATE_REPOSITORY_RAW_BASE_URL}/${normalizedPath}` : '';
 }
 
+function normalizeManifestTemplate(value: unknown): RepositoryTemplate | null {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return null;
+  }
+
+  const candidate = value as Partial<TemplateManifestEntry>;
+  const id = typeof candidate.id === 'string' ? candidate.id.trim() : '';
+  const name = typeof candidate.name === 'string' ? candidate.name.trim() : '';
+  const rawUrl = typeof candidate.url === 'string' ? candidate.url.trim() : '';
+  if (!id || !name || !rawUrl) {
+    return null;
+  }
+
+  const kind = resolveTemplateKind(id, rawUrl, name);
+  if (!kind) {
+    return null;
+  }
+
+  const filename = extractFilename(id) || extractFilename(rawUrl) || `${kind}-template.json`;
+  const version = normalizeTemplateVersion(candidate.version)
+    || extractVersionFromFilename(filename)
+    || extractVersionFromFilename(name);
+
+  return {
+    kind,
+    filename,
+    path: id,
+    rawUrl,
+    sourcePriority: 0,
+    version,
+    isDefault: typeof candidate.isDefault === 'boolean' ? candidate.isDefault : undefined,
+  };
+}
+
+function resolveTemplateKind(...candidates: string[]): TemplateKind | null {
+  for (const candidate of candidates) {
+    const directMatch = getTemplateKind(candidate);
+    if (directMatch) {
+      return directMatch;
+    }
+  }
+
+  const haystack = candidates.join(' ').toLowerCase();
+  return getTemplateKindFromHaystack(haystack);
+}
+
 function getTemplateKind(filename: string): TemplateKind | null {
   const normalizedName = filename.toLowerCase();
   if (!normalizedName.endsWith('.json')) {
     return null;
   }
 
-  if (normalizedName.includes('ume-omni-template') || normalizedName.includes('omni-snapshot')) {
+  return getTemplateKindFromHaystack(normalizedName);
+}
+
+function getTemplateKindFromHaystack(value: string): TemplateKind | null {
+  if (value.includes('ume-omni-template') || value.includes('omni-snapshot')) {
     return 'fusion';
   }
 
-  if (normalizedName.includes('ume-aiometadata-catalogs-only')) {
+  if (value.includes('ume-aiometadata-catalogs-only')) {
     return 'aiometadata-catalogs-only';
   }
 
-  if (normalizedName.includes('ume-aiometadata-config')) {
+  if (value.includes('ume-aiometadata-config')) {
     return 'aiometadata';
   }
 
-  if (normalizedName.startsWith('ume-aiostreams-template')) {
+  if (value.includes('ume-aiostreams-template')) {
     return 'aiostreams';
   }
 
@@ -294,6 +494,12 @@ function sortTemplatesNewestFirst(templates: RepositoryTemplate[]): RepositoryTe
       return versionComparison;
     }
 
+    const sourcePriorityComparison = (left.sourcePriority ?? Number.MAX_SAFE_INTEGER)
+      - (right.sourcePriority ?? Number.MAX_SAFE_INTEGER);
+    if (sourcePriorityComparison !== 0) {
+      return sourcePriorityComparison;
+    }
+
     return left.path.localeCompare(right.path);
   });
 }
@@ -301,6 +507,31 @@ function sortTemplatesNewestFirst(templates: RepositoryTemplate[]): RepositoryTe
 function normalizeVersion(value: string): string {
   const versionMatch = value.match(/v?(\d+(?:\.\d+)+)/i);
   return versionMatch ? `v${versionMatch[1]}` : '';
+}
+
+function normalizeTemplateVersion(value: unknown): string {
+  if (typeof value === 'string') {
+    return normalizeVersion(value.trim());
+  }
+
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return normalizeVersion(String(value));
+  }
+
+  return '';
+}
+
+function extractFilename(value: string): string {
+  const normalized = value.split('?')[0].split('#')[0];
+  const parts = normalized.split('/').filter(Boolean);
+  return parts[parts.length - 1] || '';
+}
+
+function isTemplateManifestPayload(value: unknown): value is { templates: unknown[] } {
+  return Boolean(value)
+    && typeof value === 'object'
+    && !Array.isArray(value)
+    && Array.isArray((value as { templates?: unknown }).templates);
 }
 
 function isGithubContentsEntry(value: unknown): value is GithubContentsEntry {
