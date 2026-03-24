@@ -72,9 +72,11 @@ export function MainEditor() {
   const [isLoadingTemplates, setIsLoadingTemplates] = useState(false);
   const [selectedTemplateUrl, setSelectedTemplateUrl] = useState<string>('');
   const [aiometadataTemplate, setAiometadataTemplate] = useState<RepositoryTemplate | null>(null);
+  const [aiometadataCatalogsOnlyTemplate, setAiometadataCatalogsOnlyTemplate] = useState<RepositoryTemplate | null>(null);
   const [aiostreamsTemplate, setAiostreamsTemplate] = useState<RepositoryTemplate | null>(null);
   const [isTemplatePopoverOpen, setIsTemplatePopoverOpen] = useState(false);
   const [isDraggingFile, setIsDraggingFile] = useState(false);
+  const [showAiometadataActions, setShowAiometadataActions] = useState(false);
   const [showAiostreamsActions, setShowAiostreamsActions] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -97,6 +99,7 @@ export function MainEditor() {
         const repository = await fetchTemplateRepository();
         setGithubTemplates(repository.fusionTemplates);
         setAiometadataTemplate(repository.aiometadataTemplate ?? null);
+        setAiometadataCatalogsOnlyTemplate(repository.aiometadataCatalogsOnlyTemplate ?? null);
         setAiostreamsTemplate(repository.aiostreamsTemplate ?? null);
         setSelectedTemplateUrl(repository.defaultFusionTemplate?.rawUrl ?? '');
       } catch (error) {
@@ -320,7 +323,8 @@ export function MainEditor() {
   };
 
   const handleDownloadMetadata = async () => {
-    await downloadTemplateFile(aiometadataTemplate);
+    if (!aiometadataTemplate && !aiometadataCatalogsOnlyTemplate) return;
+    setShowAiometadataActions(true);
   };
 
   const handleDownloadAiostreams = () => {
@@ -429,7 +433,7 @@ export function MainEditor() {
                   variant="ghost"
                   className="h-9 sm:h-[2.2rem] rounded-[1rem] border border-border/65 bg-background/65 hover:border-primary/35 hover:bg-primary/[0.04] transition-all font-bold uppercase tracking-[0.14em] text-[9px] px-3.5 sm:px-3 text-muted-foreground/68 hover:text-primary whitespace-nowrap shrink-0 justify-center shadow-[0_10px_24px_-22px_rgba(15,23,42,0.28)]"
                   onClick={handleDownloadMetadata}
-                  disabled={isLoadingTemplates || !aiometadataTemplate}
+                  disabled={isLoadingTemplates || (!aiometadataTemplate && !aiometadataCatalogsOnlyTemplate)}
                 >
                   {isLoadingTemplates ? (
                     <RotateCcw className="size-3 mr-2 animate-spin" />
@@ -646,53 +650,74 @@ export function MainEditor() {
       <main className="flex-1 flex flex-col min-w-0 relative z-10">
         <header className="sticky top-0 z-50 w-full px-3 pt-[calc(env(safe-area-inset-top)+0.75rem)] pb-2 sm:hidden">
           <div className="rounded-[1.6rem] border border-border/60 bg-background/80 px-4 py-3 shadow-[0_10px_30px_-18px_rgba(0,0,0,0.35)] backdrop-blur-xl">
-            <div className="flex items-center justify-between gap-3.5">
-              <div className="flex min-w-0 items-center gap-2.5">
-                <div className="relative size-12 shrink-0 overflow-hidden">
-                  <Image src={LogoImage} alt="Logo" fill className="object-contain drop-shadow-sm" priority />
-                </div>
-                <div className="flex min-w-[8.75rem] shrink-0 flex-col -space-y-0.5">
-                  <h1 className="whitespace-nowrap text-sm font-black tracking-tight leading-none">Fusion Widget</h1>
-                  <span className="whitespace-nowrap pt-1 text-[11px] font-black uppercase tracking-[0.16em] text-primary/90 leading-none">
-                    Manager
-                  </span>
+            {view === 'welcome' ? (
+              <div className="flex items-center justify-between gap-3">
+                <ManagerSwitcher
+                  currentManager="fusion"
+                  className="h-9 min-w-0 rounded-2xl px-3 text-xs shadow-none"
+                />
+
+                <div className="flex shrink-0 items-center gap-1">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="size-8 rounded-lg border border-border/50 bg-background/30 text-primary/80 hover:bg-primary/5 hover:text-primary"
+                    onClick={() => setShowHowToUse(true)}
+                    title="How To Use"
+                  >
+                    <Book className="size-3.5" />
+                  </Button>
+
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="size-8 rounded-lg border border-border/50 bg-background/30 text-red-500/75 hover:bg-red-500/5 hover:text-red-500"
+                    onClick={() => window.open('https://ko-fi.com/botbidraiser', '_blank')}
+                    title="Support My Work"
+                  >
+                    <Heart className="size-3.5 fill-current" />
+                  </Button>
+
+                  <ThemeToggle className="size-8 rounded-lg bg-background/30 dark:bg-black/20 border-border/50 shadow-none" />
                 </div>
               </div>
+            ) : (
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex min-w-0 flex-1 items-center gap-1.5">
+                  <div className="relative size-11 shrink-0 overflow-hidden">
+                    <Image src={LogoImage} alt="Logo" fill className="object-contain drop-shadow-sm" priority />
+                  </div>
+                  <div className="flex min-w-0 flex-1 flex-col -space-y-px">
+                    <h1 className="truncate text-[12px] font-black leading-none tracking-[-0.03em]">Fusion Widget</h1>
+                    <span className="truncate pt-0.5 text-[9px] font-black uppercase tracking-[0.18em] text-primary/90 leading-none">
+                      Manager
+                    </span>
+                  </div>
+                </div>
 
-              <div className="flex items-center gap-1">
-                {view === 'welcome' && (
-                  <>
-                    <ManagerSwitcher
-                      currentManager="fusion"
-                      className="h-8 rounded-xl px-2.5 text-[11px] shadow-none"
-                    />
-                    <div className="w-px h-3 bg-border/45 mx-0.5" />
-                  </>
-                )}
+                <div className="flex shrink-0 items-center gap-1">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="size-8 rounded-lg border border-border/50 bg-background/30 text-primary/80 hover:bg-primary/5 hover:text-primary"
+                    onClick={() => setShowHowToUse(true)}
+                    title="How To Use"
+                  >
+                    <Book className="size-3.5" />
+                  </Button>
 
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="size-8 rounded-lg border border-border/50 bg-background/30 text-primary/80 hover:bg-primary/5 hover:text-primary"
-                  onClick={() => setShowHowToUse(true)}
-                  title="How To Use"
-                >
-                  <Book className="size-3.5" />
-                </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="size-8 rounded-lg border border-border/50 bg-background/30 text-red-500/75 hover:bg-red-500/5 hover:text-red-500"
+                    onClick={() => window.open('https://ko-fi.com/botbidraiser', '_blank')}
+                    title="Support My Work"
+                  >
+                    <Heart className="size-3.5 fill-current" />
+                  </Button>
 
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="size-8 rounded-lg border border-border/50 bg-background/30 text-red-500/75 hover:bg-red-500/5 hover:text-red-500"
-                  onClick={() => window.open('https://ko-fi.com/botbidraiser', '_blank')}
-                  title="Support My Work"
-                >
-                  <Heart className="size-3.5 fill-current" />
-                </Button>
+                  <ThemeToggle className="size-8 rounded-lg bg-background/30 dark:bg-black/20 border-border/50 shadow-none" />
 
-                <ThemeToggle className="size-8 rounded-lg bg-background/30 dark:bg-black/20 border-border/50 shadow-none" />
-
-                {view !== 'welcome' && (
                   <Button
                     variant="ghost"
                     size="icon"
@@ -702,9 +727,9 @@ export function MainEditor() {
                   >
                     <RotateCcw className="size-3.5" />
                   </Button>
-                )}
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </header>
 
@@ -782,7 +807,7 @@ export function MainEditor() {
           
           <div className="flex flex-col items-center gap-1 opacity-20 select-none hover:opacity-50 transition-opacity">
             <div className="flex items-center gap-2 text-[8px] font-mono tracking-[0.2em] font-medium uppercase text-muted-foreground/80">
-              <span>V0.2.0</span>
+              <span>V0.2.1</span>
               <span className="size-1 rounded-full bg-foreground/20" />
               <span>BY BOT-BID-RAISER</span>
             </div>
@@ -827,6 +852,81 @@ export function MainEditor() {
         cancelText={undefined}
         onConfirm={() => { }}
       />
+
+      <Dialog open={showAiometadataActions} onOpenChange={setShowAiometadataActions}>
+        <DialogContent
+          overlayClassName="z-[70]"
+          className="z-[71] sm:max-w-[460px] rounded-[2.25rem] border border-border/40 bg-card/95 p-0 backdrop-blur-2xl shadow-2xl overflow-hidden max-sm:w-[calc(100vw-1.25rem)] max-sm:max-w-[calc(100vw-1.25rem)] max-sm:rounded-[2rem] [&>button:last-child]:right-5 [&>button:last-child]:top-5 [&>button:last-child]:size-9 [&>button:last-child]:rounded-full [&>button:last-child]:border [&>button:last-child]:border-border/50 [&>button:last-child]:bg-background/80 [&>button:last-child]:backdrop-blur-sm [&>button:last-child]:hover:bg-muted/60"
+        >
+          <div className="p-8 pt-10 max-sm:px-4 max-sm:pb-4 max-sm:pt-4">
+            <DialogHeader className="space-y-4 items-start pr-12 text-left max-sm:space-y-3">
+              <div className="size-14 rounded-2xl border border-primary/10 bg-primary/5 text-primary shadow-sm flex items-center justify-center max-sm:size-11 max-sm:rounded-[1rem]">
+                <Download className="size-7 max-sm:size-6" />
+              </div>
+              <div className="space-y-1">
+                <DialogTitle className="text-2xl font-bold tracking-tight max-sm:text-[1.75rem] max-sm:leading-none">
+                  AIOMetadata Download
+                </DialogTitle>
+                <DialogDescription className="max-w-[34ch] text-xs font-medium leading-relaxed text-muted-foreground/60 max-sm:max-w-none max-sm:text-[11px]">
+                  Use Full Template for your first AIOMetadata setup. Use Catalogs Only for later catalog updates, then paste that JSON into AIOMetadata under Catalogs and choose Import Setup.
+                </DialogDescription>
+              </div>
+            </DialogHeader>
+
+            <div className="mt-8 grid gap-3 max-sm:mt-6 max-sm:gap-2.5">
+              <Button
+                type="button"
+                variant="outline"
+                className="h-auto min-h-[5.25rem] w-full rounded-[1.5rem] border-border/50 bg-background/55 px-4 py-3 text-left shadow-[0_12px_30px_-24px_rgba(15,23,42,0.28)] transition-all hover:border-primary/35 hover:bg-primary/[0.04] hover:shadow-[0_18px_40px_-28px_rgba(37,99,235,0.28)] max-sm:min-h-[4.5rem] max-sm:rounded-[1.35rem] max-sm:px-3.5 max-sm:py-2.5"
+                onClick={async () => {
+                  await downloadTemplateFile(aiometadataTemplate);
+                  setShowAiometadataActions(false);
+                }}
+                disabled={!aiometadataTemplate}
+              >
+                <div className="flex w-full items-center gap-3">
+                  <div className="flex min-w-0 flex-1 flex-col items-start">
+                    <span className="text-[11px] font-bold uppercase tracking-[0.16em] text-foreground">
+                      Full Template
+                    </span>
+                    <span className="pt-1 text-[10px] font-medium text-muted-foreground/58 normal-case">
+                      {aiometadataTemplate?.filename ?? 'ume-aiometadata-config not available'}
+                    </span>
+                  </div>
+                  <div className="flex size-11 shrink-0 items-center justify-center rounded-2xl border border-primary/12 bg-primary/6 text-primary max-sm:size-10 max-sm:rounded-[1rem]">
+                    <Download className="size-4.5 max-sm:size-4" />
+                  </div>
+                </div>
+              </Button>
+
+              <Button
+                type="button"
+                variant="outline"
+                className="h-auto min-h-[5.25rem] w-full rounded-[1.5rem] border-border/50 bg-background/55 px-4 py-3 text-left shadow-[0_12px_30px_-24px_rgba(15,23,42,0.28)] transition-all hover:border-primary/35 hover:bg-primary/[0.04] hover:shadow-[0_18px_40px_-28px_rgba(37,99,235,0.28)] max-sm:min-h-[4.5rem] max-sm:rounded-[1.35rem] max-sm:px-3.5 max-sm:py-2.5"
+                onClick={async () => {
+                  await downloadTemplateFile(aiometadataCatalogsOnlyTemplate);
+                  setShowAiometadataActions(false);
+                }}
+                disabled={!aiometadataCatalogsOnlyTemplate}
+              >
+                <div className="flex w-full items-center gap-3">
+                  <div className="flex min-w-0 flex-1 flex-col items-start">
+                    <span className="text-[11px] font-bold uppercase tracking-[0.16em] text-foreground">
+                      Catalogs Only
+                    </span>
+                    <span className="pt-1 text-[10px] font-medium text-muted-foreground/58 normal-case">
+                      {aiometadataCatalogsOnlyTemplate?.filename ?? 'ume-aiometadata-catalogs-only not available'}
+                    </span>
+                  </div>
+                  <div className="flex size-11 shrink-0 items-center justify-center rounded-2xl border border-primary/12 bg-primary/6 text-primary max-sm:size-10 max-sm:rounded-[1rem]">
+                    <Download className="size-4.5 max-sm:size-4" />
+                  </div>
+                </div>
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={showAiostreamsActions} onOpenChange={setShowAiostreamsActions}>
         <DialogContent

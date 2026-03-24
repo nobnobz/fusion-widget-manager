@@ -4,7 +4,7 @@ export const TEMPLATE_REPOSITORY_CONTENTS_URL =
 const TEMPLATE_REPOSITORY_RAW_BASE_URL =
   'https://raw.githubusercontent.com/nobnobz/Omni-Template-Bot-Bid-Raiser/main';
 
-export type TemplateKind = 'fusion' | 'aiometadata' | 'aiostreams';
+export type TemplateKind = 'fusion' | 'aiometadata' | 'aiometadata-catalogs-only' | 'aiostreams';
 
 export interface RepositoryTemplate {
   kind: TemplateKind;
@@ -37,6 +37,7 @@ export type FetchLike = (input: string, init?: RequestInit) => Promise<FetchResp
 
 export interface TemplateRepositorySnapshot {
   aiometadataTemplate?: RepositoryTemplate;
+  aiometadataCatalogsOnlyTemplate?: RepositoryTemplate;
   aiostreamsTemplate?: RepositoryTemplate;
   defaultFusionTemplate?: RepositoryTemplate;
   fusionTemplates: RepositoryTemplate[];
@@ -122,6 +123,9 @@ export async function fetchTemplateRepository(
   const aiometadataTemplates = sortTemplatesNewestFirst(
     templates.filter((template) => template.kind === 'aiometadata'),
   );
+  const aiometadataCatalogsOnlyTemplates = sortTemplatesNewestFirst(
+    templates.filter((template) => template.kind === 'aiometadata-catalogs-only'),
+  );
   const aiostreamsTemplates = sortTemplatesNewestFirst(
     templates.filter((template) => template.kind === 'aiostreams'),
   );
@@ -130,6 +134,7 @@ export async function fetchTemplateRepository(
     fusionTemplates,
     defaultFusionTemplate: fusionTemplates[0],
     aiometadataTemplate: aiometadataTemplates[0],
+    aiometadataCatalogsOnlyTemplate: aiometadataCatalogsOnlyTemplates[0],
     aiostreamsTemplate: aiostreamsTemplates[0],
   };
 }
@@ -251,6 +256,10 @@ function getTemplateKind(filename: string): TemplateKind | null {
 
   if (normalizedName.includes('ume-omni-template') || normalizedName.includes('omni-snapshot')) {
     return 'fusion';
+  }
+
+  if (normalizedName.includes('ume-aiometadata-catalogs-only')) {
+    return 'aiometadata-catalogs-only';
   }
 
   if (normalizedName.includes('ume-aiometadata-config')) {

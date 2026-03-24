@@ -345,7 +345,8 @@ export function WidgetSelectionGrid({ onNewWidget, onDownload, onSyncManifest }:
                   className="h-11 max-sm:h-12 px-6 max-sm:px-4 rounded-2xl max-sm:rounded-xl font-black uppercase tracking-wider text-[10px] shadow-xl shadow-primary/20 bg-primary hover:bg-primary/95 text-primary-foreground transition-all active:scale-95 flex-1 md:flex-none order-1"
                 >
                   <Plus className="size-4 mr-2" />
-                  New Widget
+                  <span className="sm:hidden">New</span>
+                  <span className="hidden sm:inline">New Widget</span>
                 </Button>
 
                 <Button

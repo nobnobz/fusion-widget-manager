@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.2.1] - 2026-03-24
+### Added
+- **AIOMetadata Popup**: Introduced a selection popup for AIOMetadata templates, allowing users to choose between a "Full Setup" (comprehensive configuration) or "Catalogs Only" (lightweight metadata) during download.
+
+### Changed
+- **Mobile UI Optimizations**:
+  - Refined the "New Widget" button layout on mobile to be more compact by showing only "New" instead of the full text.
+  - Improved touch interactions and spacing for better usability on small screens.
+
 ## [0.2.0] - 2026-03-23
 ### UI Polish
 - **Welcome Screen Overhaul**: Redesigned the desktop layout and hero section proportions for better visual balance.

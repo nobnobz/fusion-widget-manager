@@ -43,6 +43,13 @@ test('fetchTemplateRepository prefers versions from JSON content and falls back 
         download_url: 'https://raw.test/aiometadata.json',
       },
       {
+        name: 'ume-aiometadata-catalogs-only-v1.4.0.json',
+        path: 'ume-aiometadata-catalogs-only-v1.4.0.json',
+        type: 'file',
+        url: 'https://api.test/root/ume-aiometadata-catalogs-only-v1.4.0.json',
+        download_url: 'https://raw.test/aiometadata-catalogs-only.json',
+      },
+      {
         name: 'ume-aiostreams-template-latest.json',
         path: 'ume-aiostreams-template-latest.json',
         type: 'file',
@@ -60,6 +67,7 @@ test('fetchTemplateRepository prefers versions from JSON content and falls back 
 
   assert.equal(repository.defaultFusionTemplate?.version, 'v1.0.0');
   assert.equal(repository.aiometadataTemplate?.version, 'v1.5.0');
+  assert.equal(repository.aiometadataCatalogsOnlyTemplate?.version, 'v1.4.0');
   assert.equal(repository.aiostreamsTemplate?.version, 'v2.1.1');
 });
 
@@ -125,6 +133,7 @@ test('fetchTemplateRepository chooses the newest actual version instead of the r
 test('requiresDownloadActionPrompt only prompts for AIOStreams templates', () => {
   assert.equal(requiresDownloadActionPrompt('fusion'), false);
   assert.equal(requiresDownloadActionPrompt('aiometadata'), false);
+  assert.equal(requiresDownloadActionPrompt('aiometadata-catalogs-only'), false);
   assert.equal(requiresDownloadActionPrompt('aiostreams'), true);
 });
 
@@ -144,6 +153,32 @@ test('AIOMetadata keeps using the filename even if the file content has a differ
   const repository = await fetchTemplateRepository(fetch, 'https://api.test/root');
 
   assert.equal(repository.aiometadataTemplate?.version, 'v2.1');
+});
+
+test('AIOMetadata catalogs-only templates are tracked separately from the full config template', async () => {
+  const fetch = createMockFetch({
+    'https://api.test/root': [
+      {
+        name: 'ume-aiometadata-config-v2.1.json',
+        path: 'ume-aiometadata-config-v2.1.json',
+        type: 'file',
+        url: 'https://api.test/file/aiometadata-full.json',
+        download_url: 'https://raw.test/aiometadata-full.json',
+      },
+      {
+        name: 'ume-aiometadata-catalogs-only-v2.3.json',
+        path: 'ume-aiometadata-catalogs-only-v2.3.json',
+        type: 'file',
+        url: 'https://api.test/file/aiometadata-catalogs-only.json',
+        download_url: 'https://raw.test/aiometadata-catalogs-only.json',
+      },
+    ],
+  });
+
+  const repository = await fetchTemplateRepository(fetch, 'https://api.test/root');
+
+  assert.equal(repository.aiometadataTemplate?.filename, 'ume-aiometadata-config-v2.1.json');
+  assert.equal(repository.aiometadataCatalogsOnlyTemplate?.filename, 'ume-aiometadata-catalogs-only-v2.3.json');
 });
 
 test('AIOStreams falls back to raw JSON when the GitHub contents API version lookup fails', async () => {
