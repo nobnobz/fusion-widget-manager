@@ -66,24 +66,6 @@ export function CollectionRowEditor({ widget, searchQuery = "" }: { widget: Coll
     removeCollectionItem(widget.id, itemId);
   };
 
-  const handleDuplicateItem = (itemId: string) => {
-    const index = widget.dataSource.payload.items.findIndex(item => item.id === itemId);
-    if (index === -1) return;
-    const original = widget.dataSource.payload.items[index];
-    const copy = { ...original, id: crypto.randomUUID(), name: `${original.name} (Copy)` };
-    const nextItems = [...widget.dataSource.payload.items];
-    nextItems.splice(index + 1, 0, copy);
-    updateWidgetMeta(widget.id, {
-      dataSource: {
-        ...widget.dataSource,
-        payload: {
-          ...widget.dataSource.payload,
-          items: nextItems
-        }
-      }
-    });
-  };
-
   const handleUpdateItem = (itemId: string, updates: Partial<CollectionItem>) => {
     updateCollectionItem(widget.id, itemId, updates);
   };
@@ -197,7 +179,6 @@ export function CollectionRowEditor({ widget, searchQuery = "" }: { widget: Coll
                   onToggleExpand={() => setExpandedItemId(expandedItemId === item.id ? null : item.id)}
                   onUpdate={(updates) => handleUpdateItem(item.id, updates)}
                   onDelete={() => handleDeleteItem(item.id)}
-                  onDuplicate={() => handleDuplicateItem(item.id)}
                 />
               ))}
             </SortableContext>

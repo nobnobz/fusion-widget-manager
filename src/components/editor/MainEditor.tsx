@@ -1009,6 +1009,11 @@ export function MainEditor() {
                     <p className="text-[14px] font-medium leading-7 text-muted-foreground/78 max-sm:text-[13px] max-sm:leading-6">
                       First, download the template and upload it to your AIOMetadata instance. Then add the addon to Fusion.
                     </p>
+                    <div className="rounded-2xl border border-blue-500/20 bg-blue-500/[0.1] px-5 py-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] max-sm:px-4 max-sm:py-3">
+                      <p className="text-[12px] font-semibold leading-6 text-blue-500/90 max-sm:text-[11px]">
+                        <strong>Note:</strong> You need to add your <span className="font-semibold">MDBList API key</span> in AIOMetadata to get the catalogs displayed in Fusion.
+                      </p>
+                    </div>
                     <Button 
                       variant="outline" 
                       className="h-11 w-full justify-start rounded-[1.1rem] border-border/45 bg-background/72 px-3.5 text-[11px] font-semibold text-foreground/78 hover:text-primary hover:border-primary/30 hover:bg-primary/5 shadow-[0_10px_24px_-24px_rgba(15,23,42,0.22)]"
