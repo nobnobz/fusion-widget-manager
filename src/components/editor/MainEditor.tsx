@@ -1011,7 +1011,7 @@ export function MainEditor() {
                     </p>
                     <div className="rounded-2xl border border-blue-500/20 bg-blue-500/[0.1] px-5 py-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] max-sm:px-4 max-sm:py-3">
                       <p className="text-[12px] font-semibold leading-6 text-blue-500/90 max-sm:text-[11px]">
-                        <strong>Note:</strong> You need to add your <span className="font-semibold">MDBList API key</span> in AIOMetadata to get the catalogs displayed in Fusion.
+                        <strong>Note:</strong> Add your <span className="font-semibold">MDBList API key</span> in AIOMetadata so the catalogs show up in Fusion.
                       </p>
                     </div>
                     <Button 
