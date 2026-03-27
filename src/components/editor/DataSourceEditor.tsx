@@ -4,7 +4,7 @@ import { useConfig } from '@/context/ConfigContext';
 import { Button } from '@/components/ui/button';
 import { AlertTriangle, Trash2 } from 'lucide-react';
 import { resolveFusionCatalogType } from '@/lib/config-utils';
-import { AddonCatalogDataSource } from '@/lib/types/widget';
+import { AIOMetadataDataSource } from '@/lib/types/widget';
 import { CatalogCombobox } from './CatalogCombobox';
 
 export function DataSourceEditor({ 
@@ -13,12 +13,13 @@ export function DataSourceEditor({
   onDelete,
   disabledCatalogIds = []
 }: { 
-  dataSource: AddonCatalogDataSource,
-  onUpdate: (updates: Partial<AddonCatalogDataSource['payload']>) => void,
+  dataSource: AIOMetadataDataSource,
+  onUpdate: (updates: Partial<AIOMetadataDataSource['payload']>) => void,
   onDelete: () => void,
   disabledCatalogIds?: string[]
 }) {
   const { manifestCatalogs } = useConfig();
+  const hasCatalogId = Boolean(dataSource.payload.catalogId.trim());
 
   return (
     <div className="flex items-center gap-2 max-sm:gap-2.5 p-1.5 max-sm:p-2 rounded-xl max-sm:rounded-[1rem] bg-muted/30 border border-border group/ds hover:border-primary/30 transition-all">
@@ -49,10 +50,25 @@ export function DataSourceEditor({
                 />
               </div>
             ) : (
-              <div className="flex-1 flex items-center gap-2 px-3 h-8 rounded-lg bg-amber-500/5 border border-amber-500/10 text-[9px] font-bold text-amber-500/60 uppercase tracking-widest">
-                <AlertTriangle className="size-3 shrink-0" />
-                <span>Sync manifest first</span>
-              </div>
+              hasCatalogId ? (
+                <div className="flex-1 rounded-lg border border-border/50 bg-background/75 px-3 py-2 shadow-sm">
+                  <div className="flex items-center gap-2">
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-[11px] font-bold tracking-tight text-foreground/85">
+                        {dataSource.payload.catalogId}
+                      </p>
+                      <p className="mt-0.5 text-[9px] font-bold uppercase tracking-[0.14em] text-muted-foreground/55">
+                        Sync manifest to change this catalog
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex-1 flex items-center gap-2 px-3 h-8 rounded-lg bg-amber-500/5 border border-amber-500/10 text-[9px] font-bold text-amber-500/60 uppercase tracking-widest">
+                  <AlertTriangle className="size-3 shrink-0" />
+                  <span>Sync manifest first</span>
+                </div>
+              )
             )}
         </div>
       </div>

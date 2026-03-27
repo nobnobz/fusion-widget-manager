@@ -1,9 +1,17 @@
 export type WidgetType = 'collection.row' | 'row.classic';
+export type SourceType = 'aiometadata' | 'trakt-native';
 
 export interface AddonCatalogPayload {
   addonId: string;
   catalogId: string;
   catalogType: string;
+}
+
+export interface TraktListPayload {
+  listName: string;
+  listSlug: string;
+  traktId: number | string | null;
+  username: string;
 }
 
 export interface AIOMetadataCatalog {
@@ -13,10 +21,35 @@ export interface AIOMetadataCatalog {
   displayType?: string;
 }
 
-export interface AddonCatalogDataSource {
+export interface AiometadataCatalogsOnlyEntry {
+  id: string;
+  type: string;
+  name: string;
+  enabled: true;
+  source: 'trakt' | 'mdblist' | 'streaming';
+  displayType?: string;
+}
+
+export interface AiometadataCatalogsOnlyExport {
+  version: 1;
+  exportedAt: string;
+  catalogs: AiometadataCatalogsOnlyEntry[];
+}
+
+export interface AIOMetadataDataSource {
+  sourceType: 'aiometadata';
   kind: 'addonCatalog';
   payload: AddonCatalogPayload;
 }
+
+export interface NativeTraktDataSource {
+  sourceType: 'trakt-native';
+  kind: 'traktList';
+  payload: TraktListPayload;
+}
+
+export type AddonCatalogDataSource = AIOMetadataDataSource;
+export type WidgetDataSource = AIOMetadataDataSource | NativeTraktDataSource;
 
 export interface CollectionItem {
   id: string;
@@ -24,7 +57,7 @@ export interface CollectionItem {
   hideTitle: boolean;
   layout: 'Wide' | 'Poster' | 'Square';
   backgroundImageURL: string;
-  dataSources: AddonCatalogDataSource[];
+  dataSources: WidgetDataSource[];
 }
 
 export interface CollectionDataSource {
@@ -61,7 +94,7 @@ export interface RowClassicWidget extends BaseWidget {
   cacheTTL: number;
   limit: number;
   presentation: Presentation;
-  dataSource: AddonCatalogDataSource;
+  dataSource: WidgetDataSource;
 }
 
 export type Widget = CollectionRowWidget | RowClassicWidget;

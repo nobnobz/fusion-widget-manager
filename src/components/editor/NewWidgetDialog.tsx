@@ -46,6 +46,7 @@ export function NewWidgetDialog({ isOpen, onOpenChange, onCreated }: NewWidgetDi
           title: title.trim(),
           type,
           dataSource: {
+            sourceType: 'aiometadata',
             kind: 'addonCatalog',
             payload: { addonId: MANIFEST_PLACEHOLDER, catalogId: '', catalogType: 'movie' },
           },
@@ -67,7 +68,7 @@ export function NewWidgetDialog({ isOpen, onOpenChange, onCreated }: NewWidgetDi
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[550px] rounded-[2.5rem] border border-border/40 bg-background/95 backdrop-blur-2xl shadow-2xl p-0 overflow-hidden max-sm:w-[calc(100vw-1rem)] max-sm:max-w-[calc(100vw-1rem)] max-sm:rounded-[1.9rem] [&>button:last-child]:top-8 [&>button:last-child]:right-8 [&>button:last-child]:size-9 [&>button:last-child]:rounded-full [&>button:last-child]:bg-muted/30 [&>button:last-child]:hover:bg-muted/50 [&>button:last-child]:transition-all [&>button:last-child]:border-none [&>button:last-child]:flex [&>button:last-child]:items-center [&>button:last-child]:justify-center max-sm:[&>button:last-child]:top-4 max-sm:[&>button:last-child]:right-4">
+      <DialogContent className="sm:max-w-[550px] rounded-[2.5rem] border border-border/40 bg-background/95 backdrop-blur-2xl shadow-2xl p-0 overflow-hidden max-sm:w-[calc(100vw-1rem)] max-sm:max-w-[calc(100vw-1rem)] max-sm:rounded-[1.9rem]">
         <div className="p-8 pt-10 max-sm:p-5 max-sm:pt-6">
           <DialogHeader className="space-y-4 items-start text-left">
             <div className="size-14 rounded-2xl bg-primary/5 border border-primary/10 flex items-center justify-center text-primary mb-2 shadow-sm max-sm:size-12 max-sm:rounded-[1rem]">
@@ -86,6 +87,7 @@ export function NewWidgetDialog({ isOpen, onOpenChange, onCreated }: NewWidgetDi
               <Label htmlFor="widget-title" className="text-xs font-bold uppercase tracking-widest text-muted-foreground/40 ml-1">Widget Title</Label>
               <div className="relative group bg-muted/20 rounded-2xl border border-border/10 focus-within:border-primary/30 transition-all p-1">
                 <Input
+                  data-testid="new-widget-title-input"
                   id="widget-title"
                   placeholder="e.g. Recommended for You"
                   value={title}
@@ -164,6 +166,7 @@ export function NewWidgetDialog({ isOpen, onOpenChange, onCreated }: NewWidgetDi
               </Button>
             </DialogClose>
             <Button 
+              data-testid="new-widget-submit"
               onClick={handleCreate}
               disabled={!title.trim()}
               className="w-full sm:flex-1 h-11 sm:h-12 rounded-xl max-sm:rounded-[1rem] font-bold uppercase tracking-wider text-xs shadow-lg shadow-primary/20 transition-all active:scale-95"

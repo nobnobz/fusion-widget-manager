@@ -17,11 +17,13 @@ interface ConfirmationDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   title: string;
-  description: string;
+  description: React.ReactNode;
+  details?: React.ReactNode;
   onConfirm: () => void;
   confirmText?: string;
   cancelText?: string;
-  variant?: 'danger' | 'info';
+  variant?: 'danger' | 'info' | 'warning';
+  contentClassName?: string;
 }
 
 export function ConfirmationDialog({
@@ -29,25 +31,33 @@ export function ConfirmationDialog({
   onOpenChange,
   title,
   description,
+  details,
   onConfirm,
   confirmText = "Confirm",
   cancelText = "Cancel",
-  variant = 'info'
+  variant = 'info',
+  contentClassName,
 }: ConfirmationDialogProps) {
   const isDanger = variant === 'danger';
+  const isWarning = variant === 'warning';
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[400px] rounded-[2.5rem] border border-border/40 bg-card/95 backdrop-blur-2xl shadow-2xl p-0 overflow-hidden max-sm:w-[calc(100vw-1rem)] max-sm:max-w-[calc(100vw-1rem)] max-sm:rounded-[1.9rem] [&>button:last-child]:hidden">
+      <DialogContent className={cn(
+        "sm:max-w-[400px] rounded-[2.5rem] border border-border/40 bg-card/95 backdrop-blur-2xl shadow-2xl p-0 overflow-hidden max-sm:w-[calc(100vw-1rem)] max-sm:max-w-[calc(100vw-1rem)] max-sm:rounded-[1.9rem] [&>button:last-child]:hidden",
+        contentClassName
+      )}>
         <div className="p-8 pt-10 max-sm:p-5 max-sm:pt-6">
           <DialogHeader className="space-y-4 items-start text-left">
             <div className={cn(
               "size-14 rounded-2xl flex items-center justify-center border shadow-sm transition-all animate-in zoom-in-75 duration-300 max-sm:size-12 max-sm:rounded-[1rem]",
               isDanger 
-                ? "bg-destructive/5 text-destructive border-destructive/10" 
-                : "bg-primary/5 text-primary border-primary/10"
+                ? "bg-destructive/5 text-destructive border-destructive/10"
+                : isWarning
+                  ? "bg-amber-500/8 text-amber-600 border-amber-500/15 dark:text-amber-300 dark:border-amber-500/20"
+                  : "bg-primary/5 text-primary border-primary/10"
             )}>
-              {isDanger ? <AlertTriangle className="size-7 max-sm:size-6" /> : <Info className="size-7 max-sm:size-6" />}
+              {isDanger || isWarning ? <AlertTriangle className="size-7 max-sm:size-6" /> : <Info className="size-7 max-sm:size-6" />}
             </div>
             <div className="space-y-1">
               <DialogTitle className="text-2xl font-bold tracking-tight max-sm:text-xl">{title}</DialogTitle>
@@ -56,6 +66,8 @@ export function ConfirmationDialog({
               </DialogDescription>
             </div>
           </DialogHeader>
+
+          {details ? <div className="mt-5">{details}</div> : null}
 
           <DialogFooter className="flex-col sm:flex-row gap-3 sm:gap-4 mt-8 sm:mt-10">
             {cancelText && (

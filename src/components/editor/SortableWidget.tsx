@@ -12,10 +12,12 @@ import {
   processWidgetWithManifest, 
   convertEditorWidgetToFusionWidget,
 } from '@/lib/config-utils';
-import { countInvalidCatalogsInWidget } from '@/lib/catalog-validation';
+import { countInvalidCatalogsInWidget, countTraktWarningsInWidget } from '@/lib/catalog-validation';
 import { useState }
  from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Badge } from '@/components/ui/badge';
+import { isNativeTraktDataSource } from '@/lib/widget-domain';
 
 import { CollectionRowEditor } from './CollectionRowEditor';
 import { RowClassicEditor } from './RowClassicEditor';
@@ -46,6 +48,8 @@ export function SortableWidget({
 
   const invalidCatalogCount = countInvalidCatalogsInWidget(widget, manifestCatalogs);
   const hasInvalidCatalog = invalidCatalogCount > 0;
+  const traktWarningCount = countTraktWarningsInWidget(widget);
+  const hasNativeTrakt = widget.type === 'row.classic' && isNativeTraktDataSource(widget.dataSource);
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -71,12 +75,16 @@ export function SortableWidget({
 
       // 3. Collect required addons for this single widget
     const addonsSet = new Set<string>();
-    if (fusionWidget.type === 'row.classic' && fusionWidget.dataSource?.payload?.addonId?.startsWith('http')) {
+    if (
+      fusionWidget.type === 'row.classic' &&
+      fusionWidget.dataSource.kind === 'addonCatalog' &&
+      fusionWidget.dataSource.payload.addonId.startsWith('http')
+    ) {
       addonsSet.add(fusionWidget.dataSource.payload.addonId);
     } else if (fusionWidget.type === 'collection.row' && Array.isArray(fusionWidget.dataSource?.payload?.items)) {
-        fusionWidget.dataSource.payload.items.forEach((item: { dataSources: Array<{ payload: { addonId: string } }> }) => {
+        fusionWidget.dataSource.payload.items.forEach((item) => {
           item.dataSources.forEach((dataSource) => {
-            if (dataSource.payload.addonId.startsWith('http')) {
+            if (dataSource.kind === 'addonCatalog' && dataSource.payload.addonId.startsWith('http')) {
               addonsSet.add(dataSource.payload.addonId);
             }
           });
@@ -135,6 +143,7 @@ export function SortableWidget({
     <motion.div
       ref={setNodeRef}
       style={style}
+      data-testid={`widget-card-${widget.id}`}
       className={cn(
         "group relative bg-background/40 dark:bg-zinc-900/20 border border-zinc-200/50 dark:border-border/10 rounded-2xl max-sm:rounded-[1.2rem] transition-all duration-500 shadow-[0_4px_12px_-2px_rgba(0,0,0,0.03)] max-sm:shadow-[0_1px_4px_rgba(0,0,0,0.04)] backdrop-blur-md",
         isSelected ? "ring-2 ring-primary/20 shadow-2xl border-primary/40 z-20 bg-background/80 max-sm:ring-1 max-sm:shadow-xl" : "hover:border-primary/20 hover:shadow-lg hover:bg-background/60",
@@ -155,6 +164,7 @@ export function SortableWidget({
           <div 
             {...attributes} 
             {...listeners}
+            data-testid={`widget-handle-${widget.id}`}
             className="size-10 flex items-center justify-center rounded-xl text-muted-foreground/20 hover:text-primary hover:bg-primary/10 transition-all cursor-grab active:cursor-grabbing border border-transparent hover:border-primary/10 shrink-0 shadow-sm touch-none select-none"
             onClick={(e) => e.stopPropagation()}
           >
@@ -202,6 +212,11 @@ export function SortableWidget({
               )}>
                 {widget.type.split('.')[0] === 'collection' ? 'Collection' : 'Classic Row'}
               </div>
+              {hasNativeTrakt && (
+                <Badge className="bg-emerald-600/10 text-emerald-700 dark:text-emerald-300">
+                  Native Trakt
+                </Badge>
+              )}
               {widget.dataSource.kind === 'collection' && widget.dataSource.payload?.items && (
                 <div className="flex items-center gap-1.5 text-[9px] font-bold text-muted-foreground/40 uppercase tracking-[0.1em]">
                   <div className="size-1 rounded-full bg-muted-foreground/20" />
@@ -211,7 +226,13 @@ export function SortableWidget({
               {hasInvalidCatalog && (
                 <div className="flex items-center gap-1.5 text-[9px] font-bold text-amber-500 uppercase tracking-[0.1em]">
                   <div className="size-1 rounded-full bg-amber-500/60" />
-                  <span>{invalidCatalogCount} invalid</span>
+                  <span>{invalidCatalogCount} issue{invalidCatalogCount === 1 ? '' : 's'}</span>
+                </div>
+              )}
+              {traktWarningCount > 0 && (
+                <div className="flex items-center gap-1.5 text-[9px] font-bold text-emerald-700 uppercase tracking-[0.1em] dark:text-emerald-300">
+                  <div className="size-1 rounded-full bg-emerald-500/70" />
+                  <span>{traktWarningCount} Trakt warn</span>
                 </div>
               )}
             </div>
@@ -254,6 +275,7 @@ export function SortableWidget({
             <div 
               {...attributes} 
               {...listeners}
+              data-testid={`widget-handle-${widget.id}`}
               className="size-9 flex items-center justify-center rounded-xl text-muted-foreground/30 hover:text-primary hover:bg-primary/10 transition-all cursor-grab active:cursor-grabbing border border-transparent hover:border-primary/10 shrink-0 touch-none select-none"
               onClick={(e) => e.stopPropagation()}
             >
@@ -318,6 +340,14 @@ export function SortableWidget({
               )}>
                 {widget.type.split('.')[0] === 'collection' ? 'Collection' : 'Classic Row'}
               </span>
+              {hasNativeTrakt && (
+                <>
+                  <div className="size-1 rounded-full bg-emerald-500/70" />
+                  <span className="text-[9px] font-bold uppercase tracking-[0.14em] text-emerald-700 dark:text-emerald-300">
+                    Native Trakt
+                  </span>
+                </>
+              )}
               {widget.dataSource.kind === 'collection' && widget.dataSource.payload?.items && (
                 <div className="flex items-center gap-2">
                   <div className="size-1 rounded-full bg-border" />
@@ -331,6 +361,14 @@ export function SortableWidget({
                   <div className="size-1 rounded-full bg-amber-500/70" />
                   <span className="text-[9px] font-bold uppercase tracking-[0.14em] text-amber-500">
                     {invalidCatalogCount} Invalid
+                  </span>
+                </div>
+              )}
+              {traktWarningCount > 0 && (
+                <div className="flex items-center gap-2">
+                  <div className="size-1 rounded-full bg-emerald-500/70" />
+                  <span className="text-[9px] font-bold uppercase tracking-[0.14em] text-emerald-700 dark:text-emerald-300">
+                    {traktWarningCount} Trakt Warn
                   </span>
                 </div>
               )}

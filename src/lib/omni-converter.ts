@@ -8,6 +8,8 @@ import type {
   AddonCatalogDataSource
 } from './types/widget';
 import { MANIFEST_PLACEHOLDER, resolveFusionCatalogType } from './config-utils';
+import { bridgeNativeTraktSourcesForOmni } from './native-trakt-bridge';
+import { isNativeTraktDataSource } from './widget-domain';
 
 export interface NormalizedOmniMainGroup {
   id: string;
@@ -247,6 +249,7 @@ export function convertOmniToFusion(snapshot: any): FusionWidgetsConfig {
       const dataSources: AddonCatalogDataSource[] = catalogIds.map(id => {
         const normalizedId = normalizeCatalogId(id);
         return {
+          sourceType: 'aiometadata',
           kind: 'addonCatalog',
           payload: {
             addonId: MANIFEST_PLACEHOLDER,
@@ -336,6 +339,7 @@ export function convertOmniToFusion(snapshot: any): FusionWidgetsConfig {
 
 
       dataSource: {
+        sourceType: 'aiometadata',
         kind: 'addonCatalog',
         payload: {
           addonId: MANIFEST_PLACEHOLDER,
@@ -411,6 +415,11 @@ interface NormalizedFusionToOmniModel {
     syntheticGroups: number;
     syntheticSubgroups: number;
   };
+}
+
+export interface OmniExportOptions {
+  nativeTraktStrategy?: 'reject' | 'bridge';
+  manifestUrl?: string | null;
 }
 
 const OMNI_ALLOWED_VALUE_FIELDS = [
@@ -543,17 +552,84 @@ function createStableMainGroupId(name: string, occurrence: number): string {
   return `fusion-${slug}-${hash}`;
 }
 
-function normalizeFusionForOmniExport(config: FusionWidgetsConfig): NormalizedFusionToOmniModel {
-  const widgets = Array.isArray(config?.widgets) ? config.widgets : [];
+function createUniqueSubgroupName(baseName: string, groupName: string, usedNames: Set<string>): string {
+  const safeBaseName = baseName.trim() || 'Untitled Item';
+  if (!usedNames.has(safeBaseName)) {
+    usedNames.add(safeBaseName);
+    return safeBaseName;
+  }
+
+  const safeGroupName = groupName.trim();
+  if (safeGroupName) {
+    const groupScopedCandidate = `${safeBaseName} (${safeGroupName})`;
+    if (!usedNames.has(groupScopedCandidate)) {
+      usedNames.add(groupScopedCandidate);
+      return groupScopedCandidate;
+    }
+
+    let groupScopedCounter = 2;
+    let groupScopedName = `${safeBaseName} (${safeGroupName} ${groupScopedCounter})`;
+    while (usedNames.has(groupScopedName)) {
+      groupScopedCounter += 1;
+      groupScopedName = `${safeBaseName} (${safeGroupName} ${groupScopedCounter})`;
+    }
+    usedNames.add(groupScopedName);
+    return groupScopedName;
+  }
+
+  let counter = 2;
+  let candidate = `${safeBaseName} (${counter})`;
+  while (usedNames.has(candidate)) {
+    counter += 1;
+    candidate = `${safeBaseName} (${counter})`;
+  }
+  usedNames.add(candidate);
+  return candidate;
+}
+
+function assertOmniCompatibleConfig(config: FusionWidgetsConfig): void {
+  config.widgets.forEach((widget, widgetIndex) => {
+    if (widget.type === 'row.classic') {
+      if (isNativeTraktDataSource(widget.dataSource)) {
+        throw new Error(
+          `Omni export does not support native Trakt Fusion sources. Remove or convert widget "${widget.title || `#${widgetIndex + 1}`}" before exporting to Omni.`
+        );
+      }
+      return;
+    }
+
+    widget.dataSource.payload.items.forEach((item, itemIndex) => {
+      if (item.dataSources.some(isNativeTraktDataSource)) {
+        throw new Error(
+          `Omni export does not support native Trakt Fusion sources. Remove or convert collection item "${item.name || `#${itemIndex + 1}`}" before exporting to Omni.`
+        );
+      }
+    });
+  });
+}
+
+function normalizeFusionForOmniExport(
+  config: FusionWidgetsConfig,
+  options: OmniExportOptions = {}
+): NormalizedFusionToOmniModel {
+  const effectiveConfig =
+    options.nativeTraktStrategy === 'bridge'
+      ? bridgeNativeTraktSourcesForOmni(config, options.manifestUrl ?? null)
+      : config;
+
+  assertOmniCompatibleConfig(effectiveConfig);
+  const widgets = Array.isArray(effectiveConfig?.widgets) ? effectiveConfig.widgets : [];
 
   const rowCatalogs: NormalizedOmniCatalog[] = [];
   const rowByKey = new Map<string, NormalizedOmniCatalog>();
   const rowMembership = new Map<string, { groupIndex: number; subgroupIndex: number }>();
   const mainGroups: NormalizedOmniMainGroupExport[] = [];
+  const usedSubgroupNames = new Set<string>();
   const subgroupIndexEntries: Array<{
     groupIndex: number;
     subgroupIndex: number;
     subgroupName: string;
+    matchName: string;
     normalizedName: string;
   }> = [];
 
@@ -566,6 +642,9 @@ function normalizeFusionForOmniExport(config: FusionWidgetsConfig): NormalizedFu
   widgets.forEach((widget, widgetIndex) => {
     if (widget.type !== 'row.classic') return;
     rowCount += 1;
+    if (widget.dataSource.kind !== 'addonCatalog') {
+      throw new Error(`Omni export does not support native Trakt Fusion sources. Remove or convert widget "${widget.title || `#${widgetIndex + 1}`}" before exporting to Omni.`);
+    }
 
     const catalogId = widget.dataSource?.payload?.catalogId;
     if (!catalogId) {
@@ -622,7 +701,8 @@ function normalizeFusionForOmniExport(config: FusionWidgetsConfig): NormalizedFu
     items.forEach((item: any, itemIndex: number) => {
       collectionItemCount += 1;
 
-      const subgroupName = (item.name || item.title || '').trim() || `Untitled Item ${itemIndex + 1}`;
+      const subgroupBaseName = (item.name || item.title || '').trim() || `Untitled Item ${itemIndex + 1}`;
+      const subgroupName = createUniqueSubgroupName(subgroupBaseName, collectionName, usedSubgroupNames);
       const subgroup: NormalizedOmniSubgroupExport = {
         name: subgroupName,
         imageUrl: item.backgroundImageURL || item.imageURL || '',
@@ -638,7 +718,8 @@ function normalizeFusionForOmniExport(config: FusionWidgetsConfig): NormalizedFu
         groupIndex: mainGroups.length,
         subgroupIndex,
         subgroupName,
-        normalizedName: normalizeMatchText(subgroupName)
+        matchName: subgroupBaseName,
+        normalizedName: normalizeMatchText(subgroupBaseName)
       });
 
       const rawSources = Array.isArray(item.dataSources) && item.dataSources.length > 0
@@ -732,7 +813,7 @@ function normalizeFusionForOmniExport(config: FusionWidgetsConfig): NormalizedFu
 
     subgroupIndexEntries.forEach((entry) => {
       if (!entry.normalizedName) return;
-      const score = scoreRowToSubgroup(row.customName || row.sourceRowTitle, entry.subgroupName);
+      const score = scoreRowToSubgroup(row.customName || row.sourceRowTitle, entry.matchName);
       if (score <= 0) return;
 
       if (score > bestScore) {
@@ -751,9 +832,6 @@ function normalizeFusionForOmniExport(config: FusionWidgetsConfig): NormalizedFu
   });
 
   const standaloneRows: NormalizedOmniCatalog[] = [];
-  const usedSubgroupNames = new Set(
-    mainGroups.flatMap((group) => group.subgroups.map((subgroup) => subgroup.name))
-  );
 
   rowCatalogs.forEach((row) => {
     const membership = rowMembership.get(row.key);
@@ -1116,14 +1194,14 @@ function validateSerializedOmniSnapshot(snapshot: any, model: NormalizedFusionTo
   }
 }
 
-export function convertFusionToOmni(config: FusionWidgetsConfig): any {
-  const normalizedModel = normalizeFusionForOmniExport(config);
+export function convertFusionToOmni(config: FusionWidgetsConfig, options: OmniExportOptions = {}): any {
+  const normalizedModel = normalizeFusionForOmniExport(config, options);
   validateNormalizedModel(normalizedModel);
   const snapshot = serializeModelToOmniSnapshot(normalizedModel);
   validateSerializedOmniSnapshot(snapshot, normalizedModel);
   return snapshot;
 }
 
-export function validateOmniExport(config: FusionWidgetsConfig): void {
-  validateNormalizedModel(normalizeFusionForOmniExport(config));
+export function validateOmniExport(config: FusionWidgetsConfig, options: OmniExportOptions = {}): void {
+  validateNormalizedModel(normalizeFusionForOmniExport(config, options));
 }

@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.3.0] - 2026-03-27
+### Added
+- **AIOMetadata Export**: Added full support for exporting AIOMetadata catalogs directly from the manager with preview, selection controls, and JSON download.
+- **Unified Import Logic**: Standardized import flow for JSON URLs, manual pasting, and file uploads, including automatic manifest takeover.
+- **Flexible Export Options**: New choices for handling invalid catalog entries (`Skip Invalid` or `Export Empty Items`) to preserve layout even without valid catalogs.
+
+### Improved
+- **Enhanced Issue Detection**: Items without catalogs are now flagged as issues with clearer warnings and guidance.
+- **UI Refinements**: Refined status banners, refined Apple TV warnings, and updated wording for better clarity (e.g., `issue/issues` instead of `invalid`).
+- **Standardized Navigation**: Changed `Select All` to `All` in the source selection UI for consistency.
+
+### Fixed
+- **Manifest Sync**: Fixed AIOMetadata disconnect behavior to ensure full disconnection after confirmation.
+- **Export Consistency**: Resolved inconsistent behavior when exporting items with zero catalogs.
+
+### Validation
+- Updated unit tests for manifest extraction, catalog handling, and empty item export behavior.
+
 ## [0.2.1] - 2026-03-24
 ### Added
 - **AIOMetadata Popup**: Introduced a selection popup for AIOMetadata templates, allowing users to choose between a "Full Setup" (comprehensive configuration) or "Catalogs Only" (lightweight metadata) during download.

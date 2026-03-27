@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { 
   Dialog, 
   DialogContent, 
@@ -13,9 +13,9 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Plus, RectangleHorizontal, RectangleVertical, Square, Layers } from 'lucide-react';
+import { Plus, RectangleHorizontal, RectangleVertical, Square, Layers, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { CollectionItem, AddonCatalogDataSource } from '@/lib/types/widget';
+import { CollectionItem, AIOMetadataDataSource } from '@/lib/types/widget';
 import { DataSourceEditor } from './DataSourceEditor';
 import { MANIFEST_PLACEHOLDER } from '@/lib/config-utils';
 
@@ -28,9 +28,11 @@ export function AddItemDialog({ onAdd, trigger }: AddItemDialogProps) {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState('');
   const [backgroundImageURL, setBackgroundImageURL] = useState('');
+  const backgroundImageUrlInputRef = useRef<HTMLInputElement | null>(null);
   const [layout, setLayout] = useState<'Wide' | 'Poster' | 'Square'>('Wide');
-  const [dataSources, setDataSources] = useState<AddonCatalogDataSource[]>([
+  const [dataSources, setDataSources] = useState<AIOMetadataDataSource[]>([
     {
+      sourceType: 'aiometadata',
       kind: 'addonCatalog',
       payload: { addonId: MANIFEST_PLACEHOLDER, catalogId: '', catalogType: 'movie' }
     }
@@ -55,10 +57,19 @@ export function AddItemDialog({ onAdd, trigger }: AddItemDialogProps) {
     setLayout('Wide');
     setDataSources([
       {
+        sourceType: 'aiometadata',
         kind: 'addonCatalog',
         payload: { addonId: MANIFEST_PLACEHOLDER, catalogId: '', catalogType: 'movie' }
       }
     ]);
+  };
+
+  const handleClearBackgroundImageUrl = () => {
+    setBackgroundImageURL('');
+
+    requestAnimationFrame(() => {
+      backgroundImageUrlInputRef.current?.focus();
+    });
   };
 
   return (
@@ -70,7 +81,7 @@ export function AddItemDialog({ onAdd, trigger }: AddItemDialogProps) {
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[560px] rounded-[2.5rem] border border-border/40 bg-background/95 p-0 overflow-hidden shadow-2xl backdrop-blur-2xl max-sm:w-[calc(100vw-1rem)] max-sm:max-w-[calc(100vw-1rem)] max-sm:rounded-[1.9rem] [&>button:last-child]:top-8 [&>button:last-child]:right-8 [&>button:last-child]:size-9 [&>button:last-child]:rounded-full [&>button:last-child]:bg-muted/30 [&>button:last-child]:hover:bg-muted/50 [&>button:last-child]:transition-all [&>button:last-child]:border-none [&>button:last-child]:flex [&>button:last-child]:items-center [&>button:last-child]:justify-center max-sm:[&>button:last-child]:top-4 max-sm:[&>button:last-child]:right-4">
+      <DialogContent className="sm:max-w-[560px] rounded-[2.5rem] border border-border/40 bg-background/95 p-0 overflow-hidden shadow-2xl backdrop-blur-2xl max-sm:w-[calc(100vw-1rem)] max-sm:max-w-[calc(100vw-1rem)] max-sm:rounded-[1.9rem]">
         <div className="p-8 pt-10 max-sm:p-5 max-sm:pt-6">
           <DialogHeader className="space-y-4 items-start text-left">
             <div className="size-14 rounded-2xl bg-primary/5 border border-primary/10 flex items-center justify-center text-primary shadow-sm max-sm:size-12 max-sm:rounded-[1rem]">
@@ -105,11 +116,22 @@ export function AddItemDialog({ onAdd, trigger }: AddItemDialogProps) {
             <div className="relative group rounded-2xl border border-border/10 bg-muted/20 p-1 transition-all focus-within:border-primary/30">
               <Input
                 id="item-url"
+                ref={backgroundImageUrlInputRef}
                 placeholder="https://..."
                 value={backgroundImageURL}
                 onChange={(e) => setBackgroundImageURL(e.target.value)}
-                className="h-11 max-sm:h-11 bg-transparent border-none focus-visible:ring-0 rounded-xl max-sm:rounded-[1rem] px-4 font-mono text-xs"
+                className="h-11 max-sm:h-11 bg-transparent border-none focus-visible:ring-0 rounded-xl max-sm:rounded-[1rem] px-4 pr-12 font-mono text-xs"
               />
+              {backgroundImageURL && (
+                <button
+                  type="button"
+                  onClick={handleClearBackgroundImageUrl}
+                  className="absolute right-3 top-1/2 inline-flex size-8 -translate-y-1/2 items-center justify-center rounded-xl text-muted-foreground/45 transition-colors hover:bg-destructive/10 hover:text-destructive focus:outline-none focus:ring-2 focus:ring-destructive/20"
+                  aria-label="Clear image URL"
+                >
+                  <Trash2 className="size-4" />
+                </button>
+              )}
             </div>
           </div>
           

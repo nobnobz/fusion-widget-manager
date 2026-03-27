@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import {
   AIOMetadataCatalog,
   CollectionItem,
@@ -11,12 +11,19 @@ import {
 } from '@/lib/types/widget';
 import {
   exportConfigToFusion,
+  type FusionInvalidCatalogExportMode,
   processConfigWithManifest,
   processWidgetWithManifest,
 } from '@/lib/config-utils';
 import { convertFusionToOmni } from '@/lib/omni-converter';
 import {
+  analyzeAiometadataManifestDetection,
+  getAiometadataManifestDetectionSignature,
+} from '@/lib/aiometadata-manifest-detection';
+import {
   AppState,
+  extractImportedManifestState,
+  ImportIssue,
   IdRepairSummary,
   mergeWidgetLists,
   normalizeFusionConfigDetailed,
@@ -24,11 +31,18 @@ import {
   parseManifest,
 } from '@/lib/widget-domain';
 
+interface ImportResult {
+  importedWidgets: number;
+  repairedIds: IdRepairSummary;
+  importIssues: ImportIssue[];
+}
+
 interface MergeResult {
   added: number;
   skippedExisting: number;
   skippedInPayload: number;
   repairedIds: IdRepairSummary;
+  importIssues: ImportIssue[];
 }
 
 interface ConfigContextType {
@@ -40,9 +54,12 @@ interface ConfigContextType {
   replacePlaceholder: boolean;
   setReplacePlaceholder: (replace: boolean) => void;
   replaceConfig: (config: FusionWidgetsConfig) => void;
-  importConfig: (config: unknown) => void;
+  importConfig: (config: unknown) => ImportResult;
   mergeConfig: (config: unknown) => MergeResult;
-  exportConfig: () => unknown;
+  exportConfig: (options?: {
+    skipInvalidAiometadataSources?: boolean;
+    invalidAiometadataMode?: FusionInvalidCatalogExportMode;
+  }) => unknown;
   addWidget: (widget: Widget) => void;
   updateWidgetMeta: (id: string, updates: Partial<Widget>) => void;
   deleteWidget: (id: string) => void;
@@ -65,7 +82,8 @@ interface ConfigContextType {
   manifestContent: string;
   setManifestContent: (content: string) => void;
   fetchManifest: (url: string) => Promise<AIOMetadataCatalog[]>;
-  exportOmniConfig: () => unknown;
+  manifestAutoSyncIssue: string | null;
+  exportOmniConfig: (options?: { nativeTraktStrategy?: 'reject' | 'bridge' }) => unknown;
   view: 'welcome' | 'selection' | 'editor';
   setView: (view: 'welcome' | 'selection' | 'editor') => void;
 }
@@ -93,24 +111,28 @@ export function ConfigProvider({ children }: { children: React.ReactNode }) {
   const [isDragging, setIsDragging] = useState(false);
   const [manifestCatalogs, setManifestCatalogs] = useState<AIOMetadataCatalog[]>([]);
   const [manifestContent, setManifestContent] = useState('');
+  const [manifestAutoSyncIssue, setManifestAutoSyncIssue] = useState<string | null>(null);
   const [view, setView] = useState<'welcome' | 'selection' | 'editor'>('welcome');
+  const [hasHydrated, setHasHydrated] = useState(false);
+  const autoRefreshedManifestUrlRef = useRef<string | null>(null);
+  const lastManifestDetectionSignatureRef = useRef<string | null>(null);
 
   useEffect(() => {
     const saved = localStorage.getItem('fusion-widgets-config');
-    if (!saved) return;
-
-    try {
-      const normalized = normalizeLoadedState(JSON.parse(saved));
-      setWidgets(normalized.widgets);
-      setTrash(normalized.trash);
-      setItemTrash(normalized.itemTrash);
-      setManifestUrl(normalized.manifestUrl);
-      setReplacePlaceholder(normalized.replacePlaceholder);
-      if (normalized.widgets.length > 0 || normalized.trash.length > 0 || normalized.itemTrash.length > 0) {
-        setView('selection');
+    if (saved) {
+      try {
+        const normalized = normalizeLoadedState(JSON.parse(saved));
+        setWidgets(normalized.widgets);
+        setTrash(normalized.trash);
+        setItemTrash(normalized.itemTrash);
+        setManifestUrl(normalized.manifestUrl);
+        setReplacePlaceholder(normalized.replacePlaceholder);
+        if (normalized.widgets.length > 0 || normalized.trash.length > 0 || normalized.itemTrash.length > 0) {
+          setView('selection');
+        }
+      } catch (error) {
+        console.error('Failed to parse config from storage:', error);
       }
-    } catch (error) {
-      console.error('Failed to parse config from storage:', error);
     }
 
     const savedCatalogs = localStorage.getItem('fusion-widget-manifest-catalogs');
@@ -126,6 +148,8 @@ export function ConfigProvider({ children }: { children: React.ReactNode }) {
     if (savedContent) {
       setManifestContent(savedContent);
     }
+
+    setHasHydrated(true);
   }, []);
 
   useEffect(() => {
@@ -154,15 +178,53 @@ export function ConfigProvider({ children }: { children: React.ReactNode }) {
   }, [manifestContent]);
 
   const normalizeIncomingConfig = useCallback(
-    (config: unknown) =>
+    (
+      config: unknown,
+      overrides?: {
+        manifestUrl?: string | null;
+        replacePlaceholder?: boolean;
+        catalogs?: AIOMetadataCatalog[];
+      }
+    ) =>
       normalizeFusionConfigDetailed(config, {
-        manifestUrl,
-        replacePlaceholder,
-        catalogs: manifestCatalogs,
+        manifestUrl: overrides?.manifestUrl ?? manifestUrl,
+        replacePlaceholder: overrides?.replacePlaceholder ?? replacePlaceholder,
+        catalogs: overrides?.catalogs ?? manifestCatalogs,
         sanitize: true,
+        allowPartialImport: true,
       }),
     [manifestCatalogs, manifestUrl, replacePlaceholder]
   );
+
+  const applyImportedManifestState = useCallback((config: unknown, importedWidgets: Widget[]) => {
+    const importedManifest = extractImportedManifestState(config);
+
+    if (importedManifest.hasExplicitManifest) {
+      autoRefreshedManifestUrlRef.current =
+        importedManifest.manifestUrl && importedManifest.manifestCatalogs.length > 0
+          ? importedManifest.manifestUrl
+          : null;
+      setManifestUrl(importedManifest.manifestUrl);
+      setReplacePlaceholder(importedManifest.replacePlaceholder);
+      setManifestCatalogs(importedManifest.manifestCatalogs);
+      setManifestContent(importedManifest.manifestContent);
+      setManifestAutoSyncIssue(null);
+      return;
+    }
+
+    const detection = analyzeAiometadataManifestDetection(importedWidgets);
+    if (!detection.hasSingleValidDetectedUrl) {
+      return;
+    }
+
+    const detectedUrl = detection.detectedUrls[0] || '';
+    autoRefreshedManifestUrlRef.current = null;
+    setManifestUrl(detectedUrl);
+    setReplacePlaceholder(true);
+    setManifestCatalogs([]);
+    setManifestContent('');
+    setManifestAutoSyncIssue(null);
+  }, []);
 
   const replaceConfig = useCallback((config: FusionWidgetsConfig) => {
     setWidgets(config.widgets);
@@ -171,10 +233,38 @@ export function ConfigProvider({ children }: { children: React.ReactNode }) {
 
   const importConfig = useCallback(
     (config: unknown) => {
-      const normalized = normalizeIncomingConfig(config);
+      const importedManifest = extractImportedManifestState(config);
+      const normalized =
+        importedManifest.hasExplicitManifest
+          ? normalizeIncomingConfig(config, {
+              manifestUrl: importedManifest.manifestUrl,
+              replacePlaceholder: importedManifest.replacePlaceholder,
+              catalogs: importedManifest.manifestCatalogs,
+            })
+          : (() => {
+              const importedNormalization = normalizeIncomingConfig(config, {
+                manifestUrl: '',
+                replacePlaceholder: false,
+                catalogs: [],
+              });
+              const detection = analyzeAiometadataManifestDetection(importedNormalization.config.widgets);
+              return detection.hasSingleValidDetectedUrl ? importedNormalization : normalizeIncomingConfig(config);
+            })();
+
+      if (normalized.config.widgets.length === 0 && normalized.importIssues.length > 0) {
+        throw new Error(
+          `No supported widgets could be imported. First issue: ${normalized.importIssues[0]?.path} - ${normalized.importIssues[0]?.message}`
+        );
+      }
       replaceConfig(normalized.config);
+      applyImportedManifestState(config, normalized.config.widgets);
+      return {
+        importedWidgets: normalized.config.widgets.length,
+        repairedIds: normalized.repairedIds,
+        importIssues: normalized.importIssues,
+      };
     },
-    [normalizeIncomingConfig, replaceConfig]
+    [applyImportedManifestState, normalizeIncomingConfig, replaceConfig]
   );
 
   const mergeConfig = useCallback(
@@ -188,6 +278,7 @@ export function ConfigProvider({ children }: { children: React.ReactNode }) {
           skippedExisting: merged.skippedExisting,
           skippedInPayload: merged.skippedInPayload,
           repairedIds: normalized.repairedIds,
+          importIssues: normalized.importIssues,
         };
       }
 
@@ -208,20 +299,24 @@ export function ConfigProvider({ children }: { children: React.ReactNode }) {
       setWidgets(repairedMerge.config.widgets);
       setView('selection');
 
-      return {
-        added: merged.added,
-        skippedExisting: merged.skippedExisting,
-        skippedInPayload: merged.skippedInPayload,
-        repairedIds: {
-          widgetIds: [...normalized.repairedIds.widgetIds, ...repairedMerge.repairedIds.widgetIds],
-          itemIds: [...normalized.repairedIds.itemIds, ...repairedMerge.repairedIds.itemIds],
-        },
-      };
-    },
+        return {
+          added: merged.added,
+          skippedExisting: merged.skippedExisting,
+          skippedInPayload: merged.skippedInPayload,
+          repairedIds: {
+            widgetIds: [...normalized.repairedIds.widgetIds, ...repairedMerge.repairedIds.widgetIds],
+            itemIds: [...normalized.repairedIds.itemIds, ...repairedMerge.repairedIds.itemIds],
+          },
+          importIssues: normalized.importIssues,
+        };
+      },
     [manifestCatalogs, manifestUrl, normalizeIncomingConfig, replacePlaceholder, widgets]
   );
 
-  const exportConfig = useCallback(() => {
+  const exportConfig = useCallback((options?: {
+    skipInvalidAiometadataSources?: boolean;
+    invalidAiometadataMode?: FusionInvalidCatalogExportMode;
+  }) => {
     const normalized = processConfigWithManifest(
       {
         exportType: 'fusionWidgets',
@@ -234,10 +329,14 @@ export function ConfigProvider({ children }: { children: React.ReactNode }) {
       true
     );
 
-    return exportConfigToFusion(normalized, manifestUrl);
+    return exportConfigToFusion(normalized, manifestUrl, {
+      skipInvalidAiometadataSources: options?.skipInvalidAiometadataSources ?? false,
+      invalidAiometadataMode: options?.invalidAiometadataMode ?? 'skip',
+      catalogs: manifestCatalogs,
+    });
   }, [widgets, manifestUrl, replacePlaceholder, manifestCatalogs]);
 
-  const exportOmniConfig = useCallback(() => {
+  const exportOmniConfig = useCallback((options?: { nativeTraktStrategy?: 'reject' | 'bridge' }) => {
     const normalized = processConfigWithManifest(
       {
         exportType: 'fusionWidgets',
@@ -250,7 +349,10 @@ export function ConfigProvider({ children }: { children: React.ReactNode }) {
       true
     );
 
-    return convertFusionToOmni(normalized);
+    return convertFusionToOmni(normalized, {
+      nativeTraktStrategy: options?.nativeTraktStrategy ?? 'reject',
+      manifestUrl: manifestUrl || null,
+    });
   }, [widgets, manifestUrl, replacePlaceholder, manifestCatalogs]);
 
   const addWidget = useCallback(
@@ -527,6 +629,7 @@ export function ConfigProvider({ children }: { children: React.ReactNode }) {
         throw new Error('No AIOMetadata manifest loaded. Please sync a manifest first.');
       }
 
+      setManifestAutoSyncIssue(null);
       setWidgets((prev) =>
         prev.map((widget) =>
           processWidgetWithManifest(widget, urlToUse, replaceToUse, catalogsToUse, true)
@@ -558,6 +661,73 @@ export function ConfigProvider({ children }: { children: React.ReactNode }) {
     []
   );
 
+  useEffect(() => {
+    if (!hasHydrated || !manifestUrl || manifestUrl.startsWith('manual://')) {
+      return;
+    }
+
+    if (autoRefreshedManifestUrlRef.current === manifestUrl) {
+      return;
+    }
+
+    autoRefreshedManifestUrlRef.current = manifestUrl;
+
+    let cancelled = false;
+
+    void fetchManifest(manifestUrl)
+      .then((catalogs) => {
+        if (cancelled) {
+          return;
+        }
+
+        syncManifest(catalogs, manifestUrl, replacePlaceholder);
+      })
+      .catch((error) => {
+        console.error('Failed to auto-refresh AIOMetadata manifest:', error);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [fetchManifest, hasHydrated, manifestUrl, replacePlaceholder, syncManifest]);
+
+  useEffect(() => {
+    if (!hasHydrated || manifestUrl) {
+      return;
+    }
+
+    const detectionSignature = getAiometadataManifestDetectionSignature(widgets);
+    if (lastManifestDetectionSignatureRef.current === detectionSignature) {
+      return;
+    }
+    lastManifestDetectionSignatureRef.current = detectionSignature;
+
+    const detection = analyzeAiometadataManifestDetection(widgets);
+    if (!detection.hasAiometadataSources || detection.detectedUrls.length === 0) {
+      setManifestAutoSyncIssue(null);
+      return;
+    }
+
+    if (detection.detectedUrls.length > 1) {
+      setManifestAutoSyncIssue('Multiple AIOMetadata URLs detected. Sync one manifest manually.');
+      return;
+    }
+
+    const [detectedUrl] = detection.detectedUrls;
+
+    void fetchManifest(detectedUrl)
+      .then((catalogs) => {
+        autoRefreshedManifestUrlRef.current = detectedUrl;
+        setManifestUrl(detectedUrl);
+        setManifestAutoSyncIssue(null);
+        syncManifest(catalogs, detectedUrl, true);
+      })
+      .catch((error) => {
+        console.error('Failed to auto-detect AIOMetadata manifest:', error);
+        setManifestAutoSyncIssue('Detected AIOMetadata URL could not be synced. Check Sync Manifest.');
+      });
+  }, [fetchManifest, hasHydrated, manifestUrl, syncManifest, widgets]);
+
   const importManifest = useCallback((data: unknown) => {
     const catalogs = parseManifest(data);
     setManifestCatalogs(catalogs);
@@ -568,11 +738,14 @@ export function ConfigProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const disconnectManifest = useCallback(() => {
+    lastManifestDetectionSignatureRef.current = getAiometadataManifestDetectionSignature(widgets);
+    autoRefreshedManifestUrlRef.current = null;
     setManifestUrl('');
     setManifestCatalogs([]);
     setManifestContent('');
+    setManifestAutoSyncIssue(null);
     setReplacePlaceholder(false);
-  }, []);
+  }, [widgets]);
 
   const clearConfig = useCallback(() => {
     setWidgets([]);
@@ -619,6 +792,7 @@ export function ConfigProvider({ children }: { children: React.ReactNode }) {
         manifestContent,
         setManifestContent,
         fetchManifest,
+        manifestAutoSyncIssue,
         exportOmniConfig,
         view,
         setView,

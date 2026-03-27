@@ -1,6 +1,6 @@
 "use client";
 
-import { CollectionItem, AddonCatalogDataSource } from '@/lib/types/widget';
+import { CollectionItem, AIOMetadataDataSource } from '@/lib/types/widget';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Card } from '@/components/ui/card';
@@ -24,11 +24,17 @@ import {
   Pencil
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { DataSourceEditor } from './DataSourceEditor';
 import { MANIFEST_PLACEHOLDER } from '@/lib/config-utils';
-import { countInvalidCatalogsInItem } from '@/lib/catalog-validation';
+import { countInvalidCatalogsInItem, countTraktWarningsInItem } from '@/lib/catalog-validation';
+import { isAIOMetadataDataSource, isNativeTraktDataSource } from '@/lib/widget-domain';
+import { TraktSourceCard } from './TraktSourceCard';
+import { Badge } from '@/components/ui/badge';
+import { ConfirmationDialog } from '@/components/ui/ConfirmationDialog';
+
+const SKIP_NATIVE_TRAKT_DELETE_WARNING_KEY = 'fusion-widget-manager.skip-native-trakt-delete-warning';
 
 export function CollectionItemEditor({ 
   item, 
@@ -47,8 +53,23 @@ export function CollectionItemEditor({
   const { manifestCatalogs } = useConfig();
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState(item.name);
+  const [showNativeTraktDeleteConfirm, setShowNativeTraktDeleteConfirm] = useState(false);
+  const [pendingNativeTraktDeleteIndex, setPendingNativeTraktDeleteIndex] = useState<number | null>(null);
+  const backgroundImageUrlInputRef = useRef<HTMLInputElement | null>(null);
+  const [skipNativeTraktDeleteWarning, setSkipNativeTraktDeleteWarning] = useState(() => {
+    if (typeof window === 'undefined') {
+      return false;
+    }
+
+    return window.localStorage.getItem(SKIP_NATIVE_TRAKT_DELETE_WARNING_KEY) === 'true';
+  });
+  const [rememberNativeTraktDeleteChoice, setRememberNativeTraktDeleteChoice] = useState(false);
   const selectedCatalogIds = useMemo(
-    () => item.dataSources.map((ds) => ds.payload.catalogId).filter(Boolean),
+    () =>
+      item.dataSources
+        .filter(isAIOMetadataDataSource)
+        .map((ds) => ds.payload.catalogId)
+        .filter(Boolean),
     [item.dataSources]
   );
   
@@ -57,6 +78,12 @@ export function CollectionItemEditor({
     [item, manifestCatalogs]
   );
   const hasInvalidCatalog = invalidCatalogCount > 0;
+  const traktWarningCount = useMemo(() => countTraktWarningsInItem(item), [item]);
+  const hasTraktWarnings = traktWarningCount > 0;
+  const hasNativeTraktSource = useMemo(
+    () => item.dataSources.some(isNativeTraktDataSource),
+    [item.dataSources]
+  );
 
   const {
     attributes,
@@ -75,7 +102,8 @@ export function CollectionItemEditor({
   };
 
   const handleAddDataSource = () => {
-    const newDS: AddonCatalogDataSource = {
+    const newDS: AIOMetadataDataSource = {
+      sourceType: 'aiometadata',
       kind: 'addonCatalog',
       payload: {
         addonId: MANIFEST_PLACEHOLDER,
@@ -92,24 +120,39 @@ export function CollectionItemEditor({
     onUpdate({ dataSources: item.dataSources.filter((_, i) => i !== dsIndex) });
   };
 
-  const handleUpdateDataSource = (dsIndex: number, updates: Partial<AddonCatalogDataSource['payload']>) => {
+  const handleUpdateDataSource = (dsIndex: number, updates: Partial<AIOMetadataDataSource['payload']>) => {
+    const currentDataSource = item.dataSources[dsIndex];
+    if (!currentDataSource || !isAIOMetadataDataSource(currentDataSource)) {
+      return;
+    }
+
     const nextCatalogId = updates.catalogId?.trim();
     if (
       nextCatalogId &&
-      item.dataSources.some((ds, i) => i !== dsIndex && ds.payload.catalogId === nextCatalogId)
+      item.dataSources.some(
+        (ds, i) => i !== dsIndex && isAIOMetadataDataSource(ds) && ds.payload.catalogId === nextCatalogId
+      )
     ) {
       return;
     }
 
     onUpdate({
       dataSources: item.dataSources.map((ds, i) => 
-        i === dsIndex ? { ...ds, payload: { ...ds.payload, ...updates } } : ds
+        i === dsIndex && isAIOMetadataDataSource(ds) ? { ...ds, payload: { ...ds.payload, ...updates } } : ds
       )
     });
   };
 
   const canAddAnotherDataSource =
     manifestCatalogs.length === 0 || selectedCatalogIds.length < manifestCatalogs.length;
+
+  const handleClearBackgroundImageUrl = () => {
+    onUpdate({ backgroundImageURL: '' });
+
+    requestAnimationFrame(() => {
+      backgroundImageUrlInputRef.current?.focus();
+    });
+  };
 
   const handleTitleSubmit = () => {
     if (editName.trim() && editName !== item.name) {
@@ -124,9 +167,30 @@ export function CollectionItemEditor({
     setIsEditing(true);
   };
 
+  const handleDeleteNativeTraktDataSource = (dsIndex: number) => {
+    if (skipNativeTraktDeleteWarning) {
+      handleDeleteDataSource(dsIndex);
+      return;
+    }
+
+    setPendingNativeTraktDeleteIndex(dsIndex);
+    setRememberNativeTraktDeleteChoice(false);
+    setShowNativeTraktDeleteConfirm(true);
+  };
+
+  const handleNativeTraktDeleteDialogChange = (isOpen: boolean) => {
+    setShowNativeTraktDeleteConfirm(isOpen);
+
+    if (!isOpen) {
+      setPendingNativeTraktDeleteIndex(null);
+      setRememberNativeTraktDeleteChoice(false);
+    }
+  };
+
   return (
-    <div ref={setNodeRef} style={style} className={cn(isDragging && "z-50")}>
-      <Card className="group bg-card border border-zinc-200/80 dark:border-border shadow-[0_1px_4px_rgba(0,0,0,0.02)] dark:shadow-none rounded-xl max-sm:rounded-[1.15rem] overflow-hidden transition-all duration-300 hover:border-primary/30 hover:shadow-sm max-sm:shadow-[0_1px_3px_rgba(0,0,0,0.03)]">
+    <>
+      <div ref={setNodeRef} style={style} className={cn(isDragging && "z-50")}>
+        <Card className="group bg-card border border-zinc-200/80 dark:border-border shadow-[0_1px_4px_rgba(0,0,0,0.02)] dark:shadow-none rounded-xl max-sm:rounded-[1.15rem] overflow-hidden transition-all duration-300 hover:border-primary/30 hover:shadow-sm max-sm:shadow-[0_1px_3px_rgba(0,0,0,0.03)]">
         <div className="flex-1 flex flex-col min-w-0">
           {/* Header */}
           <div 
@@ -269,6 +333,11 @@ export function CollectionItemEditor({
                       </button>
                     )}
                   </div>
+                  {hasNativeTraktSource && (
+                    <Badge className="shrink-0 bg-emerald-600/10 text-emerald-700 dark:text-emerald-300">
+                      Trakt
+                    </Badge>
+                  )}
 
                   <Button 
                     variant="ghost" 
@@ -304,7 +373,15 @@ export function CollectionItemEditor({
                       <>
                         <div className="size-1 rounded-full bg-amber-500/70" />
                         <span className="text-[9px] font-bold uppercase tracking-[0.14em] text-amber-500">
-                          {invalidCatalogCount} Invalid
+                          {invalidCatalogCount} Issue{invalidCatalogCount === 1 ? '' : 's'}
+                        </span>
+                      </>
+                    )}
+                    {hasTraktWarnings && (
+                      <>
+                        <div className="size-1 rounded-full bg-emerald-500/70" />
+                        <span className="text-[9px] font-bold uppercase tracking-[0.14em] text-emerald-600 dark:text-emerald-300">
+                          {traktWarningCount} Trakt Warn
                         </span>
                       </>
                     )}
@@ -399,13 +476,24 @@ export function CollectionItemEditor({
                             </div>
  
                             <div className="relative group/url w-full">
-                              <ImageIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground/30 group-focus-within/url:text-primary transition-colors" />
+                              <ImageIcon className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground/30 group-focus-within/url:text-primary transition-colors" />
                               <Input 
+                                ref={backgroundImageUrlInputRef}
                                 placeholder="Image URL (https://...)" 
-                                className="h-10 max-sm:h-11 pl-10 text-xs bg-background/50 border-zinc-200 dark:border-border/40 focus:border-primary/50 focus-visible:ring-0 rounded-xl max-sm:rounded-[1rem] shadow-sm dark:shadow-none backdrop-blur-sm transition-all"
+                                className="h-10 max-sm:h-11 pl-10 pr-12 text-xs bg-background/50 border-zinc-200 dark:border-border/40 focus:border-primary/50 focus-visible:ring-0 rounded-xl max-sm:rounded-[1rem] shadow-sm dark:shadow-none backdrop-blur-sm transition-all"
                                 value={item.backgroundImageURL}
                                 onChange={(e) => onUpdate({ backgroundImageURL: e.target.value })}
                               />
+                              {item.backgroundImageURL && (
+                                <button
+                                  type="button"
+                                  onClick={handleClearBackgroundImageUrl}
+                                  className="absolute right-2 top-1/2 inline-flex size-8 -translate-y-1/2 items-center justify-center rounded-xl text-muted-foreground/45 transition-colors hover:bg-destructive/10 hover:text-destructive focus:outline-none focus:ring-2 focus:ring-destructive/20"
+                                  aria-label="Clear image URL"
+                                >
+                                  <Trash2 className="size-4" />
+                                </button>
+                              )}
                             </div>
                           </div>
                         </div>
@@ -429,16 +517,26 @@ export function CollectionItemEditor({
                       </div>
                       <div className="space-y-2 pr-1 max-sm:pr-0">
                         {item.dataSources.map((ds, dsIndex) => (
-                          <DataSourceEditor 
-                            key={dsIndex}
-                            dataSource={ds}
-                            disabledCatalogIds={item.dataSources
-                              .filter((_, index) => index !== dsIndex)
-                              .map((source) => source.payload.catalogId)
-                              .filter(Boolean)}
-                            onUpdate={(updates) => handleUpdateDataSource(dsIndex, updates)}
-                            onDelete={() => handleDeleteDataSource(dsIndex)}
-                          />
+                          isAIOMetadataDataSource(ds) ? (
+                            <DataSourceEditor 
+                              key={dsIndex}
+                              dataSource={ds}
+                              disabledCatalogIds={item.dataSources
+                                .filter((_, index) => index !== dsIndex)
+                                .filter(isAIOMetadataDataSource)
+                                .map((source) => source.payload.catalogId)
+                                .filter(Boolean)}
+                              onUpdate={(updates) => handleUpdateDataSource(dsIndex, updates)}
+                              onDelete={() => handleDeleteDataSource(dsIndex)}
+                            />
+                          ) : (
+                            <TraktSourceCard
+                              key={dsIndex}
+                              dataSource={ds}
+                              compact
+                              onDelete={() => handleDeleteNativeTraktDataSource(dsIndex)}
+                            />
+                          )
                         ))}
                         {item.dataSources.length === 0 && (
                           <div className="flex items-center justify-center py-4 border border-dashed border-border/20 rounded-xl bg-muted/5">
@@ -454,7 +552,46 @@ export function CollectionItemEditor({
             )}
           </AnimatePresence>
         </div>
-      </Card>
-    </div>
+        </Card>
+      </div>
+
+      <ConfirmationDialog
+        isOpen={showNativeTraktDeleteConfirm}
+        onOpenChange={handleNativeTraktDeleteDialogChange}
+        title="Delete native Trakt catalog?"
+        description="Native Trakt catalogs can only be added again in Fusion."
+        details={(
+          <div>
+            <label className="flex items-center gap-3 px-1 py-1">
+              <input
+                type="checkbox"
+                className="size-4 rounded border-border/60"
+                checked={rememberNativeTraktDeleteChoice}
+                onChange={(event) => setRememberNativeTraktDeleteChoice(event.target.checked)}
+              />
+              <p className="min-w-0 text-sm font-semibold text-foreground/72">
+                Don&apos;t show again
+              </p>
+            </label>
+          </div>
+        )}
+        confirmText="Delete"
+        cancelText="Cancel"
+        variant="danger"
+        onConfirm={() => {
+          if (rememberNativeTraktDeleteChoice && typeof window !== 'undefined') {
+            window.localStorage.setItem(SKIP_NATIVE_TRAKT_DELETE_WARNING_KEY, 'true');
+            setSkipNativeTraktDeleteWarning(true);
+          }
+
+          if (pendingNativeTraktDeleteIndex !== null) {
+            handleDeleteDataSource(pendingNativeTraktDeleteIndex);
+          }
+
+          setPendingNativeTraktDeleteIndex(null);
+          setRememberNativeTraktDeleteChoice(false);
+        }}
+      />
+    </>
   );
 }

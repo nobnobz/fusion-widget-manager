@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { useState, useRef, useEffect } from 'react';
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { useConfig } from '@/context/ConfigContext';
 import { WidgetSelectionGrid } from './WidgetSelectionGrid';
 import { ManifestModal } from './ManifestModal';
@@ -26,6 +26,7 @@ import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { ManagerSwitcher } from '@/components/ui/ManagerSwitcher';
 import LogoImage from '@/../public/branding/clown_logo.png';
 import { convertOmniToFusion } from '@/lib/omni-converter';
+import { shouldPromptForAiometadataManifestSetup } from '@/lib/aiometadata-manifest-detection';
 
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
@@ -46,11 +47,25 @@ import {
   formatTemplateLabel,
   type RepositoryTemplate,
 } from '@/lib/template-repository';
+import { normalizeFusionConfigDetailed } from '@/lib/widget-domain';
 
+function isHttpUrlInput(value: string): boolean {
+  if (!value || /\s/.test(value)) {
+    return false;
+  }
+
+  try {
+    const url = new URL(value);
+    return url.protocol === 'http:' || url.protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
 
 export function MainEditor() {
   const [showManifestModal, setShowManifestModal] = useState(false);
   const [showRestartConfirm, setShowRestartConfirm] = useState(false);
+  const [expandedWidgetId, setExpandedWidgetId] = useState<string | null>(null);
   const [pastedJson, setPastedJson] = useState('');
   const [showNewWidgetDialog, setShowNewWidgetDialog] = useState(false);
   const [showHowToUse, setShowHowToUse] = useState(false);
@@ -58,14 +73,18 @@ export function MainEditor() {
     isOpen: boolean;
     title: string;
     message: string;
+    details?: ReactNode;
     variant: 'info' | 'danger';
     confirmText?: string;
+    contentClassName?: string;
   }>({
     isOpen: false,
     title: '',
     message: '',
+    details: undefined,
     variant: 'info',
-    confirmText: 'CONTINUE'
+    confirmText: 'CONTINUE',
+    contentClassName: undefined,
   });
 
   const [githubTemplates, setGithubTemplates] = useState<RepositoryTemplate[]>([]);
@@ -90,6 +109,134 @@ export function MainEditor() {
     setView,
     clearConfig
   } = useConfig();
+
+  const buildImportIssueDetails = useCallback(
+    (
+      issues: Array<{ label: string; parentLabel?: string; message: string }>,
+      importedWidgets: number
+    ) => {
+      const grouped = new Map<string, { label: string; parentLabel?: string; message: string }>();
+
+      issues.forEach((issue) => {
+        const key = `${issue.parentLabel || ''}::${issue.label}`;
+        if (!grouped.has(key)) {
+          grouped.set(key, issue);
+        }
+      });
+
+      const entries = Array.from(grouped.values());
+
+      return {
+        message: `Imported ${importedWidgets} widget${importedWidgets === 1 ? '' : 's'}, but some entries could not be imported.`,
+        details: (
+          <div className="space-y-3">
+            <div className="rounded-2xl border border-amber-500/15 bg-amber-500/5 p-4">
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-amber-700 dark:text-amber-300">
+                  Skipped Entries
+                </p>
+                <div className="rounded-full border border-amber-500/20 bg-background/70 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-amber-700 dark:text-amber-300">
+                  {entries.length}
+                </div>
+              </div>
+              <div className="mt-3 max-h-[min(42vh,20rem)] space-y-2 overflow-y-auto pr-1">
+                {entries.map((entry) => (
+                  <div
+                    key={`${entry.parentLabel || ''}-${entry.label}-${entry.message}`}
+                    className="rounded-xl border border-border/50 bg-background/80 px-3 py-2.5 text-left shadow-[0_8px_18px_-16px_rgba(15,23,42,0.3)]"
+                  >
+                    <p className="text-sm font-bold tracking-tight text-foreground">
+                      {entry.label}
+                    </p>
+                    {entry.parentLabel ? (
+                      <p className="mt-0.5 text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground/65">
+                        In {entry.parentLabel}
+                      </p>
+                    ) : null}
+                    <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground/80">
+                      {entry.message}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        ),
+      };
+    },
+    []
+  );
+
+  const applyImportConfig = useCallback(
+    (config: unknown) => {
+      const result = importConfig(config);
+      if (result.importIssues.length > 0) {
+        const issueContent = buildImportIssueDetails(result.importIssues, result.importedWidgets);
+        setAlertDialog({
+          isOpen: true,
+          title: 'Imported With Skips',
+          message: issueContent.message,
+          details: issueContent.details,
+          variant: 'info',
+          confirmText: 'CONTINUE',
+          contentClassName: 'sm:max-w-[44rem]',
+        });
+      }
+      return result;
+    },
+    [buildImportIssueDetails, importConfig]
+  );
+
+  const shouldOpenManifestModalForImportedConfig = useCallback((config: unknown) => {
+    try {
+      const normalized = normalizeFusionConfigDetailed(config, {
+        sanitize: true,
+        allowPartialImport: true,
+      });
+      return shouldPromptForAiometadataManifestSetup(normalized.config.widgets);
+    } catch {
+      return true;
+    }
+  }, []);
+
+  const importParsedPayload = useCallback(
+    (payload: any, options?: { allowTextareaFallback?: boolean }) => {
+      if (payload?.includedKeys && payload?.values) {
+        const fusionConfig = convertOmniToFusion(payload);
+        applyImportConfig(fusionConfig);
+        if (shouldOpenManifestModalForImportedConfig(fusionConfig)) {
+          setShowManifestModal(true);
+        }
+        setAlertDialog({
+          isOpen: true,
+          title: 'Omni JSON detected',
+          message: 'The Omni snapshot has been automatically converted and imported.',
+          variant: 'info',
+          confirmText: 'CONTINUE',
+        });
+        return true;
+      }
+
+      if (payload?.exportType === 'fusionWidgets' || Array.isArray(payload?.widgets)) {
+        applyImportConfig(payload);
+        if (shouldOpenManifestModalForImportedConfig(payload)) {
+          setShowManifestModal(true);
+        }
+        return true;
+      }
+
+      if (options?.allowTextareaFallback) {
+        return false;
+      }
+
+      applyImportConfig(payload);
+      if (shouldOpenManifestModalForImportedConfig(payload)) {
+        setShowManifestModal(true);
+      }
+      return true;
+    },
+    [applyImportConfig, shouldOpenManifestModalForImportedConfig]
+  );
 
   // Fetch UME templates on mount
   useEffect(() => {
@@ -122,15 +269,19 @@ export function MainEditor() {
       const json = await response.json();
 
       if (json.exportType === 'fusionWidgets' || Array.isArray(json.widgets)) {
-        importConfig(json);
+        applyImportConfig(json);
+        if (shouldOpenManifestModalForImportedConfig(json)) {
+          setShowManifestModal(true);
+        }
       } else {
         // Fallback or handle Omni
         const fusionConfig = convertOmniToFusion(json);
-        importConfig(fusionConfig);
+        applyImportConfig(fusionConfig);
+        if (shouldOpenManifestModalForImportedConfig(fusionConfig)) {
+          setShowManifestModal(true);
+        }
       }
-
-      setShowManifestModal(true);
-      } catch {
+    } catch {
         setAlertDialog({
           isOpen: true,
           title: 'Loading Failed',
@@ -149,26 +300,7 @@ export function MainEditor() {
     const reader = new FileReader();
     reader.onload = (event) => {
       try {
-        const json = JSON.parse(event.target?.result as string);
-
-        if (json.includedKeys && json.values) {
-          // Omni format detected
-          const fusionConfig = convertOmniToFusion(json);
-          importConfig(fusionConfig);
-          setAlertDialog({
-            isOpen: true,
-            title: 'Omni JSON detected',
-            message: 'The Omni snapshot has been automatically converted and imported.',
-            variant: 'info',
-            confirmText: 'CONTINUE'
-          });
-        } else {
-          // Fusion or standard format
-          importConfig(json);
-        }
-
-        setShowManifestModal(true);
-
+        importParsedPayload(JSON.parse(event.target?.result as string));
       } catch (err: any) {
         setAlertDialog({
           isOpen: true,
@@ -190,8 +322,7 @@ export function MainEditor() {
       try {
         const json = JSON.parse(event.target?.result as string);
         const fusionConfig = convertOmniToFusion(json);
-        importConfig(fusionConfig);
-        setShowManifestModal(true);
+        importParsedPayload(fusionConfig);
       } catch {
         setAlertDialog({
           isOpen: true,
@@ -229,26 +360,9 @@ export function MainEditor() {
       reader.onload = (event) => {
         try {
           const content = event.target?.result as string;
-          const json = JSON.parse(content);
+          const imported = importParsedPayload(JSON.parse(content), { allowTextareaFallback: true });
 
-          if (json.includedKeys && json.values) {
-            // Omni format detected - auto-convert and import
-            const fusionConfig = convertOmniToFusion(json);
-            importConfig(fusionConfig);
-            setAlertDialog({
-              isOpen: true,
-              title: 'Omni JSON detected',
-              message: 'The Omni snapshot has been automatically converted and imported.',
-              variant: 'info',
-              confirmText: 'CONTINUE'
-            });
-            setShowManifestModal(true);
-          } else if (json.exportType === 'fusionWidgets' || Array.isArray(json.widgets)) {
-            // Fusion format detected - auto-import
-            importConfig(json);
-            setShowManifestModal(true);
-          } else {
-            // Unknown format, just put it in the box
+          if (!imported) {
             setPastedJson(content);
           }
         } catch {
@@ -265,32 +379,29 @@ export function MainEditor() {
   };
 
 
-  const handlePasteImport = () => {
+  const handlePasteImport = async () => {
     try {
-      if (!pastedJson.trim()) return;
+      const trimmedInput = pastedJson.trim();
+      if (!trimmedInput) return;
 
-      const json = JSON.parse(pastedJson);
-
-      if (json.includedKeys && json.values) {
-        // Omni format detected
-        const fusionConfig = convertOmniToFusion(json);
-        importConfig(fusionConfig);
-      } else if (json.exportType === 'fusionWidgets' || Array.isArray(json.widgets)) {
-        // Fusion format detected
-        importConfig(json);
-      } else {
-        // Try to import anyway, it might be a partial config or raw widget list
-        importConfig(json);
+      if (isHttpUrlInput(trimmedInput)) {
+        const response = await fetch(trimmedInput);
+        if (!response.ok) {
+          throw new Error(`The JSON URL returned HTTP ${response.status}.`);
+        }
+        importParsedPayload(await response.json());
+        setPastedJson('');
+        return;
       }
 
+      importParsedPayload(JSON.parse(trimmedInput));
       setPastedJson('');
-      setShowManifestModal(true);
-
     } catch (err: any) {
       setAlertDialog({
         isOpen: true,
         title: 'Import Failed',
-        message: err.message || 'The content is not valid JSON or is missing required fields.',
+        message:
+          err.message || 'The content is not valid JSON, the URL could not be loaded, or the file is missing required fields.',
         variant: 'danger'
       });
     }
@@ -358,16 +469,22 @@ export function MainEditor() {
 
   const selectedTemplate = githubTemplates.find((template) => template.rawUrl === selectedTemplateUrl);
 
+  const openManifestModal = useCallback(() => {
+    setShowManifestModal(true);
+  }, []);
+
+  const openNewWidgetDialog = useCallback(() => {
+    setShowNewWidgetDialog(true);
+  }, []);
 
   const handleAddFirstWidget = () => {
     clearConfig();
     setShowNewWidgetDialog(true);
   };
 
-  const onWidgetCreated = () => {
+  const onWidgetCreated = useCallback(() => {
     setShowManifestModal(true);
-
-  };
+  }, []);
 
   // Render logic
   const renderContent = () => {
@@ -479,9 +596,10 @@ export function MainEditor() {
               onDrop={handleDrop}
             >
               <Textarea
+                data-testid="welcome-import-textarea"
                 value={pastedJson}
                 onChange={(e) => setPastedJson(e.target.value)}
-                placeholder={isDraggingFile ? "Drop your JSON file here!" : "Paste your Fusion widget export or drag & drop a file here..."}
+                placeholder={isDraggingFile ? "Drop your JSON file here!" : "Paste your Fusion widget export, a JSON URL, or drag & drop a file here..."}
                 className={cn(
                   "min-h-[148px] max-sm:min-h-[136px] font-mono text-xs bg-muted/40 border-border/80 rounded-[2rem] max-sm:rounded-[1.5rem] p-5 max-sm:p-4 focus-visible:ring-primary/20 transition-all leading-relaxed shadow-inner",
                   isDraggingFile && "border-primary/50 bg-primary/5 ring-4 ring-primary/10 shadow-lg shadow-primary/5"
@@ -501,6 +619,7 @@ export function MainEditor() {
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-3 w-full sm:max-w-[38rem] sm:mx-auto items-stretch sm:items-center justify-center">
               {pastedJson.trim() ? (
                 <Button
+                  data-testid="welcome-load-configuration"
                   onClick={handlePasteImport}
                   size="lg"
                   className="h-12 sm:h-[3.05rem] w-full sm:min-w-[224px] rounded-[1.25rem] sm:rounded-[1.3rem] shadow-lg shadow-primary/12 animate-in zoom-in-95 duration-300 font-bold uppercase tracking-[0.14em] text-[11px] sm:text-[10px] bg-primary hover:bg-primary/90 hover:scale-[1.01] active:scale-[0.98] transition-all relative overflow-hidden group/load"
@@ -512,6 +631,7 @@ export function MainEditor() {
               ) : (
                 <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full">
                     <Button
+                      data-testid="welcome-import-file-button"
                       variant="outline"
                       className="flex-1 h-[3.2rem] sm:h-[3.05rem] rounded-[1.15rem] sm:rounded-[1.2rem] border-border/75 bg-background/62 backdrop-blur-sm hover:bg-muted/70 transition-all font-bold uppercase tracking-[0.14em] text-[10px] sm:text-[10px] px-5 sm:px-5.5 group/btn hover:scale-[1.01] active:scale-[0.98] shadow-[0_12px_26px_-24px_rgba(15,23,42,0.26)]"
                       onClick={() => fileInputRef.current?.click()}
@@ -520,6 +640,7 @@ export function MainEditor() {
                       Import Fusion JSON
                     </Button>
                     <Button
+                      data-testid="welcome-create-widget-button"
                       className="flex-1 h-[3.2rem] sm:h-[3.05rem] rounded-[1.15rem] sm:rounded-[1.2rem] font-bold uppercase tracking-[0.14em] text-[10px] sm:text-[10px] px-5 sm:px-5.5 shadow-lg shadow-primary/12 group/create relative overflow-hidden bg-primary hover:bg-primary/90 hover:scale-[1.01] active:scale-[0.98] transition-all"
                       onClick={handleAddFirstWidget}
                     >
@@ -582,6 +703,7 @@ export function MainEditor() {
                       </PopoverContent>
                     </Popover>
                     <Button
+                      data-testid="welcome-load-template"
                       onClick={handleLoadTemplate}
                       disabled={isLoadingTemplates || !selectedTemplateUrl}
                       size="sm"
@@ -629,8 +751,10 @@ export function MainEditor() {
     if (view === 'selection' || view === 'editor') {
       return (
         <WidgetSelectionGrid
-          onNewWidget={() => setShowNewWidgetDialog(true)}
-          onSyncManifest={() => setShowManifestModal(true)}
+          expandedWidgetId={expandedWidgetId}
+          onExpandedWidgetChange={setExpandedWidgetId}
+          onNewWidget={openNewWidgetDialog}
+          onSyncManifest={openManifestModal}
         />
 
       );
@@ -807,7 +931,7 @@ export function MainEditor() {
           
           <div className="flex flex-col items-center gap-1 opacity-20 select-none hover:opacity-50 transition-opacity">
             <div className="flex items-center gap-2 text-[8px] font-mono tracking-[0.2em] font-medium uppercase text-muted-foreground/80">
-              <span>V0.2.1</span>
+              <span>V0.3.0</span>
               <span className="size-1 rounded-full bg-foreground/20" />
               <span>BY BOT-BID-RAISER</span>
             </div>
@@ -847,8 +971,10 @@ export function MainEditor() {
         onOpenChange={(open) => setAlertDialog(prev => ({ ...prev, isOpen: open }))}
         title={alertDialog.title}
         description={alertDialog.message}
+        details={alertDialog.details}
         variant={alertDialog.variant}
         confirmText={alertDialog.confirmText || "CONTINUE"}
+        contentClassName={alertDialog.contentClassName}
         cancelText={undefined}
         onConfirm={() => { }}
       />
@@ -856,7 +982,7 @@ export function MainEditor() {
       <Dialog open={showAiometadataActions} onOpenChange={setShowAiometadataActions}>
         <DialogContent
           overlayClassName="z-[70]"
-          className="z-[71] sm:max-w-[460px] rounded-[2.25rem] border border-border/40 bg-card/95 p-0 backdrop-blur-2xl shadow-2xl overflow-hidden max-sm:w-[calc(100vw-1.25rem)] max-sm:max-w-[calc(100vw-1.25rem)] max-sm:rounded-[2rem] [&>button:last-child]:right-5 [&>button:last-child]:top-5 [&>button:last-child]:size-9 [&>button:last-child]:rounded-full [&>button:last-child]:border [&>button:last-child]:border-border/50 [&>button:last-child]:bg-background/80 [&>button:last-child]:backdrop-blur-sm [&>button:last-child]:hover:bg-muted/60"
+          className="z-[71] sm:max-w-[460px] rounded-[2.25rem] border border-border/40 bg-card/95 p-0 backdrop-blur-2xl shadow-2xl overflow-hidden max-sm:w-[calc(100vw-1.25rem)] max-sm:max-w-[calc(100vw-1.25rem)] max-sm:rounded-[2rem]"
         >
           <div className="p-8 pt-10 max-sm:px-4 max-sm:pb-4 max-sm:pt-4">
             <DialogHeader className="space-y-4 items-start pr-12 text-left max-sm:space-y-3">
@@ -978,7 +1104,7 @@ export function MainEditor() {
 
       {/* How To Use Dialog */}
       <Dialog open={showHowToUse} onOpenChange={setShowHowToUse}>
-        <DialogContent className="max-w-2xl bg-white/95 dark:bg-black/90 backdrop-blur-2xl border-border/40 rounded-[2.5rem] p-0 shadow-2xl max-sm:w-[calc(100vw-1.25rem)] max-sm:max-w-[calc(100vw-1.25rem)] max-sm:rounded-[2rem] [&>button:last-child]:top-6 [&>button:last-child]:right-6 [&>button:last-child]:size-8 [&>button:last-child]:rounded-full [&>button:last-child]:bg-muted/30 [&>button:last-child]:hover:bg-muted/50 [&>button:last-child]:border-none max-sm:[&>button:last-child]:top-4 max-sm:[&>button:last-child]:right-4 max-sm:[&>button:last-child]:size-9 max-sm:[&>button:last-child]:border max-sm:[&>button:last-child]:border-border/50 max-sm:[&>button:last-child]:bg-background/85">
+        <DialogContent className="max-w-2xl bg-white/95 dark:bg-black/90 backdrop-blur-2xl border-border/40 rounded-[2.5rem] p-0 shadow-2xl max-sm:w-[calc(100vw-1.25rem)] max-sm:max-w-[calc(100vw-1.25rem)] max-sm:rounded-[2rem]">
           <div className="max-h-[85vh] overflow-y-auto custom-scrollbar">
           <DialogHeader className="space-y-3 p-8 pb-4 max-sm:px-4 max-sm:pb-3 max-sm:pt-4">
             <div className="size-12 rounded-[1.15rem] bg-primary/5 border border-primary/10 flex items-center justify-center text-primary shadow-sm max-sm:size-10 max-sm:rounded-[0.95rem]">

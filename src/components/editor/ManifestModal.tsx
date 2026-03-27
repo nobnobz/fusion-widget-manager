@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useConfig } from '@/context/ConfigContext';
 import {
   Dialog,
@@ -13,7 +13,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ConfirmationDialog } from '@/components/ui/ConfirmationDialog';
-import { Loader2, Globe, Sparkles } from 'lucide-react';
+import { Loader2, Globe, Sparkles, Trash2 } from 'lucide-react';
 import { AIOMetadataCatalog } from '@/lib/types/widget';
 
 
@@ -30,6 +30,7 @@ export function ManifestModal({ isOpen, onOpenChange }: ManifestModalProps) {
   const [manualJson, setManualJson] = useState('');
   const [error, setError] = useState<{ title: string; message: string; isCors?: boolean } | null>(null);
   const [showDisconnectConfirm, setShowDisconnectConfirm] = useState(false);
+  const urlInputRef = useRef<HTMLInputElement | null>(null);
 
   // Update local URL state when context changes or modal opens
   useEffect(() => {
@@ -92,10 +93,21 @@ export function ManifestModal({ isOpen, onOpenChange }: ManifestModalProps) {
     }
   };
 
+  const handleClearSyncedUrl = () => {
+    disconnectManifest();
+    setUrl('');
+    setError(null);
+    setShowDisconnectConfirm(false);
+
+    requestAnimationFrame(() => {
+      urlInputRef.current?.focus();
+    });
+  };
+
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px] rounded-[2.5rem] border border-border/40 bg-card/95 backdrop-blur-2xl shadow-2xl max-sm:w-[calc(100vw-1rem)] max-sm:max-w-[calc(100vw-1rem)] max-sm:rounded-[1.9rem] [&>button:last-child]:top-8 [&>button:last-child]:right-8 [&>button:last-child]:size-9 [&>button:last-child]:rounded-full [&>button:last-child]:bg-muted/30 [&>button:last-child]:hover:bg-muted/50 [&>button:last-child]:transition-all [&>button:last-child]:border-none [&>button:last-child]:flex [&>button:last-child]:items-center [&>button:last-child]:justify-center max-sm:[&>button:last-child]:top-4 max-sm:[&>button:last-child]:right-4">
+      <DialogContent className="sm:max-w-[500px] rounded-[2.5rem] border border-border/40 bg-card/95 backdrop-blur-2xl shadow-2xl max-sm:w-[calc(100vw-1rem)] max-sm:max-w-[calc(100vw-1rem)] max-sm:rounded-[1.9rem]">
         <DialogHeader className="space-y-4 pt-4 max-sm:pt-2">
           <div className="size-14 rounded-2xl bg-primary/5 border border-primary/10 flex items-center justify-center text-primary mb-2 shadow-sm max-sm:size-12 max-sm:rounded-[1rem]">
             <Sparkles className="size-7 max-sm:size-6" />
@@ -141,14 +153,26 @@ export function ManifestModal({ isOpen, onOpenChange }: ManifestModalProps) {
                 </p>
                 <div className="relative group rounded-[1.6rem] border border-zinc-200/90 bg-white/92 p-1.5 shadow-[0_14px_30px_-24px_rgba(15,23,42,0.18)] transition-all hover:border-zinc-300/90 focus-within:border-primary/35 focus-within:bg-white dark:border-border/40 dark:bg-background/74 dark:hover:border-border/55 dark:focus-within:bg-background">
                   <div className="relative flex items-center rounded-[1.2rem] bg-zinc-50/85 dark:bg-muted/[0.16]">
-                    <Globe className="absolute left-3.5 size-4 text-muted-foreground/40 group-focus-within:text-primary/80 dark:text-muted-foreground/28 transition-colors" />
+                    <Globe className="pointer-events-none absolute left-3.5 size-4 text-muted-foreground/40 group-focus-within:text-primary/80 dark:text-muted-foreground/28 transition-colors" />
                     <Input
+                      data-testid="manifest-url-input"
+                      ref={urlInputRef}
                       placeholder="https://aiometadata.fortheweak.cloud/manifest.json"
-                      className="pl-11 pr-4 h-12 max-sm:h-11 bg-transparent border-none text-foreground/88 placeholder:text-muted-foreground/40 focus-visible:ring-0 transition-all font-medium text-sm max-sm:text-[13px] dark:text-foreground/84 dark:placeholder:text-muted-foreground/34"
+                      className="pl-11 pr-14 h-12 max-sm:h-11 bg-transparent border-none text-foreground/88 placeholder:text-muted-foreground/40 focus-visible:ring-0 transition-all font-medium text-sm max-sm:text-[13px] dark:text-foreground/84 dark:placeholder:text-muted-foreground/34"
                       value={url}
                       onChange={(e) => setUrl(e.target.value)}
                       onKeyDown={(e) => e.key === 'Enter' && handleLoad()}
                     />
+                    {manifestUrl && (
+                      <button
+                        type="button"
+                        onClick={handleClearSyncedUrl}
+                        className="absolute right-2.5 inline-flex size-8 items-center justify-center rounded-xl text-muted-foreground/45 transition-colors hover:bg-destructive/10 hover:text-destructive focus:outline-none focus:ring-2 focus:ring-destructive/20"
+                        aria-label="Clear synced AIOMetadata URL"
+                      >
+                        <Trash2 className="size-4" />
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
@@ -172,6 +196,7 @@ export function ManifestModal({ isOpen, onOpenChange }: ManifestModalProps) {
             <div className="space-y-4">
               <div className="relative group bg-muted/20 rounded-2xl border border-border/10 focus-within:border-primary/30 transition-all p-2">
                 <textarea
+                  data-testid="manifest-manual-textarea"
                   placeholder='{ "catalogs": [...] }'
                   className="w-full min-h-[150px] max-sm:min-h-[180px] bg-transparent border-none focus:outline-none transition-all font-mono text-[10px] leading-tight resize-none p-2"
                   value={manualJson}
@@ -200,6 +225,7 @@ export function ManifestModal({ isOpen, onOpenChange }: ManifestModalProps) {
             Skip for now
           </Button>
           <Button
+            data-testid="manifest-sync-submit"
             className="w-full sm:flex-1 h-11 rounded-xl max-sm:rounded-[1rem] font-bold uppercase tracking-wider text-xs shadow-lg shadow-primary/20 transition-all"
             onClick={isManual ? handleManualSync : handleLoad}
             disabled={isLoading || (isManual ? !manualJson : !url)}

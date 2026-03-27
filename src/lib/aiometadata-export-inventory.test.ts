@@ -1,0 +1,404 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {
+  buildAiometadataSelectionExport,
+  collectAiometadataExportInventory,
+} from './aiometadata-export-inventory';
+import type {
+  AIOMetadataCatalog,
+  AIOMetadataDataSource,
+  CollectionRowWidget,
+  FusionWidgetsConfig,
+  NativeTraktDataSource,
+  RowClassicWidget,
+  Widget,
+} from './types/widget';
+
+function buildAioDataSource(overrides: Partial<AIOMetadataDataSource['payload']> = {}): AIOMetadataDataSource {
+  return {
+    sourceType: 'aiometadata',
+    kind: 'addonCatalog',
+    payload: {
+      addonId: 'https://example.com/manifest.json',
+      catalogId: 'movie::catalog-one',
+      catalogType: 'movie',
+      ...overrides,
+    },
+  };
+}
+
+function buildTraktDataSource(overrides: Partial<NativeTraktDataSource['payload']> = {}): NativeTraktDataSource {
+  return {
+    sourceType: 'trakt-native',
+    kind: 'traktList',
+    payload: {
+      listName: 'Trakt Catalog',
+      listSlug: 'trakt-catalog',
+      traktId: 77,
+      username: 'Trakt',
+      ...overrides,
+    },
+  };
+}
+
+function buildRowWidget(overrides: Partial<RowClassicWidget> = {}): RowClassicWidget {
+  return {
+    id: 'row-1',
+    title: 'Row Widget',
+    type: 'row.classic',
+    cacheTTL: 3600,
+    limit: 20,
+    presentation: {
+      aspectRatio: 'poster',
+      cardStyle: 'medium',
+      badges: {
+        providers: true,
+        ratings: true,
+      },
+      backgroundImageURL: '',
+    },
+    dataSource: buildAioDataSource(),
+    ...overrides,
+  };
+}
+
+function buildCollectionWidget(overrides: Partial<CollectionRowWidget> = {}): CollectionRowWidget {
+  return {
+    id: 'collection-1',
+    title: 'Collection Widget',
+    type: 'collection.row',
+    dataSource: {
+      kind: 'collection',
+      payload: {
+        items: [
+          {
+            id: 'item-1',
+            name: 'Item One',
+            hideTitle: false,
+            layout: 'Wide',
+            backgroundImageURL: '',
+            dataSources: [buildAioDataSource()],
+          },
+        ],
+      },
+    },
+    ...overrides,
+  };
+}
+
+function buildConfig(widgets: Widget[]): FusionWidgetsConfig {
+  return {
+    exportType: 'fusionWidgets',
+    exportVersion: 1,
+    widgets,
+  };
+}
+
+test('collectAiometadataExportInventory groups exportable trakt and mdblist catalogs by widget and item', () => {
+  const inventory = collectAiometadataExportInventory(
+    buildConfig([
+      buildRowWidget({
+        id: 'row-trakt',
+        title: 'Trakt Row',
+        dataSource: buildTraktDataSource({ listName: 'Trakt Row Name', traktId: 12 }),
+      }),
+      buildCollectionWidget({
+        dataSource: {
+          kind: 'collection',
+          payload: {
+            items: [
+              {
+                id: 'item-mdblist',
+                name: 'MDBList Item',
+                hideTitle: false,
+                layout: 'Poster',
+                backgroundImageURL: '',
+                dataSources: [buildAioDataSource({ catalogId: 'movie::mdblist.16267', catalogType: 'movie' })],
+              },
+            ],
+          },
+        },
+      }),
+    ])
+  );
+
+  assert.equal(inventory.catalogs.length, 2);
+  assert.equal(inventory.widgets.length, 2);
+  assert.equal(inventory.widgets[0]?.rowCatalogKeys.length, 1);
+  assert.equal(inventory.widgets[1]?.items[0]?.catalogKeys.length, 1);
+});
+
+test('collectAiometadataExportInventory includes streaming catalogs', () => {
+  const inventory = collectAiometadataExportInventory(
+    buildConfig([
+      buildRowWidget({
+        id: 'row-streaming',
+        title: 'Streaming Row',
+        dataSource: buildAioDataSource({ catalogId: 'movie::streaming.sta', catalogType: 'movie' }),
+      }),
+      buildCollectionWidget({
+        id: 'collection-streaming',
+        title: 'Streaming Collection',
+        dataSource: {
+          kind: 'collection',
+          payload: {
+            items: [
+              {
+                id: 'item-streaming',
+                name: 'Streaming Item',
+                hideTitle: false,
+                layout: 'Poster',
+                backgroundImageURL: '',
+                dataSources: [buildAioDataSource({ catalogId: 'series::streaming.nlz', catalogType: 'series' })],
+              },
+            ],
+          },
+        },
+      }),
+    ])
+  );
+
+  assert.deepEqual(
+    inventory.catalogs.map((catalog) => ({
+      id: catalog.entry.id,
+      type: catalog.entry.type,
+      source: catalog.entry.source,
+    })),
+    [
+      { id: 'streaming.sta', type: 'movie', source: 'streaming' },
+      { id: 'streaming.nlz', type: 'series', source: 'streaming' },
+    ]
+  );
+});
+
+test('collectAiometadataExportInventory includes AIOMetadata trakt catalogs without treating them as native bridge sources', () => {
+  const inventory = collectAiometadataExportInventory(
+    buildConfig([
+      buildRowWidget({
+        id: 'row-trakt-aiom',
+        title: 'Imported Trakt Row',
+        dataSource: buildAioDataSource({ catalogId: 'all::trakt.list.42', catalogType: 'all' }),
+      }),
+      buildCollectionWidget({
+        id: 'collection-trakt-aiom',
+        title: 'Imported Trakt Collection',
+        dataSource: {
+          kind: 'collection',
+          payload: {
+            items: [
+              {
+                id: 'item-trakt-aiom',
+                name: 'Imported Trakt Item',
+                hideTitle: false,
+                layout: 'Poster',
+                backgroundImageURL: '',
+                dataSources: [buildAioDataSource({ catalogId: 'movie::trakt.anticipated', catalogType: 'movie' })],
+              },
+            ],
+          },
+        },
+      }),
+    ])
+  );
+
+  assert.deepEqual(
+    inventory.catalogs.map((catalog) => ({
+      id: catalog.entry.id,
+      type: catalog.entry.type,
+      source: catalog.entry.source,
+    })),
+    [
+      { id: 'trakt.list.42', type: 'all', source: 'trakt' },
+      { id: 'trakt.anticipated', type: 'movie', source: 'trakt' },
+    ]
+  );
+});
+
+test('collectAiometadataExportInventory can filter to catalogs missing from the manifest', () => {
+  const manifestCatalogs: AIOMetadataCatalog[] = [
+    {
+      id: 'mdblist.16267',
+      name: 'Existing MDBList',
+      type: 'movie',
+      displayType: 'movie',
+    },
+  ];
+
+  const inventory = collectAiometadataExportInventory(
+    buildConfig([
+      buildRowWidget({
+        id: 'row-trakt',
+        title: 'Trakt Row',
+        dataSource: buildTraktDataSource({ listName: 'Trakt Row Name', traktId: 12 }),
+      }),
+      buildRowWidget({
+        id: 'row-mdblist',
+        title: 'MDBList Row',
+        dataSource: buildAioDataSource({ catalogId: 'movie::mdblist.16267', catalogType: 'movie' }),
+      }),
+    ]),
+    {
+      manifestCatalogs,
+      onlyNewAgainstManifest: true,
+    }
+  );
+
+  assert.deepEqual(
+    inventory.catalogs.map((catalog) => catalog.entry.id),
+    ['trakt.list.12']
+  );
+});
+
+test('buildAiometadataSelectionExport emits only the selected deduplicated catalogs', () => {
+  const inventory = collectAiometadataExportInventory(
+    buildConfig([
+      buildRowWidget({
+        id: 'row-mdblist',
+        title: 'MDBList Row',
+        dataSource: buildAioDataSource({ catalogId: 'movie::mdblist.16267', catalogType: 'movie' }),
+      }),
+      buildRowWidget({
+        id: 'row-trakt',
+        title: 'Trakt Row',
+        dataSource: buildTraktDataSource({ listName: 'Trakt Row Name', traktId: 12 }),
+      }),
+    ])
+  );
+
+  const exported = buildAiometadataSelectionExport(
+    inventory,
+    inventory.catalogs
+      .filter((catalog) => catalog.entry.source === 'trakt')
+      .map((catalog) => catalog.key),
+    '2026-03-26T18:41:10.859Z'
+  );
+
+  assert.deepEqual(exported, {
+    version: 1,
+    exportedAt: '2026-03-26T18:41:10.859Z',
+    catalogs: [
+      {
+        id: 'trakt.list.12',
+        type: 'all',
+        name: '[Trakt Row] Trakt Row Name',
+        enabled: true,
+        source: 'trakt',
+      },
+    ],
+  });
+});
+
+test('collectAiometadataExportInventory uses stable item fallback labels and derived catalog names', () => {
+  const inventory = collectAiometadataExportInventory(
+    buildConfig([
+      buildCollectionWidget({
+        title: 'Streaming Services',
+        dataSource: {
+          kind: 'collection',
+          payload: {
+            items: [
+              {
+                id: 'item-blank',
+                name: '',
+                hideTitle: false,
+                layout: 'Poster',
+                backgroundImageURL: '',
+                dataSources: [
+                  buildAioDataSource({ catalogId: 'movie::mdblist.16267', catalogType: 'movie' }),
+                  buildAioDataSource({ catalogId: 'movie::mdblist.16268', catalogType: 'movie' }),
+                ],
+              },
+            ],
+          },
+        },
+      }),
+    ])
+  );
+
+  assert.equal(inventory.widgets[0]?.items[0]?.itemName, 'Item 1');
+  assert.deepEqual(
+    inventory.catalogs.map((catalog) => catalog.entry.name),
+    ['[Streaming Services] Item 1 Movies', '[Streaming Services] Item 1 Movies 2']
+  );
+});
+
+test('collectAiometadataExportInventory reads collection item titles from exported fusion payloads', () => {
+  const inventory = collectAiometadataExportInventory({
+    exportType: 'fusionWidgets',
+    exportVersion: 1,
+    widgets: [
+      {
+        id: 'collection-1',
+        title: 'Streaming Services',
+        type: 'collection.row',
+        dataSource: {
+          kind: 'collection',
+          payload: {
+            items: [
+              {
+                id: 'item-7',
+                title: 'Hunger Games',
+                hideTitle: false,
+                imageAspect: 'poster',
+                dataSources: [
+                  buildAioDataSource({ catalogId: 'movie::mdblist.2410', catalogType: 'movie' }),
+                ],
+              },
+            ],
+          },
+        },
+      } as unknown as Widget,
+    ],
+  });
+
+  assert.equal(inventory.widgets[0]?.items[0]?.itemName, 'Hunger Games');
+  assert.equal(inventory.catalogs[0]?.entry.name, '[Streaming Services] Hunger Games Movies');
+});
+
+test('collectAiometadataExportInventory sorts catalogs by widget order and alphabetically within each widget', () => {
+  const inventory = collectAiometadataExportInventory(
+    buildConfig([
+      buildRowWidget({
+        id: 'collections-widget',
+        title: 'Collections',
+        dataSource: buildAioDataSource({ catalogId: 'movie::mdblist.300', catalogType: 'movie' }),
+      }),
+      buildCollectionWidget({
+        id: 'discover-widget',
+        title: 'Discover',
+        dataSource: {
+          kind: 'collection',
+          payload: {
+            items: [
+              {
+                id: 'discover-b',
+                name: 'Zeta',
+                hideTitle: false,
+                layout: 'Poster',
+                backgroundImageURL: '',
+                dataSources: [buildAioDataSource({ catalogId: 'movie::mdblist.2', catalogType: 'movie' })],
+              },
+              {
+                id: 'discover-a',
+                name: 'Alpha',
+                hideTitle: false,
+                layout: 'Poster',
+                backgroundImageURL: '',
+                dataSources: [buildAioDataSource({ catalogId: 'movie::mdblist.1', catalogType: 'movie' })],
+              },
+            ],
+          },
+        },
+      }),
+    ])
+  );
+
+  assert.deepEqual(
+    inventory.catalogs.map((catalog) => catalog.entry.name),
+    [
+      '[Collections] Collections Movies',
+      '[Discover] Alpha Movies',
+      '[Discover] Zeta Movies',
+    ]
+  );
+});

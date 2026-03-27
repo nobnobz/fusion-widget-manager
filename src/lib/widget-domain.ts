@@ -3,9 +3,11 @@ import type {
   AIOMetadataCatalog,
   CollectionItem,
   FusionWidgetsConfig,
+  NativeTraktDataSource,
   TrashCollectionItemEntry,
   TrashWidgetEntry,
   Widget,
+  WidgetDataSource,
 } from './types/widget';
 
 export const MANIFEST_PLACEHOLDER = 'YOUR_AIOMETADATA';
@@ -25,9 +27,26 @@ export interface IdRepairSummary {
   itemIds: string[];
 }
 
+export interface ImportIssue {
+  path: string;
+  message: string;
+  skippedType: 'widget' | 'item' | 'dataSource';
+  label: string;
+  parentLabel?: string;
+}
+
 export interface NormalizedFusionConfigResult {
   config: FusionWidgetsConfig;
   repairedIds: IdRepairSummary;
+  importIssues: ImportIssue[];
+}
+
+export interface ImportedManifestState {
+  manifestUrl: string;
+  replacePlaceholder: boolean;
+  manifestCatalogs: AIOMetadataCatalog[];
+  manifestContent: string;
+  hasExplicitManifest: boolean;
 }
 
 interface NormalizeOptions {
@@ -35,6 +54,7 @@ interface NormalizeOptions {
   replacePlaceholder?: boolean;
   catalogs?: AIOMetadataCatalog[];
   sanitize?: boolean;
+  allowPartialImport?: boolean;
 }
 
 interface LegacyCollectionItemInput {
@@ -138,7 +158,19 @@ export function resolveFusionCatalogType(catalogId: string, currentType?: string
   return currentType || 'movie';
 }
 
-export function getPrimaryDataSource(item: Pick<CollectionItem, 'dataSources'>): AddonCatalogDataSource | undefined {
+export function isAIOMetadataDataSource(
+  dataSource: Pick<WidgetDataSource, 'kind'> | undefined | null
+): dataSource is AddonCatalogDataSource {
+  return dataSource?.kind === 'addonCatalog';
+}
+
+export function isNativeTraktDataSource(
+  dataSource: Pick<WidgetDataSource, 'kind'> | undefined | null
+): dataSource is NativeTraktDataSource {
+  return dataSource?.kind === 'traktList';
+}
+
+export function getPrimaryDataSource(item: Pick<CollectionItem, 'dataSources'>): WidgetDataSource | undefined {
   return item.dataSources[0];
 }
 
@@ -148,6 +180,17 @@ function normalizeCatalogId(catalogId: string, catalogType: string): string {
   if (trimmed.includes('::')) return trimmed;
   const resolvedType = resolveFusionCatalogType(trimmed, catalogType);
   return `${resolvedType}::${trimmed}`;
+}
+
+function normalizeTraktId(value: unknown): number | string | null {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return value;
+  }
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    return trimmed ? trimmed : null;
+  }
+  return null;
 }
 
 export function parseManifest(input: unknown): AIOMetadataCatalog[] {
@@ -180,10 +223,12 @@ export function parseManifest(input: unknown): AIOMetadataCatalog[] {
 function normalizeDataSource(
   input: unknown,
   path: string,
-  options: NormalizeOptions
-): AddonCatalogDataSource {
+  options: NormalizeOptions,
+  issues: ImportIssue[]
+): WidgetDataSource | null {
   if (input === undefined || input === null) {
     return {
+      sourceType: 'aiometadata',
       kind: 'addonCatalog',
       payload: {
         addonId: MANIFEST_PLACEHOLDER,
@@ -194,8 +239,31 @@ function normalizeDataSource(
   }
 
   const source = asRecord(input, path);
+  if (source.kind === 'traktList') {
+    const payload = asRecord(source.payload ?? {}, `${path}.payload`);
+    return {
+      sourceType: 'trakt-native',
+      kind: 'traktList',
+      payload: {
+        listName: asOptionalString(payload.listName) || '',
+        listSlug: asOptionalString(payload.listSlug) || '',
+        traktId: normalizeTraktId(payload.traktId),
+        username: asOptionalString(payload.username) || '',
+      },
+    };
+  }
+
   if (source.kind !== 'addonCatalog') {
-    throw new Error(`${path}.kind must be "addonCatalog".`);
+    if (options.allowPartialImport) {
+      issues.push({
+        path,
+        message: `Unsupported data source kind "${String(source.kind)}".`,
+        skippedType: 'dataSource',
+        label: '',
+      });
+      return null;
+    }
+    throw new Error(`${path}.kind must be "addonCatalog" or "traktList".`);
   }
 
   const payload = asRecord(source.payload ?? {}, `${path}.payload`);
@@ -215,6 +283,7 @@ function normalizeDataSource(
 
   const finalType = resolveFusionCatalogType(catalogId, catalogType);
   return {
+    sourceType: 'aiometadata',
     kind: 'addonCatalog',
     payload: {
       addonId:
@@ -230,50 +299,161 @@ function normalizeDataSource(
 function normalizeCollectionItem(
   input: unknown,
   index: number,
-  options: NormalizeOptions
-): CollectionItem {
-  const item = asRecord(input, `widgets[].dataSource.payload.items[${index}]`) as LegacyCollectionItemInput;
-  const dataSourcesInput = Array.isArray(item.dataSources)
-    ? item.dataSources
-    : item.dataSource !== undefined
-      ? [item.dataSource]
-      : [];
+  options: NormalizeOptions,
+  issues: ImportIssue[],
+  path = `widgets[].dataSource.payload.items[${index}]`,
+  parentLabel?: string
+): CollectionItem | null {
+  try {
+    const item = asRecord(input, path) as LegacyCollectionItemInput;
+    const itemLabel = asOptionalString(item.name) || asOptionalString(item.title) || `Untitled Item ${index + 1}`;
+    const dataSourcesInput = Array.isArray(item.dataSources)
+      ? item.dataSources
+      : item.dataSource !== undefined
+        ? [item.dataSource]
+        : [];
 
-  const dataSources = dataSourcesInput.map((entry, dsIndex) =>
-    normalizeDataSource(entry, `widgets[].dataSource.payload.items[${index}].dataSources[${dsIndex}]`, options)
-  );
+    const localIssues: ImportIssue[] = [];
+    const dataSources = dataSourcesInput
+      .map((entry, dsIndex) =>
+        normalizeDataSource(entry, `${path}.dataSources[${dsIndex}]`, options, localIssues)
+      )
+      .filter((entry): entry is WidgetDataSource => entry !== null);
 
-  return {
-    id: asOptionalString(item.id) || crypto.randomUUID(),
-    name: asOptionalString(item.name) || asOptionalString(item.title) || `Untitled Item ${index + 1}`,
-    hideTitle: asBoolean(item.hideTitle),
-    layout: toLayout(item.layout ?? item.imageAspect),
-    backgroundImageURL:
-      asOptionalString(item.backgroundImageURL) || asOptionalString(item.imageURL) || '',
-    dataSources,
-  };
+    if (options.allowPartialImport && dataSources.length === 0) {
+      const unsupportedKinds = Array.from(
+        new Set(
+          localIssues
+            .map((issue) => {
+              const match = issue.message.match(/Unsupported data source kind "(.+?)"/);
+              return match?.[1];
+            })
+            .filter((kind): kind is string => Boolean(kind))
+        )
+      );
+
+      issues.push({
+        path,
+        message:
+          unsupportedKinds.length > 0
+            ? `Unsupported source${unsupportedKinds.length === 1 ? '' : 's'}: ${unsupportedKinds.join(', ')}.`
+            : 'Could not import because it has no supported data sources.',
+        skippedType: 'item',
+        label: itemLabel,
+        parentLabel,
+      });
+      return null;
+    }
+
+    localIssues.forEach((issue) => {
+      issues.push({
+        ...issue,
+        label: itemLabel,
+        parentLabel,
+      });
+    });
+
+    return {
+      id: asOptionalString(item.id) || crypto.randomUUID(),
+      name: itemLabel,
+      hideTitle: asBoolean(item.hideTitle),
+      layout: toLayout(item.layout ?? item.imageAspect),
+      backgroundImageURL:
+        asOptionalString(item.backgroundImageURL) || asOptionalString(item.imageURL) || '',
+      dataSources,
+    };
+  } catch (error) {
+    if (options.allowPartialImport) {
+      issues.push({
+        path,
+        message: error instanceof Error ? error.message : 'Unsupported collection item.',
+        skippedType: 'item',
+        label: `Untitled Item ${index + 1}`,
+        parentLabel,
+      });
+      return null;
+    }
+    throw error;
+  }
 }
 
-function normalizeWidget(input: unknown, index: number, options: NormalizeOptions): Widget {
-  const widget = asRecord(input, `widgets[${index}]`);
-  const type = widget.type;
-  if (type !== 'collection.row' && type !== 'row.classic') {
-    throw new Error(`widgets[${index}].type must be "collection.row" or "row.classic".`);
-  }
+function normalizeWidget(input: unknown, index: number, options: NormalizeOptions, issues: ImportIssue[]): Widget | null {
+  const path = `widgets[${index}]`;
 
-  const id = asOptionalString(widget.id) || crypto.randomUUID();
-  const title = asOptionalString(widget.title) || `Untitled Widget ${index + 1}`;
-  const hideTitle = asBoolean(widget.hideTitle);
-
-  if (type === 'collection.row') {
-    const dataSource = asRecord(widget.dataSource ?? {}, `widgets[${index}].dataSource`);
-    if (dataSource.kind !== 'collection') {
-      throw new Error(`widgets[${index}].dataSource.kind must be "collection".`);
+  try {
+    const widget = asRecord(input, path);
+    const type = widget.type;
+    if (type !== 'collection.row' && type !== 'row.classic') {
+      throw new Error(`widgets[${index}].type must be "collection.row" or "row.classic".`);
     }
-    const payload = asRecord(dataSource.payload ?? {}, `widgets[${index}].dataSource.payload`);
-    const rawItems = payload.items;
-    if (!Array.isArray(rawItems)) {
-      throw new Error(`widgets[${index}].dataSource.payload.items must be an array.`);
+
+    const id = asOptionalString(widget.id) || crypto.randomUUID();
+    const title = asOptionalString(widget.title) || `Untitled Widget ${index + 1}`;
+    const hideTitle = asBoolean(widget.hideTitle);
+
+    if (type === 'collection.row') {
+      const dataSource = asRecord(widget.dataSource ?? {}, `widgets[${index}].dataSource`);
+      if (dataSource.kind !== 'collection') {
+        throw new Error(`widgets[${index}].dataSource.kind must be "collection".`);
+      }
+      const payload = asRecord(dataSource.payload ?? {}, `widgets[${index}].dataSource.payload`);
+      const rawItems = payload.items;
+      if (!Array.isArray(rawItems)) {
+        throw new Error(`widgets[${index}].dataSource.payload.items must be an array.`);
+      }
+
+      const items = rawItems
+        .map((entry, itemIndex) =>
+          normalizeCollectionItem(
+            entry,
+            itemIndex,
+            options,
+            issues,
+            `widgets[${index}].dataSource.payload.items[${itemIndex}]`,
+            title
+          )
+        )
+        .filter((entry): entry is CollectionItem => entry !== null);
+
+      return {
+        id,
+        title,
+        hideTitle,
+        type,
+        dataSource: {
+          kind: 'collection',
+          payload: {
+            items,
+          },
+        },
+      };
+    }
+
+    const presentation = asRecord(widget.presentation ?? {}, `widgets[${index}].presentation`);
+    const badges = asRecord(presentation.badges ?? {}, `widgets[${index}].presentation.badges`);
+    const localIssues: ImportIssue[] = [];
+    const dataSource = normalizeDataSource(widget.dataSource, `widgets[${index}].dataSource`, options, localIssues);
+    if (options.allowPartialImport && !dataSource) {
+      const unsupportedKinds = Array.from(
+        new Set(
+          localIssues
+            .map((issue) => {
+              const match = issue.message.match(/Unsupported data source kind "(.+?)"/);
+              return match?.[1];
+            })
+            .filter((kind): kind is string => Boolean(kind))
+        )
+      );
+      issues.push({
+        path,
+        message:
+          unsupportedKinds.length > 0
+            ? `Unsupported source${unsupportedKinds.length === 1 ? '' : 's'}: ${unsupportedKinds.join(', ')}.`
+            : 'Could not import because its row source is not supported.',
+        skippedType: 'widget',
+        label: title,
+      });
+      return null;
     }
 
     return {
@@ -281,51 +461,52 @@ function normalizeWidget(input: unknown, index: number, options: NormalizeOption
       title,
       hideTitle,
       type,
-      dataSource: {
-        kind: 'collection',
-        payload: {
-          items: rawItems.map((entry, itemIndex) => normalizeCollectionItem(entry, itemIndex, options)),
+      cacheTTL: typeof widget.cacheTTL === 'number' ? widget.cacheTTL : 3600,
+      limit: typeof widget.limit === 'number' ? widget.limit : 20,
+      presentation: {
+        aspectRatio:
+          presentation.aspectRatio === 'wide' ||
+          presentation.aspectRatio === 'poster' ||
+          presentation.aspectRatio === 'square'
+            ? presentation.aspectRatio
+            : 'poster',
+        cardStyle:
+          presentation.cardStyle === 'small' ||
+          presentation.cardStyle === 'medium' ||
+          presentation.cardStyle === 'large'
+            ? presentation.cardStyle
+            : 'medium',
+        badges: {
+          providers: asBoolean(badges.providers, true),
+          ratings: asBoolean(badges.ratings, true),
         },
+        backgroundImageURL: asOptionalString(presentation.backgroundImageURL) || '',
       },
+      dataSource: dataSource!,
     };
+  } catch (error) {
+    if (options.allowPartialImport) {
+      issues.push({
+        path,
+        message: error instanceof Error ? error.message : 'Unsupported widget.',
+        skippedType: 'widget',
+        label: `Untitled Widget ${index + 1}`,
+      });
+      return null;
+    }
+    throw error;
   }
-
-  const presentation = asRecord(widget.presentation ?? {}, `widgets[${index}].presentation`);
-  const badges = asRecord(presentation.badges ?? {}, `widgets[${index}].presentation.badges`);
-
-  return {
-    id,
-    title,
-    type,
-    cacheTTL: typeof widget.cacheTTL === 'number' ? widget.cacheTTL : 3600,
-    limit: typeof widget.limit === 'number' ? widget.limit : 20,
-    presentation: {
-      aspectRatio:
-        presentation.aspectRatio === 'wide' ||
-        presentation.aspectRatio === 'poster' ||
-        presentation.aspectRatio === 'square'
-          ? presentation.aspectRatio
-          : 'poster',
-      cardStyle:
-        presentation.cardStyle === 'small' ||
-        presentation.cardStyle === 'medium' ||
-        presentation.cardStyle === 'large'
-          ? presentation.cardStyle
-          : 'medium',
-      badges: {
-        providers: asBoolean(badges.providers, true),
-        ratings: asBoolean(badges.ratings, true),
-      },
-      backgroundImageURL: asOptionalString(presentation.backgroundImageURL) || '',
-    },
-    dataSource: normalizeDataSource(widget.dataSource, `widgets[${index}].dataSource`, options),
-  };
 }
 
 function normalizeTrashEntry(input: unknown, index: number, options: NormalizeOptions): TrashWidgetEntry {
   const entry = asRecord(input, `trash[${index}]`);
+  const issues: ImportIssue[] = [];
+  const widget = normalizeWidget(entry.widget, index, options, issues);
+  if (!widget) {
+    throw new Error(`trash[${index}].widget could not be normalized.`);
+  }
   return {
-    widget: normalizeWidget(entry.widget, index, options),
+    widget,
     deletedAt: asOptionalString(entry.deletedAt) || new Date(0).toISOString(),
     originalIndex:
       typeof entry.originalIndex === 'number' && Number.isFinite(entry.originalIndex)
@@ -340,10 +521,15 @@ function normalizeItemTrashEntry(
   options: NormalizeOptions
 ): TrashCollectionItemEntry {
   const entry = asRecord(input, `itemTrash[${index}]`);
+  const issues: ImportIssue[] = [];
+  const item = normalizeCollectionItem(entry.item, index, options, issues, `itemTrash[${index}].item`);
+  if (!item) {
+    throw new Error(`itemTrash[${index}].item could not be normalized.`);
+  }
   return {
     widgetId: asOptionalString(entry.widgetId) || '',
     widgetTitle: asOptionalString(entry.widgetTitle) || 'Untitled Widget',
-    item: normalizeCollectionItem(entry.item, index, options),
+    item,
     deletedAt: asOptionalString(entry.deletedAt) || new Date(0).toISOString(),
     originalIndex:
       typeof entry.originalIndex === 'number' && Number.isFinite(entry.originalIndex)
@@ -408,6 +594,7 @@ function repairWidgetIds(widgets: Widget[]): NormalizedFusionConfigResult {
       widgets: normalizedWidgets,
     },
     repairedIds: repairs,
+    importIssues: [],
   };
 }
 
@@ -420,10 +607,14 @@ export function normalizeFusionConfigDetailed(input: unknown, options: Normalize
     throw new Error('Fusion config must contain a widgets array.');
   }
 
-  const widgets = root.widgets.map((entry, index) => normalizeWidget(entry, index, options));
+  const importIssues: ImportIssue[] = [];
+  const widgets = root.widgets
+    .map((entry, index) => normalizeWidget(entry, index, options, importIssues))
+    .filter((entry): entry is Widget => entry !== null);
   const normalized = repairWidgetIds(widgets);
   normalized.config.exportVersion =
     typeof root.exportVersion === 'number' && Number.isFinite(root.exportVersion) ? root.exportVersion : 1;
+  normalized.importIssues = importIssues;
   return normalized;
 }
 
@@ -437,7 +628,9 @@ export function normalizeLoadedState(input: unknown, options: NormalizeOptions =
   const trashInput = Array.isArray(root.trash) ? root.trash : [];
   const itemTrashInput = Array.isArray(root.itemTrash) ? root.itemTrash : [];
   const normalizedWidgets = repairWidgetIds(
-    widgetsInput.map((entry, index) => normalizeWidget(entry, index, options))
+    widgetsInput
+      .map((entry, index) => normalizeWidget(entry, index, options, []))
+      .filter((entry): entry is Widget => entry !== null)
   );
 
   return {
@@ -448,6 +641,32 @@ export function normalizeLoadedState(input: unknown, options: NormalizeOptions =
     replacePlaceholder: asBoolean(root.replacePlaceholder),
     manifestCatalogs: Array.isArray(root.manifestCatalogs) ? parseManifest({ catalogs: root.manifestCatalogs }) : [],
     manifestContent: typeof root.manifestContent === 'string' ? root.manifestContent : '',
+  };
+}
+
+export function extractImportedManifestState(input: unknown): ImportedManifestState {
+  const root = asRecord(input, 'Imported config');
+  const manifestUrl = asOptionalString(root.manifestUrl) || '';
+  const replacePlaceholder = asBoolean(root.replacePlaceholder);
+  const manifestContent = typeof root.manifestContent === 'string' ? root.manifestContent : '';
+
+  let manifestCatalogs: AIOMetadataCatalog[] = [];
+  if (Array.isArray(root.manifestCatalogs)) {
+    manifestCatalogs = parseManifest({ catalogs: root.manifestCatalogs });
+  } else if (manifestContent) {
+    try {
+      manifestCatalogs = parseManifest(manifestContent);
+    } catch {
+      manifestCatalogs = [];
+    }
+  }
+
+  return {
+    manifestUrl,
+    replacePlaceholder,
+    manifestCatalogs,
+    manifestContent,
+    hasExplicitManifest: Boolean(manifestUrl || manifestCatalogs.length > 0 || manifestContent),
   };
 }
 
@@ -473,26 +692,32 @@ export function validateFusionExport(config: FusionWidgetsConfig, manifestUrl?: 
           throw new Error(`Export failed: widgets[${widgetIndex}].items[${itemIndex}] has an empty name.`);
         }
         item.dataSources.forEach((dataSource, dsIndex) => {
-          if (!dataSource.payload.catalogId) {
-            throw new Error(
-              `Export failed: widgets[${widgetIndex}].items[${itemIndex}].dataSources[${dsIndex}] is missing a catalog ID.`
-            );
-          }
-          if (dataSource.payload.addonId === MANIFEST_PLACEHOLDER && !manifestUrl) {
-            throw new Error(
-              `Export failed: widgets[${widgetIndex}].items[${itemIndex}].dataSources[${dsIndex}] still uses the AIOMetadata placeholder.`
-            );
+          if (isAIOMetadataDataSource(dataSource)) {
+            if (!dataSource.payload.catalogId) {
+              throw new Error(
+                `Export failed: widgets[${widgetIndex}].items[${itemIndex}].dataSources[${dsIndex}] is missing a catalog ID.`
+              );
+            }
+            if (dataSource.payload.addonId === MANIFEST_PLACEHOLDER && !manifestUrl) {
+              throw new Error(
+                'Sync your AIOMetadata manifest before Fusion export so the AIOMetadata URL can be embedded in your Fusion setup.'
+              );
+            }
           }
         });
       });
       return;
     }
 
-    if (!widget.dataSource.payload.catalogId) {
-      throw new Error(`Export failed: widgets[${widgetIndex}] is missing a catalog ID.`);
-    }
-    if (widget.dataSource.payload.addonId === MANIFEST_PLACEHOLDER && !manifestUrl) {
-      throw new Error(`Export failed: widgets[${widgetIndex}] still uses the AIOMetadata placeholder.`);
+    if (isAIOMetadataDataSource(widget.dataSource)) {
+      if (!widget.dataSource.payload.catalogId) {
+        throw new Error(`Export failed: widgets[${widgetIndex}] is missing a catalog ID.`);
+      }
+      if (widget.dataSource.payload.addonId === MANIFEST_PLACEHOLDER && !manifestUrl) {
+        throw new Error(
+          'Sync your AIOMetadata manifest before Fusion export so the AIOMetadata URL can be embedded in your Fusion setup.'
+        );
+      }
     }
   });
 }

@@ -1,17 +1,58 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { exportConfigToFusion } from './config-utils';
+import {
+  collectUsedAiometadataCatalogKeys,
+  exportConfigToFusion,
+  processConfigWithManifest,
+  processWidgetWithManifest,
+  sanitizeFusionConfigForExport,
+} from './config-utils';
 import { convertFusionToOmni, convertOmniToFusion, validateOmniExport } from './omni-converter';
 import {
+  extractImportedManifestState,
   MANIFEST_PLACEHOLDER,
   mergeWidgetLists,
   normalizeFusionConfigDetailed,
   normalizeLoadedState,
   parseFusionConfig,
 } from './widget-domain';
-import type { FusionWidgetsConfig, Widget } from './types/widget';
+import type {
+  AIOMetadataDataSource,
+  CollectionRowWidget,
+  FusionWidgetsConfig,
+  NativeTraktDataSource,
+  RowClassicWidget,
+  Widget,
+} from './types/widget';
 
-function buildCollectionWidget(overrides: Partial<Widget> = {}): Widget {
+function buildAioDataSource(overrides: Partial<AIOMetadataDataSource['payload']> = {}): AIOMetadataDataSource {
+  return {
+    sourceType: 'aiometadata',
+    kind: 'addonCatalog',
+    payload: {
+      addonId: 'https://example.com/manifest.json',
+      catalogId: 'movie::catalog-one',
+      catalogType: 'movie',
+      ...overrides,
+    },
+  };
+}
+
+function buildTraktDataSource(overrides: Partial<NativeTraktDataSource['payload']> = {}): NativeTraktDataSource {
+  return {
+    sourceType: 'trakt-native',
+    kind: 'traktList',
+    payload: {
+      listName: 'MARVEL Cinematic Universe',
+      listSlug: 'marvel-cinematic-universe',
+      traktId: 1248149,
+      username: 'Donxy',
+      ...overrides,
+    },
+  };
+}
+
+function buildCollectionWidget(overrides: Partial<CollectionRowWidget> = {}): CollectionRowWidget {
   return {
     id: 'collection-1',
     title: 'Collection',
@@ -26,25 +67,16 @@ function buildCollectionWidget(overrides: Partial<Widget> = {}): Widget {
             hideTitle: false,
             layout: 'Wide',
             backgroundImageURL: '',
-            dataSources: [
-              {
-                kind: 'addonCatalog',
-                payload: {
-                  addonId: 'https://example.com/manifest.json',
-                  catalogId: 'movie::catalog-one',
-                  catalogType: 'movie',
-                },
-              },
-            ],
+            dataSources: [buildAioDataSource()],
           },
         ],
       },
     },
     ...overrides,
-  } as Widget;
+  };
 }
 
-function buildRowWidget(overrides: Partial<Widget> = {}): Widget {
+function buildRowWidget(overrides: Partial<RowClassicWidget> = {}): RowClassicWidget {
   return {
     id: 'row-1',
     title: 'Netflix Movies',
@@ -60,16 +92,9 @@ function buildRowWidget(overrides: Partial<Widget> = {}): Widget {
       },
       backgroundImageURL: '',
     },
-    dataSource: {
-      kind: 'addonCatalog',
-      payload: {
-        addonId: 'https://example.com/manifest.json',
-        catalogId: 'movie::catalog-one',
-        catalogType: 'movie',
-      },
-    },
+    dataSource: buildAioDataSource(),
     ...overrides,
-  } as Widget;
+  };
 }
 
 function buildConfig(widgets: Widget[]): FusionWidgetsConfig {
@@ -120,6 +145,10 @@ test('legacy collection item dataSource normalizes into dataSources', () => {
   const item = parsed.widgets[0].type === 'collection.row' ? parsed.widgets[0].dataSource.payload.items[0] : null;
   assert.ok(item);
   assert.equal(item.dataSources.length, 1);
+  assert.equal(item.dataSources[0]?.kind, 'addonCatalog');
+  if (item.dataSources[0]?.kind !== 'addonCatalog') {
+    throw new Error('Expected AIOMetadata data source.');
+  }
   assert.equal(item.dataSources[0].payload.catalogId, 'movie::legacy');
   assert.equal('dataSource' in item, false);
 });
@@ -208,14 +237,7 @@ test('normalizeLoadedState preserves collection item trash entries', () => {
           layout: 'Wide',
           backgroundImageURL: '',
           dataSources: [
-            {
-              kind: 'addonCatalog',
-              payload: {
-                addonId: 'https://example.com/manifest.json',
-                catalogId: 'movie::catalog-one',
-                catalogType: 'movie',
-              },
-            },
+            buildAioDataSource(),
           ],
         },
         deletedAt: '2026-03-20T10:00:00.000Z',
@@ -229,6 +251,53 @@ test('normalizeLoadedState preserves collection item trash entries', () => {
   assert.equal(state.itemTrash[0]?.widgetTitle, 'Collection');
   assert.equal(state.itemTrash[0]?.item.name, 'Action');
   assert.equal(state.itemTrash[0]?.originalIndex, 1);
+});
+
+test('extractImportedManifestState reads explicit manifest metadata from imported configs', () => {
+  const imported = extractImportedManifestState({
+    exportType: 'fusionWidgets',
+    exportVersion: 1,
+    manifestUrl: 'https://aiometadata.example/manifest.json',
+    replacePlaceholder: true,
+    manifestCatalogs: [
+      {
+        id: 'catalog-one',
+        name: 'Catalog One',
+        type: 'movie',
+        displayType: 'movie',
+      },
+    ],
+    widgets: [buildRowWidget()],
+  });
+
+  assert.equal(imported.hasExplicitManifest, true);
+  assert.equal(imported.manifestUrl, 'https://aiometadata.example/manifest.json');
+  assert.equal(imported.replacePlaceholder, true);
+  assert.equal(imported.manifestCatalogs.length, 1);
+  assert.equal(imported.manifestCatalogs[0]?.id, 'catalog-one');
+});
+
+test('extractImportedManifestState falls back to manifest content when catalogs are not stored separately', () => {
+  const imported = extractImportedManifestState({
+    exportType: 'fusionWidgets',
+    exportVersion: 1,
+    manifestContent: JSON.stringify({
+      catalogs: [
+        {
+          id: 'catalog-two',
+          name: 'Catalog Two',
+          type: 'series',
+          displayType: 'series',
+        },
+      ],
+    }),
+    widgets: [buildCollectionWidget()],
+  });
+
+  assert.equal(imported.hasExplicitManifest, true);
+  assert.equal(imported.manifestCatalogs.length, 1);
+  assert.equal(imported.manifestCatalogs[0]?.id, 'catalog-two');
+  assert.equal(imported.manifestCatalogs[0]?.type, 'series');
 });
 
 test('Fusion export derives requiredAddons from collection item dataSources', () => {
@@ -245,22 +314,16 @@ test('Fusion export derives requiredAddons from collection item dataSources', ()
               layout: 'Wide',
               backgroundImageURL: '',
               dataSources: [
-                {
-                  kind: 'addonCatalog',
-                  payload: {
-                    addonId: 'https://one.example/manifest.json',
-                    catalogId: 'movie::catalog-one',
-                    catalogType: 'movie',
-                  },
-                },
-                {
-                  kind: 'addonCatalog',
-                  payload: {
-                    addonId: 'https://two.example/manifest.json',
-                    catalogId: 'series::catalog-two',
-                    catalogType: 'series',
-                  },
-                },
+                buildAioDataSource({
+                  addonId: 'https://one.example/manifest.json',
+                  catalogId: 'movie::catalog-one',
+                  catalogType: 'movie',
+                }),
+                buildAioDataSource({
+                  addonId: 'https://two.example/manifest.json',
+                  catalogId: 'series::catalog-two',
+                  catalogType: 'series',
+                }),
               ],
             },
           ],
@@ -276,20 +339,61 @@ test('Fusion export derives requiredAddons from collection item dataSources', ()
   ]);
 });
 
+test('collectUsedAiometadataCatalogKeys deduplicates AIOMetadata catalogs and ignores native trakt', () => {
+  const config = buildConfig([
+    buildRowWidget({
+      dataSource: buildAioDataSource({
+        catalogId: 'mdblist.1',
+        catalogType: 'movie',
+      }),
+    }),
+    buildCollectionWidget({
+      title: 'Collections',
+      dataSource: {
+        kind: 'collection',
+        payload: {
+          items: [
+            {
+              id: 'item-1',
+              name: 'One',
+              hideTitle: false,
+              layout: 'Wide',
+              backgroundImageURL: '',
+              dataSources: [
+                buildAioDataSource({
+                  catalogId: 'movie::mdblist.1',
+                  catalogType: 'movie',
+                }),
+                buildAioDataSource({
+                  catalogId: 'series::streaming.sta',
+                  catalogType: 'series',
+                }),
+                buildTraktDataSource(),
+              ],
+            },
+          ],
+        },
+      },
+    }),
+  ]);
+
+  assert.deepEqual(collectUsedAiometadataCatalogKeys(config).sort(), [
+    'movie::mdblist.1',
+    'series::streaming.sta',
+  ]);
+});
+
 test('ambiguous manifest suffix matches are rejected', () => {
   assert.throws(
     () =>
       parseFusionConfig(
         buildConfig([
           buildRowWidget({
-            dataSource: {
-              kind: 'addonCatalog',
-              payload: {
-                addonId: MANIFEST_PLACEHOLDER,
-                catalogId: 'popular',
-                catalogType: 'movie',
-              },
-            },
+            dataSource: buildAioDataSource({
+              addonId: MANIFEST_PLACEHOLDER,
+              catalogId: 'popular',
+              catalogType: 'movie',
+            }),
           }),
         ]),
         {
@@ -304,20 +408,682 @@ test('ambiguous manifest suffix matches are rejected', () => {
   );
 });
 
-test('validateOmniExport rejects duplicate subgroup names', () => {
+test('parseFusionConfig imports native trakt row widgets', () => {
+  const parsed = parseFusionConfig({
+    exportType: 'fusionWidgets',
+    exportVersion: 1,
+    widgets: [
+      {
+        id: 'trakt.8306839E-006E-4A6E-90CE-56BFFD9D3E09',
+        title: 'MARVEL Cinematic Universe',
+        hideTitle: true,
+        type: 'row.classic',
+        cacheTTL: 7200,
+        limit: 12,
+        presentation: {
+          aspectRatio: 'wide',
+          cardStyle: 'small',
+          badges: { providers: false, ratings: true },
+          backgroundImageURL: 'https://img.test/marvel.jpg',
+        },
+        dataSource: {
+          kind: 'traktList',
+          payload: {
+            listName: 'MARVEL Cinematic Universe',
+            listSlug: 'marvel-cinematic-universe',
+            traktId: 1248149,
+            username: 'Donxy',
+          },
+        },
+      },
+    ],
+  });
+
+  const widget = parsed.widgets[0];
+  assert.equal(widget?.type, 'row.classic');
+  if (!widget || widget.type !== 'row.classic') {
+    throw new Error('Expected classic row widget.');
+  }
+
+  assert.equal(widget.dataSource.sourceType, 'trakt-native');
+  assert.equal(widget.dataSource.payload.listSlug, 'marvel-cinematic-universe');
+  assert.equal(widget.hideTitle, true);
+  assert.equal(widget.limit, 12);
+  assert.equal(widget.presentation.backgroundImageURL, 'https://img.test/marvel.jpg');
+});
+
+test('parseFusionConfig imports collection items with native trakt data sources', () => {
+  const parsed = parseFusionConfig({
+    exportType: 'fusionWidgets',
+    exportVersion: 1,
+    widgets: [
+      {
+        id: 'collection-trakt',
+        title: 'Collections',
+        type: 'collection.row',
+        dataSource: {
+          kind: 'collection',
+          payload: {
+            items: [
+              {
+                id: 'Rush_Hour',
+                title: 'Rush Hour',
+                dataSources: [
+                  {
+                    kind: 'traktList',
+                    payload: {
+                      listName: 'Rush Hour Collection',
+                      listSlug: 'rush-hour-collection',
+                      traktId: 197,
+                      username: 'Trakt',
+                    },
+                  },
+                ],
+              },
+            ],
+          },
+        },
+      },
+    ],
+  });
+
+  const widget = parsed.widgets[0];
+  assert.equal(widget?.type, 'collection.row');
+  if (!widget || widget.type !== 'collection.row') {
+    throw new Error('Expected collection row widget.');
+  }
+
+  const item = widget.dataSource.payload.items[0];
+  assert.ok(item);
+  assert.equal(item?.dataSources[0]?.sourceType, 'trakt-native');
+  assert.equal(item?.dataSources[0]?.kind, 'traktList');
+});
+
+test('mixed imports keep AIOMetadata catalogs and native trakt distinct', () => {
+  const parsed = parseFusionConfig({
+    exportType: 'fusionWidgets',
+    exportVersion: 1,
+    widgets: [
+      buildRowWidget(),
+      {
+        ...buildRowWidget({
+          id: 'trakt.row',
+          title: 'Native Trakt',
+          dataSource: buildTraktDataSource(),
+        }),
+      },
+      buildCollectionWidget({
+        id: 'mixed-collection',
+        dataSource: {
+          kind: 'collection',
+          payload: {
+            items: [
+              {
+                id: 'mixed-item',
+                name: 'Mixed',
+                hideTitle: false,
+                layout: 'Wide',
+                backgroundImageURL: '',
+                dataSources: [
+                  buildAioDataSource({ catalogId: 'all::trakt.list.29034789', catalogType: 'series' }),
+                  buildTraktDataSource({ listName: 'Mixed Trakt', listSlug: 'mixed-trakt', traktId: 99 }),
+                ],
+              },
+            ],
+          },
+        },
+      }),
+    ],
+  });
+
+  const collection = parsed.widgets[2];
+  if (!collection || collection.type !== 'collection.row') {
+    throw new Error('Expected collection row widget.');
+  }
+
+  assert.equal(collection.dataSource.payload.items[0]?.dataSources[0]?.sourceType, 'aiometadata');
+  assert.equal(collection.dataSource.payload.items[0]?.dataSources[1]?.sourceType, 'trakt-native');
+});
+
+test('native trakt rows round-trip through Fusion export without catalog prefixing', () => {
+  const config = buildConfig([
+    buildRowWidget({
+      id: 'trakt.8306839E-006E-4A6E-90CE-56BFFD9D3E09',
+      title: 'MARVEL Cinematic Universe',
+      hideTitle: true,
+      limit: 15,
+      presentation: {
+        aspectRatio: 'wide',
+        cardStyle: 'small',
+        badges: { providers: false, ratings: true },
+        backgroundImageURL: 'https://img.test/marvel.jpg',
+      },
+      dataSource: buildTraktDataSource(),
+    }),
+  ]);
+
+  const exported = exportConfigToFusion(config);
+  const widget = exported.widgets[0];
+  assert.equal(widget?.id, 'trakt.8306839E-006E-4A6E-90CE-56BFFD9D3E09');
+  assert.equal(widget?.type, 'row.classic');
+  if (!widget || widget.type !== 'row.classic') {
+    throw new Error('Expected row.classic export.');
+  }
+  assert.equal(widget.dataSource.kind, 'traktList');
+  assert.equal(widget.limit, 15);
+  assert.equal(widget.hideTitle, true);
+  assert.equal(widget.presentation.backgroundImageURL, 'https://img.test/marvel.jpg');
+});
+
+test('native trakt collection items round-trip through Fusion export', () => {
+  const config = buildConfig([
+    buildCollectionWidget({
+      dataSource: {
+        kind: 'collection',
+        payload: {
+          items: [
+            {
+              id: 'Rush_Hour',
+              name: 'Rush Hour',
+              hideTitle: false,
+              layout: 'Poster',
+              backgroundImageURL: '',
+              dataSources: [buildTraktDataSource({
+                listName: 'Rush Hour Collection',
+                listSlug: 'rush-hour-collection',
+                traktId: 197,
+                username: 'Trakt',
+              })],
+            },
+          ],
+        },
+      },
+    }),
+  ]);
+
+  const exported = exportConfigToFusion(config);
+  const widget = exported.widgets[0];
+  if (!widget || widget.type !== 'collection.row') {
+    throw new Error('Expected collection export.');
+  }
+  assert.equal(widget.dataSource.payload.items[0]?.dataSources[0]?.kind, 'traktList');
+});
+
+test('processWidgetWithManifest leaves native trakt sources untouched', () => {
+  const widget = buildRowWidget({
+    id: 'trakt.row',
+    dataSource: buildTraktDataSource({ username: '' }),
+  });
+
+  const processed = processWidgetWithManifest(
+    widget,
+    'https://aiometadata.example/manifest.json',
+    true,
+    [{ id: 'catalog-one', name: 'Catalog One', type: 'movie', displayType: 'movie' }],
+    true
+  );
+
+  if (processed.type !== 'row.classic' || processed.dataSource.kind !== 'traktList') {
+    throw new Error('Expected native trakt row.');
+  }
+  assert.equal(processed.dataSource.payload.username, '');
+  assert.equal(processed.id, 'trakt.row');
+});
+
+test('processConfigWithManifest leaves native trakt collection item sources untouched', () => {
+  const config = buildConfig([
+    buildCollectionWidget({
+      dataSource: {
+        kind: 'collection',
+        payload: {
+          items: [
+            {
+              id: 'trakt-item',
+              name: 'Trakt Item',
+              hideTitle: false,
+              layout: 'Wide',
+              backgroundImageURL: '',
+              dataSources: [buildTraktDataSource({ listSlug: '', traktId: null })],
+            },
+          ],
+        },
+      },
+    }),
+  ]);
+
+  const processed = processConfigWithManifest(
+    config,
+    'https://aiometadata.example/manifest.json',
+    true,
+    [{ id: 'catalog-one', name: 'Catalog One', type: 'movie', displayType: 'movie' }],
+    true
+  );
+
+  const itemSource = processed.widgets[0]?.type === 'collection.row'
+    ? processed.widgets[0].dataSource.payload.items[0]?.dataSources[0]
+    : null;
+  assert.equal(itemSource?.kind, 'traktList');
+  if (!itemSource || itemSource.kind !== 'traktList') {
+    throw new Error('Expected native trakt collection item source.');
+  }
+  assert.equal(itemSource.payload.listSlug, '');
+  assert.equal(itemSource.payload.traktId, null);
+});
+
+test('sanitizeFusionConfigForExport removes invalid AIOMetadata collection catalogs and empty items', () => {
+  const config = buildConfig([
+    buildCollectionWidget({
+      dataSource: {
+        kind: 'collection',
+        payload: {
+          items: [
+            {
+              id: 'item-valid',
+              name: 'Valid Item',
+              hideTitle: false,
+              layout: 'Wide',
+              backgroundImageURL: '',
+              dataSources: [
+                buildAioDataSource({ catalogId: 'movie::catalog-one' }),
+                buildAioDataSource({ catalogId: '' }),
+              ],
+            },
+            {
+              id: 'item-invalid',
+              name: 'Invalid Item',
+              hideTitle: false,
+              layout: 'Wide',
+              backgroundImageURL: '',
+              dataSources: [buildAioDataSource({ catalogId: '' })],
+            },
+          ],
+        },
+      },
+    }),
+  ]);
+
+  const sanitized = sanitizeFusionConfigForExport(config, [
+    { id: 'catalog-one', name: 'Catalog One', type: 'movie', displayType: 'movie' },
+  ]);
+
+  assert.equal(sanitized.skippedDataSources, 2);
+  assert.equal(sanitized.skippedItems, 1);
+  assert.equal(sanitized.skippedWidgets, 0);
+  assert.equal(sanitized.emptiedItems, 0);
+  const widget = sanitized.config.widgets[0];
+  if (!widget || widget.type !== 'collection.row') {
+    throw new Error('Expected collection widget.');
+  }
+  assert.equal(widget.dataSource.payload.items.length, 1);
+  assert.equal(widget.dataSource.payload.items[0]?.dataSources.length, 1);
+});
+
+test('sanitizeFusionConfigForExport can keep invalid collection items as empty items', () => {
+  const config = buildConfig([
+    buildCollectionWidget({
+      dataSource: {
+        kind: 'collection',
+        payload: {
+          items: [
+            {
+              id: 'item-invalid',
+              name: 'Invalid Item',
+              hideTitle: false,
+              layout: 'Wide',
+              backgroundImageURL: 'https://images.example/item.jpg',
+              dataSources: [buildAioDataSource({ catalogId: '' })],
+            },
+          ],
+        },
+      },
+    }),
+  ]);
+
+  const sanitized = sanitizeFusionConfigForExport(config, [
+    { id: 'catalog-one', name: 'Catalog One', type: 'movie', displayType: 'movie' },
+  ], {
+    invalidAiometadataMode: 'empty-items',
+  });
+
+  assert.equal(sanitized.skippedDataSources, 1);
+  assert.equal(sanitized.skippedItems, 0);
+  assert.equal(sanitized.skippedWidgets, 0);
+  assert.equal(sanitized.emptiedItems, 1);
+  const widget = sanitized.config.widgets[0];
+  if (!widget || widget.type !== 'collection.row') {
+    throw new Error('Expected collection widget.');
+  }
+  assert.equal(widget.dataSource.payload.items.length, 1);
+  assert.equal(widget.dataSource.payload.items[0]?.dataSources.length, 0);
+  assert.equal(widget.dataSource.payload.items[0]?.backgroundImageURL, 'https://images.example/item.jpg');
+});
+
+test('sanitizeFusionConfigForExport can keep collection items without catalogs as empty items', () => {
+  const config = buildConfig([
+    buildCollectionWidget({
+      dataSource: {
+        kind: 'collection',
+        payload: {
+          items: [
+            {
+              id: 'item-empty',
+              name: 'Empty Item',
+              hideTitle: false,
+              layout: 'Wide',
+              backgroundImageURL: 'https://images.example/empty.jpg',
+              dataSources: [],
+            },
+          ],
+        },
+      },
+    }),
+  ]);
+
+  const sanitized = sanitizeFusionConfigForExport(config, [], {
+    invalidAiometadataMode: 'empty-items',
+  });
+
+  assert.equal(sanitized.skippedDataSources, 0);
+  assert.equal(sanitized.skippedItems, 0);
+  assert.equal(sanitized.skippedWidgets, 0);
+  assert.equal(sanitized.emptiedItems, 1);
+  const widget = sanitized.config.widgets[0];
+  if (!widget || widget.type !== 'collection.row') {
+    throw new Error('Expected collection widget.');
+  }
+  assert.equal(widget.dataSource.payload.items.length, 1);
+  assert.equal(widget.dataSource.payload.items[0]?.dataSources.length, 0);
+  assert.equal(widget.dataSource.payload.items[0]?.backgroundImageURL, 'https://images.example/empty.jpg');
+});
+
+test('sanitizeFusionConfigForExport removes invalid classic rows entirely', () => {
+  const config = buildConfig([
+    buildRowWidget({ dataSource: buildAioDataSource({ catalogId: '' }) }),
+    buildRowWidget({
+      id: 'row-2',
+      title: 'Valid',
+      dataSource: buildAioDataSource({ catalogId: 'movie::catalog-one' }),
+    }),
+  ]);
+
+  const sanitized = sanitizeFusionConfigForExport(config, [
+    { id: 'catalog-one', name: 'Catalog One', type: 'movie', displayType: 'movie' },
+  ]);
+
+  assert.equal(sanitized.skippedDataSources, 1);
+  assert.equal(sanitized.skippedWidgets, 1);
+  assert.equal(sanitized.emptiedItems, 0);
+  assert.equal(sanitized.config.widgets.length, 1);
+  assert.equal(sanitized.config.widgets[0]?.title, 'Valid');
+});
+
+test('exportConfigToFusion can skip invalid AIOMetadata catalogs when requested', () => {
+  const config = buildConfig([
+    buildCollectionWidget({
+      dataSource: {
+        kind: 'collection',
+        payload: {
+          items: [
+            {
+              id: 'item-1',
+              name: 'Mixed Item',
+              hideTitle: false,
+              layout: 'Wide',
+              backgroundImageURL: '',
+              dataSources: [
+                buildAioDataSource({ catalogId: 'movie::catalog-one' }),
+                buildAioDataSource({ catalogId: '' }),
+              ],
+            },
+          ],
+        },
+      },
+    }),
+  ]);
+
+  const exported = exportConfigToFusion(config, 'https://example.com/manifest.json', {
+    skipInvalidAiometadataSources: true,
+    catalogs: [{ id: 'catalog-one', name: 'Catalog One', type: 'movie', displayType: 'movie' }],
+  });
+
+  const widget = exported.widgets[0];
+  if (!widget || widget.type !== 'collection.row') {
+    throw new Error('Expected collection widget.');
+  }
+  assert.equal(widget.dataSource.payload.items[0]?.dataSources.length, 1);
+  assert.equal(widget.dataSource.payload.items[0]?.dataSources[0]?.kind, 'addonCatalog');
+});
+
+test('exportConfigToFusion can keep invalid collection items as empty items when requested', () => {
+  const config = buildConfig([
+    buildCollectionWidget({
+      dataSource: {
+        kind: 'collection',
+        payload: {
+          items: [
+            {
+              id: 'item-1',
+              name: 'Mixed Item',
+              hideTitle: false,
+              layout: 'Wide',
+              backgroundImageURL: '',
+              dataSources: [buildAioDataSource({ catalogId: '' })],
+            },
+          ],
+        },
+      },
+    }),
+  ]);
+
+  const exported = exportConfigToFusion(config, 'https://example.com/manifest.json', {
+    skipInvalidAiometadataSources: true,
+    invalidAiometadataMode: 'empty-items',
+    catalogs: [{ id: 'catalog-one', name: 'Catalog One', type: 'movie', displayType: 'movie' }],
+  });
+
+  const widget = exported.widgets[0];
+  if (!widget || widget.type !== 'collection.row') {
+    throw new Error('Expected collection widget.');
+  }
+  assert.equal(widget.dataSource.payload.items[0]?.dataSources.length, 0);
+  assert.equal(widget.dataSource.payload.items[0]?.title, 'Mixed Item');
+});
+
+test('exportConfigToFusion can keep collection items without catalogs as empty items when requested', () => {
+  const config = buildConfig([
+    buildCollectionWidget({
+      dataSource: {
+        kind: 'collection',
+        payload: {
+          items: [
+            {
+              id: 'item-empty',
+              name: 'Empty Item',
+              hideTitle: false,
+              layout: 'Wide',
+              backgroundImageURL: '',
+              dataSources: [],
+            },
+          ],
+        },
+      },
+    }),
+  ]);
+
+  const exported = exportConfigToFusion(config, 'https://example.com/manifest.json', {
+    skipInvalidAiometadataSources: true,
+    invalidAiometadataMode: 'empty-items',
+    catalogs: [],
+  });
+
+  const widget = exported.widgets[0];
+  if (!widget || widget.type !== 'collection.row') {
+    throw new Error('Expected collection widget.');
+  }
+  assert.equal(widget.dataSource.payload.items[0]?.dataSources.length, 0);
+  assert.equal(widget.dataSource.payload.items[0]?.title, 'Empty Item');
+});
+
+test('partial import skips unsupported item sources instead of rejecting the full file', () => {
+  const normalized = normalizeFusionConfigDetailed(
+    {
+      exportType: 'fusionWidgets',
+      exportVersion: 1,
+      widgets: [
+        {
+          id: 'collections',
+          title: 'Collections',
+          type: 'collection.row',
+          dataSource: {
+            kind: 'collection',
+            payload: {
+              items: [
+                {
+                  id: 'supported',
+                  title: 'Rush Hour',
+                  imageAspect: 'poster',
+                  dataSources: [
+                    {
+                      kind: 'traktList',
+                      payload: {
+                        listName: 'Rush Hour Collection',
+                        listSlug: 'rush-hour-collection',
+                        traktId: 197,
+                        username: 'Trakt',
+                      },
+                    },
+                  ],
+                },
+                {
+                  id: 'unsupported',
+                  title: 'The Chronicles of Riddick',
+                  imageAspect: 'poster',
+                  dataSources: [
+                    {
+                      kind: 'tmdbDiscover',
+                      payload: {
+                        limit: 30,
+                        sortBy: 'popularity.desc',
+                        type: 'movie',
+                      },
+                    },
+                  ],
+                },
+              ],
+            },
+          },
+        },
+      ],
+    },
+    { allowPartialImport: true }
+  );
+
+  const widget = normalized.config.widgets[0];
+  if (!widget || widget.type !== 'collection.row') {
+    throw new Error('Expected collection row widget.');
+  }
+
+  assert.equal(widget.dataSource.payload.items.length, 1);
+  assert.equal(widget.dataSource.payload.items[0]?.name, 'Rush Hour');
+  assert.equal(normalized.importIssues.length, 1);
+  assert.equal(normalized.importIssues[0]?.label, 'The Chronicles of Riddick');
+  assert.match(normalized.importIssues[0]?.message || '', /Unsupported source/);
+});
+
+test('export preserves reorder and delete outcomes for native trakt entries', () => {
+  const reordered = buildConfig([
+    buildRowWidget({ id: 'trakt-2', title: 'Second', dataSource: buildTraktDataSource({ listSlug: 'second' }) }),
+    buildRowWidget({ id: 'trakt-1', title: 'First', dataSource: buildTraktDataSource({ listSlug: 'first' }) }),
+  ]);
+
+  const exportedRows = exportConfigToFusion(reordered);
+  assert.deepEqual(
+    exportedRows.widgets.map((widget) => widget.id),
+    ['trakt-2', 'trakt-1']
+  );
+
+  const collectionConfig = buildConfig([
+    buildCollectionWidget({
+      dataSource: {
+        kind: 'collection',
+        payload: {
+          items: [
+            {
+              id: 'keep',
+              name: 'Keep',
+              hideTitle: false,
+              layout: 'Wide',
+              backgroundImageURL: '',
+              dataSources: [buildTraktDataSource({ listSlug: 'keep' })],
+            },
+          ],
+        },
+      },
+    }),
+  ]);
+  const exportedCollection = exportConfigToFusion(collectionConfig);
+  const collection = exportedCollection.widgets[0];
+  if (!collection || collection.type !== 'collection.row') {
+    throw new Error('Expected collection export.');
+  }
+  assert.deepEqual(collection.dataSource.payload.items.map((item) => item.id), ['keep']);
+});
+
+test('validateOmniExport makes duplicate subgroup names unique', () => {
+  const secondCollection = buildCollectionWidget({
+    id: 'collection-2',
+    title: 'Second',
+    dataSource: {
+      kind: 'collection',
+      payload: {
+        items: [
+          {
+            id: 'item-2',
+            name: 'Netflix',
+            hideTitle: false,
+            layout: 'Wide',
+            backgroundImageURL: '',
+            dataSources: [buildAioDataSource({ catalogId: 'movie::catalog-two' })],
+          },
+        ],
+      },
+    },
+  });
+
+  assert.doesNotThrow(() =>
+    validateOmniExport(
+      buildConfig([
+        buildCollectionWidget(),
+        secondCollection,
+        buildRowWidget(),
+      ])
+    )
+  );
+
+  const snapshot = convertFusionToOmni(
+    buildConfig([
+      buildCollectionWidget(),
+      secondCollection,
+      buildRowWidget(),
+    ])
+  );
+
+  const converted = convertOmniToFusion(snapshot);
+  const collectionWidgets = converted.widgets.filter((widget) => widget.type === 'collection.row');
+  assert.equal(collectionWidgets.length, 2);
+  assert.equal(collectionWidgets[0]?.type, 'collection.row');
+  assert.equal(collectionWidgets[1]?.type, 'collection.row');
+  if (collectionWidgets[0]?.type !== 'collection.row' || collectionWidgets[1]?.type !== 'collection.row') {
+    throw new Error('Expected converted collection widgets.');
+  }
+  assert.equal(collectionWidgets[0].dataSource.payload.items[0]?.name, 'Netflix');
+  assert.equal(collectionWidgets[1].dataSource.payload.items[0]?.name, 'Netflix (Second)');
+});
+
+test('validateOmniExport rejects native trakt sources', () => {
   assert.throws(
-    () =>
-      validateOmniExport(
-        buildConfig([
-          buildCollectionWidget(),
-          buildCollectionWidget({
-            id: 'collection-2',
-            title: 'Second',
-          }),
-          buildRowWidget(),
-        ])
-      ),
-    /(Duplicate subgroup name|mapped to multiple Collection items)/
+    () => validateOmniExport(buildConfig([buildRowWidget({ dataSource: buildTraktDataSource() })])),
+    /does not support native Trakt/
   );
 });
 
