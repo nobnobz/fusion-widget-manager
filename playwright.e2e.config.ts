@@ -5,6 +5,9 @@ const baseURL = `http://127.0.0.1:${port}`;
 const isCi = process.env.CI === '1' || process.env.CI === 'true';
 const useSystemChrome = process.env.PLAYWRIGHT_USE_SYSTEM_CHROME === '1';
 const channel = useSystemChrome || !isCi ? 'chrome' : undefined;
+const webServerCommand = isCi
+  ? `node ./test/scripts/serve-static.mjs out ${port}`
+  : `rm -f .next/dev/lock && npm run dev -- --webpack --hostname 127.0.0.1 --port ${port}`;
 
 export default defineConfig({
   testDir: './test/e2e',
@@ -39,9 +42,9 @@ export default defineConfig({
   ],
   outputDir: 'test-results/e2e',
   webServer: {
-    command: `rm -f .next/dev/lock && npm run dev -- --webpack --hostname 127.0.0.1 --port ${port}`,
+    command: webServerCommand,
     url: baseURL,
     reuseExistingServer: !isCi,
-    timeout: 120_000,
+    timeout: isCi ? 180_000 : 120_000,
   },
 });

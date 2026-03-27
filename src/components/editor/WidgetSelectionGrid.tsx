@@ -278,6 +278,11 @@ function WidgetSelectionGridComponent({
       widgetsStillSkippedInEmptyMode: emptyItemsSanitized.skippedWidgets,
     };
   }, [basePreviewState.config, manifestCatalogs, showPreview]);
+  const fusionInvalidCatalogSkippedItems = fusionInvalidCatalogState.skippedItems;
+  const fusionInvalidCatalogSkippedWidgets = fusionInvalidCatalogState.skippedWidgets;
+  const fusionInvalidCatalogEmptiedItems = fusionInvalidCatalogState.emptiedItems;
+  const fusionInvalidCatalogWidgetsStillSkippedInEmptyMode =
+    fusionInvalidCatalogState.widgetsStillSkippedInEmptyMode;
 
   const requiresFusionInvalidCatalogConfirmation =
     !!fusionInvalidCatalogState.fingerprint
@@ -688,21 +693,21 @@ function WidgetSelectionGridComponent({
 
     if (exportMode === 'fusion' && requiresFusionInvalidCatalogConfirmation && !isFusionInvalidCatalogConfirmed) {
       const skipSummaryParts = [
-        fusionInvalidCatalogState.skippedItems > 0
-          ? formatCountLabel(fusionInvalidCatalogState.skippedItems, 'collection item', 'collection items')
+        fusionInvalidCatalogSkippedItems > 0
+          ? formatCountLabel(fusionInvalidCatalogSkippedItems, 'collection item', 'collection items')
           : null,
-        fusionInvalidCatalogState.skippedWidgets > 0
-          ? formatCountLabel(fusionInvalidCatalogState.skippedWidgets, 'widget', 'widgets')
+        fusionInvalidCatalogSkippedWidgets > 0
+          ? formatCountLabel(fusionInvalidCatalogSkippedWidgets, 'widget', 'widgets')
           : null,
       ].filter((value): value is string => Boolean(value));
 
       const emptyItemSummary =
-        fusionInvalidCatalogState.emptiedItems > 0
-          ? `${formatCountLabel(fusionInvalidCatalogState.emptiedItems, 'collection item', 'collection items')} can stay in the export without catalogs so you can assign them manually in Fusion.`
+        fusionInvalidCatalogEmptiedItems > 0
+          ? `${formatCountLabel(fusionInvalidCatalogEmptiedItems, 'collection item', 'collection items')} can stay in the export without catalogs so you can assign them manually in Fusion.`
           : null;
       const emptyModeRowSummary =
-        fusionInvalidCatalogState.widgetsStillSkippedInEmptyMode > 0
-          ? `${formatCountLabel(fusionInvalidCatalogState.widgetsStillSkippedInEmptyMode, 'classic row', 'classic rows')} will still be skipped because Fusion requires a valid catalog there.`
+        fusionInvalidCatalogWidgetsStillSkippedInEmptyMode > 0
+          ? `${formatCountLabel(fusionInvalidCatalogWidgetsStillSkippedInEmptyMode, 'classic row', 'classic rows')} will still be skipped because Fusion requires a valid catalog there.`
           : null;
 
       return [
@@ -819,6 +824,10 @@ function WidgetSelectionGridComponent({
     exportOmniConfig,
     fusionPreviewState.config,
     fusionPreviewState.error,
+    fusionInvalidCatalogEmptiedItems,
+    fusionInvalidCatalogSkippedItems,
+    fusionInvalidCatalogSkippedWidgets,
+    fusionInvalidCatalogWidgetsStillSkippedInEmptyMode,
     isBridgeConfirmed,
     isFusionInvalidCatalogConfirmed,
     isManifestSynced,

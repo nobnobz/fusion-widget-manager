@@ -5,8 +5,7 @@ import { ThemeChromeSync } from "@/components/theme-chrome-sync";
 import { ThemeProvider } from "@/components/theme-provider";
 import "./globals.css";
 
-const isGithubActions = process.env.GITHUB_ACTIONS === "true";
-const basePath = isGithubActions ? "/fusion-widget-manager" : "";
+const basePath = process.env.NEXT_PUBLIC_BASE_PATH || "";
 const withBasePath = (path: string) => `${basePath}${path}`;
 
 const geistSans = Geist({
