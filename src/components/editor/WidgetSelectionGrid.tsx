@@ -1209,11 +1209,11 @@ function WidgetSelectionGridComponent({
             <div className="flex items-center justify-between gap-4 max-sm:flex-col max-sm:items-stretch">
               <div className="flex items-start gap-3">
                 {isManifestSynced ? (
-                  <div className="flex size-10 items-center justify-center rounded-xl border border-emerald-200/65 bg-emerald-100/65 shadow-[inset_0_1px_0_rgba(255,255,255,0.35)] dark:border-emerald-500/16 dark:bg-emerald-500/12">
+                  <div className="flex size-10 items-center justify-center rounded-xl border border-emerald-200/65 bg-emerald-100/62 dark:border-emerald-500/16 dark:bg-emerald-500/12">
                     <span className="size-2 rounded-full bg-emerald-600/85 dark:bg-emerald-300/88" />
                   </div>
                 ) : (
-                  <div className="rounded-xl border border-amber-200/60 bg-amber-100/62 p-2 text-amber-700/80 shadow-[inset_0_1px_0_rgba(255,255,255,0.32)] dark:border-amber-500/16 dark:bg-amber-500/12 dark:text-amber-300/85">
+                  <div className="rounded-xl border border-amber-200/60 bg-amber-100/62 p-2 text-amber-700/80 dark:border-amber-500/16 dark:bg-amber-500/12 dark:text-amber-300/85">
                     <AlertTriangle className="size-4" />
                   </div>
                 )}
@@ -1559,7 +1559,7 @@ function WidgetSelectionGridComponent({
                         value={aiometadataSearchQuery}
                         onChange={(event) => setAiometadataSearchQuery(event.target.value)}
                         placeholder="Filter catalogs, widgets, or items..."
-                        className="h-11 rounded-2xl border-border/30 bg-background/70 pl-11 text-sm font-medium"
+                        className="h-11 rounded-2xl border-border/30 bg-background/70 pl-11 text-base sm:text-sm font-medium"
                       />
                     </div>
 
@@ -1979,7 +1979,7 @@ function WidgetSelectionGridComponent({
                       data-testid="export-preview-textarea"
                       readOnly
                       value={previewContent}
-                      className="h-[320px] w-full resize-none overflow-y-auto border-none bg-transparent p-5 font-mono text-xs leading-relaxed focus-visible:ring-0 custom-scrollbar"
+                      className="h-[320px] w-full resize-none overflow-y-auto border-none bg-transparent p-5 font-mono text-base sm:text-xs leading-relaxed focus-visible:ring-0 custom-scrollbar"
                     />
                   </div>
                 </div>
@@ -2029,7 +2029,7 @@ function WidgetSelectionGridComponent({
                     data-testid="export-preview-textarea"
                     readOnly
                     value={previewContent}
-                    className="h-[320px] w-full resize-none overflow-y-auto border-none bg-transparent p-5 font-mono text-xs leading-relaxed focus-visible:ring-0 custom-scrollbar"
+                    className="h-[320px] w-full resize-none overflow-y-auto border-none bg-transparent p-5 font-mono text-base sm:text-xs leading-relaxed focus-visible:ring-0 custom-scrollbar"
                   />
                 )}
                 </div>

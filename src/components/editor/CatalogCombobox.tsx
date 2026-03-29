@@ -95,7 +95,7 @@ export function CatalogCombobox({
                 autoFocus
                 type="text"
                 placeholder="Search catalogs..."
-                className="flex-1 bg-transparent border-none outline-none text-xs h-7 placeholder:text-muted-foreground/40 focus:ring-0"
+                className="flex-1 bg-transparent border-none outline-none text-base sm:text-xs h-7 placeholder:text-muted-foreground/40 focus:ring-0"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 onKeyDown={(e) => {

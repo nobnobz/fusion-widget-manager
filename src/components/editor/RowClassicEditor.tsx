@@ -51,7 +51,7 @@ export function RowClassicEditor({ widget }: { widget: RowClassicWidget }) {
                 id="title" 
                 value={widget.title} 
                 onChange={(e) => updateWidgetMeta(widget.id, { title: e.target.value })} 
-                className="bg-muted/20 dark:bg-muted/10 border-zinc-200 dark:border-border/40 focus:border-primary/50 transition-all flex-1 h-10 max-sm:h-11 rounded-xl max-sm:rounded-[1rem] backdrop-blur-sm shadow-sm dark:shadow-none"
+                className="bg-muted/20 dark:bg-muted/10 border-zinc-200 dark:border-border/40 focus:border-primary/50 transition-all flex-1 h-10 max-sm:h-11 rounded-xl max-sm:rounded-[1rem] backdrop-blur-sm shadow-sm dark:shadow-none text-base sm:text-sm"
               />
             </div>
           </CardContent>

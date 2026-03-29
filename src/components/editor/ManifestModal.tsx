@@ -128,11 +128,11 @@ export function ManifestModal({ isOpen, onOpenChange }: ManifestModalProps) {
           {!isManual ? (
             <div className="space-y-4">
               {manifestUrl && (
-                <div className="flex items-center justify-between gap-3 rounded-2xl border border-primary/10 bg-primary/5 px-4 py-3 max-sm:flex-col max-sm:items-stretch">
+                <div className="flex items-center justify-between gap-3 rounded-2xl border border-primary/10 bg-primary/5 px-4 py-2.5">
                   <div className="min-w-0">
                     <p className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.16em] text-primary/80">
                       <span className="size-1.5 rounded-full bg-green-500/90 shadow-[0_0_6px_rgba(34,197,94,0.28)]" />
-                      Currently synced
+                      Synced
                     </p>
                   </div>
 

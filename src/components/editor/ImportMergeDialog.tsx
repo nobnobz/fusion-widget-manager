@@ -80,7 +80,7 @@ export function ImportMergeDialog({ open, onOpenChange }: ImportMergeDialogProps
               <Textarea
                 data-testid="merge-import-textarea"
                 placeholder='{ "exportType": "fusionWidgets", ... }'
-                className="min-h-[250px] max-sm:min-h-[220px] font-mono text-[11px] bg-transparent border-none focus-visible:ring-0 p-4 max-sm:p-3 resize-none transition-all leading-relaxed"
+                className="min-h-[250px] max-sm:min-h-[220px] font-mono text-base sm:text-[11px] bg-transparent border-none focus-visible:ring-0 p-4 max-sm:p-3 resize-none transition-all leading-relaxed"
                 value={jsonInput}
                 onChange={(e) => setJsonInput(e.target.value)}
               />

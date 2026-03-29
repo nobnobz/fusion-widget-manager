@@ -227,7 +227,7 @@ export function CollectionItemEditor({
                           setIsEditing(false);
                         }
                       }}
-                      className="h-6 py-0 px-2 text-xs font-bold tracking-tight bg-background border-primary/30 focus:border-primary/50 focus-visible:ring-0 rounded-md w-full max-w-[200px]"
+                      className="h-6 py-0 px-2 text-base sm:text-xs font-bold tracking-tight bg-background border-primary/30 focus:border-primary/50 focus-visible:ring-0 rounded-md w-full max-w-[200px]"
                       onClick={(e) => e.stopPropagation()}
                     />
                   ) : (
@@ -317,7 +317,7 @@ export function CollectionItemEditor({
                             setIsEditing(false);
                           }
                         }}
-                        className="h-9 py-0 px-3 text-[13px] font-bold tracking-tight bg-background/70 border-primary/30 focus:border-primary/50 focus-visible:ring-0 rounded-xl w-full"
+                        className="h-9 py-0 px-3 text-base font-bold tracking-tight bg-background/70 border-primary/30 focus:border-primary/50 focus-visible:ring-0 rounded-xl w-full"
                         onClick={(e) => e.stopPropagation()}
                       />
                     ) : (
@@ -480,7 +480,7 @@ export function CollectionItemEditor({
                               <Input 
                                 ref={backgroundImageUrlInputRef}
                                 placeholder="Image URL (https://...)" 
-                                className="h-10 max-sm:h-11 pl-10 pr-12 text-xs bg-background/50 border-zinc-200 dark:border-border/40 focus:border-primary/50 focus-visible:ring-0 rounded-xl max-sm:rounded-[1rem] shadow-sm dark:shadow-none backdrop-blur-sm transition-all"
+                                className="h-10 max-sm:h-11 pl-10 pr-12 text-base sm:text-xs bg-background/50 border-zinc-200 dark:border-border/40 focus:border-primary/50 focus-visible:ring-0 rounded-xl max-sm:rounded-[1rem] shadow-sm dark:shadow-none backdrop-blur-sm transition-all"
                                 value={item.backgroundImageURL}
                                 onChange={(e) => onUpdate({ backgroundImageURL: e.target.value })}
                               />

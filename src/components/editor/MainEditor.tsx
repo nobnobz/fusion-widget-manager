@@ -601,7 +601,7 @@ export function MainEditor() {
                 onChange={(e) => setPastedJson(e.target.value)}
                 placeholder={isDraggingFile ? "Drop your JSON file here!" : "Paste your Fusion widget export, a JSON URL, or drag & drop a file here..."}
                 className={cn(
-                  "min-h-[148px] max-sm:min-h-[136px] font-mono text-xs bg-muted/40 border-border/80 rounded-[2rem] max-sm:rounded-[1.5rem] p-5 max-sm:p-4 focus-visible:ring-primary/20 transition-all leading-relaxed shadow-inner",
+                  "min-h-[148px] max-sm:min-h-[136px] font-mono text-base sm:text-xs bg-muted/40 border-border/80 rounded-[2rem] max-sm:rounded-[1.5rem] p-5 max-sm:p-4 focus-visible:ring-primary/20 transition-all leading-relaxed shadow-inner",
                   isDraggingFile && "border-primary/50 bg-primary/5 ring-4 ring-primary/10 shadow-lg shadow-primary/5"
                 )}
               />

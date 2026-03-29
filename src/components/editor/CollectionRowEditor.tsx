@@ -113,7 +113,7 @@ export function CollectionRowEditor({ widget, searchQuery = "" }: { widget: Coll
               id="title" 
               value={widget.title} 
               onChange={(e) => updateWidgetMeta(widget.id, { title: e.target.value })} 
-              className="h-10 max-sm:h-11 bg-muted/20 dark:bg-muted/10 border-zinc-200 dark:border-border/40 focus:border-primary/50 transition-all font-semibold px-4 rounded-xl max-sm:rounded-[1rem] shadow-sm dark:shadow-none flex-1 backdrop-blur-sm"
+              className="h-10 max-sm:h-11 bg-muted/20 dark:bg-muted/10 border-zinc-200 dark:border-border/40 focus:border-primary/50 transition-all font-semibold px-4 rounded-xl max-sm:rounded-[1rem] shadow-sm dark:shadow-none flex-1 backdrop-blur-sm text-base sm:text-sm"
               placeholder="e.g. Featured Content"
             />
         </div>
