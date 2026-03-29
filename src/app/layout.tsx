@@ -19,7 +19,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Widget Manager",
+  title: "Fusion Widget Manager",
   description: "A clean, visual editor for fusionWidgets JSON",
   icons: {
     icon: [
@@ -32,7 +32,7 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "Widget Manager",
+    title: "Fusion Widget Manager",
   },
 };
 

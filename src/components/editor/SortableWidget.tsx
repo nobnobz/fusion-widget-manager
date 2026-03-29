@@ -181,7 +181,7 @@ export function SortableWidget({
                   onChange={(e) => setEditTitle(e.target.value)}
                   onBlur={handleTitleSubmit}
                   onKeyDown={handleTitleKeyDown}
-                  className="h-9 py-0 px-3 text-sm font-bold tracking-tight bg-background/50 border-primary/20 focus:border-primary/40 focus-visible:ring-0 rounded-xl w-full max-w-[320px] backdrop-blur-sm shadow-inner"
+                  className="h-9 py-0 px-3 text-base sm:text-sm font-bold tracking-tight bg-background/50 border-primary/20 focus:border-primary/40 focus-visible:ring-0 rounded-xl w-full max-w-[320px] backdrop-blur-sm shadow-inner"
                   onClick={(e) => e.stopPropagation()}
                 />
               ) : (
@@ -296,13 +296,13 @@ export function SortableWidget({
                       onChange={(e) => setEditTitle(e.target.value)}
                       onBlur={handleTitleSubmit}
                       onKeyDown={handleTitleKeyDown}
-                      className="h-9 py-0 px-3 text-[13px] font-bold tracking-tight bg-background/60 border-primary/20 focus:border-primary/40 focus-visible:ring-0 rounded-xl w-full backdrop-blur-sm shadow-inner"
+                      className="h-9 py-0 px-3 text-base font-bold tracking-tight bg-background/60 border-primary/20 focus:border-primary/40 focus-visible:ring-0 rounded-xl w-full backdrop-blur-sm shadow-inner"
                       onClick={(e) => e.stopPropagation()}
                     />
                   ) : (
                     <button
                       type="button"
-                      className="flex w-full items-center gap-1.5 overflow-hidden text-left py-0.5"
+                      className="flex w-fit items-center gap-1.5 overflow-hidden text-left py-0.5"
                       onClick={startEditing}
                     >
                       <h3 className="truncate text-[14px] font-bold tracking-[-0.015em] text-foreground/95 leading-[1.15]">

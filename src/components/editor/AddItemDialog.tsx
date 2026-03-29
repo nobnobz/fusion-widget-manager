@@ -81,7 +81,7 @@ export function AddItemDialog({ onAdd, trigger }: AddItemDialogProps) {
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[560px] rounded-[2.5rem] border border-border/40 bg-background/95 p-0 overflow-hidden shadow-2xl backdrop-blur-2xl max-sm:w-[calc(100vw-1rem)] max-sm:max-w-[calc(100vw-1rem)] max-sm:rounded-[1.9rem]">
+      <DialogContent className="sm:max-w-[560px] rounded-[2.5rem] border border-border/40 bg-background/95 p-0 overflow-hidden shadow-2xl backdrop-blur-2xl">
         <div className="p-8 pt-10 max-sm:p-5 max-sm:pt-6">
           <DialogHeader className="space-y-4 items-start text-left">
             <div className="size-14 rounded-2xl bg-primary/5 border border-primary/10 flex items-center justify-center text-primary shadow-sm max-sm:size-12 max-sm:rounded-[1rem]">
@@ -104,7 +104,7 @@ export function AddItemDialog({ onAdd, trigger }: AddItemDialogProps) {
                 placeholder="e.g. Inception"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="h-11 max-sm:h-11 bg-transparent border-none focus-visible:ring-0 rounded-xl max-sm:rounded-[1rem] font-semibold px-4"
+                className="h-11 max-sm:h-11 bg-transparent border-none focus-visible:ring-0 rounded-xl max-sm:rounded-[1rem] font-semibold px-4 text-base sm:text-sm"
                 autoFocus
                 onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
               />
@@ -120,7 +120,7 @@ export function AddItemDialog({ onAdd, trigger }: AddItemDialogProps) {
                 placeholder="https://..."
                 value={backgroundImageURL}
                 onChange={(e) => setBackgroundImageURL(e.target.value)}
-                className="h-11 max-sm:h-11 bg-transparent border-none focus-visible:ring-0 rounded-xl max-sm:rounded-[1rem] px-4 pr-12 font-mono text-xs"
+                className="h-11 max-sm:h-11 bg-transparent border-none focus-visible:ring-0 rounded-xl max-sm:rounded-[1rem] px-4 pr-12 font-mono text-base sm:text-xs"
               />
               {backgroundImageURL && (
                 <button

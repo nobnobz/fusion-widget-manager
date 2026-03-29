@@ -1190,7 +1190,7 @@ function WidgetSelectionGridComponent({
       <main className="max-w-5xl mx-auto w-full px-6 max-sm:px-4 py-12 max-sm:py-6 max-sm:pb-[calc(env(safe-area-inset-bottom)+2rem)]">
         <div className="flex flex-col gap-3 mb-10 max-sm:mb-6 text-center sm:text-left">
           <div className="flex items-center justify-center sm:justify-start max-sm:justify-start">
-            <h1 className="text-4xl max-sm:text-[1.9rem] font-black tracking-tight text-foreground leading-none">Widget Manager</h1>
+            <h1 className="text-4xl max-sm:text-[1.9rem] font-black tracking-tight text-foreground leading-none">Fusion Widget Manager</h1>
           </div>
           <p className="text-[15px] max-sm:text-[13px] text-muted-foreground/80 font-medium max-w-2xl leading-relaxed max-sm:text-left">
             Organize and manage your library of Fusion widgets.
@@ -1305,7 +1305,7 @@ function WidgetSelectionGridComponent({
                 <Input
                   data-testid="widget-search"
                   placeholder="Search for widgets..."
-                  className="w-full h-12 max-sm:h-11 pl-12 max-sm:pl-10 pr-10 rounded-[2rem] max-sm:rounded-[1.25rem] border-none bg-transparent shadow-none focus-visible:ring-0 text-sm max-sm:text-[14px] font-semibold tracking-tight"
+                  className="w-full h-12 max-sm:h-11 pl-12 max-sm:pl-10 pr-10 rounded-[2rem] max-sm:rounded-[1.25rem] border-none bg-transparent shadow-none focus-visible:ring-0 text-base sm:text-sm font-semibold tracking-tight"
                   value={searchQuery}
                   onChange={(event) => setSearchQuery(event.target.value)}
                 />
@@ -1439,7 +1439,7 @@ function WidgetSelectionGridComponent({
           setCopiedAction(null);
         }}
       >
-        <DialogContent className="flex max-h-[92vh] max-w-2xl flex-col overflow-hidden rounded-[2.5rem] border border-border/40 bg-background/95 p-0 shadow-2xl backdrop-blur-2xl max-sm:h-[calc(100vh-1rem)] max-sm:max-h-[calc(100vh-1rem)] max-sm:w-[calc(100vw-1rem)] max-sm:max-w-[calc(100vw-1rem)] max-sm:rounded-[1.9rem]">
+        <DialogContent className="flex sm:max-h-[92vh] max-w-2xl flex-col overflow-hidden rounded-[2.5rem] border border-border/40 bg-background/95 p-0 shadow-2xl backdrop-blur-2xl">
           <div className="flex min-h-0 flex-1 flex-col p-8 pt-10 max-sm:p-5 max-sm:pt-6">
             <div className="min-h-0 flex-1 overflow-y-auto pr-1 custom-scrollbar">
             <DialogHeader className="space-y-4 items-start text-left">
@@ -2200,7 +2200,7 @@ function WidgetSelectionGridComponent({
       />
 
       <Dialog open={showTrash} onOpenChange={setShowTrash}>
-        <DialogContent className="max-w-2xl p-0 overflow-hidden border-border/40 shadow-2xl backdrop-blur-xl bg-background/95 dark:border-white/10 dark:bg-zinc-950/95 max-sm:w-[calc(100vw-1rem)] max-sm:max-w-[calc(100vw-1rem)] max-sm:rounded-[1.9rem]">
+        <DialogContent className="max-w-2xl p-0 overflow-hidden border-border/40 shadow-2xl backdrop-blur-xl bg-background/95 dark:border-white/10 dark:bg-zinc-950/95">
           <DialogHeader className="p-8 pb-4 max-sm:p-5 max-sm:pt-6 max-sm:pb-3">
             <div className="flex flex-col gap-1">
               <div className="mb-2 flex size-14 items-center justify-center self-start rounded-2xl border border-destructive/10 bg-destructive/10 text-destructive shadow-sm transition-all animate-in zoom-in-75 duration-300 dark:border-destructive/15 dark:bg-destructive/15 max-sm:size-12 max-sm:rounded-[1rem]">

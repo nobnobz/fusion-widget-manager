@@ -107,7 +107,7 @@ export function ManifestModal({ isOpen, onOpenChange }: ManifestModalProps) {
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px] rounded-[2.5rem] border border-border/40 bg-card/95 backdrop-blur-2xl shadow-2xl max-sm:w-[calc(100vw-1rem)] max-sm:max-w-[calc(100vw-1rem)] max-sm:rounded-[1.9rem]">
+      <DialogContent className="sm:max-w-[500px] rounded-[2.5rem] border border-border/40 bg-card/95 backdrop-blur-2xl shadow-2xl">
         <DialogHeader className="space-y-4 pt-4 max-sm:pt-2">
           <div className="size-14 rounded-2xl bg-primary/5 border border-primary/10 flex items-center justify-center text-primary mb-2 shadow-sm max-sm:size-12 max-sm:rounded-[1rem]">
             <Sparkles className="size-7 max-sm:size-6" />
@@ -158,7 +158,7 @@ export function ManifestModal({ isOpen, onOpenChange }: ManifestModalProps) {
                       data-testid="manifest-url-input"
                       ref={urlInputRef}
                       placeholder="https://aiometadata.fortheweak.cloud/manifest.json"
-                      className="pl-11 pr-14 h-12 max-sm:h-11 bg-transparent border-none text-foreground/88 placeholder:text-muted-foreground/40 focus-visible:ring-0 transition-all font-medium text-sm max-sm:text-[13px] dark:text-foreground/84 dark:placeholder:text-muted-foreground/34"
+                      className="pl-11 pr-14 h-12 max-sm:h-11 bg-transparent border-none text-foreground/88 placeholder:text-muted-foreground/40 focus-visible:ring-0 transition-all font-medium text-base sm:text-sm dark:text-foreground/84 dark:placeholder:text-muted-foreground/34"
                       value={url}
                       onChange={(e) => setUrl(e.target.value)}
                       onKeyDown={(e) => e.key === 'Enter' && handleLoad()}

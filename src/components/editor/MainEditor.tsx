@@ -1104,7 +1104,7 @@ export function MainEditor() {
 
       {/* How To Use Dialog */}
       <Dialog open={showHowToUse} onOpenChange={setShowHowToUse}>
-        <DialogContent className="max-w-2xl bg-white/95 dark:bg-black/90 backdrop-blur-2xl border-border/40 rounded-[2.5rem] p-0 shadow-2xl max-sm:w-[calc(100vw-1.25rem)] max-sm:max-w-[calc(100vw-1.25rem)] max-sm:rounded-[2rem]">
+        <DialogContent className="max-w-2xl bg-white/95 dark:bg-black/90 backdrop-blur-2xl border-border/40 rounded-[2.5rem] p-0 shadow-2xl">
           <div className="max-h-[85vh] overflow-y-auto custom-scrollbar">
           <DialogHeader className="space-y-3 p-8 pb-4 max-sm:px-4 max-sm:pb-3 max-sm:pt-4">
             <div className="size-12 rounded-[1.15rem] bg-primary/5 border border-primary/10 flex items-center justify-center text-primary shadow-sm max-sm:size-10 max-sm:rounded-[0.95rem]">
