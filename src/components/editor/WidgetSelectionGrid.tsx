@@ -531,7 +531,7 @@ function WidgetSelectionGridComponent({
 
         const rowCatalogKeys = widget.rowCatalogKeys.filter((catalogKey) => {
           const catalog = aiometadataCatalogMap.get(catalogKey);
-          if (!catalog) return false;
+          if (!catalog || !aiometadataSelectableCatalogKeys.has(catalogKey)) return false;
           if (!search) return true;
           if (widgetTitleMatches) return true;
           return [widget.widgetTitle, catalog.entry.name, catalog.entry.id, catalog.entry.type, catalog.source]
@@ -549,7 +549,7 @@ function WidgetSelectionGridComponent({
 
             const catalogKeys = item.catalogKeys.filter((catalogKey) => {
               const catalog = aiometadataCatalogMap.get(catalogKey);
-              if (!catalog) return false;
+              if (!catalog || !aiometadataSelectableCatalogKeys.has(catalogKey)) return false;
               if (!search) return true;
               if (widgetTitleMatches || itemNameMatches) return true;
               return [widget.widgetTitle, item.itemName, catalog.entry.name, catalog.entry.id, catalog.entry.type, catalog.source]
@@ -703,17 +703,17 @@ function WidgetSelectionGridComponent({
 
       const emptyItemSummary =
         fusionInvalidCatalogEmptiedItems > 0
-          ? `${formatCountLabel(fusionInvalidCatalogEmptiedItems, 'collection item', 'collection items')} can stay in the export without catalogs so you can assign them manually in Fusion.`
+          ? `${formatCountLabel(fusionInvalidCatalogEmptiedItems, 'collection item', 'collection items')} will remain in the export without catalogs so you can assign them manually in Fusion.`
           : null;
       const emptyModeRowSummary =
         fusionInvalidCatalogWidgetsStillSkippedInEmptyMode > 0
-          ? `${formatCountLabel(fusionInvalidCatalogWidgetsStillSkippedInEmptyMode, 'classic row', 'classic rows')} will still be skipped because Fusion requires a valid catalog there.`
+          ? `${formatCountLabel(fusionInvalidCatalogWidgetsStillSkippedInEmptyMode, 'classic row', 'classic rows')} will still be skipped because Fusion requires a valid catalog.`
           : null;
 
       return [
-        'Some AIOMetadata catalogs in this setup are invalid or missing.',
+        'Some AIOMetadata catalogs in this setup are missing or invalid.',
         '',
-        'Catalogs with the warning triangle should be fixed or removed first. If you are unsure whether all required catalogs are in your AIOMetadata setup, update the catalogs in the AIOMetadata section first.',
+        'Fix or remove catalogs marked with a warning triangle first. If you are unsure whether all required catalogs are included in your AIOMetadata setup, update the catalogs in the AIOMetadata section first.',
         '',
         skipSummaryParts.length > 0
           ? `If you skip invalid entries, ${skipSummaryParts.join(' and ')} will be removed from the Fusion export.`
@@ -746,9 +746,7 @@ function WidgetSelectionGridComponent({
           '',
           `Fusion has an Apple TV bug that can cause the app to crash when AIOMetadata setups are too large. It is recommended to stay below ${APPLE_TV_FUSION_CATALOG_LIMIT} total catalogs.`,
           '',
-          'This Fusion setup is already within that limit, but your AIOMetadata setup still contains many unused catalogs. It is recommended to delete your existing AIOMetadata catalogs and use the AIOMetadata Export tab to export the catalogs from this Fusion setup into AIOMetadata so the unused catalogs are removed.',
-          '',
-          'For the import in AIOMetadata, go to Catalogs > Import Setup and paste the exported catalogs.',
+          'This Fusion setup is already within that limit, but your AIOMetadata setup still contains unused catalogs. It is recommended to delete your existing AIOMetadata catalogs and use the AIOMetadata section to export only the used catalogs into AIOMetadata.',
           '',
           'Before installing this setup on Apple TV, delete the Fusion app and install it again.',
         ].join('\n');
@@ -2009,7 +2007,21 @@ function WidgetSelectionGridComponent({
                       )}
                     </div>
                     <div className="mt-4 max-w-4xl whitespace-pre-wrap break-words font-mono text-xs leading-relaxed text-foreground">
-                      {previewContent}
+                      {typeof previewContent === 'string' && previewContent.includes('AIOMetadata section') ? (
+                        <>
+                          {previewContent.split('AIOMetadata section')[0]}
+                          <button
+                            type="button"
+                            onClick={() => handleExportModeChange('aiometadata')}
+                            className="text-primary underline decoration-primary/30 underline-offset-4 transition-colors hover:text-primary/80 hover:decoration-primary/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 rounded-sm font-semibold"
+                          >
+                            AIOMetadata section
+                          </button>
+                          {previewContent.split('AIOMetadata section')[1]}
+                        </>
+                      ) : (
+                        previewContent
+                      )}
                     </div>
                   </div>
                 ) : (
@@ -2063,8 +2075,7 @@ function WidgetSelectionGridComponent({
               ) : exportStage === 'fusion-needs-appletv-device-check' ? (
                 <>
                   <Button
-                    variant="secondary"
-                    className="h-11 rounded-xl max-sm:rounded-[1rem] px-6 text-[11px] font-bold uppercase tracking-wider transition-all sm:w-40"
+                    className="h-11 rounded-xl max-sm:rounded-[1rem] px-6 text-[11px] font-bold uppercase tracking-wider shadow-lg shadow-primary/20 transition-all sm:w-40"
                     onClick={() => {
                       if (fusionAppleTvCatalogRiskFingerprint) {
                         setAppleTvDeviceDecision({
@@ -2078,7 +2089,7 @@ function WidgetSelectionGridComponent({
                     No
                   </Button>
                   <Button
-                    className="h-11 rounded-xl max-sm:rounded-[1rem] px-6 text-[11px] font-bold uppercase tracking-wider shadow-lg shadow-primary/20 transition-all sm:w-48"
+                    className="h-11 rounded-xl max-sm:rounded-[1rem] px-6 text-[11px] font-bold uppercase tracking-wider shadow-lg shadow-primary/20 transition-all sm:w-40"
                     onClick={() => {
                       if (fusionAppleTvCatalogRiskFingerprint) {
                         setAppleTvDeviceDecision({
@@ -2089,7 +2100,7 @@ function WidgetSelectionGridComponent({
                       }
                     }}
                   >
-                    Yes, Apple TV
+                    Yes
                   </Button>
                 </>
               ) : exportStage === 'fusion-needs-appletv-catalog-warning' ? (
@@ -2115,13 +2126,6 @@ function WidgetSelectionGridComponent({
               ) : exportStage === 'omni-needs-aiom-bridge' ? (
                 <>
                   <Button
-                    variant="secondary"
-                    className="h-11 rounded-xl max-sm:rounded-[1rem] px-6 text-[11px] font-bold uppercase tracking-wider transition-all sm:w-32"
-                    onClick={() => setShowPreview(false)}
-                  >
-                    Skip
-                  </Button>
-                  <Button
                     className="h-11 rounded-xl max-sm:rounded-[1rem] px-6 text-[11px] font-bold uppercase tracking-wider shadow-lg shadow-primary/20 transition-all sm:w-52"
                     onClick={handleCopyMissingCatalogs}
                   >
@@ -2136,14 +2140,15 @@ function WidgetSelectionGridComponent({
                     variant={hasCopiedRequiredTraktCatalogs && !!nativeTraktBridgeState.fingerprint ? 'default' : 'secondary'}
                     className="h-11 rounded-xl max-sm:rounded-[1rem] px-6 text-[11px] font-bold uppercase tracking-wider transition-all sm:w-36"
                     onClick={() => {
-                      if (nativeTraktBridgeState.fingerprint) {
+                      if (hasCopiedRequiredTraktCatalogs && nativeTraktBridgeState.fingerprint) {
                         setConfirmedBridgeFingerprint(nativeTraktBridgeState.fingerprint);
                         setCopiedAction(null);
+                      } else {
+                        setShowPreview(false);
                       }
                     }}
-                    disabled={!hasCopiedRequiredTraktCatalogs || !nativeTraktBridgeState.fingerprint}
                   >
-                    Continue
+                    {hasCopiedRequiredTraktCatalogs && !!nativeTraktBridgeState.fingerprint ? 'Continue' : 'Skip'}
                   </Button>
                 </>
               ) : exportMode === 'aiometadata' ? (
