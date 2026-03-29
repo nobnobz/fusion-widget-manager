@@ -233,8 +233,38 @@ export function SortableWidget({
           </div>
         </div>
 
-        <div className="hidden sm:flex items-center gap-4 shrink-0">
-          <div className="flex items-center gap-1.5 mr-2">
+        <div className="hidden sm:flex items-center gap-1.5 shrink-0">
+          <div className="flex items-center gap-1.5">
+            <div className={cn(
+              "size-10 flex items-center justify-center rounded-xl bg-muted/5 text-muted-foreground/20 transition-all duration-500 shadow-sm border border-transparent dark:bg-zinc-950/55 dark:text-zinc-500/70 dark:border-white/5 cursor-pointer",
+              isSelected ? "rotate-90 bg-primary/10 text-primary opacity-100 border-primary/10 dark:bg-primary/15 dark:border-primary/20" : "group-hover:text-primary/40 group-hover:bg-primary/5 dark:group-hover:bg-primary/10 dark:group-hover:text-primary/70"
+            )}
+              onClick={(e) => {
+                e.stopPropagation();
+                onSelect(widget.id);
+              }}
+              title={isSelected ? "Collapse widget" : "Expand widget"}
+            >
+              <ChevronRight className="size-4" />
+            </div>
+
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="size-10 rounded-2xl border border-border/40 bg-background/60 text-muted-foreground/60 shadow-sm transition-all hover:border-primary/20 hover:bg-primary/5 hover:text-primary dark:border-white/10 dark:bg-zinc-950/70 dark:text-zinc-300/75 dark:hover:border-primary/20 dark:hover:bg-primary/10 dark:hover:text-primary/90"
+              onClick={(e) => {
+                e.stopPropagation();
+                startEditing(e);
+              }}
+              title="Rename widget"
+            >
+              <Pencil className="size-3.5" />
+            </Button>
+          </div>
+
+          <div className="w-px h-4 bg-border/40 mx-1.5 shrink-0" />
+
+          <div className="flex items-center gap-1.5">
             <Button 
               variant="ghost" 
               size="icon" 
@@ -253,28 +283,6 @@ export function SortableWidget({
             >
               <Trash2 className="size-4" />
             </Button>
-          </div>
-
-          <div className="hidden sm:flex items-center gap-1.5 border-l border-border/40 pl-4">
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="size-10 rounded-2xl border border-border/40 bg-background/60 text-muted-foreground/60 shadow-sm transition-all hover:border-primary/20 hover:bg-primary/5 hover:text-primary dark:border-white/10 dark:bg-zinc-950/70 dark:text-zinc-300/75 dark:hover:border-primary/20 dark:hover:bg-primary/10 dark:hover:text-primary/90"
-              onClick={(e) => {
-                e.stopPropagation();
-                startEditing(e);
-              }}
-              title="Rename widget"
-            >
-              <Pencil className="size-4" />
-            </Button>
-
-            <div className={cn(
-              "size-10 flex items-center justify-center rounded-xl bg-muted/5 text-muted-foreground/20 transition-all duration-500 shadow-sm border border-transparent dark:bg-zinc-950/55 dark:text-zinc-500/70 dark:border-white/5",
-              isSelected ? "rotate-90 bg-primary/10 text-primary opacity-100 border-primary/10 dark:bg-primary/15 dark:border-primary/20" : "group-hover:text-primary/40 group-hover:bg-primary/5 dark:group-hover:bg-primary/10 dark:group-hover:text-primary/70"
-            )}>
-              <ChevronRight className="size-4" />
-            </div>
           </div>
         </div>
 
