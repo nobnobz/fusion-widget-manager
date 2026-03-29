@@ -171,6 +171,8 @@ export function SortableWidget({
             <GripVertical className="size-4" />
           </div>
 
+          <div className="h-8 w-px bg-border/40 shrink-0" />
+
           {/* Title & Metadata */}
           <div className="flex flex-col min-w-0 flex-1 py-1">
             <div className="min-w-0 group/title flex items-center gap-2">
@@ -185,19 +187,12 @@ export function SortableWidget({
                   onClick={(e) => e.stopPropagation()}
                 />
               ) : (
-                <div 
-                  className="flex items-center gap-3 group/text overflow-hidden cursor-pointer"
-                  onClick={startEditing}
-                >
                   <h3 className="text-[17px] font-black tracking-tight text-foreground truncate drop-shadow-sm">
                     {hasInvalidCatalog && (
                       <AlertTriangle className="size-4 text-amber-500 animate-pulse shrink-0 inline mr-2" />
                     )}
                     {widget.title}
                   </h3>
-                  <div className="size-6 rounded-lg bg-primary/10 flex items-center justify-center opacity-0 group-hover/text:opacity-100 transition-all duration-300 shrink-0 scale-75 group-hover:scale-100">
-                    <Pencil className="size-3 text-primary" />
-                  </div>
                 </div>
               )}
             </div>
@@ -239,7 +234,6 @@ export function SortableWidget({
           </div>
         </div>
 
-        {/* Right: Actions & Expand - Desktop Only */}
         <div className="hidden sm:flex items-center gap-4 shrink-0">
           <div className="flex items-center gap-1.5 mr-2">
             <Button 
@@ -262,11 +256,26 @@ export function SortableWidget({
             </Button>
           </div>
 
-          <div className={cn(
-            "size-10 flex items-center justify-center rounded-xl bg-muted/5 text-muted-foreground/20 transition-all duration-500 shadow-sm border border-transparent dark:bg-zinc-950/55 dark:text-zinc-500/70 dark:border-white/5",
-            isSelected ? "rotate-90 bg-primary/10 text-primary opacity-100 border-primary/10 dark:bg-primary/15 dark:border-primary/20" : "group-hover:text-primary/40 group-hover:bg-primary/5 dark:group-hover:bg-primary/10 dark:group-hover:text-primary/70"
-          )}>
-            <ChevronRight className="size-4" />
+          <div className="hidden sm:flex items-center gap-1.5 border-l border-border/40 pl-4">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="size-10 rounded-2xl border border-border/40 bg-background/60 text-muted-foreground/60 shadow-sm transition-all hover:border-primary/20 hover:bg-primary/5 hover:text-primary dark:border-white/10 dark:bg-zinc-950/70 dark:text-zinc-300/75 dark:hover:border-primary/20 dark:hover:bg-primary/10 dark:hover:text-primary/90"
+              onClick={(e) => {
+                e.stopPropagation();
+                startEditing(e);
+              }}
+              title="Rename widget"
+            >
+              <Pencil className="size-4" />
+            </Button>
+
+            <div className={cn(
+              "size-10 flex items-center justify-center rounded-xl bg-muted/5 text-muted-foreground/20 transition-all duration-500 shadow-sm border border-transparent dark:bg-zinc-950/55 dark:text-zinc-500/70 dark:border-white/5",
+              isSelected ? "rotate-90 bg-primary/10 text-primary opacity-100 border-primary/10 dark:bg-primary/15 dark:border-primary/20" : "group-hover:text-primary/40 group-hover:bg-primary/5 dark:group-hover:bg-primary/10 dark:group-hover:text-primary/70"
+            )}>
+              <ChevronRight className="size-4" />
+            </div>
           </div>
         </div>
 

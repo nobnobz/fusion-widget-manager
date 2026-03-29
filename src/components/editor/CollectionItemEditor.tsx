@@ -201,11 +201,14 @@ export function CollectionItemEditor({
             <div 
                 {...attributes} 
                 {...listeners}
-                className="text-muted-foreground/30 hover:text-primary hover:bg-primary/5 transition-all cursor-grab active:cursor-grabbing p-1.5 rounded-lg shrink-0 touch-none select-none"
+                className="size-9 flex items-center justify-center rounded-xl text-muted-foreground/20 hover:text-primary hover:bg-primary/10 transition-all cursor-grab active:cursor-grabbing border border-transparent hover:border-primary/10 shrink-0 shadow-sm touch-none select-none"
                 onClick={(e) => e.stopPropagation()}
               >
-                <GripVertical className="size-3.5" />
+                <GripVertical className="size-4" />
               </div>
+
+              <div className="h-6 w-px bg-border/40 shrink-0 mx-2" />
+
               <div className="flex-1 min-w-0 flex items-center gap-2">
                 {hasInvalidCatalog && (
                   <AlertTriangle className="size-3.5 text-amber-500 animate-pulse shrink-0" />
@@ -237,42 +240,50 @@ export function CollectionItemEditor({
                       <span className="text-sm font-bold tracking-tight text-foreground/90 truncate">
                         {item.name || "Untitled Item"}
                       </span>
-                      <div 
-                        className="p-1 rounded-md hover:bg-primary/10 cursor-pointer group-hover/text:opacity-100 transition-all opacity-0"
-                        onClick={startEditing}
-                        title="Rename Item"
-                      >
-                        <Pencil className="size-3 text-primary shrink-0" />
-                      </div>
                     </div>
                   )}
                 </div>
               </div>
             </div>
 
-            <div className="flex items-center gap-1 ml-3 shrink-0">
+            <div className="flex items-center gap-1.5 ml-3 shrink-0">
               <Button 
                 variant="ghost" 
                 size="icon" 
                 className={cn(
-                  "size-8 rounded-xl border border-border/40 bg-background/55 shadow-sm transition-all dark:border-white/10 dark:bg-zinc-950/70",
-                  isExpanded ? "bg-primary/10 text-primary rotate-90 border-primary/20 dark:bg-primary/12 dark:border-primary/25" : "text-muted-foreground/55 hover:bg-primary/5 hover:text-primary hover:border-primary/20 dark:text-zinc-300/75 dark:hover:bg-primary/10 dark:hover:text-primary/90 dark:hover:border-primary/20"
+                  "size-9 rounded-xl border border-border/50 bg-background/60 transition-all shadow-sm shrink-0 hover:border-primary/20 hover:bg-primary/5 hover:text-primary",
+                  isExpanded ? "rotate-90 bg-primary/10 text-primary border-primary/20 shadow-inner" : "text-muted-foreground/60"
                 )}
                 onClick={(e) => {
                   e.stopPropagation();
                   onToggleExpand();
                 }}
-                title={isExpanded ? "Collapse Item" : "Expand Item"}
+                title={isExpanded ? "Collapse item" : "Expand item"}
               >
-                <ChevronRight className="size-3.5" />
+                <ChevronRight className="size-4" />
               </Button>
-              <div className="w-px h-4 bg-border mx-1" />
+
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="size-9 rounded-xl border border-border/50 bg-background/60 text-muted-foreground/60 shadow-sm transition-all hover:border-primary/20 hover:bg-primary/5 hover:text-primary"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  startEditing(e);
+                }}
+                title="Rename item"
+              >
+                <Pencil className="size-3.5" />
+              </Button>
+
+              <div className="w-px h-4 bg-border/40 mx-1.5 shrink-0" />
+
               <Button 
                 variant="ghost" 
                 size="icon" 
                 className={cn(
-                  "size-8 rounded-xl border border-border/40 bg-background/55 shadow-sm transition-all dark:border-white/10 dark:bg-zinc-950/70",
-                  item.hideTitle ? "text-muted-foreground/50 hover:bg-primary/5 hover:text-primary hover:border-primary/20 dark:text-zinc-300/75 dark:hover:bg-primary/10 dark:hover:text-primary/90 dark:hover:border-primary/20" : "text-primary bg-primary/5 border-primary/20 dark:bg-primary/12 dark:border-primary/25"
+                  "size-9 rounded-xl border border-border/50 bg-background/60 shadow-sm transition-all hover:border-primary/20 hover:bg-primary/5 hover:text-primary",
+                  item.hideTitle ? "text-muted-foreground/50" : "text-primary bg-primary/5 border-primary/20"
                 )}
                 onClick={(e) => {
                    e.stopPropagation();
@@ -280,10 +291,10 @@ export function CollectionItemEditor({
                 }}
                 title={item.hideTitle ? "Show Title" : "Hide Title"}
               >
-                  {item.hideTitle ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
+                  {item.hideTitle ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
               </Button>
-              <Button variant="ghost" size="icon" className="size-8 rounded-xl border border-border/40 bg-background/55 text-destructive/55 shadow-sm transition-all hover:border-destructive/20 hover:text-destructive hover:bg-destructive/10 dark:border-white/10 dark:bg-zinc-950/70 dark:text-destructive/75 dark:hover:border-destructive/20 dark:hover:bg-destructive/12" onClick={(e) => { e.stopPropagation(); onDelete(); }} title="Delete Item">
-                <Trash2 className="size-3.5" />
+              <Button variant="ghost" size="icon" className="size-9 rounded-xl border border-border/50 bg-background/60 text-destructive/55 shadow-sm transition-all hover:border-destructive/20 hover:text-destructive hover:bg-destructive/10" onClick={(e) => { e.stopPropagation(); onDelete(); }} title="Delete Item">
+                <Trash2 className="size-4" />
               </Button>
             </div>
           </div>
