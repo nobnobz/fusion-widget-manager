@@ -232,13 +232,18 @@ export function CollectionItemEditor({
                     />
                   ) : (
                     <div 
-                      className="flex items-center gap-2 group/text overflow-hidden cursor-pointer"
-                      onClick={startEditing}
+                      className="flex items-center gap-2 group/text overflow-hidden"
                     >
                       <span className="text-sm font-bold tracking-tight text-foreground/90 truncate">
                         {item.name || "Untitled Item"}
                       </span>
-                      <Pencil className="size-3 text-primary opacity-0 group-hover/text:opacity-40 transition-opacity shrink-0" />
+                      <div 
+                        className="p-1 rounded-md hover:bg-primary/10 cursor-pointer group-hover/text:opacity-100 transition-all opacity-0"
+                        onClick={startEditing}
+                        title="Rename Item"
+                      >
+                        <Pencil className="size-3 text-primary shrink-0" />
+                      </div>
                     </div>
                   )}
                 </div>
@@ -321,16 +326,19 @@ export function CollectionItemEditor({
                         onClick={(e) => e.stopPropagation()}
                       />
                     ) : (
-                      <button
-                        type="button"
-                        className="flex w-full items-start gap-2 overflow-hidden text-left"
-                        onClick={startEditing}
+                      <div
+                        className="flex w-full items-start justify-between gap-2 overflow-hidden text-left"
                       >
                         <span className="truncate text-[15px] font-bold tracking-tight text-foreground/90 leading-tight">
                           {item.name || "Untitled Item"}
                         </span>
-                        <Pencil className="mt-0.5 size-3 text-primary/70 shrink-0" />
-                      </button>
+                        <div 
+                          className="flex size-7 items-center justify-center rounded-lg bg-primary/5 border border-primary/10 active:scale-90 transition-all shrink-0"
+                          onClick={startEditing}
+                        >
+                          <Pencil className="size-3.5 text-primary" />
+                        </div>
+                      </div>
                     )}
                   </div>
                   {hasNativeTraktSource && (
