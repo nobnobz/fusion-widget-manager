@@ -193,7 +193,6 @@ export function SortableWidget({
                     )}
                     {widget.title}
                   </h3>
-                </div>
               )}
             </div>
 
