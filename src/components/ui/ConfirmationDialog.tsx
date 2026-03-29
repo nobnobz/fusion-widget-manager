@@ -48,7 +48,7 @@ export function ConfirmationDialog({
         contentClassName
       )}>
         <div className="p-8 pt-10 max-sm:p-5 max-sm:pt-6">
-          <DialogHeader className="space-y-4 items-start text-left">
+          <DialogHeader className="space-y-6 items-start text-left">
             <div className={cn(
               "size-14 rounded-2xl flex items-center justify-center border shadow-sm transition-all animate-in zoom-in-75 duration-300 max-sm:size-12 max-sm:rounded-[1rem]",
               isDanger 

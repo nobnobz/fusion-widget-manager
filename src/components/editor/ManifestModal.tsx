@@ -108,8 +108,8 @@ export function ManifestModal({ isOpen, onOpenChange }: ManifestModalProps) {
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px] rounded-[2.5rem] border border-border/40 bg-card/95 backdrop-blur-2xl shadow-2xl">
-        <DialogHeader className="space-y-4 items-start text-left pt-4 max-sm:pt-2">
-          <div className="size-14 rounded-2xl bg-primary/5 border border-primary/10 flex items-center justify-center text-primary mb-2 shadow-sm max-sm:size-12 max-sm:rounded-[1rem]">
+        <DialogHeader className="space-y-6 items-start text-left pt-4 max-sm:pt-2">
+          <div className="size-14 rounded-2xl bg-primary/5 border border-primary/10 flex items-center justify-center text-primary shadow-sm max-sm:size-12 max-sm:rounded-[1rem]">
             <Sparkles className="size-7 max-sm:size-6" />
           </div>
           <div className="space-y-1">

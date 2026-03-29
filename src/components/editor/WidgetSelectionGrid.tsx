@@ -1442,7 +1442,7 @@ function WidgetSelectionGridComponent({
         <DialogContent className="flex sm:max-h-[92vh] max-w-2xl flex-col overflow-hidden rounded-[2.5rem] border border-border/40 bg-background/95 p-0 shadow-2xl backdrop-blur-2xl">
           <div className="flex min-h-0 flex-1 flex-col p-8 pt-10 max-sm:p-5 max-sm:pt-6">
             <div className="min-h-0 flex-1 overflow-y-auto pr-1 custom-scrollbar">
-            <DialogHeader className="space-y-4 items-start text-left">
+            <DialogHeader className="space-y-6 items-start text-left">
               <div className="size-14 rounded-2xl bg-primary/5 border border-primary/10 flex items-center justify-center text-primary shadow-sm max-sm:size-12 max-sm:rounded-[1rem]">
                 <FileJson2 className="size-7 max-sm:size-6" />
               </div>
@@ -2201,7 +2201,7 @@ function WidgetSelectionGridComponent({
 
       <Dialog open={showTrash} onOpenChange={setShowTrash}>
         <DialogContent className="max-w-2xl p-0 overflow-hidden border-border/40 shadow-2xl backdrop-blur-xl bg-background/95 dark:border-white/10 dark:bg-zinc-950/95">
-          <DialogHeader className="space-y-4 items-start text-left p-8 pb-4 max-sm:p-5 max-sm:pt-6 max-sm:pb-3">
+          <DialogHeader className="space-y-6 items-start text-left p-8 pb-4 max-sm:p-5 max-sm:pt-6 max-sm:pb-3">
             <div className="size-14 rounded-2xl border border-destructive/10 bg-destructive/10 text-destructive shadow-sm flex items-center justify-center transition-all animate-in zoom-in-75 duration-300 dark:border-destructive/15 dark:bg-destructive/15 max-sm:size-12 max-sm:rounded-[1rem]">
               <Trash2 className="size-7 max-sm:size-6" />
             </div>
