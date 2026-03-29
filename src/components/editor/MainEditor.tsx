@@ -984,7 +984,7 @@ export function MainEditor() {
           overlayClassName="z-[70]"
           className="z-[71] sm:max-w-[460px] rounded-[2.25rem] border border-border/40 bg-card/95 p-0 backdrop-blur-2xl shadow-2xl overflow-hidden max-sm:w-[calc(100vw-1.25rem)] max-sm:max-w-[calc(100vw-1.25rem)] max-sm:rounded-[2rem]"
         >
-          <div className="p-8 pt-10 max-sm:px-4 max-sm:pb-4 max-sm:pt-4">
+          <div className="p-8 pt-10 max-sm:p-5 max-sm:pt-6">
             <DialogHeader className="space-y-6 items-start pr-12 text-left max-sm:space-y-4">
               <div className="size-14 rounded-2xl border border-primary/10 bg-primary/5 text-primary shadow-sm flex items-center justify-center max-sm:size-12 max-sm:rounded-[1rem]">
                 <Download className="size-7 max-sm:size-6" />
@@ -1106,19 +1106,21 @@ export function MainEditor() {
       <Dialog open={showHowToUse} onOpenChange={setShowHowToUse}>
         <DialogContent className="max-w-2xl bg-white/95 dark:bg-black/90 backdrop-blur-2xl border-border/40 rounded-[2.5rem] p-0 shadow-2xl">
           <div className="max-h-[85vh] overflow-y-auto custom-scrollbar">
-          <DialogHeader className="space-y-6 items-start text-left p-8 pb-4 max-sm:px-4 max-sm:pb-3 max-sm:pt-4">
-            <div className="size-14 rounded-2xl bg-primary/5 border border-primary/10 flex items-center justify-center text-primary shadow-sm max-sm:size-12 max-sm:rounded-[1rem]">
-              <Book className="size-7 max-sm:size-6" />
-            </div>
-            <div className="space-y-1">
-              <DialogTitle className="text-2xl font-black tracking-tight max-sm:text-xl">
-                How To Use
-              </DialogTitle>
-              <DialogDescription className="text-muted-foreground/60 text-xs font-medium leading-relaxed max-sm:text-[11px]">
-                Step-by-step setup for Fusion Widget Manager.
-              </DialogDescription>
-            </div>
-          </DialogHeader>
+          <div className="p-8 pt-10 max-sm:p-5 max-sm:pt-6">
+            <DialogHeader className="space-y-6 items-start text-left">
+              <div className="size-14 rounded-2xl bg-primary/5 border border-primary/10 flex items-center justify-center text-primary shadow-sm max-sm:size-12 max-sm:rounded-[1rem]">
+                <Book className="size-7 max-sm:size-6" />
+              </div>
+              <div className="space-y-1">
+                <DialogTitle className="text-2xl font-black tracking-tight max-sm:text-xl">
+                  How To Use
+                </DialogTitle>
+                <DialogDescription className="text-muted-foreground/60 text-xs font-medium leading-relaxed max-sm:text-[11px]">
+                  Step-by-step setup for Fusion Widget Manager.
+                </DialogDescription>
+              </div>
+            </DialogHeader>
+          </div>
           
           <div className="px-8 pb-8 max-sm:px-4 max-sm:pb-4">
             <div className="mx-auto max-w-[680px] space-y-3.5 max-sm:space-y-3">

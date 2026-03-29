@@ -2201,19 +2201,21 @@ function WidgetSelectionGridComponent({
 
       <Dialog open={showTrash} onOpenChange={setShowTrash}>
         <DialogContent className="max-w-2xl p-0 overflow-hidden border-border/40 shadow-2xl backdrop-blur-xl bg-background/95 dark:border-white/10 dark:bg-zinc-950/95">
-          <DialogHeader className="space-y-6 items-start text-left p-8 pb-4 max-sm:p-5 max-sm:pt-6 max-sm:pb-3">
-            <div className="size-14 rounded-2xl border border-destructive/10 bg-destructive/10 text-destructive shadow-sm flex items-center justify-center transition-all animate-in zoom-in-75 duration-300 dark:border-destructive/15 dark:bg-destructive/15 max-sm:size-12 max-sm:rounded-[1rem]">
-              <Trash2 className="size-7 max-sm:size-6" />
-            </div>
-            <div className="space-y-1">
-              <DialogTitle className="text-2xl font-black tracking-tight max-sm:text-xl">
-                Trash
-              </DialogTitle>
-              <DialogDescription className="text-muted-foreground/60 text-xs font-medium leading-relaxed max-sm:text-[11px]">
-                Deleted widgets and collection items stay here in local storage until you restore them or empty the trash.
-              </DialogDescription>
-            </div>
-          </DialogHeader>
+          <div className="p-8 pt-10 max-sm:p-5 max-sm:pt-6">
+            <DialogHeader className="space-y-6 items-start text-left">
+              <div className="size-14 rounded-2xl border border-destructive/10 bg-destructive/10 text-destructive shadow-sm flex items-center justify-center transition-all animate-in zoom-in-75 duration-300 dark:border-destructive/15 dark:bg-destructive/15 max-sm:size-12 max-sm:rounded-[1rem]">
+                <Trash2 className="size-7 max-sm:size-6" />
+              </div>
+              <div className="space-y-1">
+                <DialogTitle className="text-2xl font-black tracking-tight max-sm:text-xl">
+                  Trash
+                </DialogTitle>
+                <DialogDescription className="text-muted-foreground/60 text-xs font-medium leading-relaxed max-sm:text-[11px]">
+                  Deleted widgets and collection items stay here in local storage until you restore them or empty the trash.
+                </DialogDescription>
+              </div>
+            </DialogHeader>
+          </div>
 
           <div className="px-8 pb-8 max-sm:px-5 max-sm:pb-5">
             <div className="flex items-center justify-between mb-4">

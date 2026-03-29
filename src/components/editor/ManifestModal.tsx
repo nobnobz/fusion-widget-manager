@@ -107,27 +107,28 @@ export function ManifestModal({ isOpen, onOpenChange }: ManifestModalProps) {
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px] rounded-[2.5rem] border border-border/40 bg-card/95 backdrop-blur-2xl shadow-2xl">
-        <DialogHeader className="space-y-6 items-start text-left pt-4 max-sm:pt-2">
-          <div className="size-14 rounded-2xl bg-primary/5 border border-primary/10 flex items-center justify-center text-primary shadow-sm max-sm:size-12 max-sm:rounded-[1rem]">
-            <Sparkles className="size-7 max-sm:size-6" />
-          </div>
-          <div className="space-y-1">
-            <DialogTitle className="text-2xl font-black tracking-tight max-sm:text-xl">
-              {isManual ? 'Manual Manifest Sync' : 'AIOMetadata Setup'}
-            </DialogTitle>
-            <DialogDescription className="text-muted-foreground/60 text-xs font-medium leading-relaxed max-sm:text-[11px]">
-              {isManual 
-                ? 'Paste your AIOMetadata manifest JSON below to sync catalogs. This bypasses CORS and connection issues.'
-                : 'Enter your AIOMetadata manifest URL below to automatically sync your catalogs and update placeholders.'}
-            </DialogDescription>
-          </div>
-        </DialogHeader>
+      <DialogContent className="sm:max-w-[500px] rounded-[2.5rem] border border-border/40 bg-card/95 backdrop-blur-2xl shadow-2xl p-0 overflow-hidden">
+        <div className="p-8 pt-10 max-sm:p-5 max-sm:pt-6">
+          <DialogHeader className="space-y-6 items-start text-left">
+            <div className="size-14 rounded-2xl bg-primary/5 border border-primary/10 flex items-center justify-center text-primary shadow-sm max-sm:size-12 max-sm:rounded-[1rem]">
+              <Sparkles className="size-7 max-sm:size-6" />
+            </div>
+            <div className="space-y-1">
+              <DialogTitle className="text-2xl font-black tracking-tight max-sm:text-xl">
+                {isManual ? 'Manual Manifest Sync' : 'AIOMetadata Setup'}
+              </DialogTitle>
+              <DialogDescription className="text-muted-foreground/60 text-xs font-medium leading-relaxed max-sm:text-[11px]">
+                {isManual 
+                  ? 'Paste your AIOMetadata manifest JSON below to sync catalogs. This bypasses CORS and connection issues.'
+                  : 'Enter your AIOMetadata manifest URL below to automatically sync your catalogs and update placeholders.'}
+              </DialogDescription>
+            </div>
+          </DialogHeader>
 
-        <div className="py-6 max-sm:py-5">
-          {!isManual ? (
-            <div className="space-y-4">
-              {manifestUrl && (
+          <div className="py-6 max-sm:py-5">
+            {!isManual ? (
+              <div className="space-y-4">
+                {manifestUrl && (
                 <div className="flex items-center justify-between gap-3 rounded-2xl border border-primary/10 bg-primary/5 px-4 py-2.5">
                   <div className="min-w-0">
                     <p className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.16em] text-primary/80">
