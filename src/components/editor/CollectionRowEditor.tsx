@@ -3,8 +3,6 @@
 import { useState } from 'react';
 import { useConfig } from '@/context/ConfigContext';
 import { CollectionRowWidget, CollectionItem } from '@/lib/types/widget';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Plus, ListTree, Layers, SortAsc, SortDesc } from 'lucide-react';
 

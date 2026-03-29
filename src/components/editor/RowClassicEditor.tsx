@@ -2,8 +2,6 @@ import { DataSourceEditor } from './DataSourceEditor';
 import { useConfig } from '@/context/ConfigContext';
 import { AIOMetadataDataSource, NativeTraktDataSource, RowClassicWidget } from '@/lib/types/widget';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
 import { Layers } from 'lucide-react';
 import { isNativeTraktDataSource } from '@/lib/widget-domain';
 import { TraktSourceCard } from './TraktSourceCard';
