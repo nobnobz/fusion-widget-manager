@@ -106,24 +106,6 @@ export function CollectionRowEditor({ widget, searchQuery = "" }: { widget: Coll
 
   return (
     <div className="space-y-6 max-sm:space-y-4 animate-in fade-in slide-in-from-top-4 duration-500">
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-end gap-4 max-sm:gap-3">
-        <div className="flex-1 space-y-2.5 max-sm:space-y-2">
-          <Label htmlFor="title" className="text-xs max-sm:text-[10px] font-bold uppercase tracking-wider text-muted-foreground/60 ml-1">Widget Title</Label>
-            <Input 
-              id="title" 
-              value={widget.title} 
-              onChange={(e) => updateWidgetMeta(widget.id, { title: e.target.value })} 
-              className="h-10 max-sm:h-11 bg-muted/20 dark:bg-muted/10 border-zinc-200 dark:border-border/40 focus:border-primary/50 transition-all font-semibold px-4 rounded-xl max-sm:rounded-[1rem] shadow-sm dark:shadow-none flex-1 backdrop-blur-sm text-base sm:text-sm"
-              placeholder="e.g. Featured Content"
-            />
-        </div>
-        <div className="max-sm:w-full max-sm:[&>button]:w-full">
-          <AddItemDialog onAdd={handleAddItem} />
-        </div>
-      </div>
-
-      <div className="h-px bg-border w-full opacity-50" />
-
       <div className="space-y-4 max-sm:space-y-3">
         <div className="flex items-center justify-between px-1 max-sm:flex-col max-sm:items-stretch max-sm:gap-2.5 max-sm:px-0">
           <h3 className="text-xs max-sm:text-[10px] font-bold uppercase tracking-wider text-muted-foreground/50 flex items-center gap-2">
@@ -131,32 +113,40 @@ export function CollectionRowEditor({ widget, searchQuery = "" }: { widget: Coll
             Items ({filteredItems.length})
           </h3>
 
-          <div className="flex items-center gap-1 max-sm:flex-wrap max-sm:justify-between">
+          <div className="flex items-center gap-1.5 max-sm:flex-wrap max-sm:justify-between">
             {searchQuery && (
               <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground/50 mr-2 max-sm:order-3 max-sm:mr-0 max-sm:w-full">
                 Reorder disabled while searching
               </span>
             )}
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="h-8 max-sm:flex-1 px-2.5 text-xs max-sm:text-[10px] font-bold uppercase tracking-wider text-muted-foreground/60 hover:text-primary hover:bg-primary/5 transition-all rounded-lg max-sm:rounded-xl border border-transparent hover:border-primary/10"
-              onClick={() => handleSort('asc')}
-              title="Sort A-Z"
-            >
-              <SortAsc className="size-3.5 mr-1.5" />
-              A-Z
-            </Button>
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="h-8 max-sm:flex-1 px-2.5 text-xs max-sm:text-[10px] font-bold uppercase tracking-wider text-muted-foreground/60 hover:text-primary hover:bg-primary/5 transition-all rounded-lg max-sm:rounded-xl border border-transparent hover:border-primary/10"
-              onClick={() => handleSort('desc')}
-              title="Sort Z-A"
-            >
-              <SortDesc className="size-3.5 mr-1.5" />
-              Z-A
-            </Button>
+            <div className="flex items-center gap-1 flex-1">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="h-8 max-sm:flex-1 px-2.5 text-xs max-sm:text-[10px] font-bold uppercase tracking-wider text-muted-foreground/60 hover:text-primary hover:bg-primary/5 transition-all rounded-lg max-sm:rounded-xl border border-transparent hover:border-primary/10"
+                onClick={() => handleSort('asc')}
+                title="Sort A-Z"
+              >
+                <SortAsc className="size-3.5 mr-1.5" />
+                A-Z
+              </Button>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="h-8 max-sm:flex-1 px-2.5 text-xs max-sm:text-[10px] font-bold uppercase tracking-wider text-muted-foreground/60 hover:text-primary hover:bg-primary/5 transition-all rounded-lg max-sm:rounded-xl border border-transparent hover:border-primary/10"
+                onClick={() => handleSort('desc')}
+                title="Sort Z-A"
+              >
+                <SortDesc className="size-3.5 mr-1.5" />
+                Z-A
+              </Button>
+            </div>
+
+            <div className="h-4 w-px bg-border/40 mx-1 max-sm:hidden" />
+
+            <div className="max-sm:w-full">
+              <AddItemDialog onAdd={handleAddItem} />
+            </div>
           </div>
         </div>
 
