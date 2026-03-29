@@ -986,7 +986,7 @@ export function MainEditor() {
         >
           <div className="p-8 pt-10 max-sm:px-4 max-sm:pb-4 max-sm:pt-4">
             <DialogHeader className="space-y-4 items-start pr-12 text-left max-sm:space-y-3">
-              <div className="size-14 rounded-2xl border border-primary/10 bg-primary/5 text-primary shadow-sm flex items-center justify-center max-sm:size-11 max-sm:rounded-[1rem]">
+              <div className="size-14 rounded-2xl border border-primary/10 bg-primary/5 text-primary shadow-sm flex items-center justify-center max-sm:size-12 max-sm:rounded-[1rem]">
                 <Download className="size-7 max-sm:size-6" />
               </div>
               <div className="space-y-1">
@@ -1106,15 +1106,15 @@ export function MainEditor() {
       <Dialog open={showHowToUse} onOpenChange={setShowHowToUse}>
         <DialogContent className="max-w-2xl bg-white/95 dark:bg-black/90 backdrop-blur-2xl border-border/40 rounded-[2.5rem] p-0 shadow-2xl">
           <div className="max-h-[85vh] overflow-y-auto custom-scrollbar">
-          <DialogHeader className="space-y-3 p-8 pb-4 max-sm:px-4 max-sm:pb-3 max-sm:pt-4">
-            <div className="size-12 rounded-[1.15rem] bg-primary/5 border border-primary/10 flex items-center justify-center text-primary shadow-sm max-sm:size-10 max-sm:rounded-[0.95rem]">
-              <Book className="size-6 max-sm:size-5" />
+          <DialogHeader className="space-y-4 items-start text-left p-8 pb-4 max-sm:px-4 max-sm:pb-3 max-sm:pt-4">
+            <div className="size-14 rounded-2xl bg-primary/5 border border-primary/10 flex items-center justify-center text-primary mb-2 shadow-sm max-sm:size-12 max-sm:rounded-[1rem]">
+              <Book className="size-7 max-sm:size-6" />
             </div>
-            <div className="space-y-1.5">
-              <DialogTitle className="text-[1.85rem] font-black tracking-tight text-foreground/96 max-sm:text-[1.7rem] max-sm:leading-none">
+            <div className="space-y-1">
+              <DialogTitle className="text-2xl font-black tracking-tight max-sm:text-xl">
                 How To Use
               </DialogTitle>
-              <DialogDescription className="max-w-[520px] text-[13px] font-medium leading-relaxed text-muted-foreground/58 max-sm:max-w-none max-sm:text-[11px]">
+              <DialogDescription className="text-muted-foreground/60 text-xs font-medium leading-relaxed max-sm:text-[11px]">
                 Step-by-step setup for Fusion Widget Manager.
               </DialogDescription>
             </div>
