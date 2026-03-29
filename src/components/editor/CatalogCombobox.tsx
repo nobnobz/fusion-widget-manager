@@ -15,6 +15,7 @@ interface CatalogComboboxProps {
   disabledValues?: string[];
   placeholder?: string;
   className?: string;
+  trigger?: React.ReactNode;
 }
 
 export function CatalogCombobox({
@@ -23,7 +24,8 @@ export function CatalogCombobox({
   onChange,
   disabledValues = [],
   placeholder = "Select catalog...",
-  className
+  className,
+  trigger
 }: CatalogComboboxProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState('');
@@ -56,23 +58,25 @@ export function CatalogCombobox({
       }}
     >
       <Popover.Trigger asChild>
-        <button
-          type="button"
-          className={cn(
-            "flex items-center justify-between w-full h-8 px-3 rounded-lg bg-muted/50 text-[11px] font-semibold text-left transition-all outline-none border border-transparent",
-            isOpen ? "ring-1 ring-primary/30 bg-background border-primary/20" : "hover:bg-muted hover:border-border",
-            selectedOption ? "text-primary" : (isInvalid ? "text-amber-500 italic border-amber-500/20" : "text-muted-foreground/60"),
-            className
-          )}
-        >
-          <div className="flex items-center gap-2 truncate pr-2 flex-1">
-            {isInvalid && <AlertTriangle className="size-3 text-amber-500 shrink-0 animate-pulse" />}
-            <span className="truncate">
-              {selectedOption ? selectedOption.name : (value ? value : placeholder)}
-            </span>
-          </div>
-          <ChevronDown className={cn("size-3 shrink-0 transition-transform duration-300 opacity-40 group-hover/combobox:opacity-100", isOpen && "rotate-180")} />
-        </button>
+        {trigger || (
+          <button
+            type="button"
+            className={cn(
+              "flex items-center justify-between w-full h-8 px-3 rounded-lg bg-muted/50 text-[11px] font-semibold text-left transition-all outline-none border border-transparent",
+              isOpen ? "ring-1 ring-primary/30 bg-background border-primary/20" : "hover:bg-muted hover:border-border",
+              selectedOption ? "text-primary" : (isInvalid ? "text-amber-500 italic border-amber-500/20" : "text-muted-foreground/60"),
+              className
+            )}
+          >
+            <div className="flex items-center gap-2 truncate pr-2 flex-1">
+              {isInvalid && <AlertTriangle className="size-3 text-amber-500 shrink-0 animate-pulse" />}
+              <span className="truncate">
+                {selectedOption ? selectedOption.name : (value ? value : placeholder)}
+              </span>
+            </div>
+            <ChevronDown className={cn("size-3 shrink-0 transition-transform duration-300 opacity-40 group-hover/combobox:opacity-100", isOpen && "rotate-180")} />
+          </button>
+        )}
       </Popover.Trigger>
 
       <Popover.Portal>

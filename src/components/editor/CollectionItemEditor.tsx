@@ -27,7 +27,8 @@ import { cn } from '@/lib/utils';
 import { useMemo, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { DataSourceEditor } from './DataSourceEditor';
-import { MANIFEST_PLACEHOLDER } from '@/lib/config-utils';
+import { CatalogCombobox } from './CatalogCombobox';
+import { MANIFEST_PLACEHOLDER, resolveFusionCatalogType } from '@/lib/config-utils';
 import { countInvalidCatalogsInItem, countTraktWarningsInItem } from '@/lib/catalog-validation';
 import { isAIOMetadataDataSource, isNativeTraktDataSource } from '@/lib/widget-domain';
 import { TraktSourceCard } from './TraktSourceCard';
@@ -101,14 +102,19 @@ export function CollectionItemEditor({
     opacity: isDragging ? 0.5 : 1,
   };
 
-  const handleAddDataSource = () => {
+  const handleAddDataSource = (combinedId: string) => {
+    const selected = manifestCatalogs.find(c => `${c.type}::${c.id}` === combinedId);
+    if (!selected) return;
+
+    const catalogType = resolveFusionCatalogType(combinedId, selected.displayType || selected.type || 'movie');
+
     const newDS: AIOMetadataDataSource = {
       sourceType: 'aiometadata',
       kind: 'addonCatalog',
       payload: {
         addonId: MANIFEST_PLACEHOLDER,
-        catalogId: '',
-        catalogType: 'movie'
+        catalogId: combinedId,
+        catalogType: catalogType
       }
     };
     onUpdate({ 
@@ -526,15 +532,23 @@ export function CollectionItemEditor({
                         <h4 className="text-xs max-sm:text-[10px] font-bold uppercase tracking-wider text-muted-foreground/50 flex items-center gap-1.5">
                           <Layers className="size-3" /> Data Sources
                         </h4>
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          className="h-7 max-sm:h-8 px-2.5 text-[10px] gap-1 font-bold border-border/40 bg-muted/10 hover:border-primary/50 hover:bg-primary/5 hover:text-primary transition-all rounded-lg max-sm:rounded-xl uppercase tracking-wider backdrop-blur-sm" 
-                          disabled={!canAddAnotherDataSource}
-                          onClick={(e) => { e.stopPropagation(); handleAddDataSource(); }}
-                        >
-                          <Plus className="size-2.5" /> New
-                        </Button>
+                        <CatalogCombobox
+                          options={manifestCatalogs}
+                          value=""
+                          disabledValues={selectedCatalogIds}
+                          onChange={handleAddDataSource}
+                          trigger={
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              className="h-7 max-sm:h-8 px-2.5 text-[10px] gap-1 font-bold border-border/40 bg-muted/10 hover:border-primary/50 hover:bg-primary/5 hover:text-primary transition-all rounded-lg max-sm:rounded-xl uppercase tracking-wider backdrop-blur-sm" 
+                              disabled={!canAddAnotherDataSource}
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <Plus className="size-2.5" /> New
+                            </Button>
+                          }
+                        />
                       </div>
                       <div className="space-y-2 pr-1 max-sm:pr-0">
                         {item.dataSources.map((ds, dsIndex) => (
