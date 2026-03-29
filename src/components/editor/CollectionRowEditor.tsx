@@ -106,12 +106,12 @@ export function CollectionRowEditor({ widget, searchQuery = "" }: { widget: Coll
     <div className="space-y-6 max-sm:space-y-4 animate-in fade-in slide-in-from-top-4 duration-500">
       <div className="space-y-4 max-sm:space-y-3">
         <div className="flex items-center justify-between px-1 max-sm:flex-col max-sm:items-stretch max-sm:gap-2.5 max-sm:px-0">
-          <h3 className="text-xs max-sm:text-[10px] font-bold uppercase tracking-wider text-muted-foreground/50 flex items-center gap-2">
-            <ListTree className="size-3.5" />
+          <h3 className="text-xs max-sm:text-[10px] font-bold uppercase tracking-widest text-muted-foreground/75 flex items-center gap-2.5 ml-0.5">
+            <ListTree className="size-3.5 opacity-50" />
             Items ({filteredItems.length})
           </h3>
 
-          <div className="flex items-center gap-1.5 max-sm:flex-wrap max-sm:justify-between">
+          <div className="flex items-center gap-2 max-sm:flex-wrap max-sm:justify-between">
             {searchQuery && (
               <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground/50 mr-2 max-sm:order-3 max-sm:mr-0 max-sm:w-full">
                 Reorder disabled while searching
@@ -121,7 +121,7 @@ export function CollectionRowEditor({ widget, searchQuery = "" }: { widget: Coll
               <Button 
                 variant="ghost" 
                 size="sm" 
-                className="h-8 max-sm:flex-1 px-2.5 text-xs max-sm:text-[10px] font-bold uppercase tracking-wider text-muted-foreground/60 hover:text-primary hover:bg-primary/5 transition-all rounded-lg max-sm:rounded-xl border border-transparent hover:border-primary/10"
+                className="h-9 max-sm:flex-1 px-3 text-xs max-sm:text-[10px] font-bold uppercase tracking-wider text-muted-foreground/60 hover:text-primary hover:bg-primary/5 transition-all rounded-lg max-sm:rounded-xl border border-transparent hover:border-primary/10"
                 onClick={() => handleSort('asc')}
                 title="Sort A-Z"
               >
@@ -131,7 +131,7 @@ export function CollectionRowEditor({ widget, searchQuery = "" }: { widget: Coll
               <Button 
                 variant="ghost" 
                 size="sm" 
-                className="h-8 max-sm:flex-1 px-2.5 text-xs max-sm:text-[10px] font-bold uppercase tracking-wider text-muted-foreground/60 hover:text-primary hover:bg-primary/5 transition-all rounded-lg max-sm:rounded-xl border border-transparent hover:border-primary/10"
+                className="h-9 max-sm:flex-1 px-3 text-xs max-sm:text-[10px] font-bold uppercase tracking-wider text-muted-foreground/60 hover:text-primary hover:bg-primary/5 transition-all rounded-lg max-sm:rounded-xl border border-transparent hover:border-primary/10"
                 onClick={() => handleSort('desc')}
                 title="Sort Z-A"
               >
@@ -140,7 +140,7 @@ export function CollectionRowEditor({ widget, searchQuery = "" }: { widget: Coll
               </Button>
             </div>
 
-            <div className="h-4 w-px bg-border/40 mx-1 max-sm:hidden" />
+            <div className="h-5 w-px bg-border/40 mx-2 max-sm:hidden" />
 
             <div className="max-sm:w-full">
               <AddItemDialog onAdd={handleAddItem} />
