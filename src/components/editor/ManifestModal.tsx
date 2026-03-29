@@ -238,6 +238,7 @@ export function ManifestModal({ isOpen, onOpenChange }: ManifestModalProps) {
             )}
           </Button>
         </DialogFooter>
+        </div>
       </DialogContent>
 
       <ConfirmationDialog 
