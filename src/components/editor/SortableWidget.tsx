@@ -235,19 +235,6 @@ export function SortableWidget({
 
         <div className="hidden sm:flex items-center gap-1.5 shrink-0">
           <div className="flex items-center gap-1.5">
-            <div className={cn(
-              "size-10 flex items-center justify-center rounded-xl bg-muted/5 text-muted-foreground/20 transition-all duration-500 shadow-sm border border-transparent dark:bg-zinc-950/55 dark:text-zinc-500/70 dark:border-white/5 cursor-pointer",
-              isSelected ? "rotate-90 bg-primary/10 text-primary opacity-100 border-primary/10 dark:bg-primary/15 dark:border-primary/20" : "group-hover:text-primary/40 group-hover:bg-primary/5 dark:group-hover:bg-primary/10 dark:group-hover:text-primary/70"
-            )}
-              onClick={(e) => {
-                e.stopPropagation();
-                onSelect(widget.id);
-              }}
-              title={isSelected ? "Collapse widget" : "Expand widget"}
-            >
-              <ChevronRight className="size-4" />
-            </div>
-
             <Button 
               variant="ghost" 
               size="icon" 
@@ -260,6 +247,19 @@ export function SortableWidget({
             >
               <Pencil className="size-3.5" />
             </Button>
+
+            <div className={cn(
+              "size-10 flex items-center justify-center rounded-xl bg-muted/5 text-muted-foreground/20 transition-all duration-500 shadow-sm border border-transparent dark:bg-zinc-950/55 dark:text-zinc-500/70 dark:border-white/5 cursor-pointer",
+              isSelected ? "rotate-90 bg-primary/10 text-primary opacity-100 border-primary/10 dark:bg-primary/15 dark:border-primary/20" : "group-hover:text-primary/40 group-hover:bg-primary/5 dark:group-hover:bg-primary/10 dark:group-hover:text-primary/70"
+            )}
+              onClick={(e) => {
+                e.stopPropagation();
+                onSelect(widget.id);
+              }}
+              title={isSelected ? "Collapse widget" : "Expand widget"}
+            >
+              <ChevronRight className="size-4" />
+            </div>
           </div>
 
           <div className="w-px h-4 bg-border/40 mx-1.5 shrink-0" />

@@ -250,22 +250,6 @@ export function CollectionItemEditor({
               <Button 
                 variant="ghost" 
                 size="icon" 
-                className={cn(
-                  "size-9 rounded-xl border border-border/50 bg-background/60 transition-all shadow-sm shrink-0 hover:border-primary/20 hover:bg-primary/5 hover:text-primary",
-                  isExpanded ? "rotate-90 bg-primary/10 text-primary border-primary/20 shadow-inner" : "text-muted-foreground/60"
-                )}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onToggleExpand();
-                }}
-                title={isExpanded ? "Collapse item" : "Expand item"}
-              >
-                <ChevronRight className="size-4" />
-              </Button>
-
-              <Button 
-                variant="ghost" 
-                size="icon" 
                 className="size-9 rounded-xl border border-border/50 bg-background/60 text-muted-foreground/60 shadow-sm transition-all hover:border-primary/20 hover:bg-primary/5 hover:text-primary"
                 onClick={(e) => {
                   e.stopPropagation();
@@ -274,6 +258,22 @@ export function CollectionItemEditor({
                 title="Rename item"
               >
                 <Pencil className="size-3.5" />
+              </Button>
+
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className={cn(
+                  "size-9 rounded-xl border border-border/50 bg-background/60 transition-all shadow-sm shrink-0 hover:border-primary/20 hover:bg-primary/5 hover:text-primary",
+                  isExpanded ? "rotate-90 bg-primary/10 text-primary border-primary/20 shadow-inner" : "text-muted-foreground/60"
+                )}
+                onClick={(e) => {
+                   e.stopPropagation();
+                   onToggleExpand();
+                }}
+                title={isExpanded ? "Collapse item" : "Expand item"}
+              >
+                <ChevronRight className="size-4" />
               </Button>
 
               <div className="w-px h-4 bg-border/40 mx-1.5 shrink-0" />
