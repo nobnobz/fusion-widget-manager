@@ -271,19 +271,21 @@ export function SortableWidget({
         </div>
 
         <div className="sm:hidden flex w-full flex-col gap-2.5">
-          <div className="flex items-center gap-2.5 min-w-0">
+          <div className="flex items-start gap-2.5 min-w-0">
             <div 
               {...attributes} 
               {...listeners}
               data-testid={`widget-handle-${widget.id}`}
-              className="size-9 flex items-center justify-center rounded-xl text-muted-foreground/30 hover:text-primary hover:bg-primary/10 transition-all cursor-grab active:cursor-grabbing border border-transparent hover:border-primary/10 shrink-0 touch-none select-none"
+              className="mt-0.5 size-9 flex items-center justify-center rounded-xl text-muted-foreground/30 hover:text-primary hover:bg-primary/10 transition-all cursor-grab active:cursor-grabbing border border-transparent hover:border-primary/10 shrink-0 touch-none select-none"
               onClick={(e) => e.stopPropagation()}
             >
               <GripVertical className="size-4" />
             </div>
 
+            <div className="h-6 w-px bg-border/40 mt-2 shrink-0" />
+
             <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1.5 pt-0.5">
                 {hasInvalidCatalog && (
                   <AlertTriangle className="size-4 text-amber-500 animate-pulse shrink-0" />
                 )}
@@ -300,34 +302,41 @@ export function SortableWidget({
                       onClick={(e) => e.stopPropagation()}
                     />
                   ) : (
-                    <button
-                      type="button"
-                      className="flex w-fit items-center gap-1.5 overflow-hidden text-left py-0.5"
-                      onClick={startEditing}
+                    <div
+                      className="flex w-full items-center justify-between gap-2 overflow-hidden text-left"
                     >
                       <h3 className="truncate text-[14px] font-bold tracking-[-0.015em] text-foreground/95 leading-[1.15]">
                         {widget.title}
                       </h3>
-                      <Pencil className="size-3 text-primary/40 shrink-0" />
-                    </button>
+                      <div className="flex items-center gap-1.5">
+                        <div 
+                          className="flex size-8 items-center justify-center rounded-lg bg-primary/5 border border-primary/10 active:scale-90 transition-all shrink-0"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            startEditing(e);
+                          }}
+                        >
+                          <Pencil className="size-3.5 text-primary" />
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className={cn(
+                            "size-9 rounded-xl border border-border/50 bg-background/60 transition-all shadow-sm shrink-0",
+                            isSelected ? "rotate-90 bg-primary/10 text-primary border-primary/20" : "text-muted-foreground/60"
+                          )}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onSelect(widget.id);
+                          }}
+                          title={isSelected ? "Collapse widget" : "Expand widget"}
+                        >
+                          <ChevronRight className="size-4" />
+                        </Button>
+                      </div>
+                    </div>
                   )}
                 </div>
-
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className={cn(
-                    "size-9 rounded-xl border border-border/50 bg-background/60 transition-all shadow-sm shrink-0",
-                    isSelected ? "rotate-90 bg-primary/10 text-primary border-primary/20" : "text-muted-foreground/60"
-                  )}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onSelect(widget.id);
-                  }}
-                  title={isSelected ? "Collapse widget" : "Expand widget"}
-                >
-                  <ChevronRight className="size-4" />
-                </Button>
               </div>
             </div>
           </div>

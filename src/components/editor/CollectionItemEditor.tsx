@@ -292,7 +292,7 @@ export function CollectionItemEditor({
             className="sm:hidden border-b border-border/40 bg-primary/[0.02] px-3 py-3"
             onClick={onToggleExpand}
           >
-            <div className="flex items-center gap-2.5">
+            <div className="flex items-start gap-2.5">
               <div 
                 {...attributes} 
                 {...listeners}
@@ -302,8 +302,10 @@ export function CollectionItemEditor({
                 <GripVertical className="size-4" />
               </div>
 
+              <div className="h-6 w-px bg-border/40 mt-2 shrink-0" />
+
               <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5 pt-0.5">
                   {hasInvalidCatalog && (
                     <AlertTriangle className="mt-0.5 size-4 text-amber-500 animate-pulse shrink-0" />
                   )}
