@@ -93,7 +93,7 @@ export function NewWidgetDialog({ isOpen, onOpenChange, onCreated }: NewWidgetDi
                   placeholder="e.g. Recommended for You"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  className="h-12 max-sm:h-11 bg-transparent border-none focus-visible:ring-0 px-4 font-semibold text-base transition-all text-foreground/85"
+                  className="h-12 max-sm:h-11 bg-transparent border-none focus-visible:ring-0 px-4 font-semibold text-base sm:text-sm transition-all text-foreground/85"
                   autoFocus
                   onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
                 />

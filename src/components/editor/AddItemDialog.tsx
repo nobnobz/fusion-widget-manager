@@ -121,7 +121,7 @@ export function AddItemDialog({ onAdd, trigger }: AddItemDialogProps) {
                 placeholder="https://..."
                 value={backgroundImageURL}
                 onChange={(e) => setBackgroundImageURL(e.target.value)}
-                className="h-11 max-sm:h-11 bg-transparent border-none focus-visible:ring-0 rounded-xl px-4 pr-12 text-sm sm:text-[11px] font-semibold text-foreground/85 focus:text-foreground transition-colors flex-1 min-w-0"
+                className="h-11 max-sm:h-11 bg-transparent border-none focus-visible:ring-0 rounded-xl px-4 pr-12 text-base sm:text-sm font-semibold text-foreground/85 focus:text-foreground transition-colors flex-1 min-w-0"
               />
               {backgroundImageURL && (
                 <button
