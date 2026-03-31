@@ -387,12 +387,15 @@ export function convertEditorWidgetToFusionWidget(widget: Widget, manifestUrl: s
     return {
       id,
       title: "MDBList Up Next Series",
+      hideTitle: false,
       cacheTTL: 1800,
+      limit: 20,
       type: widget.type,
       presentation: {
         aspectRatio: 'poster',
         badges: { providers: false, ratings: true },
         cardStyle: 'medium',
+        backgroundImageURL: '',
       },
       dataSource: convertEditorDataSourceToFusionDataSource(widget.dataSource, manifestUrl),
     };
