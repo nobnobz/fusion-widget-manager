@@ -332,23 +332,23 @@ export function ImportMergeDialog({ open, onOpenChange, initialJson, initialFile
           const itemDiffs: Record<string, ItemDiff> = {};
           if (w.type === 'collection.row') {
             w.dataSource.payload.items.forEach(item => { 
-              newItemSelected[item.id] = false; 
+              newItemSelected[item.id] = true; 
               itemDiffs[item.id] = { status: 'new', changes: new Set() };
             });
           }
           newWidgetDiffs[w.id] = { status: 'new', changes: new Set(), itemDiffs };
-          newWidgetSelected[w.id] = false;
+          newWidgetSelected[w.id] = true;
         } else if (w.type === 'collection.row' && existingWidget.type === 'collection.row') {
           const itemDiffs = diffCollectionItems(w.dataSource.payload.items, existingWidget.dataSource.payload.items);
           const hasActionableItems = Object.values(itemDiffs).some(d => d.status !== 'unchanged');
 
           newWidgetDiffs[w.id] = { status: hasActionableItems ? 'existing' : 'unchanged', changes: new Set(), itemDiffs, existingWidget };
-          newWidgetSelected[w.id] = false;
+          newWidgetSelected[w.id] = hasActionableItems;
 
           w.dataSource.payload.items.forEach(item => {
             const diff = itemDiffs[item.id];
             const isActionable = (diff?.status ?? 'unchanged') !== 'unchanged';
-            newItemSelected[item.id] = false;
+            newItemSelected[item.id] = isActionable;
             if (isActionable) {
               newItemFieldUpdates[item.id] = {
                 name: diff?.changes.has('name') ?? false,
@@ -360,7 +360,7 @@ export function ImportMergeDialog({ open, onOpenChange, initialJson, initialFile
         } else if (w.type === 'row.classic' && existingWidget.type === 'row.classic') {
           const { changes, unchanged } = diffRowClassic(w, existingWidget);
           newWidgetDiffs[w.id] = { status: unchanged ? 'unchanged' : 'existing', changes, itemDiffs: {}, existingWidget };
-          newWidgetSelected[w.id] = false;
+          newWidgetSelected[w.id] = !unchanged;
           if (!unchanged) {
             newWidgetFieldUpdates[w.id] = {
               name: changes.has('name'),
@@ -373,12 +373,12 @@ export function ImportMergeDialog({ open, onOpenChange, initialJson, initialFile
           const itemDiffs: Record<string, ItemDiff> = {};
           if (w.type === 'collection.row') {
             w.dataSource.payload.items.forEach(item => {
-              newItemSelected[item.id] = false;
+              newItemSelected[item.id] = true;
               itemDiffs[item.id] = { status: 'new', changes: new Set() };
             });
           }
           newWidgetDiffs[w.id] = { status: 'new', changes: new Set(), itemDiffs };
-          newWidgetSelected[w.id] = false;
+          newWidgetSelected[w.id] = true;
         }
       });
 
