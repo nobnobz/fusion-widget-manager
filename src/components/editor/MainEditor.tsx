@@ -548,7 +548,7 @@ export function MainEditor() {
                 alt="Clown Logo"
                 width={208}
                 height={208}
-                className="w-full h-full object-contain animate-in zoom-in-110 duration-1000 group-hover:scale-110 transition-transform duration-700"
+                className="w-full h-full object-contain"
                 priority
               />
             </div>
