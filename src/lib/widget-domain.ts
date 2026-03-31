@@ -104,10 +104,17 @@ function normalizeWidgetTitleKey(value: string): string {
 }
 
 function isAIOMetadataAddon(addonId: string): boolean {
-  return addonId.toUpperCase().includes('AIOMETADATA');
+  if (!addonId) return false;
+  if (addonId === MANIFEST_PLACEHOLDER) return true;
+  const lower = addonId.toLowerCase();
+  return (
+    lower.includes('aiometadata') ||
+    lower.includes('fortheweak.cloud') ||
+    lower.includes('midnightignite.me')
+  );
 }
 
-function getCatalogActualId(id: string): string {
+export function getCatalogActualId(id: string): string {
   const parts = id.split('::');
   return parts[parts.length - 1];
 }
@@ -152,9 +159,12 @@ export function findCatalog(catalogs: AIOMetadataCatalog[], id: string): AIOMeta
 }
 
 export function resolveFusionCatalogType(catalogId: string, currentType?: string): string {
-  if (catalogId.startsWith('all::')) {
+  const lowId = catalogId.toLowerCase();
+  if (lowId.startsWith('all::') || lowId.includes('mdblist.upnext')) {
     return 'series';
   }
+  if (lowId.startsWith('series::')) return 'series';
+  if (lowId.startsWith('movie::')) return 'movie';
   return currentType || 'movie';
 }
 
@@ -178,7 +188,7 @@ function normalizeCatalogId(catalogId: string, catalogType: string): string {
   const trimmed = catalogId.trim();
   if (!trimmed) return '';
   if (trimmed.includes('::')) return trimmed;
-  const resolvedType = resolveFusionCatalogType(trimmed, catalogType);
+  const resolvedType = resolveFusionCatalogType(trimmed, catalogType).toLowerCase();
   return `${resolvedType}::${trimmed}`;
 }
 
@@ -282,14 +292,19 @@ function normalizeDataSource(
   }
 
   const finalType = resolveFusionCatalogType(catalogId, catalogType);
+  
+  // Normalize addonId: if it's an AIOMetadata addon AND we have a local manifestUrl,
+  // we treat it as being "from our manifest" to keep fingerprints consistent.
+  const normalizedAddonId = 
+    isAIOMetadataAddon(addonId) && options.manifestUrl
+      ? options.manifestUrl
+      : addonId;
+
   return {
     sourceType: 'aiometadata',
     kind: 'addonCatalog',
     payload: {
-      addonId:
-        isAIOMetadataAddon(addonId) && options.replacePlaceholder && options.manifestUrl
-          ? options.manifestUrl
-          : addonId,
+      addonId: normalizedAddonId,
       catalogId: normalizeCatalogId(catalogId, finalType),
       catalogType: finalType,
     },

@@ -13,7 +13,7 @@ import {
 } from './aiometadata-catalog-labels';
 import { findCatalog, isAIOMetadataDataSource, resolveFusionCatalogType } from './widget-domain';
 
-export interface UsedMdblistCatalogReference {
+export interface UsedSimklCatalogReference {
   widgetId: string;
   widgetTitle: string;
   widgetIndex: number;
@@ -37,16 +37,8 @@ function getCatalogActualId(catalogId: string): string {
   return parts[parts.length - 1] || '';
 }
 
-const AIOMETADATA_BUILTIN_MDBLIST_IDS = new Set([
-  'mdblist.upnext',
-]);
-
-const PRETTY_BUILTIN_TITLES: Record<string, string> = {
-  'mdblist.upnext': 'MDBList Up Next Series',
-};
-
-function isMdblistCatalogId(catalogId: string): boolean {
-  return getCatalogActualId(catalogId).startsWith('mdblist.');
+function isSimklCatalogId(catalogId: string): boolean {
+  return getCatalogActualId(catalogId).startsWith('simkl.');
 }
 
 function getCatalogType(dataSource: AIOMetadataDataSource): string {
@@ -62,22 +54,17 @@ function getCatalogDisplayName(
   manifestCatalogs: AIOMetadataCatalog[]
 ): string | null {
   const catalogId = String(dataSource.payload.catalogId || '').trim();
-  const actualId = getCatalogActualId(catalogId);
-  const type = getCatalogType(dataSource);
-
-  const manifestMatch = manifestCatalogs.find(
-    (catalog) => catalog.id === actualId && catalog.type === type
-  );
-  if (manifestMatch?.name?.trim()) {
-    return manifestMatch.name.trim();
+  const manifestCatalog = findCatalog(manifestCatalogs, catalogId);
+  if (manifestCatalog?.name?.trim()) {
+    return manifestCatalog.name.trim();
   }
 
-  return PRETTY_BUILTIN_TITLES[actualId] || null;
+  return null;
 }
 
-function dedupeReferences(references: UsedMdblistCatalogReference[]): UsedMdblistCatalogReference[] {
+function dedupeReferences(references: UsedSimklCatalogReference[]): UsedSimklCatalogReference[] {
   const seen = new Set<string>();
-  const deduped: UsedMdblistCatalogReference[] = [];
+  const deduped: UsedSimklCatalogReference[] = [];
 
   references.forEach((reference) => {
     const key = `${reference.type}::${reference.id}`;
@@ -112,18 +99,18 @@ function filterCatalogEntriesAgainstManifest(
   return entries.filter((entry) => !manifestKeys.has(createCatalogEntryKey(entry.type, entry.id)));
 }
 
-export function collectUsedMdblistCatalogs(
+export function collectUsedSimklCatalogs(
   config: FusionWidgetsConfig,
   manifestCatalogs: AIOMetadataCatalog[] = []
-): UsedMdblistCatalogReference[] {
-  const references: UsedMdblistCatalogReference[] = [];
+): UsedSimklCatalogReference[] {
+  const references: UsedSimklCatalogReference[] = [];
   const fallbackCounts = new Map<string, number>();
 
   config.widgets.forEach((widget, widgetIndex) => {
     const widgetTitle = String(widget.title || '').trim();
 
     if (widget.type === 'row.classic') {
-      if (!isAIOMetadataDataSource(widget.dataSource) || !isMdblistCatalogId(widget.dataSource.payload.catalogId)) {
+      if (!isAIOMetadataDataSource(widget.dataSource) || !isSimklCatalogId(widget.dataSource.payload.catalogId)) {
         return;
       }
 
@@ -158,7 +145,7 @@ export function collectUsedMdblistCatalogs(
     widget.dataSource.payload.items.forEach((item, itemIndex) => {
       const itemName = getFusionCollectionItemName(item, itemIndex);
       item.dataSources.forEach((dataSource, dataSourceIndex) => {
-        if (!isAIOMetadataDataSource(dataSource) || !isMdblistCatalogId(dataSource.payload.catalogId)) {
+        if (!isAIOMetadataDataSource(dataSource) || !isSimklCatalogId(dataSource.payload.catalogId)) {
           return;
         }
 
@@ -199,34 +186,34 @@ export function collectUsedMdblistCatalogs(
   return references;
 }
 
-export function hasUsedMdblistCatalogs(config: FusionWidgetsConfig): boolean {
+export function hasUsedSimklCatalogs(config: FusionWidgetsConfig): boolean {
   return config.widgets.some((widget) => {
     if (widget.type === 'row.classic') {
-      return isAIOMetadataDataSource(widget.dataSource) && isMdblistCatalogId(widget.dataSource.payload.catalogId);
+      return isAIOMetadataDataSource(widget.dataSource) && isSimklCatalogId(widget.dataSource.payload.catalogId);
     }
 
     return widget.dataSource.payload.items.some((item) =>
       item.dataSources.some(
-        (dataSource) => isAIOMetadataDataSource(dataSource) && isMdblistCatalogId(dataSource.payload.catalogId)
+        (dataSource) => isAIOMetadataDataSource(dataSource) && isSimklCatalogId(dataSource.payload.catalogId)
       )
     );
   });
 }
 
-export function buildAiometadataMdblistCatalogsOnlyExport(
+export function buildAiometadataSimklCatalogsOnlyExport(
   config: FusionWidgetsConfig,
   manifestCatalogs: AIOMetadataCatalog[] = [],
   exportedAt = new Date().toISOString(),
   options: CatalogExportFilterOptions = {}
 ): AiometadataCatalogsOnlyExport {
   const catalogs = dedupeReferences(
-    collectUsedMdblistCatalogs(config, manifestCatalogs)
+    collectUsedSimklCatalogs(config, manifestCatalogs)
   ).sort(compareCatalogExportOrder).map<AiometadataCatalogsOnlyEntry>((reference) => ({
     id: reference.id,
     type: reference.type,
     name: reference.name,
     enabled: true,
-    source: 'mdblist',
+    source: 'simkl',
     displayType: reference.displayType,
   }));
 

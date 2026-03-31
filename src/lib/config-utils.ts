@@ -10,6 +10,7 @@ import type {
 import {
   MANIFEST_PLACEHOLDER,
   findCatalog,
+  getCatalogActualId,
   isAIOMetadataDataSource,
   isNativeTraktDataSource,
   normalizeFusionConfigDetailed,
@@ -20,6 +21,7 @@ import {
 export {
   MANIFEST_PLACEHOLDER,
   findCatalog,
+  getCatalogActualId,
   getPrimaryDataSource,
   resolveFusionCatalogType,
 } from './widget-domain';
@@ -107,10 +109,20 @@ function normalizeFusionDataSourcePayload(
     throw new Error('Export failed: A data source still has an empty catalog ID. Please select a catalog first.');
   }
 
-  const type = resolveFusionCatalogType(payload.catalogId, payload.catalogType);
+  const type = resolveFusionCatalogType(payload.catalogId, payload.catalogType).toLowerCase();
+  
+  // Normalize catalogId to lowercase type prefix (e.g. Movie:: -> movie::)
+  let normalizedCatalogId = payload.catalogId;
+  if (normalizedCatalogId.includes('::')) {
+    const parts = normalizedCatalogId.split('::');
+    normalizedCatalogId = `${parts[0].toLowerCase()}::${parts.slice(1).join('::')}`;
+  } else {
+    normalizedCatalogId = `${type}::${normalizedCatalogId}`;
+  }
+
   return {
     addonId: payload.addonId,
-    catalogId: payload.catalogId.includes('::') ? payload.catalogId : `${type}::${payload.catalogId}`,
+    catalogId: normalizedCatalogId,
     type,
   };
 }
@@ -369,10 +381,29 @@ export function convertEditorWidgetToFusionWidget(widget: Widget, manifestUrl: s
     };
   }
 
+  const isMdblistUpNext = 
+    isAIOMetadataDataSource(widget.dataSource) && 
+    widget.dataSource.payload.catalogId.includes('mdblist.upnext');
+
+  if (isMdblistUpNext) {
+    return {
+      id,
+      title: "MDBList Up Next Series",
+      cacheTTL: 1800,
+      type: widget.type,
+      presentation: {
+        aspectRatio: 'poster',
+        badges: { providers: false, ratings: true },
+        cardStyle: 'medium',
+      },
+      dataSource: convertEditorDataSourceToFusionDataSource(widget.dataSource, manifestUrl),
+    };
+  }
+
   return {
     id,
     title: widget.title,
-    hideTitle: widget.hideTitle ?? false,
+    ...(widget.hideTitle ? { hideTitle: true } : {}),
     type: widget.type,
     cacheTTL: widget.cacheTTL || 1800,
     limit: widget.limit || 20,

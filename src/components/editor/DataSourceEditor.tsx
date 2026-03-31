@@ -22,7 +22,7 @@ export function DataSourceEditor({
   const hasCatalogId = Boolean(dataSource.payload.catalogId.trim());
 
   return (
-    <div className="flex items-center gap-2 max-sm:gap-2.5 p-1.5 max-sm:p-2 rounded-xl max-sm:rounded-[1rem] bg-muted/30 border border-border group/ds hover:border-primary/30 transition-all">
+    <div className="flex items-center gap-1.5 w-full">
       <div className="flex-1 min-w-0">
         <div className="relative flex items-center min-w-0">
             {manifestCatalogs.length > 0 ? (
@@ -51,20 +51,15 @@ export function DataSourceEditor({
               </div>
             ) : (
               hasCatalogId ? (
-                <div className="flex-1 rounded-lg border border-border/50 bg-background/75 px-3 py-2 shadow-sm">
-                  <div className="flex items-center gap-2">
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-[11px] font-bold tracking-tight text-foreground/85">
-                        {dataSource.payload.catalogId}
-                      </p>
-                      <p className="mt-0.5 text-[9px] font-bold uppercase tracking-[0.14em] text-muted-foreground/55">
-                        Sync manifest to change this catalog
-                      </p>
-                    </div>
+                <div className="flex-1 min-w-0 rounded-xl border border-zinc-200 dark:border-white/5 bg-zinc-100/40 dark:bg-zinc-950/20 px-3.5 h-10 max-sm:h-11 flex items-center">
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-[11px] font-bold tracking-tight text-foreground/85">
+                      {dataSource.payload.catalogId}
+                    </p>
                   </div>
                 </div>
               ) : (
-                <div className="flex-1 flex items-center gap-2 px-3 h-8 rounded-lg bg-amber-500/5 border border-amber-500/10 text-[9px] font-bold text-amber-500/60 uppercase tracking-widest">
+                <div className="flex-1 flex items-center gap-2 px-3.5 h-10 max-sm:h-11 rounded-xl bg-amber-500/5 border border-amber-500/10 text-[9px] font-bold text-amber-500/60 uppercase tracking-widest">
                   <AlertTriangle className="size-3 shrink-0" />
                   <span>Sync manifest first</span>
                 </div>
@@ -73,15 +68,17 @@ export function DataSourceEditor({
         </div>
       </div>
 
-      <Button
-        variant="ghost"
-        size="icon"
-        className="size-8 max-sm:size-9 rounded-lg max-sm:rounded-xl border border-border/40 bg-background/55 text-destructive/55 shadow-sm transition-all hover:border-destructive/20 hover:bg-destructive/10 hover:text-destructive dark:border-white/10 dark:bg-zinc-950/70 dark:text-destructive/75 dark:hover:border-destructive/20 dark:hover:bg-destructive/12"
-        onClick={onDelete}
-        title="Delete data source"
-      >
-        <Trash2 className="size-3.5" />
-      </Button>
+      <div className="flex items-center justify-center size-10 max-sm:size-11 shrink-0 rounded-xl bg-zinc-100/40 dark:bg-zinc-950/20 border border-zinc-200 dark:border-white/5">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="size-8 max-sm:size-9 rounded-xl text-destructive/55 transition-all hover:bg-destructive/8 hover:text-destructive hover:border-destructive/20 dark:text-destructive/75 dark:hover:bg-destructive/12"
+          onClick={onDelete}
+          title="Delete data source"
+        >
+          <Trash2 className="size-3.5" />
+        </Button>
+      </div>
     </div>
   );
 }

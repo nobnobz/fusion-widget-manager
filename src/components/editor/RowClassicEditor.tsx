@@ -1,8 +1,8 @@
 import { DataSourceEditor } from './DataSourceEditor';
 import { useConfig } from '@/context/ConfigContext';
 import { AIOMetadataDataSource, NativeTraktDataSource, RowClassicWidget } from '@/lib/types/widget';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Layers } from 'lucide-react';
+import { Layers, Pencil } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { isNativeTraktDataSource } from '@/lib/widget-domain';
 import { TraktSourceCard } from './TraktSourceCard';
 
@@ -34,37 +34,30 @@ export function RowClassicEditor({ widget }: { widget: RowClassicWidget }) {
 
   return (
     <div className="space-y-6 max-sm:space-y-4 animate-in fade-in slide-in-from-top-4 duration-500">
-      <div className="grid grid-cols-1 gap-6 max-sm:gap-4">
-      </div>
-
-      {/* Data Source */}
-      <div className="max-w-3xl max-sm:max-w-none">
-        <Card className="bg-card border border-zinc-200/80 dark:border-border shadow-sm dark:shadow-none max-sm:rounded-[1.15rem]">
-          <CardHeader className="bg-muted/30 border-b py-3 px-6 max-sm:px-4 max-sm:py-3">
-            <CardTitle className="text-xs max-sm:text-[10px] font-bold uppercase tracking-wider text-muted-foreground/60">
-              {isNativeTrakt ? 'Native Trakt Source' : 'Addon Source Configuration'}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-6 max-sm:p-4 space-y-4 max-sm:space-y-3">
-            <div className="space-y-1.5">
-              <h4 className="text-xs max-sm:text-[10px] font-bold uppercase tracking-wider text-muted-foreground/40 flex items-center gap-1.5 mb-2">
-                <Layers className="size-3" /> Data Source
-              </h4>
-              {isNativeTrakt ? (
-                <TraktSourceCard
-                  dataSource={nativeTraktDataSource!}
-                  helperText="Imported native Trakt source. It can be reordered, renamed, and deleted, but not newly added from the manager."
-                />
-              ) : (
-                <DataSourceEditor 
-                  dataSource={aiometadataDataSource!}
-                  onUpdate={(updates) => handleDataSourceUpdate(updates)}
-                  onDelete={() => {}} // Classic row must have one DS
-                />
-              )}
-            </div>
-          </CardContent>
-        </Card>
+      {/* Data Source Configuration */}
+      <div className="flex flex-col gap-6 max-sm:gap-4 p-5 max-sm:p-3.5 bg-white dark:bg-black/10 rounded-xl border border-zinc-200/80 dark:border-white/5  backdrop-blur-sm">
+        <div className="space-y-4">
+          <div className="flex items-center justify-between border-b border-border/40 pb-3 mb-2">
+            <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-zinc-400 flex items-center gap-2">
+              <Layers className="size-3.5" /> {isNativeTrakt ? 'Native Trakt Source' : 'Data Sources'}
+            </h4>
+          </div>
+          
+          <div className="space-y-1.5">
+            {isNativeTrakt ? (
+              <TraktSourceCard
+                dataSource={nativeTraktDataSource!}
+                helperText="Imported native Trakt source. It can be reordered, renamed, and deleted, but not newly added from the manager."
+              />
+            ) : (
+              <DataSourceEditor 
+                dataSource={aiometadataDataSource!}
+                onUpdate={(updates) => handleDataSourceUpdate(updates)}
+                onDelete={() => {}} // Classic row must have one DS
+              />
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );

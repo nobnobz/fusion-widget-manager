@@ -622,6 +622,7 @@ function WidgetSelectionGridComponent({
       trakt: [] as string[],
       mdblist: [] as string[],
       streaming: [] as string[],
+      simkl: [] as string[],
     };
 
     aiometadataInventory.catalogs.forEach((catalog) => {
@@ -1200,10 +1201,10 @@ function WidgetSelectionGridComponent({
         <div className="mb-12 max-sm:mb-7">
           <div
             className={cn(
-              "mb-4 rounded-[1.75rem] px-5 shadow-sm max-sm:mb-3 max-sm:rounded-[1.3rem] max-sm:px-4",
+              "mb-4 rounded-3xl px-5 max-sm:mb-3 max-sm:px-4",
               isManifestSynced
-                ? "border border-emerald-200/75 bg-emerald-50/65 py-3.5 shadow-[0_12px_32px_-28px_rgba(15,23,42,0.16)] dark:border-emerald-500/22 dark:bg-emerald-500/[0.08]"
-                : "border border-amber-200/65 bg-amber-50/50 py-4 shadow-[0_12px_32px_-28px_rgba(15,23,42,0.12)] dark:border-amber-500/18 dark:bg-amber-500/[0.06]"
+                ? "border border-emerald-200/75 bg-emerald-50/65 py-3.5 dark:border-emerald-500/22 dark:bg-emerald-500/[0.08]"
+                : "border border-amber-200/65 bg-amber-50/50 py-4 dark:border-amber-500/18 dark:bg-amber-500/[0.06]"
             )}
           >
             <div className="flex items-center justify-between gap-4 max-sm:flex-col max-sm:items-stretch">
@@ -1227,7 +1228,7 @@ function WidgetSelectionGridComponent({
                         : "text-stone-900/72 dark:text-amber-100/82"
                     )}
                   >
-                    {isManifestSynced ? 'AIOMetadata synced' : manifestAutoSyncIssue ? 'AIOMetadata sync issue' : 'AIOMetadata not synced'}
+                    {isManifestSynced ? 'AIOMetadata synced' : manifestAutoSyncIssue ? 'AIOMetadata sync alert' : 'AIOMetadata not synced'}
                   </p>
                   <p
                     className={cn(
@@ -1242,7 +1243,7 @@ function WidgetSelectionGridComponent({
                       : manifestAutoSyncIssue
                         ? manifestAutoSyncIssue
                       : hasUnsyncedAiometadataSources
-                        ? 'Sync an AIOMetadata manifest before Fusion export to replace placeholders and add new catalogs.'
+                        ? 'Sync your AIOMetadata manifest to replace placeholders and add new catalogs.'
                         : 'Add your AIOMetadata manifest URL for catalog validation and automatic placeholder replacement.'}
                   </p>
                 </div>
@@ -1255,7 +1256,7 @@ function WidgetSelectionGridComponent({
                       onClick={handleRefreshManifest}
                       variant="secondary"
                       disabled={isRefreshingManifest}
-                      className="h-9 shrink-0 rounded-2xl border border-emerald-300/75 bg-white/80 px-4 text-[10px] font-black uppercase tracking-wider text-stone-900/80 shadow-[0_10px_24px_-20px_rgba(15,23,42,0.2)] transition-all hover:bg-emerald-50/90 hover:border-emerald-400/60 hover:text-stone-900/88 max-sm:w-full dark:border-emerald-500/24 dark:bg-zinc-950/60 dark:text-emerald-200/90 dark:hover:bg-emerald-500/12 dark:hover:border-emerald-500/34"
+                      className="h-9 shrink-0 rounded-2xl border border-emerald-300/75 bg-white/80 px-4 text-[10px] font-black uppercase tracking-wider text-stone-900/80 transition-all hover:bg-emerald-50/90 hover:border-emerald-400/60 hover:text-stone-900/88 max-sm:w-full dark:border-emerald-500/24 dark:bg-zinc-950/60 dark:text-emerald-200/90 dark:hover:bg-emerald-500/12 dark:hover:border-emerald-500/34"
                     >
                       <RotateCcw className={cn("size-4 mr-2 text-emerald-700/90 dark:text-emerald-300/92", isRefreshingManifest && "animate-spin")} />
                       Refresh
@@ -1263,9 +1264,9 @@ function WidgetSelectionGridComponent({
                     <Button
                       onClick={onSyncManifest}
                       variant="secondary"
-                      className="h-9 shrink-0 rounded-2xl border border-border/45 bg-white/65 px-4 text-[10px] font-black uppercase tracking-wider text-foreground/78 shadow-sm transition-all hover:bg-muted/40 hover:border-border/65 max-sm:w-full dark:border-white/10 dark:bg-zinc-950/60 dark:text-zinc-300/80 dark:hover:bg-zinc-900/85"
+                      className="h-9 shrink-0 rounded-2xl border border-emerald-200/50 bg-white/70 px-4 text-[10px] font-black uppercase tracking-wider text-stone-900/70 transition-all hover:bg-emerald-50/60 hover:border-emerald-300/60 hover:text-stone-900/85 max-sm:w-full dark:border-white/5 dark:bg-zinc-950/60 dark:text-zinc-300/80 dark:hover:bg-zinc-900/85"
                     >
-                      <Pencil className="size-4 mr-2" />
+                      <Pencil className="size-4 mr-2 opacity-70" />
                       Edit
                     </Button>
                   </>
@@ -1273,7 +1274,7 @@ function WidgetSelectionGridComponent({
                   <Button
                     onClick={onSyncManifest}
                     variant="secondary"
-                    className="h-10 shrink-0 rounded-2xl border border-amber-300/70 bg-white/80 px-4 text-[10px] font-black uppercase tracking-wider text-stone-900/80 shadow-[0_10px_24px_-20px_rgba(15,23,42,0.2)] transition-all hover:bg-amber-50/90 hover:border-amber-400/60 hover:text-stone-900/88 max-sm:w-full max-sm:col-span-2 dark:border-amber-500/24 dark:bg-zinc-950/60 dark:text-amber-200/90 dark:hover:bg-amber-500/12 dark:hover:border-amber-500/34"
+                    className="h-10 shrink-0 rounded-2xl border border-amber-300/70 bg-white/80 px-4 text-[10px] font-black uppercase tracking-wider text-stone-900/80 transition-all hover:bg-amber-50/90 hover:border-amber-400/60 hover:text-stone-900/88 max-sm:w-full max-sm:col-span-2 dark:border-amber-500/24 dark:bg-zinc-950/60 dark:text-amber-200/90 dark:hover:bg-amber-500/12 dark:hover:border-amber-500/34"
                   >
                     <Globe className="size-4 mr-2 text-amber-700/90 dark:text-amber-300/92" />
                     Sync Manifest
@@ -1288,7 +1289,7 @@ function WidgetSelectionGridComponent({
               <Button
                 onClick={() => setShowTrash(true)}
                 variant="secondary"
-                className="h-10 rounded-2xl border border-destructive/20 bg-destructive/10 px-4 text-[10px] font-black uppercase tracking-wider text-destructive shadow-sm transition-all hover:bg-destructive/15 hover:shadow-destructive/10 max-sm:h-10 max-sm:w-full max-sm:justify-center dark:border-destructive/25 dark:bg-destructive/12 dark:hover:bg-destructive/16"
+                className="h-10 rounded-2xl border border-destructive/20 bg-destructive/10 px-4 text-[10px] font-black uppercase tracking-wider text-destructive  transition-all hover:bg-destructive/15  max-sm:h-10 max-sm:w-full max-sm:justify-center dark:border-destructive/25 dark:bg-destructive/12 dark:hover:bg-destructive/16"
                 title="Trash"
               >
                 <Trash2 className="mr-2 size-4 opacity-90" />
@@ -1297,22 +1298,22 @@ function WidgetSelectionGridComponent({
             </div>
           )}
 
-          <div className="p-2 max-sm:p-3 rounded-[2.5rem] max-sm:rounded-[1.6rem] bg-zinc-50/50 dark:bg-zinc-900/50 border border-zinc-200/50 dark:border-border/10 shadow-[0_8px_32px_-4px_rgba(0,0,0,0.05)] max-sm:shadow-[0_10px_30px_-20px_rgba(0,0,0,0.35)] backdrop-blur-2xl">
+          <div className="p-4 max-sm:p-3 rounded-3xl max-sm:rounded-[1.5rem] bg-zinc-50/50 dark:bg-zinc-900/50 border border-zinc-200/50 dark:border-border/10 backdrop-blur-2xl">
             <div className="flex flex-col md:flex-row items-stretch md:items-center gap-2 max-sm:gap-3">
               {/* Left Group: Search */}
-              <div className="relative flex-1 group min-w-0 rounded-[2rem] max-sm:rounded-[1.25rem]">
-                <Search className="pointer-events-none absolute left-5 max-sm:left-4 top-1/2 -translate-y-1/2 size-4 text-muted-foreground/30 group-focus-within:text-primary transition-colors" />
+              <div className="relative flex-1 group min-w-0 rounded-xl">
+                <Search className="pointer-events-none absolute left-5 max-sm:left-4 top-1/2 -translate-y-1/2 size-4 text-muted-foreground/60 group-focus-within:text-primary transition-colors" />
                 <Input
                   data-testid="widget-search"
                   placeholder="Search for widgets..."
-                  className="w-full h-12 max-sm:h-11 pl-12 max-sm:pl-10 pr-10 rounded-[2rem] max-sm:rounded-[1.25rem] border-none bg-transparent shadow-none focus-visible:ring-0 text-base sm:text-sm font-semibold tracking-tight"
+                  className="w-full h-11 max-sm:h-10 pl-11 max-sm:pl-9 pr-10 rounded-xl border-none bg-transparent shadow-none focus-visible:ring-0 text-sm sm:text-[13px] font-medium tracking-tight placeholder:text-muted-foreground/40"
                   value={searchQuery}
                   onChange={(event) => setSearchQuery(event.target.value)}
                 />
                 {searchQuery && (
                   <button 
                     onClick={() => setSearchQuery('')}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-lg hover:bg-muted/50 text-muted-foreground/20 hover:text-muted-foreground transition-all"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-xl hover:bg-muted/50 text-muted-foreground/20 hover:text-muted-foreground transition-all"
                   >
                     <Plus className="size-4 rotate-45" />
                   </button>
@@ -1324,7 +1325,7 @@ function WidgetSelectionGridComponent({
                 <Button
                   data-testid="new-widget-button"
                   onClick={handleCreateWidget}
-                  className="h-11 max-sm:h-12 px-6 max-sm:px-4 rounded-2xl max-sm:rounded-xl font-black uppercase tracking-wider text-[10px] shadow-xl shadow-primary/20 bg-primary hover:bg-primary/95 text-primary-foreground transition-all active:scale-95 flex-1 md:flex-none order-1"
+                  className="h-11 max-sm:h-11 px-6 max-sm:px-4 rounded-xl font-black uppercase tracking-wider text-[10px] bg-primary hover:bg-primary/95 text-primary-foreground transition-all active:scale-95 flex-1 md:flex-none order-1"
                 >
                   <Plus className="size-4 mr-2" />
                   <span className="sm:hidden">New</span>
@@ -1335,10 +1336,10 @@ function WidgetSelectionGridComponent({
                   data-testid="merge-import-button"
                   onClick={() => setShowImportMergeDialog(true)}
                   variant="secondary"
-                  className="h-11 max-sm:h-12 px-6 max-sm:px-4 rounded-2xl max-sm:rounded-xl font-black uppercase tracking-wider text-[10px] border border-border/40 bg-muted/20 text-muted-foreground hover:bg-muted/30 transition-all shadow-sm order-2 flex-1 md:flex-none dark:border-white/10 dark:bg-zinc-950/65 dark:text-zinc-300/80 dark:hover:bg-zinc-900/85"
+                  className="h-11 max-sm:h-11 px-6 max-sm:px-4 rounded-xl font-black uppercase tracking-wider text-[10px] border border-primary/20 bg-primary/10 text-primary hover:bg-primary/20 transition-all order-2 flex-1 md:flex-none dark:border-primary/25 dark:bg-primary/12 dark:hover:bg-primary/18"
                   title="Import JSON"
                 >
-                  <FileJson2 className="size-4 mr-2 opacity-60" />
+                  <FileJson2 className="size-4 mr-2" />
                   Import
                 </Button>
 
@@ -1349,7 +1350,7 @@ function WidgetSelectionGridComponent({
                     onDownload?.();
                   }}
                   variant="secondary"
-                  className="h-11 max-sm:h-12 px-6 max-sm:px-4 rounded-2xl max-sm:rounded-xl font-black uppercase tracking-wider text-[10px] border border-primary/20 bg-primary/10 text-primary hover:bg-primary/20 transition-all shadow-sm order-3 flex-1 md:flex-none dark:border-primary/25 dark:bg-primary/12 dark:hover:bg-primary/18"
+                  className="h-11 max-sm:h-11 px-6 max-sm:px-4 rounded-xl font-black uppercase tracking-wider text-[10px] border border-primary/20 bg-primary/10 text-primary hover:bg-primary/20 transition-all order-3 flex-1 md:flex-none dark:border-primary/25 dark:bg-primary/12 dark:hover:bg-primary/18"
                   title="Export JSON"
                 >
                   <Download className="size-4 mr-2" />
@@ -1408,12 +1409,10 @@ function WidgetSelectionGridComponent({
             </p>
             <div className="flex items-center justify-center gap-3 max-sm:flex-col">
               <Button onClick={handleCreateWidget} className="rounded-xl max-sm:w-full max-sm:h-11">
-                <Plus className="size-4 mr-2" />
-                New widget
+                <Plus className="size-4 mr-2" /> Add Widget
               </Button>
               <Button onClick={() => setShowTrash(true)} variant="outline" className="rounded-xl max-sm:w-full max-sm:h-11">
-                <Trash2 className="size-4 mr-2" />
-                Open trash
+                <Trash2 className="size-4 mr-2" /> Trash
               </Button>
             </div>
           </div>
@@ -1439,23 +1438,26 @@ function WidgetSelectionGridComponent({
           setCopiedAction(null);
         }}
       >
-        <DialogContent className="flex sm:max-h-[92vh] max-w-2xl flex-col overflow-hidden rounded-[2.5rem] border border-border/40 bg-background/95 p-0 shadow-2xl backdrop-blur-2xl">
+        <DialogContent className="flex sm:max-h-[92vh] max-w-2xl flex-col overflow-hidden rounded-3xl border border-border/40 bg-background/95 p-0  backdrop-blur-2xl">
+          <DialogTitle className="sr-only">Export JSON</DialogTitle>
           <div className="flex min-h-0 flex-1 flex-col p-8 pt-10 max-sm:p-5 max-sm:pt-6">
             <div className="min-h-0 flex-1 overflow-y-auto pr-1 custom-scrollbar">
             <DialogHeader className="space-y-6 items-start text-left">
-              <div className="size-14 rounded-2xl bg-primary/5 border border-primary/10 flex items-center justify-center text-primary shadow-sm max-sm:size-12 max-sm:rounded-[1rem]">
+              <div className="size-14 rounded-xl bg-primary/5 border border-primary/10 flex items-center justify-center text-primary  max-sm:size-12">
                 <FileJson2 className="size-7 max-sm:size-6" />
               </div>
               <DialogTitle className="text-2xl font-black tracking-tight max-sm:text-xl">Export JSON</DialogTitle>
             </DialogHeader>
 
-            <div className="mt-6 flex justify-end max-sm:mt-5 max-sm:justify-start">
-              <div className="flex flex-wrap rounded-2xl border border-border/10 bg-muted/20 p-1">
+            <div className="mt-8 flex justify-end max-sm:mt-5 max-sm:justify-start">
+              <div className="flex flex-wrap rounded-2xl border border-border/10 bg-muted/20 p-1.5">
                 <button
                   onClick={() => handleExportModeChange('fusion')}
                   className={cn(
-                    'px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all',
-                    exportMode === 'fusion' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground/45 hover:text-muted-foreground/80'
+                    'px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all',
+                    exportMode === 'fusion' 
+                      ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/20' 
+                      : 'text-muted-foreground/65 hover:text-foreground hover:bg-background/40'
                   )}
                 >
                   Fusion
@@ -1463,8 +1465,10 @@ function WidgetSelectionGridComponent({
                 <button
                   onClick={() => handleExportModeChange('omni')}
                   className={cn(
-                    'px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all',
-                    exportMode === 'omni' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground/45 hover:text-muted-foreground/80'
+                    'px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all',
+                    exportMode === 'omni' 
+                      ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/20' 
+                      : 'text-muted-foreground/65 hover:text-foreground hover:bg-background/40'
                   )}
                 >
                   Omni
@@ -1473,11 +1477,11 @@ function WidgetSelectionGridComponent({
                   onClick={() => handleExportModeChange('aiometadata')}
                   disabled={aiometadataInventory.catalogs.length === 0}
                   className={cn(
-                    'px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all',
+                    'px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all',
                     exportMode === 'aiometadata'
-                      ? 'bg-primary text-primary-foreground shadow-sm'
-                      : 'text-muted-foreground/45 hover:text-muted-foreground/80',
-                    aiometadataInventory.catalogs.length === 0 && 'cursor-not-allowed opacity-45 hover:text-muted-foreground/45'
+                      ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/20'
+                      : 'text-muted-foreground/65 hover:text-foreground hover:bg-background/40',
+                    aiometadataInventory.catalogs.length === 0 && 'cursor-not-allowed opacity-30 hover:text-muted-foreground/65'
                   )}
                 >
                   AIOMETADATA
@@ -1486,16 +1490,16 @@ function WidgetSelectionGridComponent({
             </div>
 
             {exportMode === 'aiometadata' && (
-              <div className="mt-5 rounded-2xl border border-primary/15 bg-primary/5 px-4 py-3">
+              <div className="mt-5 rounded-3xl border border-primary/20 bg-primary/[0.08] px-5 py-3.5 dark:border-primary/30 dark:bg-primary/[0.12]">
                 <div className="flex items-start gap-3">
-                  <div className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-xl border border-primary/15 bg-background/75 text-primary">
+                  <div className="mt-0.5 flex size-10 shrink-0 items-center justify-center rounded-xl border border-primary/15 bg-background/75 text-primary">
                     <Info className="size-4" />
                   </div>
                   <div className="min-w-0">
-                    <p className="text-[10px] font-black uppercase tracking-[0.16em] text-primary/85">
+                    <p className="text-[11px] font-black uppercase tracking-[0.16em] text-primary/85">
                       Custom AIOMetadata export
                     </p>
-                    <p className="mt-1 text-xs font-medium leading-relaxed text-foreground/72">
+                    <p className="mt-1 text-[13px] font-normal leading-[1.55] text-foreground/72">
                       Select catalogs to build a catalogs-only AIOMetadata export. Copy the exported catalogs into AIOMetadata under Catalogs &gt; Import Setup, then save your changes.
                     </p>
                   </div>
@@ -1504,119 +1508,126 @@ function WidgetSelectionGridComponent({
             )}
 
             {exportMode === 'aiometadata' && isManifestSynced && existingAiometadataCatalogCount > 0 && (
-              <div className="mt-4 rounded-2xl border border-border/12 bg-background/45 px-4 py-3 shadow-[0_10px_24px_-22px_rgba(15,23,42,0.16)]">
+              <div className="mt-4 rounded-3xl border border-zinc-200/80 bg-white/40 px-5 py-5 backdrop-blur-md dark:border-white/10 dark:bg-white/[0.03]">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div className="min-w-0">
-                    <p className="text-[10px] font-black uppercase tracking-[0.16em] text-foreground/58">
+                    <p className="text-[11px] font-black uppercase tracking-[0.16em] text-foreground/58">
                       Export Full Catalog Setup
                     </p>
-                    <p className="mt-1 text-xs font-medium leading-relaxed text-muted-foreground/72">
+                    <p className="mt-1 text-[13px] font-normal leading-[1.55] text-muted-foreground/72">
                       Export every linked catalog, including the {existingAiometadataCatalogCount} already in the synced manifest.
                     </p>
                   </div>
-                  <div className="flex flex-wrap gap-2 sm:flex-col">
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      className="h-9 rounded-xl border-border/20 bg-background/70 px-4 text-[10px] font-black uppercase tracking-widest text-foreground/78 sm:w-56"
-                      onClick={handleDownloadFullAiometadataCatalogSetup}
-                    >
-                      <Download className="mr-1.5 size-3.5" />
-                      Download All Catalogs
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      className="h-9 rounded-xl border-border/20 bg-background/70 px-4 text-[10px] font-black uppercase tracking-widest text-foreground/78 sm:w-56"
-                      onClick={handleCopyFullAiometadataCatalogSetup}
-                    >
-                      {copiedAction === 'full-aiometadata' ? <Check className="mr-1.5 size-3.5" /> : <Copy className="mr-1.5 size-3.5" />}
-                      {copiedAction === 'full-aiometadata' ? 'Copied' : 'Copy All Catalogs'}
-                    </Button>
-                  </div>
+                    <div className="flex flex-wrap gap-2 sm:flex-col">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="h-10 rounded-xl border border-primary/20 bg-primary/10 px-6 text-[10px] font-black uppercase tracking-widest text-primary hover:bg-primary/20 transition-all dark:border-primary/30 dark:bg-primary/15 dark:hover:bg-primary/25 sm:w-64"
+                        onClick={handleDownloadFullAiometadataCatalogSetup}
+                      >
+                        <Download className="mr-2 size-3.5" />
+                        Download All Catalogs
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="h-10 rounded-xl border border-zinc-200 bg-white/80 px-6 text-[10px] font-black uppercase tracking-widest text-foreground/80 hover:bg-zinc-50 hover:text-foreground transition-all dark:border-white/10 dark:bg-zinc-800/80 dark:hover:bg-zinc-700 sm:w-64"
+                        onClick={handleCopyFullAiometadataCatalogSetup}
+                      >
+                        {copiedAction === 'full-aiometadata' ? <Check className="mr-2 size-3.5" /> : <Copy className="mr-2 size-3.5" />}
+                        {copiedAction === 'full-aiometadata' ? 'Copied' : 'Copy All Catalogs'}
+                      </Button>
+                    </div>
                 </div>
               </div>
             )}
 
             {exportMode === 'aiometadata' ? (
               <div className="mt-5 flex min-h-0 flex-col gap-4">
-                <div className="min-h-0 rounded-2xl border border-border/10 bg-muted/20 p-4">
-                  <div className="flex flex-col gap-3">
-                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                      <div>
-                        <p className="text-[10px] font-black uppercase tracking-[0.16em] text-foreground/55">
-                          Select Sources
-                        </p>
-                        <p className="mt-1 text-xs font-medium text-muted-foreground/75">
-                          {selectedAiometadataCatalogCount} of {selectableAiometadataCatalogCount} new catalogs selected
-                        </p>
+                <div className="min-h-0 rounded-[2.5rem] border border-zinc-200 dark:border-white/5 bg-white/70 dark:bg-zinc-950/25 backdrop-blur-xl shadow-sm overflow-hidden">
+                  {/* Header Stack: Tabs + Action Dock */}
+                  <div className="shrink-0 border-b border-zinc-200/60 dark:border-border/5 relative z-50">
+                    {/* Header with Search */}
+                    <div className="p-4 border-b border-zinc-200/60 dark:border-border/5 bg-zinc-50/10 dark:bg-white/[0.02]">
+                      <div className="relative">
+                        <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground/35" />
+                        <Input
+                          value={aiometadataSearchQuery}
+                          onChange={(event) => setAiometadataSearchQuery(event.target.value)}
+                          placeholder="Filter catalogs, widgets, or items..."
+                          className="h-10 rounded-2xl border-border/30 bg-background/70 pl-11 text-sm sm:text-xs font-medium"
+                        />
                       </div>
                     </div>
 
-                    <div className="relative">
-                      <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground/35" />
-                      <Input
-                        value={aiometadataSearchQuery}
-                        onChange={(event) => setAiometadataSearchQuery(event.target.value)}
-                        placeholder="Filter catalogs, widgets, or items..."
-                        className="h-11 rounded-2xl border-border/30 bg-background/70 pl-11 text-base sm:text-sm font-medium"
-                      />
-                    </div>
+                    {/* Integrated Action Dock */}
+                    <div className="flex items-center justify-between px-5 max-sm:px-3 h-12 bg-white/30 dark:bg-black/10">
+                      <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-2">
+                        <button
+                          type="button"
+                          onClick={() => replaceAiometadataSelection(Array.from(aiometadataSelectableCatalogKeys))}
+                          disabled={aiometadataSelectableCatalogKeys.size === 0}
+                          className="h-7.5 px-3 rounded-xl text-[9px] font-black uppercase tracking-widest text-foreground/65 border border-border/10 bg-white/95 dark:bg-white/[0.06] hover:bg-white dark:hover:bg-white/[0.12] hover:border-primary/20 hover:text-primary transition-all active:scale-95 shadow-sm dark:shadow-none shrink-0"
+                        >
+                          All
+                        </button>
+                        {selectableAiometadataCatalogKeysBySource.trakt.length > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => replaceAiometadataSelection(selectableAiometadataCatalogKeysBySource.trakt)}
+                            className="h-7.5 px-3 rounded-xl text-[9px] font-black uppercase tracking-widest text-foreground/65 border border-border/10 bg-white/95 dark:bg-white/[0.06] hover:bg-white dark:hover:bg-white/[0.12] hover:border-primary/20 hover:text-primary transition-all active:scale-95 shadow-sm dark:shadow-none shrink-0"
+                          >
+                            Trakt
+                          </button>
+                        )}
+                        {selectableAiometadataCatalogKeysBySource.mdblist.length > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => replaceAiometadataSelection(selectableAiometadataCatalogKeysBySource.mdblist)}
+                            className="h-7.5 px-3 rounded-xl text-[9px] font-black uppercase tracking-widest text-foreground/65 border border-border/10 bg-white/95 dark:bg-white/[0.06] hover:bg-white dark:hover:bg-white/[0.12] hover:border-primary/20 hover:text-primary transition-all active:scale-95 shadow-sm dark:shadow-none shrink-0"
+                          >
+                            MDBList
+                          </button>
+                        )}
+                        {selectableAiometadataCatalogKeysBySource.streaming.length > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => replaceAiometadataSelection(selectableAiometadataCatalogKeysBySource.streaming)}
+                            className="h-7.5 px-3 rounded-xl text-[9px] font-black uppercase tracking-widest text-foreground/65 border border-border/10 bg-white/95 dark:bg-white/[0.06] hover:bg-white dark:hover:bg-white/[0.12] hover:border-primary/20 hover:text-primary transition-all active:scale-95 shadow-sm dark:shadow-none shrink-0"
+                          >
+                            Streaming
+                          </button>
+                        )}
+                        {selectableAiometadataCatalogKeysBySource.simkl.length > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => replaceAiometadataSelection(selectableAiometadataCatalogKeysBySource.simkl)}
+                            className="h-7.5 px-3 rounded-xl text-[9px] font-black uppercase tracking-widest text-foreground/65 border border-border/10 bg-white/95 dark:bg-white/[0.06] hover:bg-white dark:hover:bg-white/[0.12] hover:border-primary/20 hover:text-primary transition-all active:scale-95 shadow-sm dark:shadow-none shrink-0"
+                          >
+                            Simkl
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => replaceAiometadataSelection([])}
+                          disabled={selectedAiometadataCatalogCount === 0}
+                          className="h-7.5 px-3 rounded-xl text-[9px] font-black uppercase tracking-widest text-foreground/65 border border-border/10 bg-white/95 dark:bg-white/[0.06] hover:bg-white dark:hover:bg-white/[0.12] hover:border-destructive/20 hover:text-destructive transition-all active:scale-95 shadow-sm dark:shadow-none shrink-0"
+                        >
+                          None
+                        </button>
+                      </div>
 
-                    <div className="flex flex-wrap gap-2">
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        className="h-9 rounded-xl px-4 text-[10px] font-black uppercase tracking-widest"
-                        onClick={() => replaceAiometadataSelection(Array.from(aiometadataSelectableCatalogKeys))}
-                        disabled={aiometadataSelectableCatalogKeys.size === 0}
-                      >
-                        All
-                      </Button>
-                      {selectableAiometadataCatalogKeysBySource.trakt.length > 0 && (
-                        <Button
-                          type="button"
-                          variant="secondary"
-                          className="h-9 rounded-xl px-4 text-[10px] font-black uppercase tracking-widest"
-                          onClick={() => replaceAiometadataSelection(selectableAiometadataCatalogKeysBySource.trakt)}
-                        >
-                          Trakt
-                        </Button>
-                      )}
-                      {selectableAiometadataCatalogKeysBySource.mdblist.length > 0 && (
-                        <Button
-                          type="button"
-                          variant="secondary"
-                          className="h-9 rounded-xl px-4 text-[10px] font-black uppercase tracking-widest"
-                          onClick={() => replaceAiometadataSelection(selectableAiometadataCatalogKeysBySource.mdblist)}
-                        >
-                          MDBList
-                        </Button>
-                      )}
-                      {selectableAiometadataCatalogKeysBySource.streaming.length > 0 && (
-                        <Button
-                          type="button"
-                          variant="secondary"
-                          className="h-9 rounded-xl px-4 text-[10px] font-black uppercase tracking-widest"
-                          onClick={() => replaceAiometadataSelection(selectableAiometadataCatalogKeysBySource.streaming)}
-                        >
-                          Streaming Services
-                        </Button>
-                      )}
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        className="h-9 rounded-xl px-4 text-[10px] font-black uppercase tracking-widest"
-                        onClick={() => replaceAiometadataSelection([])}
-                        disabled={selectedAiometadataCatalogCount === 0}
-                      >
-                        Clear
-                      </Button>
+                      {/* Info Cluster */}
+                      <div className="flex items-center shrink-0">
+                        <div className="text-[11px] font-black uppercase tracking-[0.2em] text-foreground h-5 flex items-center select-none">
+                          <span className="text-primary">{selectedAiometadataCatalogCount}</span>
+                          <span className="text-[9.5px] font-black ml-2 mt-0.5 text-foreground/60 max-sm:hidden">SELECTED</span>
+                        </div>
+                      </div>
                     </div>
-
                   </div>
 
-                  <div className="mt-4 max-h-[320px] min-h-0 space-y-3 overflow-y-auto pr-1 custom-scrollbar">
+                  <div className="p-4 max-h-[400px] min-h-0 space-y-3 overflow-y-auto pr-1 custom-scrollbar bg-zinc-50/20 dark:bg-zinc-950/10">
                     {filteredAiometadataWidgets.length === 0 ? (
                       <div className="rounded-2xl border border-dashed border-border/30 bg-background/40 px-4 py-8 text-center">
                         <p className="text-sm font-semibold text-muted-foreground/60">
@@ -1645,7 +1656,7 @@ function WidgetSelectionGridComponent({
                           <div
                             key={widget.key}
                             className={cn(
-                              'scroll-mt-4 rounded-2xl border p-4 shadow-sm',
+                              'scroll-mt-4 rounded-2xl border p-4 ',
                               widgetIsSyncedOnly
                                 ? 'border-border/10 bg-background/35 opacity-80'
                                 : 'border-border/20 bg-background/55'
@@ -1770,7 +1781,9 @@ function WidgetSelectionGridComponent({
                                                 ? 'bg-sky-500/10 text-sky-600 dark:text-sky-300'
                                                 : catalog.source === 'mdblist'
                                                   ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-300'
-                                                  : 'bg-amber-500/10 text-amber-600 dark:text-amber-300'
+                                                  : catalog.source === 'simkl'
+                                                    ? 'bg-rose-500/10 text-rose-600 dark:text-rose-300'
+                                                    : 'bg-amber-500/10 text-amber-600 dark:text-amber-300'
                                             )}>
                                               {catalog.source}
                                             </span>
@@ -1786,7 +1799,7 @@ function WidgetSelectionGridComponent({
                                   )}
 
                                   {widget.items.length > 0 && (
-                                    <div className="mt-3 space-y-3">
+                                    <div className="mt-2 rounded-2xl border border-zinc-200/60 dark:border-white/5 bg-zinc-100 dark:bg-zinc-900/30 overflow-hidden">
                                       {widget.items.map((item) => {
                                         const itemSelectedCount = item.catalogKeys.filter((catalogKey) =>
                                           selectedAiometadataCatalogKeySet.has(catalogKey)
@@ -1807,26 +1820,34 @@ function WidgetSelectionGridComponent({
                                           <div
                                             key={item.key}
                                             className={cn(
-                                              'rounded-xl border p-3',
+                                              'p-3.5 transition-all border-b border-zinc-200/60 dark:border-white/5 last:border-0 bg-white/40 dark:bg-white/[0.008] hover:bg-white/60 dark:hover:bg-white/[0.015]',
                                               itemIsSyncedOnly
-                                                ? 'border-border/10 bg-muted/5 opacity-80'
-                                                : 'border-border/15 bg-muted/10'
+                                                ? 'dark:bg-white/[0.002] opacity-60'
+                                                : 'relative'
                                             )}
                                           >
                                             <div className="flex items-start justify-between gap-3">
                               <div className="flex min-w-0 flex-1 items-start gap-3">
-                                <input
-                                  type="checkbox"
-                                  className="mt-1 size-4 rounded border-border/60"
-                                  checked={itemAllSelected}
-                                                  disabled={itemSelectableCatalogKeys.length === 0}
-                                                  ref={(node) => {
-                                                    if (node) {
-                                                      node.indeterminate = itemPartiallySelected;
-                                                    }
-                                                  }}
-                                                  onChange={(event) => toggleAiometadataCatalogGroup(itemSelectableCatalogKeys, event.target.checked)}
-                                                />
+                                  <div className="mt-1 shrink-0">
+                                    <div
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        toggleAiometadataCatalogGroup(itemSelectableCatalogKeys, !itemAllSelected);
+                                      }}
+                                      className={cn(
+                                        "size-[1.125rem] rounded-[0.35rem] border-2 transition-all cursor-pointer flex items-center justify-center shrink-0",
+                                        itemAllSelected || itemPartiallySelected
+                                          ? "bg-primary border-primary "
+                                          : "bg-zinc-950/40 border-white/10 hover:border-primary/40",
+                                        itemIsSyncedOnly && "opacity-30 cursor-not-allowed"
+                                      )}
+                                    >
+                                      {itemPartiallySelected
+                                        ? <div className="w-2.5 h-0.5 bg-primary-foreground rounded-full" />
+                                        : itemAllSelected && <Check className="size-3 text-primary-foreground stroke-[3.5px]" />
+                                      }
+                                    </div>
+                                  </div>
                                                 <div
                                                   className="min-w-0 flex-1 cursor-pointer"
                                                   onClick={() => toggleAiometadataItemExpanded(item.key)}
@@ -1860,7 +1881,7 @@ function WidgetSelectionGridComponent({
                                                       'mt-1 text-[10px] font-black uppercase tracking-[0.16em]',
                                                       itemIsSyncedOnly ? 'text-muted-foreground/35' : 'text-muted-foreground/50'
                                                     )}>
-                                                      Collection item
+                                                      Item
                                                     </p>
                                                   </button>
                                                 </div>
@@ -1896,27 +1917,35 @@ function WidgetSelectionGridComponent({
                                                   transition={{ duration: 0.2, ease: 'easeInOut' }}
                                                   className="overflow-hidden"
                                                 >
-                                                  <div className="mt-3 space-y-2">
+                                                  <div className="mt-3.5 p-3.5 rounded-2xl bg-zinc-100/80 dark:bg-zinc-900/30 border border-zinc-200/60 dark:border-white/5 space-y-2">
                                                     {item.catalogKeys.map((catalogKey) => {
                                                       const catalog = aiometadataCatalogMap.get(catalogKey) as ExportableCatalogDefinition | undefined;
                                                       if (!catalog) return null;
                                                       const checked = selectedAiometadataCatalogKeySet.has(catalogKey);
                                                       const disabled = isManifestSynced && catalog.isAlreadyInManifest;
                                                       return (
-                                                        <label
-                                                          key={catalogKey}
-                                                          className={cn(
-                                                            'flex items-center gap-3 rounded-xl border border-border/15 bg-background/65 px-3 py-2.5',
-                                                            disabled && 'opacity-55'
-                                                          )}
-                                                        >
-                                                          <input
-                                                            type="checkbox"
-                                                            className="size-4 rounded border-border/60"
-                                                            checked={checked}
-                                                            disabled={disabled}
-                                                            onChange={() => toggleAiometadataCatalogKey(catalogKey)}
-                                                          />
+                                                          <label
+                                                            key={catalogKey}
+                                                            className={cn(
+                                                              'flex items-center gap-3 rounded-xl border border-zinc-200/60 dark:border-white/5 bg-white/80 dark:bg-white/[0.015] px-3 py-2.5 transition-all hover:bg-zinc-50 dark:hover:bg-white/[0.03]',
+                                                              disabled && 'opacity-55'
+                                                            )}
+                                                          >
+                                                          <div
+                                                            onClick={(e) => {
+                                                              e.stopPropagation();
+                                                              if (!disabled) toggleAiometadataCatalogKey(catalogKey);
+                                                            }}
+                                                            className={cn(
+                                                              "size-[1.125rem] rounded-[0.35rem] border-2 transition-all cursor-pointer flex items-center justify-center shrink-0",
+                                                              checked
+                                                                ? "bg-primary border-primary "
+                                                                : "bg-zinc-950/40 border-white/10 hover:border-primary/40",
+                                                              disabled && "opacity-30 cursor-not-allowed"
+                                                            )}
+                                                          >
+                                                            {checked && <Check className="size-3 text-primary-foreground stroke-[3.5px]" />}
+                                                          </div>
                                                           <div className="min-w-0 flex-1">
                                                             <p className="truncate text-sm font-semibold text-foreground">{catalog.entry.name}</p>
                                                             <p className="truncate text-[11px] font-medium text-muted-foreground/65">
@@ -1929,7 +1958,9 @@ function WidgetSelectionGridComponent({
                                                               ? 'bg-sky-500/10 text-sky-600 dark:text-sky-300'
                                                               : catalog.source === 'mdblist'
                                                                 ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-300'
-                                                                : 'bg-amber-500/10 text-amber-600 dark:text-amber-300'
+                                                                : catalog.source === 'simkl'
+                                                                  ? 'bg-rose-500/10 text-rose-600 dark:text-rose-300'
+                                                                  : 'bg-amber-500/10 text-amber-600 dark:text-amber-300'
                                                           )}>
                                                             {catalog.source}
                                                           </span>
@@ -1979,7 +2010,7 @@ function WidgetSelectionGridComponent({
                       data-testid="export-preview-textarea"
                       readOnly
                       value={previewContent}
-                      className="h-[320px] w-full resize-none overflow-y-auto border-none bg-transparent p-5 font-mono text-base sm:text-xs leading-relaxed focus-visible:ring-0 custom-scrollbar"
+                      className="h-[320px] max-sm:h-[20vh] w-full resize-none overflow-y-auto border-none bg-transparent p-5 max-sm:p-3 font-mono text-base max-sm:text-[10px] sm:text-xs leading-relaxed focus-visible:ring-0 custom-scrollbar"
                     />
                   </div>
                 </div>
@@ -1991,12 +2022,12 @@ function WidgetSelectionGridComponent({
                 || exportStage === 'fusion-needs-appletv-catalog-warning'
                 || exportStage === 'fusion-needs-appletv-device-check'
                 || exportStage === 'omni-needs-aiom-bridge' ? (
-                  <div className="min-h-[320px] p-5">
+                  <div className="min-h-[320px] max-sm:min-h-[20vh] p-5 max-sm:p-4">
                     <div
                       className={cn(
-                        'flex size-9 items-center justify-center rounded-xl border bg-background/75 shadow-[0_8px_24px_-18px_rgba(245,158,11,0.5)]',
+                        'flex size-9 items-center justify-center rounded-xl border bg-background/75 ',
                         exportStage === 'fusion-needs-appletv-device-check'
-                          ? 'border-primary/15 text-primary shadow-[0_8px_24px_-18px_rgba(37,99,235,0.35)]'
+                          ? 'border-primary/15 text-primary '
                           : 'border-amber-500/15 text-amber-600 dark:text-amber-300'
                       )}
                     >
@@ -2029,7 +2060,7 @@ function WidgetSelectionGridComponent({
                     data-testid="export-preview-textarea"
                     readOnly
                     value={previewContent}
-                    className="h-[320px] w-full resize-none overflow-y-auto border-none bg-transparent p-5 font-mono text-base sm:text-xs leading-relaxed focus-visible:ring-0 custom-scrollbar"
+                    className="h-[320px] max-sm:h-[20vh] w-full resize-none overflow-y-auto border-none bg-transparent p-5 max-sm:p-3 font-mono text-base max-sm:text-[10px] sm:text-xs leading-relaxed focus-visible:ring-0 custom-scrollbar"
                   />
                 )}
                 </div>
@@ -2057,7 +2088,7 @@ function WidgetSelectionGridComponent({
                   </Button>
                   {fusionInvalidCatalogState.emptiedItems > 0 ? (
                     <Button
-                      className="h-11 rounded-xl max-sm:rounded-[1rem] px-6 text-[11px] font-bold uppercase tracking-wider shadow-lg shadow-primary/20 transition-all sm:w-52"
+                      className="h-11 rounded-xl max-sm:rounded-[1rem] px-6 text-[11px] font-bold uppercase tracking-wider   transition-all sm:w-52"
                       onClick={() => {
                         if (fusionInvalidCatalogState.fingerprint) {
                           setConfirmedFusionInvalidCatalogDecision({
@@ -2075,7 +2106,7 @@ function WidgetSelectionGridComponent({
               ) : exportStage === 'fusion-needs-appletv-device-check' ? (
                 <>
                   <Button
-                    className="h-11 rounded-xl max-sm:rounded-[1rem] px-6 text-[11px] font-bold uppercase tracking-wider shadow-lg shadow-primary/20 transition-all sm:w-40"
+                    className="h-11 rounded-xl max-sm:rounded-[1rem] px-6 text-[11px] font-bold uppercase tracking-wider   transition-all sm:w-40"
                     onClick={() => {
                       if (fusionAppleTvCatalogRiskFingerprint) {
                         setAppleTvDeviceDecision({
@@ -2089,7 +2120,7 @@ function WidgetSelectionGridComponent({
                     No
                   </Button>
                   <Button
-                    className="h-11 rounded-xl max-sm:rounded-[1rem] px-6 text-[11px] font-bold uppercase tracking-wider shadow-lg shadow-primary/20 transition-all sm:w-40"
+                    className="h-11 rounded-xl max-sm:rounded-[1rem] px-6 text-[11px] font-bold uppercase tracking-wider   transition-all sm:w-40"
                     onClick={() => {
                       if (fusionAppleTvCatalogRiskFingerprint) {
                         setAppleTvDeviceDecision({
@@ -2105,7 +2136,7 @@ function WidgetSelectionGridComponent({
                 </>
               ) : exportStage === 'fusion-needs-appletv-catalog-warning' ? (
                 <Button
-                  className="h-11 rounded-xl max-sm:rounded-[1rem] px-6 text-[11px] font-bold uppercase tracking-wider shadow-lg shadow-primary/20 transition-all sm:w-44"
+                  className="h-11 rounded-xl max-sm:rounded-[1rem] px-6 text-[11px] font-bold uppercase tracking-wider   transition-all sm:w-44"
                   onClick={() => {
                     if (fusionAppleTvCatalogRiskFingerprint) {
                       setConfirmedAppleTvCatalogWarningFingerprint(fusionAppleTvCatalogRiskFingerprint);
@@ -2117,7 +2148,7 @@ function WidgetSelectionGridComponent({
                 </Button>
               ) : exportStage === 'fusion-needs-aiom-sync' ? (
                 <Button
-                  className="h-11 rounded-xl max-sm:rounded-[1rem] px-6 text-[11px] font-bold uppercase tracking-wider shadow-lg shadow-primary/20 transition-all sm:w-52"
+                  className="h-11 rounded-xl max-sm:rounded-[1rem] px-6 text-[11px] font-bold uppercase tracking-wider   transition-all sm:w-52"
                   onClick={handleOpenSyncManifestFromPreview}
                 >
                   <Globe className="size-3.5 mr-1.5" />
@@ -2126,7 +2157,7 @@ function WidgetSelectionGridComponent({
               ) : exportStage === 'omni-needs-aiom-bridge' ? (
                 <>
                   <Button
-                    className="h-11 rounded-xl max-sm:rounded-[1rem] px-6 text-[11px] font-bold uppercase tracking-wider shadow-lg shadow-primary/20 transition-all sm:w-52"
+                    className="h-11 rounded-xl max-sm:rounded-[1rem] px-6 text-[11px] font-bold uppercase tracking-wider   transition-all sm:w-52"
                     onClick={handleCopyMissingCatalogs}
                   >
                     {copiedAction === 'missing-catalogs' ? <Check className="size-3.5 mr-1.5" /> : <Copy className="size-3.5 mr-1.5" />}
@@ -2162,7 +2193,7 @@ function WidgetSelectionGridComponent({
                     Download JSON
                   </Button>
                   <Button
-                    className="h-11 rounded-xl max-sm:rounded-[1rem] px-6 text-[11px] font-bold uppercase tracking-wider shadow-lg shadow-primary/20 transition-all sm:w-52"
+                    className="h-11 rounded-xl max-sm:rounded-[1rem] px-6 text-[11px] font-bold uppercase tracking-wider   transition-all sm:w-52"
                     onClick={handleCopy}
                     disabled={previewContent.startsWith('Error:')}
                   >
@@ -2181,7 +2212,7 @@ function WidgetSelectionGridComponent({
                     Download JSON
                   </Button>
                   <Button
-                    className="h-11 rounded-xl max-sm:rounded-[1rem] px-6 text-[11px] font-bold uppercase tracking-wider shadow-lg shadow-primary/20 transition-all sm:w-44"
+                    className="h-11 rounded-xl max-sm:rounded-[1rem] px-6 text-[11px] font-bold uppercase tracking-wider   transition-all sm:w-44"
                     onClick={handleCopy}
                     disabled={previewContent.startsWith('Error:')}
                   >
@@ -2200,10 +2231,11 @@ function WidgetSelectionGridComponent({
       />
 
       <Dialog open={showTrash} onOpenChange={setShowTrash}>
-        <DialogContent className="max-w-2xl p-0 overflow-hidden border-border/40 shadow-2xl backdrop-blur-xl bg-background/95 dark:border-white/10 dark:bg-zinc-950/95">
+        <DialogContent className="max-w-2xl p-0 overflow-hidden border-border/40  backdrop-blur-xl bg-background/95 dark:border-white/10 dark:bg-zinc-950/95">
+          <DialogTitle className="sr-only">Trash</DialogTitle>
           <div className="p-8 pt-10 max-sm:p-5 max-sm:pt-6">
             <DialogHeader className="space-y-6 items-start text-left">
-              <div className="size-14 rounded-2xl border border-destructive/10 bg-destructive/10 text-destructive shadow-sm flex items-center justify-center transition-all animate-in zoom-in-75 duration-300 dark:border-destructive/15 dark:bg-destructive/15 max-sm:size-12 max-sm:rounded-[1rem]">
+              <div className="size-14 rounded-xl border border-destructive/10 bg-destructive/10 text-destructive  flex items-center justify-center transition-all animate-in zoom-in-75 duration-300 dark:border-destructive/15 dark:bg-destructive/15 max-sm:size-12">
                 <Trash2 className="size-7 max-sm:size-6" />
               </div>
               <div className="space-y-1">
@@ -2256,7 +2288,7 @@ function WidgetSelectionGridComponent({
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 mb-1">
                         <span className={cn(
-                          "inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.15em] shadow-sm dark:shadow-none",
+                          "inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.15em]  dark:shadow-none",
                           entry.typeClassName
                         )}>
                           {entry.typeLabel}
@@ -2278,7 +2310,7 @@ function WidgetSelectionGridComponent({
                       size="sm"
                       variant="outline"
                       className={cn(
-                        "rounded-2xl shrink-0 h-9 px-5 border-border/60 bg-background/50 text-[11px] font-black uppercase tracking-widest transition-all shadow-sm dark:border-white/10 dark:bg-zinc-950/75 dark:text-zinc-100",
+                        "rounded-2xl shrink-0 h-9 px-5 border-border/60 bg-background/50 text-[11px] font-black uppercase tracking-widest transition-all  dark:border-white/10 dark:bg-zinc-950/75 dark:text-zinc-100",
                         entry.canRestore
                           ? "hover:bg-primary hover:text-primary-foreground hover:border-primary active:scale-95 dark:hover:bg-primary dark:hover:text-primary-foreground dark:hover:border-primary"
                           : "text-muted-foreground/40 dark:text-zinc-500/60"

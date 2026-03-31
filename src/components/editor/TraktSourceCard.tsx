@@ -31,7 +31,7 @@ export function TraktSourceCard({
   const issues = getTraktValidationIssues(dataSource);
 
   return (
-    <div className="relative rounded-xl border border-emerald-200/50 bg-emerald-50/60 p-3 pr-14 shadow-sm dark:border-emerald-500/20 dark:bg-emerald-500/[0.08]">
+    <div className="relative rounded-xl border border-emerald-200/50 bg-emerald-50/60 p-3 pr-14  dark:border-emerald-500/20 dark:bg-emerald-500/[0.08]">
       <div className="flex flex-wrap items-start gap-2">
         <div className="flex flex-wrap items-center gap-2">
           <Badge className="bg-emerald-600/10 text-emerald-700 hover:bg-emerald-600/15 dark:text-emerald-300">
@@ -73,7 +73,7 @@ export function TraktSourceCard({
         <Button
           variant="ghost"
           size="icon"
-          className="absolute right-3 top-3 size-8 max-sm:size-9 rounded-lg max-sm:rounded-xl border border-border/40 bg-background/55 text-destructive/55 shadow-sm transition-all hover:border-destructive/20 hover:bg-destructive/10 hover:text-destructive dark:border-white/10 dark:bg-zinc-950/70 dark:text-destructive/75 dark:hover:border-destructive/20 dark:hover:bg-destructive/12"
+          className="absolute right-3 top-3 size-8 max-sm:size-9 rounded-lg max-sm:rounded-xl border border-border/40 bg-background/55 text-destructive/55  transition-all hover:border-destructive/20 hover:bg-destructive/10 hover:text-destructive dark:border-white/10 dark:bg-zinc-950/70 dark:text-destructive/75 dark:hover:border-destructive/20 dark:hover:bg-destructive/12"
           onClick={onDelete}
           title={deleteTitle}
         >

@@ -107,10 +107,11 @@ export function ManifestModal({ isOpen, onOpenChange }: ManifestModalProps) {
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px] rounded-[2.5rem] border border-border/40 bg-card/95 backdrop-blur-2xl shadow-2xl p-0 overflow-hidden">
+      <DialogContent className="sm:max-w-[500px] rounded-3xl border border-border/40 bg-card/95 backdrop-blur-2xl  p-0 overflow-hidden">
+        <DialogTitle className="sr-only">AIOMetadata Setup</DialogTitle>
         <div className="p-8 pt-10 max-sm:p-5 max-sm:pt-6">
           <DialogHeader className="space-y-6 items-start text-left">
-            <div className="size-14 rounded-2xl bg-primary/5 border border-primary/10 flex items-center justify-center text-primary shadow-sm max-sm:size-12 max-sm:rounded-[1rem]">
+            <div className="size-14 rounded-xl bg-primary/5 border border-primary/10 flex items-center justify-center text-primary  max-sm:size-12">
               <Sparkles className="size-7 max-sm:size-6" />
             </div>
             <div className="space-y-1">
@@ -129,10 +130,10 @@ export function ManifestModal({ isOpen, onOpenChange }: ManifestModalProps) {
             {!isManual ? (
               <div className="space-y-4">
                 {manifestUrl && (
-                <div className="flex items-center justify-between gap-3 rounded-2xl border border-primary/10 bg-primary/5 px-4 py-2.5">
+                <div className="flex items-center justify-between gap-3 rounded-xl border border-primary/10 bg-primary/5 px-4 py-2.5">
                   <div className="min-w-0">
                     <p className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.16em] text-primary/80">
-                      <span className="size-1.5 rounded-full bg-green-500/90 shadow-[0_0_6px_rgba(34,197,94,0.28)]" />
+                      <span className="size-1.5 rounded-full bg-green-500/90 " />
                       Synced
                     </p>
                   </div>
@@ -152,8 +153,8 @@ export function ManifestModal({ isOpen, onOpenChange }: ManifestModalProps) {
                 <p className="px-1 text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground/55">
                   Manifest URL
                 </p>
-                <div className="relative group rounded-[1.6rem] border border-zinc-200/90 bg-white/92 p-1.5 shadow-[0_14px_30px_-24px_rgba(15,23,42,0.18)] transition-all hover:border-zinc-300/90 focus-within:border-primary/35 focus-within:bg-white dark:border-border/40 dark:bg-background/74 dark:hover:border-border/55 dark:focus-within:bg-background">
-                  <div className="relative flex items-center rounded-[1.2rem] bg-zinc-50/85 dark:bg-muted/[0.16]">
+                <div className="relative group rounded-xl border border-zinc-200/90 bg-white/92 p-1.5  transition-all hover:border-zinc-300/90 focus-within:border-primary/35 focus-within:bg-white dark:border-border/40 dark:bg-background/74 dark:hover:border-border/55 dark:focus-within:bg-background">
+                  <div className="relative flex items-center rounded-lg bg-zinc-50/85 dark:bg-muted/[0.16]">
                     <Globe className="pointer-events-none absolute left-3.5 size-4 text-muted-foreground/40 group-focus-within:text-primary/80 dark:text-muted-foreground/28 transition-colors" />
                     <Input
                       data-testid="manifest-url-input"
@@ -179,9 +180,9 @@ export function ManifestModal({ isOpen, onOpenChange }: ManifestModalProps) {
               </div>
               
               {error?.isCors && (
-                <div className="p-4 rounded-2xl bg-destructive/5 border border-destructive/10 space-y-2">
+                <div className="p-4 rounded-xl bg-destructive/5 border border-destructive/10 space-y-2">
                   <p className="text-xs text-destructive/80 leading-relaxed font-medium">
-                    Fetching failed. This is likely a CORS issue. Would you like to try 
+                    Fetching failed. This is likely a CORS alert. Would you like to try 
                     <button 
                       onClick={() => setIsManual(true)}
                       className="mx-1 text-primary hover:underline font-bold"
@@ -195,7 +196,7 @@ export function ManifestModal({ isOpen, onOpenChange }: ManifestModalProps) {
             </div>
           ) : (
             <div className="space-y-4">
-              <div className="relative group bg-muted/20 rounded-2xl border border-border/10 focus-within:border-primary/30 transition-all p-2">
+              <div className="relative group bg-muted/20 rounded-xl border border-border/10 focus-within:border-primary/30 transition-all p-2">
                 <textarea
                   data-testid="manifest-manual-textarea"
                   placeholder='{ "catalogs": [...] }'
@@ -227,7 +228,7 @@ export function ManifestModal({ isOpen, onOpenChange }: ManifestModalProps) {
           </Button>
           <Button
             data-testid="manifest-sync-submit"
-            className="w-full sm:flex-1 h-11 rounded-xl max-sm:rounded-[1rem] font-bold uppercase tracking-wider text-xs shadow-lg shadow-primary/20 transition-all"
+            className="w-full sm:flex-1 h-11 rounded-xl max-sm:rounded-[1rem] font-bold uppercase tracking-wider text-xs   transition-all"
             onClick={isManual ? handleManualSync : handleLoad}
             disabled={isLoading || (isManual ? !manualJson : !url)}
           >

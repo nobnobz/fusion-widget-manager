@@ -646,7 +646,7 @@ export function ConfigProvider({ children }: { children: React.ReactNode }) {
       try {
         const response = await fetch(url);
         if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
+          throw new Error(`Failed to load manifest (HTTP ${response.status}). Please check if the URL is correct.`);
         }
         const json = await response.json();
         setManifestContent(JSON.stringify(json, null, 2));
@@ -654,7 +654,6 @@ export function ConfigProvider({ children }: { children: React.ReactNode }) {
         setManifestCatalogs(catalogs);
         return catalogs;
       } catch (error) {
-        console.error('Failed to fetch manifest:', error);
         throw error;
       }
     },

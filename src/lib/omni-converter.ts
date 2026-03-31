@@ -7,7 +7,7 @@ import type {
   CollectionItem,
   AddonCatalogDataSource
 } from './types/widget';
-import { MANIFEST_PLACEHOLDER, resolveFusionCatalogType } from './config-utils';
+import { MANIFEST_PLACEHOLDER, resolveFusionCatalogType, getCatalogActualId } from './config-utils';
 import { bridgeNativeTraktSourcesForOmni } from './native-trakt-bridge';
 import { isNativeTraktDataSource } from './widget-domain';
 
@@ -175,22 +175,48 @@ export function normalizeOmniSnapshot(snapshot: any): NormalizedOmniModel {
 function normalizeCatalogId(omniId: string): string {
   if (!omniId) return omniId;
   // Omni uses type:source.id or just source.id
-  // We want type::source.id
+  // We want type::source.id — always lowercase the type prefix
   if (omniId.includes(':') && !omniId.includes('::')) {
-    return omniId.replace(':', '::');
+    const colonIndex = omniId.indexOf(':');
+    const typePrefix = omniId.slice(0, colonIndex).toLowerCase();
+    const rest = omniId.slice(colonIndex + 1);
+    return `${typePrefix}::${rest}`;
   }
   return omniId;
 }
 
 /**
+ * Catalog IDs that do not encode their type in their name and cannot be inferred
+ * by keyword heuristics. Maps to their canonical Fusion catalog type.
+ */
+const KNOWN_CATALOG_TYPES: Record<string, string> = {
+  'mdblist.upnext': 'series',
+};
+
+/**
  * Extracts the type from a normalized catalog ID.
+ * For IDs with a type prefix (movie::, series::) the prefix is authoritative.
+ * For IDs without a prefix (stored as bare IDs in some Omni snapshots), keyword
+ * heuristics and a known-ID lookup are applied before falling back to 'movie'.
  */
 function getCatalogType(normalizedId: string): string {
   let guessedType = 'movie';
   if (normalizedId.startsWith('movie::')) guessedType = 'movie';
   else if (normalizedId.startsWith('series::')) guessedType = 'series';
   else if (normalizedId.startsWith('anime::')) guessedType = 'series'; // Typically anime maps to series in Fusion
-  
+  else {
+    // No type prefix — try keyword heuristics on the raw ID segment.
+    const bare = normalizedId.split('::').pop() || normalizedId;
+    const known = KNOWN_CATALOG_TYPES[bare.toLowerCase()];
+    if (known) {
+      guessedType = known;
+    } else {
+      const lower = bare.toLowerCase();
+      if (/\b(show|shows|series)\b/.test(lower)) guessedType = 'series';
+      else if (/\b(movie|movies)\b/.test(lower)) guessedType = 'movie';
+    }
+  }
+
   return resolveFusionCatalogType(normalizedId, guessedType);
 }
 
@@ -319,35 +345,34 @@ export function convertOmniToFusion(snapshot: any): FusionWidgetsConfig {
     
     // Determine aspect ratio from small/landscape catalogs or name heuristics
     const isLandscape = model.landscapeCatalogs.includes(omniId) || lowName.includes('landscape');
-    const isSquare = lowName.includes('square');
-    const isSmall = model.smallCatalogs.includes(omniId) || lowName.includes('mini') || lowName.includes('small');
+    const isUpNext = omniId.includes('mdblist.upnext');
+    const title = isUpNext ? 'MDBList Up Next Series' : (customName || normalizedId.split('::').pop() || 'Untitled Row');
+    const cacheTTL = isUpNext ? 1800 : 3600;
 
-    widgets.push({
-      id: crypto.randomUUID(),
-      title: customName || normalizedId.split('::').pop() || 'Untitled Row',
+    const row: RowClassicWidget = {
+      id: `catalog.${crypto.randomUUID()}`,
+      title,
       type: 'row.classic',
-      cacheTTL: 3600,
+      cacheTTL,
       limit: 20,
       presentation: {
-        aspectRatio: isSquare ? 'square' : (isLandscape ? 'wide' : 'poster'),
-        cardStyle: isSmall ? 'small' : 'medium',
-        badges: {
-          providers: true,
-          ratings: true
-        }
+        aspectRatio: 'poster',
+        cardStyle: 'medium',
+        badges: { providers: false, ratings: true },
+        backgroundImageURL: '',
       },
-
-
       dataSource: {
         sourceType: 'aiometadata',
         kind: 'addonCatalog',
         payload: {
           addonId: MANIFEST_PLACEHOLDER,
           catalogId: normalizedId,
-          catalogType: type
-        }
-      }
-    } as RowClassicWidget);
+          catalogType: type,
+        },
+      },
+    };
+
+    widgets.push(row);
   });
 
 
@@ -486,6 +511,10 @@ const OMNI_FORBIDDEN_VALUE_FIELDS = new Set<string>([
   'stream_button_elements_order',
   'hidden_stream_button_elements',
 ]);
+
+function isMdblistCatalogId(catalogId: string): boolean {
+  return getCatalogActualId(catalogId).startsWith('mdblist.');
+}
 
 function toOmniCatalogId(catalogId: string): string {
   return String(catalogId || '').replace(/::/g, ':').trim();

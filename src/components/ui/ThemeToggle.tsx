@@ -51,10 +51,14 @@ export function ThemeToggle({ className }: { className?: string }) {
           variant="ghost" 
           size="icon" 
           className={cn(
-            "size-10 rounded-2xl bg-white/5 dark:bg-black/20 border border-border/40 hover:bg-primary/5 hover:text-primary transition-all shadow-sm group relative",
+            "size-10 rounded-xl border transition-all group relative overflow-hidden",
+            isDark 
+              ? "bg-indigo-500/[0.08] border-indigo-500/25 hover:bg-indigo-500/15 hover:border-indigo-500/35 text-indigo-400" 
+              : "bg-amber-500/[0.04] border-amber-500/20 hover:bg-amber-500/10 hover:border-amber-500/30 text-amber-500",
             className
           )}
         >
+          <div className="absolute inset-0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000 bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
           <div className="relative size-5 flex items-center justify-center overflow-hidden">
             <AnimatePresence mode="wait" initial={false}>
               {isDark ? (
@@ -85,7 +89,7 @@ export function ThemeToggle({ className }: { className?: string }) {
           <span className="sr-only">Toggle theme</span>
         </Button>
       </PopoverTrigger>
-      <PopoverContent align="end" className="w-36 p-1 bg-white/90 dark:bg-black/90 backdrop-blur-xl border-border/40 rounded-2xl shadow-2xl">
+      <PopoverContent align="end" className="w-36 p-1 bg-white/90 dark:bg-black/90 backdrop-blur-xl border-border/40 rounded-2xl ">
         <div className="flex flex-col gap-1">
           {themes.map((t) => (
             <button
@@ -94,7 +98,7 @@ export function ThemeToggle({ className }: { className?: string }) {
               className={cn(
                 "flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold transition-all",
                 theme === t.id 
-                  ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20" 
+                  ? "bg-primary text-primary-foreground  " 
                   : "hover:bg-primary/5 hover:text-primary opacity-60 hover:opacity-100"
               )}
             >

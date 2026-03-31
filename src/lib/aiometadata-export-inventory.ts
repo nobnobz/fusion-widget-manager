@@ -7,10 +7,11 @@ import type {
 import { compareCatalogExportOrder, getItemDisplayName } from './aiometadata-catalog-labels';
 import { collectUsedMdblistCatalogs } from './mdblist-catalog-export';
 import { collectNativeTraktSources } from './native-trakt-bridge';
+import { collectUsedSimklCatalogs } from './simkl-catalog-export';
 import { collectUsedStreamingCatalogs } from './streaming-catalog-export';
 import { collectUsedAiometadataTraktCatalogs } from './trakt-catalog-export';
 
-export type ExportableCatalogSource = 'trakt' | 'mdblist' | 'streaming';
+export type ExportableCatalogSource = 'trakt' | 'mdblist' | 'streaming' | 'simkl';
 
 export interface ExportableCatalogDefinition {
   key: string;
@@ -431,6 +432,74 @@ export function collectAiometadataExportInventory(
       itemIndex: reference.itemIndex,
       label,
       searchText: [reference.widgetTitle, reference.itemName, reference.name, reference.id, reference.type, 'streaming']
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase(),
+    });
+  });
+
+  collectUsedSimklCatalogs(config, manifestCatalogs).forEach((reference, occurrenceIndex) => {
+    const catalogKey = createCatalogKey('simkl', reference.type, reference.id);
+    const entry: AiometadataCatalogsOnlyEntry = {
+      id: reference.id,
+      type: reference.type,
+      name: reference.name,
+      enabled: true,
+      source: 'simkl',
+      displayType: reference.displayType,
+    };
+
+    const existingDefinition = catalogMap.get(catalogKey);
+    if (existingDefinition) {
+      existingDefinition.occurrenceCount += 1;
+    } else {
+      catalogMap.set(catalogKey, {
+        key: catalogKey,
+        entry,
+        source: 'simkl',
+        occurrenceCount: 1,
+        isAlreadyInManifest: manifestKeys.has(createManifestKey(entry.type, entry.id)),
+      });
+    }
+
+    const widgetType = reference.itemId ? 'collection.row' : 'row.classic';
+    const widgetGroup = ensureWidgetGroup(
+      widgetMap,
+      reference.widgetId,
+      reference.widgetTitle,
+      reference.widgetIndex,
+      widgetType
+    );
+    pushUnique(widgetGroup.catalogKeys, catalogKey);
+
+    if (reference.itemId) {
+      const itemGroup = ensureItemGroup(
+        widgetGroup,
+        reference.itemId,
+        getItemDisplayName(reference.itemName, reference.itemIndex),
+        reference.itemIndex || 0
+      );
+      pushUnique(itemGroup.catalogKeys, catalogKey);
+    } else {
+      pushUnique(widgetGroup.rowCatalogKeys, catalogKey);
+    }
+
+    const label = reference.itemId
+      ? `${getItemDisplayName(reference.itemName, reference.itemIndex)} / ${reference.name}`
+      : reference.name;
+    occurrences.push({
+      key: createOccurrenceKey(catalogKey, reference.widgetId, reference.itemId, `simkl-${occurrenceIndex}`),
+      catalogKey,
+      source: 'simkl',
+      widgetId: reference.widgetId,
+      widgetTitle: reference.widgetTitle,
+      widgetIndex: reference.widgetIndex,
+      widgetType,
+      itemId: reference.itemId,
+      itemName: reference.itemName,
+      itemIndex: reference.itemIndex,
+      label,
+      searchText: [reference.widgetTitle, reference.itemName, reference.name, reference.id, reference.type, 'simkl']
         .filter(Boolean)
         .join(' ')
         .toLowerCase(),

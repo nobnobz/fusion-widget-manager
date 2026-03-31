@@ -26,7 +26,7 @@ export interface AiometadataCatalogsOnlyEntry {
   type: string;
   name: string;
   enabled: true;
-  source: 'trakt' | 'mdblist' | 'streaming';
+  source: 'trakt' | 'mdblist' | 'streaming' | 'simkl';
   displayType?: string;
 }
 

@@ -1,5 +1,25 @@
 # Changelog
 
+## [0.4.0] - 2026-03-31
+### Added
+- **Smart Import & Merge System**: Completely redesigned import engine allowing users to merge widgets from external configurations into existing setups.
+  - **Granular Update Control**: Choose exactly which fields to update (Images, Names, Catalogs) on a per-widget or per-item basis.
+  - **Intelligent Diffing**: Automatically detects additions versus updates, preventing accidental overwrites.
+  - **Improved Merge Logic**: Safer handling of partial updates ensuring unaffected widgets/items remain untouched.
+  - **Built-in Repair**: Enhanced `normalizeFusionConfig` logic to automatically repair common inconsistencies in imported configurations.
+
+### Changed
+- **Neutral Obsidian UI Refinement**:
+  - Global layout polishing with standardized spacing, alignment, and consistent `rounded-3xl` radii.
+  - Enhanced contrast and typography across the editor and footer for better accessibility.
+- **Mobile Optimizations**:
+  - Optimization of the "Selection Station" for touch devices with smoother scrolling and better touch targets.
+  - Improved responsive scaling for the branding section and dialogs on various mobile devices.
+
+### Fixed
+- **Catalog Support**: Resolved parsing and validation issues affecting SIMKL and specific MDBList catalogs.
+- **Stability**: Multiple bug fixes and stability improvements during complex import/merge workflows.
+
 ## [0.3.0] - 2026-03-27
 ### Added
 - **AIOMetadata Export**: Added full support for exporting AIOMetadata catalogs directly from the manager with preview, selection controls, and JSON download.

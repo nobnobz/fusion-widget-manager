@@ -8,6 +8,7 @@ import * as Dialog from '@radix-ui/react-dialog';
 import { cn } from '@/lib/utils';
 import { AIOMetadataCatalog } from '@/lib/types/widget';
 import { findCatalog } from '@/lib/config-utils';
+import { VisuallyHidden } from '@/components/ui/visually-hidden';
 
 interface CatalogComboboxProps {
   options: AIOMetadataCatalog[];
@@ -64,8 +65,10 @@ export function CatalogCombobox({
       <button
         type="button"
         className={cn(
-          "flex items-center justify-between w-full h-8 px-3 rounded-lg bg-muted/50 text-[11px] font-semibold text-left transition-all outline-none border border-transparent",
-          isOpen ? "ring-1 ring-primary/30 bg-background border-primary/20" : "hover:bg-muted hover:border-border",
+          "flex items-center justify-between w-full h-10 max-sm:h-11 px-4 rounded-xl bg-zinc-100/40 dark:bg-zinc-950/20 text-xs sm:text-[11px] font-bold text-left transition-all outline-none border",
+          isOpen 
+            ? "ring-1 ring-primary/30 bg-background border-primary/20 dark:bg-zinc-900" 
+            : "border-zinc-200 dark:border-white/5 hover:bg-zinc-100/60 dark:hover:bg-zinc-900/60 hover:border-primary/20",
           selectedOption ? "text-primary" : (isInvalid ? "text-amber-500 italic border-amber-500/20" : "text-muted-foreground/60"),
           className
         )}
@@ -88,8 +91,8 @@ export function CatalogCombobox({
       exit={isMobile ? { opacity: 0, scale: 0.95 } : { opacity: 0, scale: 0.98, y: -4 }}
       transition={{ duration: 0.15, ease: "easeOut" }}
       className={cn(
-        "bg-popover border border-border shadow-2xl flex flex-col h-full overflow-hidden",
-        isMobile ? "rounded-[2rem] w-full max-h-[85vh]" : "rounded-xl w-full max-h-[inherit]"
+        "bg-popover border border-border  flex flex-col h-full overflow-hidden",
+        isMobile ? "rounded-[2.25rem] w-full max-h-[85vh]" : "rounded-3xl w-full sm:max-h-[380px]"
       )}
       onClick={(e) => e.stopPropagation()}
     >
@@ -145,9 +148,9 @@ export function CatalogCombobox({
                   setIsOpen(false);
                 }}
                 className={cn(
-                  "w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-left text-sm sm:text-xs transition-all mb-1 last:mb-0",
+                  "w-full flex items-center justify-between px-3.5 py-3 rounded-2xl text-left text-sm sm:text-xs transition-all mb-1.5 last:mb-0",
                   isSelected
-                    ? "bg-primary text-primary-foreground shadow-sm shadow-primary/20"
+                    ? "bg-primary text-primary-foreground  "
                     : isDisabled
                       ? "text-muted-foreground/25 cursor-not-allowed opacity-40"
                       : "hover:bg-muted text-foreground/80 hover:text-foreground active:scale-[0.98]"
@@ -188,6 +191,9 @@ export function CatalogCombobox({
             className="fixed left-1/2 top-1/2 z-[10001] w-[90vw] max-w-[400px] -translate-x-1/2 -translate-y-1/2 outline-none"
             onOpenAutoFocus={(e) => e.preventDefault()}
           >
+            <Dialog.Title asChild>
+              <VisuallyHidden>Select Catalog</VisuallyHidden>
+            </Dialog.Title>
             <AnimatePresence>
               {isOpen && renderContent()}
             </AnimatePresence>

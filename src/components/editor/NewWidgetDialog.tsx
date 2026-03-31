@@ -68,10 +68,11 @@ export function NewWidgetDialog({ isOpen, onOpenChange, onCreated }: NewWidgetDi
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[550px] rounded-[2.5rem] border border-border/40 bg-background/95 backdrop-blur-2xl shadow-2xl p-0 overflow-hidden">
+      <DialogContent className="sm:max-w-[550px] rounded-3xl border border-border/40 bg-background/95 backdrop-blur-2xl  p-0 overflow-hidden">
+        <DialogTitle className="sr-only">Add New Widget</DialogTitle>
         <div className="p-8 pt-10 max-sm:p-5 max-sm:pt-6">
           <DialogHeader className="space-y-6 items-start text-left">
-            <div className="size-14 rounded-2xl bg-primary/5 border border-primary/10 flex items-center justify-center text-primary shadow-sm max-sm:size-12 max-sm:rounded-[1rem]">
+            <div className="size-14 rounded-xl bg-primary/5 border border-primary/10 flex items-center justify-center text-primary  max-sm:size-12">
                <Sparkles className="size-7 max-sm:size-6" />
             </div>
             <div className="space-y-1">
@@ -85,7 +86,7 @@ export function NewWidgetDialog({ isOpen, onOpenChange, onCreated }: NewWidgetDi
           <div className="space-y-8 py-8 max-sm:space-y-6 max-sm:py-6">
             <div className="space-y-2.5">
               <Label htmlFor="widget-title" className="text-xs font-bold uppercase tracking-widest text-muted-foreground/40 ml-1">Widget Title</Label>
-              <div className="relative group bg-muted/20 rounded-2xl border border-border/10 focus-within:border-primary/30 transition-all p-1">
+              <div className="relative group bg-muted/20 rounded-xl border border-border/10 focus-within:border-primary/30 transition-all p-1">
                 <Input
                   data-testid="new-widget-title-input"
                   id="widget-title"
@@ -106,14 +107,14 @@ export function NewWidgetDialog({ isOpen, onOpenChange, onCreated }: NewWidgetDi
                   type="button"
                   onClick={() => setType('collection.row')}
                   className={cn(
-                    "flex flex-col items-start gap-4 p-5 max-sm:p-4 rounded-2xl max-sm:rounded-[1.15rem] border transition-all relative overflow-hidden group/btn min-h-[156px] max-sm:min-h-[132px]",
+                    "flex flex-col items-start gap-4 p-5 max-sm:p-4 rounded-xl border transition-all relative overflow-hidden group/btn min-h-[156px] max-sm:min-h-[132px]",
                     type === 'collection.row' 
-                      ? "bg-primary/5 border-primary shadow-sm" 
+                      ? "bg-primary/5 border-primary " 
                       : "bg-muted/10 border-transparent hover:bg-muted/20 hover:border-border/30"
                   )}
                 >
                   <div className={cn(
-                    "size-10 rounded-xl flex items-center justify-center transition-colors shadow-sm",
+                    "size-10 rounded-xl flex items-center justify-center transition-colors ",
                     type === 'collection.row' ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground group-hover/btn:bg-muted/80"
                   )}>
                     <Box className="size-5" />
@@ -133,14 +134,14 @@ export function NewWidgetDialog({ isOpen, onOpenChange, onCreated }: NewWidgetDi
                   type="button"
                   onClick={() => setType('row.classic')}
                   className={cn(
-                    "flex flex-col items-start gap-4 p-5 max-sm:p-4 rounded-2xl max-sm:rounded-[1.15rem] border transition-all relative overflow-hidden group/btn min-h-[156px] max-sm:min-h-[132px]",
+                    "flex flex-col items-start gap-4 p-5 max-sm:p-4 rounded-xl border transition-all relative overflow-hidden group/btn min-h-[156px] max-sm:min-h-[132px]",
                     type === 'row.classic' 
-                      ? "bg-indigo-500/5 border-indigo-500 shadow-sm" 
+                      ? "bg-indigo-500/5 border-indigo-500 " 
                       : "bg-muted/10 border-transparent hover:bg-muted/20 hover:border-border/30"
                   )}
                 >
                   <div className={cn(
-                    "size-10 rounded-xl flex items-center justify-center transition-colors shadow-sm",
+                    "size-10 rounded-xl flex items-center justify-center transition-colors ",
                     type === 'row.classic' ? "bg-indigo-500 text-white" : "bg-muted text-muted-foreground group-hover/btn:bg-muted/80"
                   )}>
                     <Layers className="size-5" />
@@ -161,7 +162,7 @@ export function NewWidgetDialog({ isOpen, onOpenChange, onCreated }: NewWidgetDi
 
           <DialogFooter className="flex-col sm:flex-row gap-3 sm:gap-4 mt-4">
             <DialogClose asChild>
-              <Button variant="ghost" className="w-full sm:flex-1 h-11 sm:h-12 rounded-xl max-sm:rounded-[1rem] font-bold uppercase tracking-wider text-xs text-muted-foreground/40 hover:text-muted-foreground hover:bg-muted/30 transition-all">
+              <Button variant="ghost" className="w-full sm:flex-1 h-11 sm:h-12 rounded-xl font-bold uppercase tracking-wider text-xs text-muted-foreground/40 hover:text-muted-foreground hover:bg-muted/30 transition-all">
                 Cancel
               </Button>
             </DialogClose>
@@ -169,7 +170,7 @@ export function NewWidgetDialog({ isOpen, onOpenChange, onCreated }: NewWidgetDi
               data-testid="new-widget-submit"
               onClick={handleCreate}
               disabled={!title.trim()}
-              className="w-full sm:flex-1 h-11 sm:h-12 rounded-xl max-sm:rounded-[1rem] font-bold uppercase tracking-wider text-xs shadow-lg shadow-primary/20 transition-all active:scale-95"
+              className="w-full sm:flex-1 h-11 sm:h-12 rounded-xl font-bold uppercase tracking-wider text-xs   transition-all active:scale-95"
             >
               Create
             </Button>

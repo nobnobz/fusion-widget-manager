@@ -52,7 +52,7 @@ export function ManagerSwitcher({
         <button
           type="button"
           className={cn(
-            "inline-flex h-10 items-center gap-1.5 rounded-2xl border border-border/40 bg-white/5 px-3.5 text-left text-[14px] font-medium text-foreground/72 shadow-sm backdrop-blur-sm transition-all hover:bg-primary/5 hover:text-primary dark:bg-black/20",
+            "inline-flex h-10 items-center gap-1.5 rounded-2xl border border-border/40 bg-white/5 px-3.5 text-left text-[14px] font-medium text-foreground/72  backdrop-blur-sm transition-all hover:bg-primary/5 hover:text-primary dark:bg-black/20",
             className
           )}
           aria-label="Switch manager"
@@ -70,7 +70,7 @@ export function ManagerSwitcher({
       <PopoverContent
         align="start"
         sideOffset={10}
-        className="w-[290px] rounded-[1.6rem] border border-border/50 bg-background/92 p-2 shadow-2xl backdrop-blur-2xl"
+        className="w-[290px] rounded-[1.6rem] border border-border/50 bg-background/92 p-2  backdrop-blur-2xl"
       >
         <div className="px-2 pb-2 pt-1">
           <p className="text-[9px] font-black uppercase tracking-[0.2em] text-muted-foreground/55">
