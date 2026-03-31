@@ -10,7 +10,6 @@ import type {
 import {
   MANIFEST_PLACEHOLDER,
   findCatalog,
-  getCatalogActualId,
   isAIOMetadataDataSource,
   isNativeTraktDataSource,
   normalizeFusionConfigDetailed,
@@ -21,7 +20,6 @@ import {
 export {
   MANIFEST_PLACEHOLDER,
   findCatalog,
-  getCatalogActualId,
   getPrimaryDataSource,
   resolveFusionCatalogType,
 } from './widget-domain';

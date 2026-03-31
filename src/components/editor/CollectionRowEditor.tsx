@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { useConfig } from '@/context/ConfigContext';
 import { CollectionRowWidget, CollectionItem } from '@/lib/types/widget';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Plus, ListTree, Layers, SortAsc, SortDesc, Pencil } from 'lucide-react';
 
 import { cn } from '@/lib/utils';

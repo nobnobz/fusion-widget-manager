@@ -7,7 +7,7 @@ import type {
   CollectionItem,
   AddonCatalogDataSource
 } from './types/widget';
-import { MANIFEST_PLACEHOLDER, resolveFusionCatalogType, getCatalogActualId } from './config-utils';
+import { MANIFEST_PLACEHOLDER, resolveFusionCatalogType } from './config-utils';
 import { bridgeNativeTraktSourcesForOmni } from './native-trakt-bridge';
 import { isNativeTraktDataSource } from './widget-domain';
 
@@ -344,7 +344,7 @@ export function convertOmniToFusion(snapshot: any): FusionWidgetsConfig {
     const type = getCatalogType(normalizedId);
     
     // Determine aspect ratio from small/landscape catalogs or name heuristics
-    const isLandscape = model.landscapeCatalogs.includes(omniId) || lowName.includes('landscape');
+
     const isUpNext = omniId.includes('mdblist.upnext');
     const title = isUpNext ? 'MDBList Up Next Series' : (customName || normalizedId.split('::').pop() || 'Untitled Row');
     const cacheTTL = isUpNext ? 1800 : 3600;
@@ -512,9 +512,7 @@ const OMNI_FORBIDDEN_VALUE_FIELDS = new Set<string>([
   'hidden_stream_button_elements',
 ]);
 
-function isMdblistCatalogId(catalogId: string): boolean {
-  return getCatalogActualId(catalogId).startsWith('mdblist.');
-}
+
 
 function toOmniCatalogId(catalogId: string): string {
   return String(catalogId || '').replace(/::/g, ':').trim();

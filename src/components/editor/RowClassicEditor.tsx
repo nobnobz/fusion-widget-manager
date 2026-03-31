@@ -1,8 +1,8 @@
 import { DataSourceEditor } from './DataSourceEditor';
 import { useConfig } from '@/context/ConfigContext';
 import { AIOMetadataDataSource, NativeTraktDataSource, RowClassicWidget } from '@/lib/types/widget';
-import { Layers, Pencil } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Layers } from 'lucide-react';
+
 import { isNativeTraktDataSource } from '@/lib/widget-domain';
 import { TraktSourceCard } from './TraktSourceCard';
 

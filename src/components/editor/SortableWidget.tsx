@@ -401,7 +401,7 @@ export function SortableWidget({
                      variant="ghost" 
                      size="sm" 
                      className="h-8 rounded-xl border border-border/40 bg-zinc-500/[0.03] text-muted-foreground/70 hover:text-primary hover:bg-primary/5 hover:border-primary/20 transition-all font-bold text-[10px] uppercase tracking-widest"
-                     onClick={(e) => { e.stopPropagation(); setIsEditing(true); }}
+                     onClick={startEditing}
                    >
                      <Pencil className="size-3 mr-2" />
                      Rename Widget

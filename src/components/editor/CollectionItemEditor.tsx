@@ -7,7 +7,6 @@ import { Card } from '@/components/ui/card';
 import { useConfig } from '@/context/ConfigContext';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
 import { 
   Trash2, 
   GripVertical, 
@@ -580,7 +579,7 @@ export function CollectionItemEditor({
                                     <ImageIcon className="size-4 shrink-0 text-muted-foreground/50 group-focus-within/url-input:text-foreground/70 transition-colors" strokeWidth={2.25} />
                                     <input 
                                       autoFocus
-                                      ref={backgroundImageUrlInputRef as any}
+                                      ref={backgroundImageUrlInputRef}
                                       placeholder="Paste Image URL (https://...)" 
                                       className="flex-1 min-w-0 h-full bg-transparent border-none focus:outline-none focus:ring-0 text-xs sm:text-[11px] font-bold text-foreground/80 placeholder:text-muted-foreground/35"
                                       value={item.backgroundImageURL || ''}

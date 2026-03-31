@@ -607,10 +607,7 @@ function WidgetSelectionGridComponent({
     [aiometadataSelectableCatalogKeys, selectedAiometadataCatalogKeys]
   );
 
-  const selectableAiometadataCatalogCount = useMemo(
-    () => aiometadataInventory.catalogs.filter((catalog) => aiometadataSelectableCatalogKeys.has(catalog.key)).length,
-    [aiometadataInventory.catalogs, aiometadataSelectableCatalogKeys]
-  );
+
 
   const existingAiometadataCatalogCount = useMemo(
     () => aiometadataInventory.catalogs.filter((catalog) => catalog.isAlreadyInManifest).length,

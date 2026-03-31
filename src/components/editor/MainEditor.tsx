@@ -6,10 +6,8 @@ import { useConfig } from '@/context/ConfigContext';
 import { WidgetSelectionGrid } from './WidgetSelectionGrid';
 import { ManifestModal } from './ManifestModal';
 import { Button } from '@/components/ui/button';
-import { VisuallyHidden } from '@/components/ui/visually-hidden';
 import {
   FileJson2,
-  Upload,
   Plus,
   RotateCcw,
   Download,
@@ -20,9 +18,7 @@ import {
   ChevronDown,
   Book,
   ClipboardPaste,
-  Globe,
   UploadCloud,
-  Trash2,
 } from 'lucide-react';
 import Image from 'next/image';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';

@@ -11,7 +11,7 @@ import {
   getFusionCollectionItemName,
   prefixCatalogNameWithWidget,
 } from './aiometadata-catalog-labels';
-import { findCatalog, isAIOMetadataDataSource, resolveFusionCatalogType } from './widget-domain';
+import { isAIOMetadataDataSource, resolveFusionCatalogType } from './widget-domain';
 
 export interface UsedMdblistCatalogReference {
   widgetId: string;
@@ -37,9 +37,7 @@ function getCatalogActualId(catalogId: string): string {
   return parts[parts.length - 1] || '';
 }
 
-const AIOMETADATA_BUILTIN_MDBLIST_IDS = new Set([
-  'mdblist.upnext',
-]);
+
 
 const PRETTY_BUILTIN_TITLES: Record<string, string> = {
   'mdblist.upnext': 'MDBList Up Next Series',

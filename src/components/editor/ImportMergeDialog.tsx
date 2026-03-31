@@ -14,8 +14,8 @@ import {
   DialogClose
 } from '@/components/ui/dialog';
 import { 
-  AlertCircle, AlertTriangle, Check, CheckCircle2, ChevronDown, ChevronRight, 
-  CloudUpload, FileJson, FileUp, Image, RefreshCw, Settings2, Tag, Trash2, UploadCloud, ArrowRight, Sparkles, Hash, FileWarning, ListTree
+  AlertCircle, CheckCircle2, ChevronDown, ChevronRight, 
+  CloudUpload, FileJson, FileUp, Image as ImageIcon, RefreshCw, Check, Tag, Trash2, UploadCloud, ArrowRight, Sparkles, ListTree
 } from 'lucide-react';
 import { convertOmniToFusion } from '@/lib/omni-converter';
 import { 
@@ -524,7 +524,6 @@ export function ImportMergeDialog({ open, onOpenChange, initialJson, initialFile
           // Filter by specific change type
           const isCatalogMode = mode.includes('catalogs');
           const isNameMode    = mode.includes('names');
-          const isImageMode   = mode.includes('images');
           
           const changeKey: 'catalogs' | 'name' | 'image' =
             isCatalogMode ? 'catalogs' :
@@ -580,7 +579,7 @@ export function ImportMergeDialog({ open, onOpenChange, initialJson, initialFile
 
   const executeImport = () => {
     try {
-      let finalWidgets = [...widgets];
+      const finalWidgets = [...widgets];
       let widgetsAdded = 0;
       let widgetsUpdated = 0;
       let itemsAdded = 0;
@@ -624,7 +623,7 @@ export function ImportMergeDialog({ open, onOpenChange, initialJson, initialFile
                 }
                 if (updates.image && diff.changes.has('image')) {
                   existingW.presentation = { 
-                    ...(existingW.presentation || {} as any), 
+                    ...(existingW.presentation || {}), 
                     backgroundImageURL: pw.presentation?.backgroundImageURL,
                     aspectRatio: pw.presentation?.aspectRatio || 'poster'
                   };
@@ -684,13 +683,13 @@ export function ImportMergeDialog({ open, onOpenChange, initialJson, initialFile
                       if (keepExistingCatalogs) {
                         // Merge: keep existing dataSources + add any from incoming that aren't already there
                         const existingKeys = new Set(
-                          (updatedItem.dataSources || []).map((ds: any) =>
+                          (updatedItem.dataSources || []).map((ds: WidgetDataSource) =>
                             ds.sourceType === 'aiometadata'
                               ? `${ds.sourceType}::${ds.payload?.catalogId}::${ds.payload?.catalogType}`
                               : `${ds.sourceType}::${JSON.stringify(ds.payload)}`
                           )
                         );
-                        const toAdd = (incomingItem.dataSources || []).filter((ds: any) => {
+                        const toAdd = (incomingItem.dataSources || []).filter((ds: WidgetDataSource) => {
                           const key = ds.sourceType === 'aiometadata'
                             ? `${ds.sourceType}::${ds.payload?.catalogId}::${ds.payload?.catalogType}`
                             : `${ds.sourceType}::${JSON.stringify(ds.payload)}`;
@@ -749,8 +748,8 @@ export function ImportMergeDialog({ open, onOpenChange, initialJson, initialFile
 
   // ─── Derived state ───────────────────────────────────────────────────────────
 
-  const { newWidgets, existingWidgets, unchangedWidgets } = useMemo(() => {
-    const nw: Widget[] = [], ew: Widget[] = [], uw: Widget[] = [];
+  const { newWidgets, existingWidgets } = useMemo(() => {
+    const nw: Widget[] = [], ew: Widget[] = [];
     parsedWidgets.forEach(w => {
       const d = widgetDiffs[w.id];
       if (!d) return;
@@ -760,9 +759,8 @@ export function ImportMergeDialog({ open, onOpenChange, initialJson, initialFile
 
       if (d.status === 'new' || hasNewItems) nw.push(w);
       if (hasUpdates) ew.push(w);
-      if (d.status === 'unchanged') uw.push(w);
     });
-    return { newWidgets: nw, existingWidgets: ew, unchangedWidgets: uw };
+    return { newWidgets: nw, existingWidgets: ew };
   }, [parsedWidgets, widgetDiffs]);
 
   const selectedCount = useMemo(() => {
@@ -806,7 +804,7 @@ export function ImportMergeDialog({ open, onOpenChange, initialJson, initialFile
       updates: { label: 'Updates', icon: null, cls: 'bg-indigo-500/15 text-indigo-700 dark:bg-indigo-500/25 dark:text-indigo-400 border-indigo-500/20 dark:border-indigo-500/30' },
       name: { label: 'Title', icon: <Tag className="size-2.5 max-sm:size-2" />, cls: 'bg-cyan-500/15 text-cyan-700 dark:bg-cyan-500/25 dark:text-cyan-400 border-cyan-500/20 dark:border-cyan-500/30' },
       catalogs: { label: 'Catalogs', icon: <RefreshCw className="size-2.5 max-sm:size-2" />, cls: 'bg-amber-500/15 text-amber-700 dark:bg-amber-500/25 dark:text-amber-400 border-amber-500/20 dark:border-amber-500/30' },
-      image: { label: 'Image', icon: <Image className="size-2.5 max-sm:size-2" />, cls: 'bg-rose-500/15 text-rose-700 dark:bg-rose-500/25 dark:text-rose-400 border-rose-500/20 dark:border-rose-500/30' },
+      image: { label: 'Image', icon: <ImageIcon className="size-2.5 max-sm:size-2" />, cls: 'bg-rose-500/15 text-rose-700 dark:bg-rose-500/25 dark:text-rose-400 border-rose-500/20 dark:border-rose-500/30' },
     };
     const config = configs[type];
     const isSelected = active !== false;
@@ -948,7 +946,6 @@ export function ImportMergeDialog({ open, onOpenChange, initialJson, initialFile
     }
 
     // Summary counts for collection (Tab-aware)
-    let summaryParts: string[] = [];
     let hasNewItems = false;
     let hasActualUpdates = false;
 
@@ -956,8 +953,6 @@ export function ImportMergeDialog({ open, onOpenChange, initialJson, initialFile
       const diffs = Object.values(diff.itemDiffs);
       
       const nNew = diffs.filter(d => d.status === 'new').length;
-      const nName = diffs.filter(d => d.status === 'name-changed').length;
-      const nCat = diffs.filter(d => d.status === 'catalog-changed').length;
       
       hasNewItems = nNew > 0;
       hasActualUpdates = diff.status === 'existing' && (
@@ -966,9 +961,7 @@ export function ImportMergeDialog({ open, onOpenChange, initialJson, initialFile
       );
 
       // Only show relevant summary parts for the current tab
-      if (nNew && (activeTab === 'all' || activeTab === 'new')) summaryParts.push(`${nNew} new`);
-      if (nName && (activeTab === 'all' || activeTab === 'updates')) summaryParts.push(`${nName} title`);
-      if (nCat && (activeTab === 'all' || activeTab === 'updates')) summaryParts.push(`${nCat} catalog`);
+
     } else if (diff.status === 'existing') {
       // For classic rows (not collections)
       hasActualUpdates = diff.changes.size > 0;
@@ -1129,7 +1122,7 @@ export function ImportMergeDialog({ open, onOpenChange, initialJson, initialFile
                 <h3 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/65">Items ({w.dataSource.payload.items.length})</h3>
               </div>
               <div className="space-y-2">
-              {w.dataSource.payload.items.map((item, idx) => {
+              {w.dataSource.payload.items.map((item) => {
                 const itemDiff = diff.itemDiffs[item.id];
                 if (!itemDiff || itemDiff.status === 'unchanged') return null;
 
@@ -1140,8 +1133,6 @@ export function ImportMergeDialog({ open, onOpenChange, initialJson, initialFile
                 const isItemExpanded = expandedItems === item.id;
                 const isItemSelected = itemSelected[item.id];
                 const hasImage = !!item.backgroundImageURL;
-                const hasUpdatedFields = itemDiff.changes.size > 0;
-                const isSomeFieldSelected = itemFieldUpdates[item.id] && (itemFieldUpdates[item.id].name || itemFieldUpdates[item.id].catalogs || itemFieldUpdates[item.id].image);
                 // Indeterminate: item selected but not ALL available change fields are active
                 const itemFieldCount = [itemDiff.changes.has('name'), itemDiff.changes.has('catalogs'), itemDiff.changes.has('image')].filter(Boolean).length;
                 const activeFieldCount = itemFieldUpdates[item.id] ? [
@@ -1357,7 +1348,7 @@ export function ImportMergeDialog({ open, onOpenChange, initialJson, initialFile
                             </div>
                           ) : (
                             <div className="shrink-0 size-16 rounded-xl border border-border/40 bg-zinc-50 flex items-center justify-center  dark:bg-muted/20 dark:border-border/20 transition-colors">
-                              <Image className="size-5 text-muted-foreground/30" />
+                              <ImageIcon className="size-5 text-muted-foreground/30" />
                             </div>
                           )}
                         </div>
@@ -1554,7 +1545,7 @@ export function ImportMergeDialog({ open, onOpenChange, initialJson, initialFile
                       ].map(tab => (
                         <button
                           key={tab.id}
-                          onClick={() => setActiveTab(tab.id as any)}
+                          onClick={() => setActiveTab(tab.id as 'all' | 'new' | 'updates')}
                           className={cn(
                             "flex-1 flex items-center justify-center gap-2.5 h-9 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300 relative",
                             activeTab === tab.id
