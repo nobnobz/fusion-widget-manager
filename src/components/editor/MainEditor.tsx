@@ -133,7 +133,7 @@ export function MainEditor() {
         message: `Imported ${importedWidgets} widget${importedWidgets === 1 ? '' : 's'}, but some entries could not be imported.`,
         details: (
           <div className="space-y-3">
-            <div className="rounded-2xl border border-amber-500/15 bg-amber-500/5 p-4">
+            <div className="rounded-xl border border-amber-500/15 bg-amber-500/5 p-4">
               <div className="flex items-center justify-between gap-3">
                 <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-amber-700 dark:text-amber-300">
                   Skipped Entries
@@ -521,7 +521,7 @@ export function MainEditor() {
             <Button
               variant="ghost"
               size="icon"
-              className="size-9 rounded-2xl hover:bg-primary/10 hover:text-primary transition-all overflow-hidden"
+              className="size-9 rounded-xl hover:bg-primary/10 hover:text-primary transition-all overflow-hidden"
               onClick={() => setShowHowToUse(true)}
               title="How To Use"
             >
@@ -530,7 +530,7 @@ export function MainEditor() {
             <Button
               variant="ghost"
               size="icon"
-              className="size-9 rounded-2xl hover:bg-red-500/10 hover:text-red-500 transition-all overflow-hidden"
+              className="size-9 rounded-xl hover:bg-red-500/10 hover:text-red-500 transition-all overflow-hidden"
               onClick={() => window.open('https://ko-fi.com/botbidraiser', '_blank')}
               title="Support Me"
             >
@@ -720,7 +720,7 @@ export function MainEditor() {
                   </div>
                 </div>
               ) : (
-                <Button variant="ghost" className="h-12 w-full max-w-sm rounded-2xl border border-dashed border-border/60 bg-muted/10" disabled={isLoadingTemplates}>
+                <Button variant="ghost" className="h-12 w-full max-w-sm rounded-xl border border-dashed border-border/60 bg-muted/10" disabled={isLoadingTemplates}>
                   <Github className={cn("size-4 text-primary/80", isLoadingTemplates && "animate-pulse")} />
                   <span className="text-[10px] font-bold uppercase tracking-widest text-primary/80 ml-2">
                     {isLoadingTemplates ? 'Fetching Templates...' : 'UME Templates - No templates available'}
@@ -760,14 +760,14 @@ export function MainEditor() {
                 <div className="flex shrink-0 items-center gap-2">
                   <Button
                     variant="ghost" size="icon"
-                    className="size-10 rounded-2xl border border-primary/20 bg-primary/5 text-primary/80 hover:bg-primary/10 transition-all"
+                    className="size-10 rounded-xl border border-primary/20 bg-primary/5 text-primary/80 hover:bg-primary/10 transition-all"
                     onClick={() => setShowHowToUse(true)}
                   >
                     <Book className="size-4" />
                   </Button>
                   <Button
                     variant="ghost" size="icon"
-                    className="size-10 rounded-2xl border border-red-500/20 bg-red-500/5 text-red-500/75 hover:bg-red-500/10 transition-all"
+                    className="size-10 rounded-xl border border-red-500/20 bg-red-500/5 text-red-500/75 hover:bg-red-500/10 transition-all"
                     onClick={() => window.open('https://ko-fi.com/botbidraiser', '_blank')}
                   >
                     <Heart className="size-4 fill-current" />
@@ -792,13 +792,13 @@ export function MainEditor() {
                   </Button>
                   <Button
                     variant="ghost" size="icon"
-                    className="size-10 rounded-2xl border border-red-500/20 bg-red-500/5 text-red-500/75 hover:bg-red-500/10 transition-all overflow-hidden"
+                    className="size-10 rounded-xl border border-red-500/20 bg-red-500/5 text-red-500/75 hover:bg-red-500/10 transition-all overflow-hidden"
                     onClick={() => window.open('https://ko-fi.com/botbidraiser', '_blank')}
                   >
                     <Heart className="size-4 fill-current" />
                   </Button>
-                  <ThemeToggle className="size-10 rounded-2xl transition-all" />
-                  <Button variant="ghost" size="icon" className="size-10 rounded-2xl border border-zinc-500/10 bg-zinc-500/[0.04] text-zinc-500/80 hover:bg-zinc-500/10 transition-all" onClick={() => setShowRestartConfirm(true)}>
+                  <ThemeToggle className="size-10 rounded-xl transition-all" />
+                  <Button variant="ghost" size="icon" className="size-10 rounded-xl border border-zinc-500/10 bg-zinc-500/[0.04] text-zinc-500/80 hover:bg-zinc-500/10 transition-all" onClick={() => setShowRestartConfirm(true)}>
                     <RotateCcw className="size-4" />
                   </Button>
                 </div>
@@ -874,7 +874,7 @@ export function MainEditor() {
           <DialogTitle className="sr-only">AIOMetadata Download</DialogTitle>
           <div className="p-8 pt-10 max-sm:p-5 max-sm:pt-6 text-left">
             <DialogHeader className="space-y-6 items-start max-sm:space-y-4">
-              <div className="size-14 rounded-2xl border border-primary/10 bg-primary/5 text-primary flex items-center justify-center max-sm:size-12">
+              <div className="size-14 rounded-xl border border-primary/10 bg-primary/5 text-primary flex items-center justify-center max-sm:size-12">
                 <Download className="size-7 max-sm:size-6" />
               </div>
               <div className="space-y-1">
@@ -887,12 +887,12 @@ export function MainEditor() {
             <div className="mt-8 grid gap-3 max-sm:mt-6">
               {[aiometadataTemplate, aiometadataCatalogsOnlyTemplate].map((t, i) => (
                 <Button
-                  key={i} variant="outline" className="h-auto min-h-[5.25rem] w-full rounded-[1.5rem] border-border/50 bg-background/55 px-4 py-3 text-left transition-all hover:bg-primary/[0.04]"
+                  key={i} variant="outline" className="h-auto min-h-[5.25rem] w-full rounded-xl border-border/50 bg-background/55 px-4 py-3 text-left transition-all hover:bg-primary/[0.04]"
                   onClick={async () => { await downloadTemplateFile(t); setShowAiometadataActions(false); }} disabled={!t}
                 >
                   <div className="flex w-full items-center gap-3">
                     <div className="flex min-w-0 flex-1 flex-col items-start font-bold uppercase tracking-[0.16em] text-[11px]">{i === 0 ? 'Full Template' : 'Catalogs Only'}<span className="pt-1 text-[10px] font-medium normal-case text-muted-foreground/58">{t?.filename ?? 'Not available'}</span></div>
-                    <div className="size-11 shrink-0 items-center justify-center rounded-2xl border border-primary/12 bg-primary/6 text-primary flex"><Download className="size-4.5" /></div>
+                    <div className="size-11 shrink-0 items-center justify-center rounded-xl border border-primary/12 bg-primary/6 text-primary flex"><Download className="size-4.5" /></div>
                   </div>
                 </Button>
               ))}
@@ -905,8 +905,8 @@ export function MainEditor() {
         <DialogContent className="sm:max-w-[420px] rounded-3xl border border-border/40 bg-card/95 p-0 backdrop-blur-2xl overflow-hidden max-sm:w-[calc(100vw-1rem)]">
           <DialogTitle className="sr-only">AIOStreams Templates</DialogTitle>
           <div className="p-8 pt-10 max-sm:p-5 text-left">
-            <DialogHeader className="space-y-4 items-start">
-              <div className="size-14 rounded-2xl border border-primary/10 bg-primary/5 text-primary flex items-center justify-center max-sm:size-12"><Download className="size-7" /></div>
+            <DialogHeader className="space-y-6 items-start text-left">
+              <div className="size-14 rounded-xl border border-primary/10 bg-primary/5 text-primary flex items-center justify-center max-sm:size-12"><Download className="size-7" /></div>
               <div className="space-y-1">
                 <DialogTitle className="text-2xl font-bold tracking-tight">{formatTemplateLabel('AIOStreams Template', aiostreamsTemplate ?? undefined)}</DialogTitle>
                 <DialogDescription className="text-muted-foreground/60 text-xs font-medium">Choose to copy the URL or download the file directly.</DialogDescription>

@@ -1541,7 +1541,7 @@ function WidgetSelectionGridComponent({
 
             {exportMode === 'aiometadata' ? (
               <div className="mt-5 flex min-h-0 flex-col gap-4">
-                <div className="min-h-0 rounded-[2.5rem] border border-zinc-200 dark:border-white/5 bg-white/70 dark:bg-zinc-950/25 backdrop-blur-xl shadow-sm overflow-hidden">
+                <div className="min-h-0 rounded-3xl border border-zinc-200 dark:border-white/5 bg-white/70 dark:bg-zinc-950/25 backdrop-blur-xl shadow-sm overflow-hidden">
                   {/* Header Stack: Tabs + Action Dock */}
                   <div className="shrink-0 border-b border-zinc-200/60 dark:border-border/5 relative z-50">
                     {/* Header with Search */}
@@ -1552,7 +1552,7 @@ function WidgetSelectionGridComponent({
                           value={aiometadataSearchQuery}
                           onChange={(event) => setAiometadataSearchQuery(event.target.value)}
                           placeholder="Filter catalogs, widgets, or items..."
-                          className="h-10 rounded-2xl border-border/30 bg-background/70 pl-11 text-sm sm:text-xs font-medium"
+                          className="h-10 rounded-xl border-border/30 bg-background/70 pl-11 text-sm sm:text-xs font-medium"
                         />
                       </div>
                     </div>
@@ -1653,7 +1653,7 @@ function WidgetSelectionGridComponent({
                           <div
                             key={widget.key}
                             className={cn(
-                              'scroll-mt-4 rounded-2xl border p-4 ',
+                              'scroll-mt-4 rounded-xl border p-4 ',
                               widgetIsSyncedOnly
                                 ? 'border-border/10 bg-background/35 opacity-80'
                                 : 'border-border/20 bg-background/55'
@@ -1796,7 +1796,7 @@ function WidgetSelectionGridComponent({
                                   )}
 
                                   {widget.items.length > 0 && (
-                                    <div className="mt-2 rounded-2xl border border-zinc-200/60 dark:border-white/5 bg-zinc-100 dark:bg-zinc-900/30 overflow-hidden">
+                                    <div className="mt-2 rounded-xl border border-zinc-200/60 dark:border-white/5 bg-zinc-100 dark:bg-zinc-900/30 overflow-hidden">
                                       {widget.items.map((item) => {
                                         const itemSelectedCount = item.catalogKeys.filter((catalogKey) =>
                                           selectedAiometadataCatalogKeySet.has(catalogKey)
@@ -1914,7 +1914,7 @@ function WidgetSelectionGridComponent({
                                                   transition={{ duration: 0.2, ease: 'easeInOut' }}
                                                   className="overflow-hidden"
                                                 >
-                                                  <div className="mt-3.5 p-3.5 rounded-2xl bg-zinc-100/80 dark:bg-zinc-900/30 border border-zinc-200/60 dark:border-white/5 space-y-2">
+                                                  <div className="mt-3.5 p-3.5 rounded-xl bg-zinc-100/80 dark:bg-zinc-900/30 border border-zinc-200/60 dark:border-white/5 space-y-2">
                                                     {item.catalogKeys.map((catalogKey) => {
                                                       const catalog = aiometadataCatalogMap.get(catalogKey) as ExportableCatalogDefinition | undefined;
                                                       if (!catalog) return null;
@@ -2002,7 +2002,7 @@ function WidgetSelectionGridComponent({
                       AIOMETADATA
                     </span>
                   </div>
-                  <div className="mt-4 relative group overflow-hidden rounded-2xl border border-border/10 bg-background/50 p-1">
+                  <div className="mt-4 relative group overflow-hidden rounded-xl border border-border/10 bg-background/50 p-1">
                     <Textarea
                       data-testid="export-preview-textarea"
                       readOnly
@@ -2280,7 +2280,7 @@ function WidgetSelectionGridComponent({
                 {trashEntries.map((entry) => (
                   <div
                     key={entry.key}
-                    className="group flex items-center justify-between gap-4 rounded-3xl border border-border/40 bg-muted/5 px-6 py-5 hover:bg-muted/10 hover:border-border/60 transition-all duration-300 backdrop-blur-sm dark:border-white/10 dark:bg-zinc-900/50 dark:hover:bg-zinc-900/75 dark:hover:border-white/15"
+                    className="group flex items-center justify-between gap-4 rounded-xl border border-border/40 bg-muted/5 px-6 py-5 hover:bg-muted/10 hover:border-border/60 transition-all duration-300 backdrop-blur-sm dark:border-white/10 dark:bg-zinc-900/50 dark:hover:bg-zinc-900/75 dark:hover:border-white/15"
                   >
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 mb-1">
@@ -2307,7 +2307,7 @@ function WidgetSelectionGridComponent({
                       size="sm"
                       variant="outline"
                       className={cn(
-                        "rounded-2xl shrink-0 h-9 px-5 border-border/60 bg-background/50 text-[11px] font-black uppercase tracking-widest transition-all  dark:border-white/10 dark:bg-zinc-950/75 dark:text-zinc-100",
+                        "rounded-xl shrink-0 h-9 px-5 border-border/60 bg-background/50 text-[11px] font-black uppercase tracking-widest transition-all  dark:border-white/10 dark:bg-zinc-950/75 dark:text-zinc-100",
                         entry.canRestore
                           ? "hover:bg-primary hover:text-primary-foreground hover:border-primary active:scale-95 dark:hover:bg-primary dark:hover:text-primary-foreground dark:hover:border-primary"
                           : "text-muted-foreground/40 dark:text-zinc-500/60"

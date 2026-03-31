@@ -1162,7 +1162,7 @@ export function ImportMergeDialog({ open, onOpenChange, initialJson, initialFile
                   <div 
                     key={item.id} 
                     className={cn(
-                      "rounded-2xl border transition-all duration-300 shadow-[0_1px_2px_rgba(0,0,0,0.02)]",
+                      "rounded-xl border transition-all duration-300 shadow-[0_1px_2px_rgba(0,0,0,0.02)]",
                       isItemSelected 
                         ? "bg-white dark:bg-white/[0.04] border-primary/20 shadow-md shadow-primary/5" 
                         : "bg-white/90 dark:bg-black/20 border-zinc-200/60 dark:border-white/5 hover:border-zinc-300/80 hover:shadow-sm hover:bg-white"
@@ -1457,7 +1457,7 @@ export function ImportMergeDialog({ open, onOpenChange, initialJson, initialFile
                         setError(null);
                         parseAndReview(lastImportedJson, loadName);
                       }}
-                      className="w-full px-4 py-2 flex-1 rounded-2xl bg-primary/10 hover:bg-primary/20 text-primary text-[10px] font-black uppercase tracking-[0.15em] transition-all hover:scale-[1.02] active:scale-[0.98] border border-primary/20 flex items-center justify-center text-center "
+                      className="w-full px-4 py-2 flex-1 rounded-xl bg-primary/10 hover:bg-primary/20 text-primary text-[10px] font-black uppercase tracking-[0.15em] transition-all hover:scale-[1.02] active:scale-[0.98] border border-primary/20 flex items-center justify-center text-center "
                     >
                       LOAD PREVIOUS TEMPLATE
                     </button>
@@ -1477,7 +1477,7 @@ export function ImportMergeDialog({ open, onOpenChange, initialJson, initialFile
                     placeholder={isDragging ? "Drop your JSON file here!" : "Paste your Fusion widget export, a JSON URL, or drag & drop a file here..."}
                     className={cn(
                       "min-h-[240px] max-sm:min-h-[140px] pb-10 max-sm:pb-6 transition-all leading-relaxed placeholder:text-muted-foreground/40 placeholder:font-bold placeholder:font-sans resize-none overflow-hidden",
-                      "font-mono text-base sm:text-sm max-sm:text-[10px] bg-zinc-50/50 dark:bg-muted/10 border-2 border-dashed border-zinc-200 dark:border-border/60 rounded-[2.5rem] max-sm:rounded-[1.75rem] px-10 max-sm:px-6",
+                      "font-mono text-base sm:text-sm max-sm:text-[10px] bg-zinc-50/50 dark:bg-muted/10 border-2 border-dashed border-zinc-200 dark:border-border/60 rounded-3xl max-sm:rounded-2xl px-10 max-sm:px-6",
                     "hover:bg-zinc-50/50 dark:hover:bg-muted/15 hover:border-primary/30",
                     "focus:border-primary/40 focus:bg-white dark:focus:bg-muted/20 focus-visible:ring-primary/10 focus-visible:ring-offset-0 text-left",
                     !jsonInput.trim() ? "pt-40 max-sm:pt-24" : "pt-10 max-sm:pt-6",
@@ -1507,7 +1507,7 @@ export function ImportMergeDialog({ open, onOpenChange, initialJson, initialFile
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="size-10 rounded-2xl text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all border border-border/20 bg-background/50 backdrop-blur-md"
+                        className="size-10 rounded-xl text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all border border-border/20 bg-background/50 backdrop-blur-md"
                         onClick={() => { setJsonInput(''); setError(null); }}
                       >
                         <Trash2 className="size-4.5" />
@@ -1525,7 +1525,7 @@ export function ImportMergeDialog({ open, onOpenChange, initialJson, initialFile
             <div className="space-y-3 w-full min-w-0">
 
               {/* Selected File Header (Streamlined) */}
-              <div className="px-5 py-3.5 bg-zinc-50/50 dark:bg-zinc-900/40 border border-border/10 rounded-2xl flex items-center justify-between group">
+              <div className="px-5 py-3.5 bg-zinc-50/50 dark:bg-zinc-900/40 border border-border/10 rounded-xl flex items-center justify-between group">
                 <div className="flex items-center gap-3 min-w-0 flex-1">
                   <div className="size-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shadow-sm shadow-primary/5">
                     <FileUp className="size-5" />
@@ -1553,7 +1553,7 @@ export function ImportMergeDialog({ open, onOpenChange, initialJson, initialFile
                   
                   {/* High-Fidelity Segmented Control */}
                   <div className="p-2.5 border-b border-zinc-200/60 dark:border-border/5 bg-zinc-50/10 dark:bg-white/[0.02]">
-                    <div className="flex bg-zinc-100/50 dark:bg-zinc-950/40 p-1 rounded-2xl relative border border-zinc-200/60 dark:border-white/5 shadow-inner shadow-black/[0.02]">
+                    <div className="flex bg-zinc-100/50 dark:bg-zinc-950/40 p-1 rounded-xl relative border border-zinc-200/60 dark:border-white/5 shadow-inner shadow-black/[0.02]">
                       {[
                         { id: 'all', label: 'All', count: newWidgets.length + existingWidgets.length },
                         { id: 'new', label: 'New', count: newWidgets.length },
@@ -1626,7 +1626,7 @@ export function ImportMergeDialog({ open, onOpenChange, initialJson, initialFile
                           </button>
                           
                           {updatesDropdownOpen && (
-                            <div className="absolute top-full left-0 mt-2 z-[100] bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/10 rounded-2xl shadow-2xl shadow-primary/10 overflow-hidden min-w-[240px] py-1.5 animate-in fade-in zoom-in-95 duration-200 backdrop-blur-xl">
+                            <div className="absolute top-full left-0 mt-2 z-[100] bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/10 rounded-xl shadow-2xl shadow-primary/10 overflow-hidden min-w-[240px] py-1.5 animate-in fade-in zoom-in-95 duration-200 backdrop-blur-xl">
                               {dropdownItems.map((item, i) =>
                                 item === null ? (
                                   <div key={i} className="h-px bg-zinc-200/60 dark:bg-border/5 my-1.5 mx-2" />
@@ -1693,7 +1693,7 @@ export function ImportMergeDialog({ open, onOpenChange, initialJson, initialFile
                   
                   {/* Empty states - Refined typography */}
                   {activeTab === 'new' && newWidgets.length === 0 && (
-                    <div className="py-20 flex flex-col items-center gap-4 bg-muted/5 rounded-2xl border border-border/10">
+                    <div className="py-20 flex flex-col items-center gap-4 bg-muted/5 rounded-xl border border-border/10">
                       <div className="size-16 rounded-full bg-muted/10 flex items-center justify-center text-muted-foreground/20">
                         <Sparkles className="size-8" />
                       </div>
@@ -1701,7 +1701,7 @@ export function ImportMergeDialog({ open, onOpenChange, initialJson, initialFile
                     </div>
                   )}
                   {activeTab === 'updates' && existingWidgets.length === 0 && (
-                    <div className="py-20 flex flex-col items-center gap-4 bg-muted/5 rounded-2xl border border-border/10">
+                    <div className="py-20 flex flex-col items-center gap-4 bg-muted/5 rounded-xl border border-border/10">
                       <div className="size-16 rounded-full bg-muted/10 flex items-center justify-center text-muted-foreground/20">
                         <RefreshCw className="size-8" />
                       </div>
@@ -1715,7 +1715,7 @@ export function ImportMergeDialog({ open, onOpenChange, initialJson, initialFile
 
             {/* ── Error ── */}
             {error && (
-              <div className="p-4 rounded-[1.5rem] bg-destructive/5 border border-destructive/10 flex items-center gap-3 text-destructive animate-in fade-in slide-in-from-top-2">
+              <div className="p-4 rounded-xl bg-destructive/5 border border-destructive/10 flex items-center gap-3 text-destructive animate-in fade-in slide-in-from-top-2">
                 <AlertCircle className="size-4 shrink-0" />
                 <p className="text-xs font-bold">{error}</p>
               </div>
@@ -1725,7 +1725,7 @@ export function ImportMergeDialog({ open, onOpenChange, initialJson, initialFile
             {step === 'success' && success && (
               <div className="p-6 rounded-3xl bg-zinc-50/50 dark:bg-zinc-900/50 border border-zinc-200/50 dark:border-border/10  flex flex-col gap-6 animate-in zoom-in-95 duration-300 w-full mb-2">
                 <div className="flex items-center gap-4">
-                  <div className="size-14 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-600 dark:text-emerald-400 ">
+                  <div className="size-14 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-600 dark:text-emerald-400 ">
                     <CheckCircle2 className="size-8" />
                   </div>
                   <div>
@@ -1736,7 +1736,7 @@ export function ImportMergeDialog({ open, onOpenChange, initialJson, initialFile
 
                 <div className="grid grid-cols-2 gap-4">
                   {/* Widgets Card */}
-                  <div className="bg-background/80 backdrop-blur-sm rounded-2xl p-5 border border-border/40  ring-1 ring-black/5 flex flex-col items-center">
+                  <div className="bg-background/80 backdrop-blur-sm rounded-xl p-5 border border-border/40  ring-1 ring-black/5 flex flex-col items-center">
                     <p className="text-[11px] font-black uppercase tracking-[0.2em] text-muted-foreground/60 mb-3 border-b border-border/20 pb-2 w-full text-center">Widgets</p>
                     <div className="flex gap-6 w-full justify-center">
                       <div className="text-center">
@@ -1752,7 +1752,7 @@ export function ImportMergeDialog({ open, onOpenChange, initialJson, initialFile
                   </div>
 
                   {/* Items Card */}
-                  <div className="bg-background/80 backdrop-blur-sm rounded-2xl p-5 border border-border/40  ring-1 ring-black/5 flex flex-col items-center">
+                  <div className="bg-background/80 backdrop-blur-sm rounded-xl p-5 border border-border/40  ring-1 ring-black/5 flex flex-col items-center">
                     <p className="text-[11px] font-black uppercase tracking-[0.2em] text-muted-foreground/60 mb-3 border-b border-border/20 pb-2 w-full text-center">Items</p>
                     <div className="flex gap-6 w-full justify-center">
                       <div className="text-center">
