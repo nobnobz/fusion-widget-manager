@@ -80,7 +80,7 @@ test('merges a partial import and keeps the result after reload', async ({ page 
   await expect(page.getByText('Import successful!')).toBeVisible();
   await expect(page.getByText(/Added: 1/)).toBeVisible();
 
-  await page.getByRole('button', { name: 'Close' }).click();
+  await page.getByTestId('import-dialog-close').click();
   await expect(
     page.locator('[data-testid^="widget-card-"]').filter({ hasText: 'Audit Merge Widget' }).first(),
   ).toBeVisible();

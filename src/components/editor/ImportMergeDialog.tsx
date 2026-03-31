@@ -1836,7 +1836,11 @@ export function ImportMergeDialog({ open, onOpenChange, initialJson, initialFile
 
             <DialogFooter className="flex-col sm:flex-row gap-3 sm:gap-4 w-full">
               <DialogClose asChild>
-                <Button variant="ghost" className="w-full sm:flex-1 h-10 rounded-xl font-bold uppercase tracking-[0.12em] text-[12px] text-muted-foreground/60 hover:text-foreground hover:bg-muted/30 transition-all">
+                <Button 
+                  variant="ghost" 
+                  data-testid="import-dialog-close"
+                  className="w-full sm:flex-1 h-10 rounded-xl font-bold uppercase tracking-[0.12em] text-[12px] text-muted-foreground/60 hover:text-foreground hover:bg-muted/30 transition-all"
+                >
                   {step === 'success' ? 'Close' : 'Cancel'}
                 </Button>
               </DialogClose>
