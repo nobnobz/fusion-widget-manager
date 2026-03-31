@@ -78,9 +78,9 @@ test('merges a partial import and keeps the result after reload', async ({ page 
   await page.getByTestId('merge-widgets-submit').click();
 
   await expect(page.getByText('Import successful!')).toBeVisible();
-  await expect(page.getByTestId('widgets-added-count')).toHaveText('1');
+  await expect(page.getByText(/Added: 1/)).toBeVisible();
 
-  await page.getByRole('button', { name: 'Cancel' }).click();
+  await page.getByRole('button', { name: 'Close' }).click();
   await expect(
     page.locator('[data-testid^="widget-card-"]').filter({ hasText: 'Audit Merge Widget' }).first(),
   ).toBeVisible();

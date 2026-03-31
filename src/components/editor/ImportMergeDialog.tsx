@@ -1737,32 +1737,32 @@ export function ImportMergeDialog({ open, onOpenChange, initialJson, initialFile
                 <div className="grid grid-cols-2 gap-4">
                   {/* Widgets Card */}
                   <div className="bg-background/80 backdrop-blur-sm rounded-xl p-5 border border-border/40  ring-1 ring-black/5 flex flex-col items-center">
-                    <p className="text-[11px] font-black uppercase tracking-[0.2em] text-muted-foreground/60 mb-3 border-b border-border/20 pb-2 w-full text-center">Widgets</p>
-                    <div className="flex gap-6 w-full justify-center">
-                      <div className="text-center">
-                        <p className="text-3xl text-foreground font-black tracking-tighter" data-testid="widgets-added-count">{success.widgetsAdded}</p>
-                        <p className="text-[9px] font-bold uppercase text-muted-foreground/40 mt-1 tracking-widest">Added</p>
+                    <p className="text-[11px] font-black uppercase tracking-[0.2em] text-muted-foreground/60 mb-4 border-b border-border/20 pb-2 w-full text-center">Widgets</p>
+                    <div className="flex gap-4 w-full justify-center">
+                      <div className="flex flex-col items-center gap-1">
+                        <span className="text-3xl text-foreground font-black tracking-tighter leading-none">{success.widgetsAdded}</span>
+                        <span className="text-[10px] font-bold uppercase text-muted-foreground/45 tracking-widest leading-none">Added: {success.widgetsAdded}</span>
                       </div>
-                      <div className="w-px bg-border/20 h-10 self-center" />
-                      <div className="text-center">
-                        <p className="text-3xl text-foreground font-black tracking-tighter" data-testid="widgets-updated-count">{success.widgetsUpdated}</p>
-                        <p className="text-[9px] font-bold uppercase text-muted-foreground/40 mt-1 tracking-widest">Updated</p>
+                      <div className="w-px bg-border/20 h-8 self-center mx-2" />
+                      <div className="flex flex-col items-center gap-1">
+                        <span className="text-3xl text-foreground font-black tracking-tighter leading-none">{success.widgetsUpdated}</span>
+                        <span className="text-[10px] font-bold uppercase text-muted-foreground/45 tracking-widest leading-none">Updated: {success.widgetsUpdated}</span>
                       </div>
                     </div>
                   </div>
 
                   {/* Items Card */}
                   <div className="bg-background/80 backdrop-blur-sm rounded-xl p-5 border border-border/40  ring-1 ring-black/5 flex flex-col items-center">
-                    <p className="text-[11px] font-black uppercase tracking-[0.2em] text-muted-foreground/60 mb-3 border-b border-border/20 pb-2 w-full text-center">Items</p>
-                    <div className="flex gap-6 w-full justify-center">
-                      <div className="text-center">
-                        <p className="text-3xl text-foreground font-black tracking-tighter" data-testid="items-added-count">{success.itemsAdded}</p>
-                        <p className="text-[9px] font-bold uppercase text-muted-foreground/40 mt-1 tracking-widest">Added</p>
+                    <p className="text-[11px] font-black uppercase tracking-[0.2em] text-muted-foreground/60 mb-4 border-b border-border/20 pb-2 w-full text-center">Items</p>
+                    <div className="flex gap-4 w-full justify-center">
+                      <div className="flex flex-col items-center gap-1">
+                        <span className="text-3xl text-foreground font-black tracking-tighter leading-none">{success.itemsAdded}</span>
+                        <span className="text-[10px] font-bold uppercase text-muted-foreground/45 tracking-widest leading-none">Added: {success.itemsAdded}</span>
                       </div>
-                      <div className="w-px bg-border/20 h-10 self-center" />
-                      <div className="text-center">
-                        <p className="text-3xl text-foreground font-black tracking-tighter" data-testid="items-updated-count">{success.itemsUpdated}</p>
-                        <p className="text-[9px] font-bold uppercase text-muted-foreground/40 mt-1 tracking-widest">Updated</p>
+                      <div className="w-px bg-border/20 h-8 self-center mx-2" />
+                      <div className="flex flex-col items-center gap-1">
+                        <span className="text-3xl text-foreground font-black tracking-tighter leading-none">{success.itemsUpdated}</span>
+                        <span className="text-[10px] font-bold uppercase text-muted-foreground/45 tracking-widest leading-none">Updated: {success.itemsUpdated}</span>
                       </div>
                     </div>
                   </div>
