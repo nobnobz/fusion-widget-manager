@@ -1455,7 +1455,7 @@ export function ImportMergeDialog({ open, onOpenChange, initialJson, initialFile
                   onDrop={handleDrop}
                 >
                   <Textarea
-                    data-testid="welcome-import-textarea"
+                    data-testid="merge-import-textarea"
                     value={jsonInput}
                     onChange={handleTextareaChange}
                     placeholder={isDragging ? "Drop your JSON file here!" : "Paste your Fusion widget export, a JSON URL, or drag & drop a file here..."}
@@ -1713,7 +1713,7 @@ export function ImportMergeDialog({ open, onOpenChange, initialJson, initialFile
                     <CheckCircle2 className="size-8" />
                   </div>
                   <div>
-                    <p className="text-xl font-black tracking-tight text-foreground">Import Successful</p>
+                    <p className="text-xl font-black tracking-tight text-foreground">Import successful!</p>
                     <p className="text-xs font-medium text-muted-foreground/60">Your configuration has been updated.</p>
                   </div>
                 </div>
@@ -1841,6 +1841,7 @@ export function ImportMergeDialog({ open, onOpenChange, initialJson, initialFile
                 <Button
                   onClick={executeImport}
                   disabled={selectedCount === 0}
+                  data-testid="merge-widgets-submit"
                   className="w-full sm:flex-1 h-10 rounded-xl font-bold uppercase tracking-[0.12em] text-[12px]  transition-all active:scale-95 px-8 bg-primary hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100"
                 >
                   <span className="flex items-center justify-center gap-2">

@@ -106,6 +106,7 @@ export function MainEditor() {
 
   const {
     importConfig,
+    widgets,
     view,
     setView,
     clearConfig,
@@ -272,16 +273,27 @@ export function MainEditor() {
       const json = await response.json();
 
       if (json.exportType === 'fusionWidgets' || Array.isArray(json.widgets)) {
-        applyImportConfig(json);
-        if (shouldOpenManifestModalForImportedConfig(json)) {
-          setShowManifestModal(true);
+        if (widgets.length === 0) {
+          applyImportConfig(json);
+          if (shouldOpenManifestModalForImportedConfig(json)) {
+            setShowManifestModal(true);
+          }
+        } else {
+          setInitialImportJson(JSON.stringify(json, null, 2));
+          setInitialImportFileName(selectedTemplate?.filename || 'UME Template');
+          setShowImportMergeDialog(true);
         }
       } else {
-        // Fallback or handle Omni
         const fusionConfig = convertOmniToFusion(json);
-        applyImportConfig(fusionConfig);
-        if (shouldOpenManifestModalForImportedConfig(fusionConfig)) {
-          setShowManifestModal(true);
+        if (widgets.length === 0) {
+          applyImportConfig(fusionConfig);
+          if (shouldOpenManifestModalForImportedConfig(fusionConfig)) {
+            setShowManifestModal(true);
+          }
+        } else {
+          setInitialImportJson(JSON.stringify(fusionConfig, null, 2));
+          setInitialImportFileName(selectedTemplate?.filename || 'UME Template');
+          setShowImportMergeDialog(true);
         }
       }
     } catch {
@@ -395,6 +407,12 @@ export function MainEditor() {
           variant: 'danger'
         });
       }
+      return;
+    }
+
+    if (widgets.length === 0) {
+      applyImportConfig(trimmedInput);
+      setPastedJson('');
       return;
     }
 
@@ -684,6 +702,7 @@ export function MainEditor() {
                       onClick={handleLoadTemplate}
                       disabled={isLoadingTemplates || !selectedTemplateUrl}
                       size="sm"
+                      data-testid="welcome-load-template"
                       className="h-11 sm:h-full min-w-[90px] sm:min-w-[120px] px-4 sm:px-6 rounded-xl font-black uppercase tracking-[0.14em] text-[11px] sm:text-[10px] bg-primary hover:bg-primary/90 transition-all shadow-md shadow-primary/10"
                     >
                       {isLoadingTemplates ? <RotateCcw className="size-4 animate-spin" /> : <><Download className="size-4 mr-2" />Load</>}
