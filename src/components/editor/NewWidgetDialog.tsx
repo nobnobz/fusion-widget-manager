@@ -86,14 +86,14 @@ export function NewWidgetDialog({ isOpen, onOpenChange, onCreated }: NewWidgetDi
           <div className="space-y-8 py-8 max-sm:space-y-6 max-sm:py-6">
             <div className="space-y-2.5">
               <Label htmlFor="widget-title" className="text-xs font-bold uppercase tracking-widest text-muted-foreground/40 ml-1">Widget Title</Label>
-              <div className="relative group bg-muted/20 rounded-xl border border-border/10 focus-within:border-primary/30 transition-all p-1">
+              <div className="relative group bg-zinc-100 dark:bg-muted/20 rounded-xl border border-zinc-200 dark:border-border/10 focus-within:border-primary/30 transition-all p-1">
                 <Input
                   data-testid="new-widget-title-input"
                   id="widget-title"
                   placeholder="e.g. Recommended for You"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  className="h-12 max-sm:h-11 bg-transparent border-none focus-visible:ring-0 px-4 font-bold text-lg max-sm:text-base transition-all"
+                  className="h-12 max-sm:h-11 bg-transparent border-none focus-visible:ring-0 px-4 font-semibold text-base transition-all text-foreground/85"
                   autoFocus
                   onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
                 />

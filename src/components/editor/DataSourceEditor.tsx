@@ -51,7 +51,7 @@ export function DataSourceEditor({
               </div>
             ) : (
               hasCatalogId ? (
-                <div className="flex-1 min-w-0 rounded-xl border border-zinc-200 dark:border-white/5 bg-zinc-100/40 dark:bg-zinc-950/20 px-3.5 h-10 max-sm:h-11 flex items-center">
+                <div className="flex-1 min-w-0 rounded-xl border border-zinc-200 dark:border-border/10 bg-zinc-100 dark:bg-zinc-900/30 px-3.5 h-10 max-sm:h-11 flex items-center">
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-[11px] font-bold tracking-tight text-foreground/85">
                       {dataSource.payload.catalogId}
@@ -68,7 +68,7 @@ export function DataSourceEditor({
         </div>
       </div>
 
-      <div className="flex items-center justify-center size-10 max-sm:size-11 shrink-0 rounded-xl bg-zinc-100/40 dark:bg-zinc-950/20 border border-zinc-200 dark:border-white/5">
+      <div className="flex items-center justify-center size-10 max-sm:size-11 shrink-0 rounded-xl bg-zinc-100 dark:bg-zinc-900/30 border border-zinc-200 dark:border-border/10">
         <Button
           variant="ghost"
           size="icon"

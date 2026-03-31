@@ -114,14 +114,14 @@ export function AddItemDialog({ onAdd, trigger }: AddItemDialogProps) {
 
           <div className="space-y-2.5">
             <Label htmlFor="item-url" className="text-xs font-bold uppercase tracking-wider text-muted-foreground/50 ml-1">Image URL</Label>
-            <div className="relative group rounded-xl border border-border/10 bg-zinc-900/30 p-1 transition-all focus-within:border-primary/30">
+            <div className="relative group rounded-xl border border-zinc-200 dark:border-border/10 bg-zinc-100 dark:bg-zinc-900/30 p-1 transition-all focus-within:border-primary/30">
               <Input
                 id="item-url"
                 ref={backgroundImageUrlInputRef}
                 placeholder="https://..."
                 value={backgroundImageURL}
                 onChange={(e) => setBackgroundImageURL(e.target.value)}
-                className="h-11 max-sm:h-11 bg-transparent border-none focus-visible:ring-0 rounded-xl px-4 pr-12 text-sm sm:text-[11px] font-semibold text-foreground/60 focus:text-foreground/90 transition-colors flex-1 min-w-0"
+                className="h-11 max-sm:h-11 bg-transparent border-none focus-visible:ring-0 rounded-xl px-4 pr-12 text-sm sm:text-[11px] font-semibold text-foreground/85 focus:text-foreground transition-colors flex-1 min-w-0"
               />
               {backgroundImageURL && (
                 <button
