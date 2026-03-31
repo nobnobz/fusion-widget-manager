@@ -52,7 +52,7 @@ export function ManagerSwitcher({
         <button
           type="button"
           className={cn(
-            "inline-flex h-10 items-center gap-1.5 rounded-2xl border border-border/40 bg-white/5 px-3.5 text-left text-[14px] font-medium text-foreground/72  backdrop-blur-sm transition-all hover:bg-primary/5 hover:text-primary dark:bg-black/20",
+            "inline-flex h-10 items-center gap-1.5 rounded-[1.25rem] border border-border/40 bg-white/5 px-3.5 text-left text-[14px] font-medium text-foreground/72  backdrop-blur-sm transition-all hover:bg-primary/5 hover:text-primary dark:bg-black/20",
             className
           )}
           aria-label="Switch manager"
@@ -70,7 +70,7 @@ export function ManagerSwitcher({
       <PopoverContent
         align="start"
         sideOffset={10}
-        className="w-[290px] rounded-[1.6rem] border border-border/50 bg-background/92 p-2  backdrop-blur-2xl"
+        className="w-[290px] rounded-3xl border border-border/50 bg-background/92 p-2  backdrop-blur-2xl shadow-xl shadow-black/10"
       >
         <div className="px-2 pb-2 pt-1">
           <p className="text-[9px] font-black uppercase tracking-[0.2em] text-muted-foreground/55">
@@ -86,9 +86,9 @@ export function ManagerSwitcher({
               return (
                 <div
                   key={manager.id}
-                  className="flex items-start gap-3 rounded-[1.2rem] border border-primary/10 bg-primary/6 px-3.5 py-3"
+                  className="flex items-start gap-3 rounded-2xl border border-primary/10 bg-primary/6 px-3.5 py-3"
                 >
-                  <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-2xl border border-primary/10 bg-background/80 text-primary">
+                  <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-xl border border-primary/10 bg-background/80 text-primary">
                     <Check className="size-4" />
                   </span>
                   <div className="min-w-0 flex-1">
@@ -114,9 +114,9 @@ export function ManagerSwitcher({
                 href={manager.href}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-start gap-3 rounded-[1.2rem] px-3.5 py-3 transition-all hover:bg-muted/40 hover:text-foreground"
+                className="flex items-start gap-3 rounded-2xl px-3.5 py-3 transition-all hover:bg-muted/40 hover:text-foreground"
               >
-                <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-2xl border border-border/50 bg-background/80 text-muted-foreground/70">
+                <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-xl border border-border/50 bg-background/80 text-muted-foreground/70">
                   <ArrowUpRight className="size-4" />
                 </span>
                 <div className="min-w-0 flex-1">

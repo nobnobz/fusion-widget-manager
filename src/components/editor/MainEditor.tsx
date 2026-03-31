@@ -492,12 +492,12 @@ export function MainEditor() {
       return (
         <div className="flex-1 flex flex-col items-center justify-center max-sm:justify-start px-4 py-6 sm:px-8 sm:py-8 md:px-12 md:py-10 max-sm:pb-[calc(env(safe-area-inset-bottom)+2rem)] animate-in fade-in duration-700 max-w-2xl md:max-w-[46rem] lg:max-w-[49rem] mx-auto w-full relative">
           <div className="absolute top-5 right-5 hidden sm:flex items-center gap-1 animate-in fade-in slide-in-from-right-4 duration-700 delay-300">
-            <ManagerSwitcher currentManager="fusion" className="h-9 rounded-[1.15rem] px-3 text-[13px] " />
+            <ManagerSwitcher currentManager="fusion" className="h-9 px-3 text-[13px]" />
             <div className="w-px h-4 bg-border/45 mx-0.5" />
             <Button
               variant="ghost"
               size="icon"
-              className="size-9 rounded-xl hover:bg-primary/10 hover:text-primary transition-all overflow-hidden"
+              className="size-9 rounded-2xl hover:bg-primary/10 hover:text-primary transition-all overflow-hidden"
               onClick={() => setShowHowToUse(true)}
               title="How To Use"
             >
@@ -506,7 +506,7 @@ export function MainEditor() {
             <Button
               variant="ghost"
               size="icon"
-              className="size-9 rounded-xl hover:bg-red-500/10 hover:text-red-500 transition-all overflow-hidden"
+              className="size-9 rounded-2xl hover:bg-red-500/10 hover:text-red-500 transition-all overflow-hidden"
               onClick={() => window.open('https://ko-fi.com/botbidraiser', '_blank')}
               title="Support Me"
             >
@@ -731,7 +731,7 @@ export function MainEditor() {
           <div className="rounded-[1.6rem] border border-border/60 bg-background/80 px-4 py-3 backdrop-blur-xl">
             {view === 'welcome' ? (
               <div className="flex items-center justify-between gap-3">
-                <ManagerSwitcher currentManager="fusion" className="h-9 min-w-0 rounded-2xl px-3 text-xs shadow-none" />
+                <ManagerSwitcher currentManager="fusion" className="h-9 min-w-0 px-3 text-xs shadow-none" />
                 <div className="flex shrink-0 items-center gap-2">
                   <Button
                     variant="ghost" size="icon"
@@ -742,7 +742,7 @@ export function MainEditor() {
                   </Button>
                   <Button
                     variant="ghost" size="icon"
-                    className="size-10 rounded-xl border border-red-500/20 bg-red-500/5 text-red-500/75 hover:bg-red-500/10 transition-all"
+                    className="size-10 rounded-2xl border border-red-500/20 bg-red-500/5 text-red-500/75 hover:bg-red-500/10 transition-all"
                     onClick={() => window.open('https://ko-fi.com/botbidraiser', '_blank')}
                   >
                     <Heart className="size-4 fill-current" />
@@ -767,13 +767,13 @@ export function MainEditor() {
                   </Button>
                   <Button
                     variant="ghost" size="icon"
-                    className="size-10 rounded-xl border border-red-500/20 bg-red-500/5 text-red-500/75 hover:bg-red-500/10 transition-all overflow-hidden"
+                    className="size-10 rounded-2xl border border-red-500/20 bg-red-500/5 text-red-500/75 hover:bg-red-500/10 transition-all overflow-hidden"
                     onClick={() => window.open('https://ko-fi.com/botbidraiser', '_blank')}
                   >
                     <Heart className="size-4 fill-current" />
                   </Button>
-                  <ThemeToggle className="size-10 rounded-xl transition-all" />
-                  <Button variant="ghost" size="icon" className="size-10 rounded-xl border border-zinc-500/10 bg-zinc-500/[0.04] text-zinc-500/80 hover:bg-zinc-500/10 transition-all" onClick={() => setShowRestartConfirm(true)}>
+                  <ThemeToggle className="size-10 rounded-2xl transition-all" />
+                  <Button variant="ghost" size="icon" className="size-10 rounded-2xl border border-zinc-500/10 bg-zinc-500/[0.04] text-zinc-500/80 hover:bg-zinc-500/10 transition-all" onClick={() => setShowRestartConfirm(true)}>
                     <RotateCcw className="size-4" />
                   </Button>
                 </div>
