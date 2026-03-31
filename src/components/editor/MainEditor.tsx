@@ -411,8 +411,18 @@ export function MainEditor() {
     }
 
     if (widgets.length === 0) {
-      applyImportConfig(trimmedInput);
-      setPastedJson('');
+      try {
+        const parsed = JSON.parse(trimmedInput);
+        applyImportConfig(parsed);
+        setPastedJson('');
+      } catch (err: any) {
+        setAlertDialog({
+          isOpen: true,
+          title: 'Invalid JSON',
+          message: err.message || 'The pasted content is not a valid JSON structure.',
+          variant: 'danger'
+        });
+      }
       return;
     }
 

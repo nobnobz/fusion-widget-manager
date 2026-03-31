@@ -288,7 +288,23 @@ export function ImportMergeDialog({ open, onOpenChange, initialJson, initialFile
     const text = e.target.value;
     setJsonInput(text);
     setFileName('Pasted JSON');
-    if (error) setError(null); // Clear previous errors when typing starts
+    if (error) setError(null);
+
+    // Auto-Review if it looks like a valid Fusion JSON
+    const trimmed = text.trim();
+    if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
+      try {
+        const parsed = JSON.parse(trimmed);
+        const isOmni = parsed?.includedKeys && Array.isArray(parsed?.values);
+        const isFusion = parsed?.exportType === 'fusionWidgets' && Array.isArray(parsed?.widgets);
+        
+        if (isOmni || isFusion) {
+          parseAndReview(text, 'Auto-detected Payload');
+        }
+      } catch {
+        // Not a complete JSON yet, ignore
+      }
+    }
   };
 
   const parseAndReview = (input: string, sourceName?: string) => {
