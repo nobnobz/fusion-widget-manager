@@ -100,7 +100,7 @@ function toAiometadataDataSource(dataSource: NativeTraktDataSource, manifestUrl:
     payload: {
       addonId: manifestUrl || MANIFEST_PLACEHOLDER,
       catalogId: `all::${getCatalogIdForTraktId(traktId)}`,
-      catalogType: 'series',
+      catalogType: 'all',
     },
   };
 }

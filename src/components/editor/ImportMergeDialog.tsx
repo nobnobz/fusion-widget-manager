@@ -19,137 +19,32 @@ import {
 } from 'lucide-react';
 import { convertOmniToFusion } from '@/lib/omni-converter';
 import { 
-  createWidgetDuplicateKey, 
   normalizeFusionConfigDetailed, 
   findCatalog 
 } from '@/lib/widget-domain';
+import { convertAiometadataImportToFusion, isAiometadataImportPayload } from '@/lib/aiometadata-import';
 import { fetchTemplateRepository } from '@/lib/template-repository';
-import type { CollectionItem, Widget, WidgetDataSource } from '@/lib/types/widget';
+import type { Widget } from '@/lib/types/widget';
+import {
+  applyImportReview,
+  buildImportReviewState,
+  getImportItemSelectionKey,
+  type WidgetDiff,
+} from '@/lib/import-merge';
 import { cn } from '@/lib/utils';
+import { getErrorMessage } from '@/lib/error-utils';
+import {
+  editorActionButtonClass,
+  editorFooterPrimaryButtonClass,
+  editorFooterSecondaryButtonClass,
+  editorPanelClass,
+} from './editorSurfaceStyles';
 
 interface ImportMergeDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   initialJson?: string;
   initialFileName?: string;
-}
-
-// ─── Types ───────────────────────────────────────────────────────────────────
-
-type ItemChangeSet = Set<'name' | 'catalogs' | 'image'>;
-
-interface ItemDiff {
-  status: 'new' | 'name-changed' | 'catalog-changed' | 'unchanged';
-  changes: ItemChangeSet;
-  // The existing item this matches (if any)
-  matchedExistingItem?: CollectionItem;
-}
-
-interface WidgetDiff {
-  // 'new' = not in existing config at all
-  // 'existing' = found by title+type key, contains item-level diffs (collection) or field diffs (row.classic)
-  // 'unchanged' = identical, nothing to do
-  status: 'new' | 'existing' | 'unchanged';
-  changes: Set<'name' | 'catalogs' | 'image'>; // for row.classic
-  itemDiffs: Record<string, ItemDiff>; // keyed by incoming item.id (collection only)
-  existingWidget?: Widget;
-}
-
-// ─── Helpers ─────────────────────────────────────────────────────────────────
-
-function getCatalogFingerprint(dataSources: WidgetDataSource[]): string {
-  return JSON.stringify(
-    dataSources
-      .map(ds =>
-        ds.sourceType === 'aiometadata'
-          ? `${ds.payload.addonId}::${ds.payload.catalogId}::${ds.payload.catalogType}`
-          : `trakt::${ds.payload.listSlug}`
-      )
-      .sort()
-  );
-}
-
-function normalizeNameKey(name: string): string {
-  return name.trim().toLowerCase();
-}
-
-function diffCollectionItems(
-  incomingItems: CollectionItem[],
-  existingItems: CollectionItem[]
-): Record<string, ItemDiff> {
-  const result: Record<string, ItemDiff> = {};
-
-  // Build lookup maps for existing items
-  const byFingerprint = new Map<string, CollectionItem>();
-  const byName = new Map<string, CollectionItem>();
-  for (const ei of existingItems) {
-    byFingerprint.set(getCatalogFingerprint(ei.dataSources), ei);
-    byName.set(normalizeNameKey(ei.name), ei);
-  }
-
-  for (const item of incomingItems) {
-    const incomingFP = getCatalogFingerprint(item.dataSources);
-    const incomingNameKey = normalizeNameKey(item.name);
-
-    const matchByFP = byFingerprint.get(incomingFP);
-    const matchByName = byName.get(incomingNameKey);
-
-    const changes: ItemChangeSet = new Set();
-
-    if (matchByFP) {
-      // Same catalog → same item
-      const nameChanged = normalizeNameKey(matchByFP.name) !== incomingNameKey;
-      const layoutChanged = (matchByFP.layout || 'Wide') !== (item.layout || 'Wide');
-      const imageChanged = (matchByFP.backgroundImageURL || '') !== (item.backgroundImageURL || '') || layoutChanged;
-      if (nameChanged) changes.add('name');
-      if (imageChanged) changes.add('image');
-
-      if (changes.size === 0) {
-        result[item.id] = { status: 'unchanged', changes, matchedExistingItem: matchByFP };
-      } else {
-        result[item.id] = { status: 'name-changed', changes, matchedExistingItem: matchByFP };
-      }
-    } else if (matchByName) {
-      // Same name, different catalog → catalog changed
-      changes.add('catalogs');
-      const layoutChanged = (matchByName.layout || 'Wide') !== (item.layout || 'Wide');
-      const imageChanged = (matchByName.backgroundImageURL || '') !== (item.backgroundImageURL || '') || layoutChanged;
-      if (imageChanged) changes.add('image');
-      result[item.id] = { status: 'catalog-changed', changes, matchedExistingItem: matchByName };
-    } else {
-      // Truly new
-      result[item.id] = { status: 'new', changes };
-    }
-  }
-
-  return result;
-}
-
-function diffRowClassic(
-  incoming: Widget,
-  existing: Widget
-): { changes: Set<'name' | 'catalogs' | 'image'>; unchanged: boolean } {
-  const changes = new Set<'name' | 'catalogs' | 'image'>();
-
-  if (incoming.type !== 'row.classic' || existing.type !== 'row.classic') {
-    return { changes, unchanged: true };
-  }
-
-  const incomingFP = getCatalogFingerprint([incoming.dataSource]);
-  const existingFP = getCatalogFingerprint([existing.dataSource]);
-
-  const nameChanged = normalizeNameKey(incoming.title) !== normalizeNameKey(existing.title);
-  const catalogChanged = incomingFP !== existingFP;
-  const incomingImage = incoming.presentation?.backgroundImageURL || '';
-  const existingImage = existing.presentation?.backgroundImageURL || '';
-  const layoutChanged = (incoming.presentation?.aspectRatio || 'poster') !== (existing.presentation?.aspectRatio || 'poster');
-  const imageChanged = incomingImage !== existingImage || layoutChanged;
-
-  if (nameChanged) changes.add('name');
-  if (catalogChanged) changes.add('catalogs');
-  if (imageChanged) changes.add('image');
-
-  return { changes, unchanged: changes.size === 0 };
 }
 
 // ─── Component ───────────────────────────────────────────────────────────────
@@ -171,6 +66,9 @@ export function ImportMergeDialog({ open, onOpenChange, initialJson, initialFile
     repairedCount: number;
     importIssues: { path: string; label: string; parentLabel?: string; message: string }[];
   } | null>(null);
+  const [parsedImportIssues, setParsedImportIssues] = useState<
+    Array<{ path: string; label: string; parentLabel?: string; message: string }>
+  >([]);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -224,12 +122,6 @@ export function ImportMergeDialog({ open, onOpenChange, initialJson, initialFile
     return () => document.removeEventListener('mousedown', handler, true);
   }, [updatesDropdownOpen]);
 
-  const existingWidgetsMap = useMemo(() => {
-    const map = new Map<string, Widget>();
-    widgets.forEach(w => map.set(createWidgetDuplicateKey(w), w));
-    return map;
-  }, [widgets]);
-
   // Handle initial payload if provided
   useEffect(() => {
     if (open && initialJson) {
@@ -256,6 +148,7 @@ export function ImportMergeDialog({ open, onOpenChange, initialJson, initialFile
     setWidgetFieldUpdates({});
     setItemFieldUpdates({});
     setKeepExistingCatalogs(false);
+    setParsedImportIssues([]);
   };
 
   const processFile = (file: File) => {
@@ -297,8 +190,9 @@ export function ImportMergeDialog({ open, onOpenChange, initialJson, initialFile
         const parsed = JSON.parse(trimmed);
         const isOmni = parsed?.includedKeys && Array.isArray(parsed?.values);
         const isFusion = parsed?.exportType === 'fusionWidgets' && Array.isArray(parsed?.widgets);
+        const isAiometadata = isAiometadataImportPayload(parsed);
         
-        if (isOmni || isFusion) {
+        if (isOmni || isFusion || isAiometadata) {
           parseAndReview(text, 'Auto-detected Payload');
         }
       } catch {
@@ -311,82 +205,35 @@ export function ImportMergeDialog({ open, onOpenChange, initialJson, initialFile
     try {
       let config = JSON.parse(input);
       if (config?.includedKeys && config?.values) config = convertOmniToFusion(config);
+      if (isAiometadataImportPayload(config)) config = convertAiometadataImportToFusion(config);
       if (config.exportType !== 'fusionWidgets' || !Array.isArray(config.widgets)) {
         throw new Error('Invalid Fusion JSON format. Missing "exportType": "fusionWidgets" or "widgets" array.');
       }
 
-      const normalized = normalizeFusionConfigDetailed(config, { manifestUrl, replacePlaceholder, catalogs: manifestCatalogs });
-      const incomingWidgets: Widget[] = normalized.config.widgets;
-
-      const newWidgetDiffs: Record<string, WidgetDiff> = {};
-      const newWidgetSelected: Record<string, boolean> = {};
-      const newItemSelected: Record<string, boolean> = {};
-      const newWidgetFieldUpdates: Record<string, { name: boolean; catalogs: boolean; image: boolean }> = {};
-      const newItemFieldUpdates: Record<string, { name: boolean; catalogs: boolean; image: boolean }> = {};
-
-      incomingWidgets.forEach(w => {
-        const key = createWidgetDuplicateKey(w);
-        const existingWidget = existingWidgetsMap.get(key);
-
-        if (!existingWidget) {
-          const itemDiffs: Record<string, ItemDiff> = {};
-          if (w.type === 'collection.row') {
-            w.dataSource.payload.items.forEach(item => { 
-              newItemSelected[item.id] = true; 
-              itemDiffs[item.id] = { status: 'new', changes: new Set() };
-            });
-          }
-          newWidgetDiffs[w.id] = { status: 'new', changes: new Set(), itemDiffs };
-          newWidgetSelected[w.id] = true;
-        } else if (w.type === 'collection.row' && existingWidget.type === 'collection.row') {
-          const itemDiffs = diffCollectionItems(w.dataSource.payload.items, existingWidget.dataSource.payload.items);
-          const hasActionableItems = Object.values(itemDiffs).some(d => d.status !== 'unchanged');
-
-          newWidgetDiffs[w.id] = { status: hasActionableItems ? 'existing' : 'unchanged', changes: new Set(), itemDiffs, existingWidget };
-          newWidgetSelected[w.id] = hasActionableItems;
-
-          w.dataSource.payload.items.forEach(item => {
-            const diff = itemDiffs[item.id];
-            const isActionable = (diff?.status ?? 'unchanged') !== 'unchanged';
-            newItemSelected[item.id] = isActionable;
-            if (isActionable) {
-              newItemFieldUpdates[item.id] = {
-                name: diff?.changes.has('name') ?? false,
-                catalogs: diff?.changes.has('catalogs') ?? false,
-                image: diff?.changes.has('image') ?? false
-              };
-            }
-          });
-        } else if (w.type === 'row.classic' && existingWidget.type === 'row.classic') {
-          const { changes, unchanged } = diffRowClassic(w, existingWidget);
-          newWidgetDiffs[w.id] = { status: unchanged ? 'unchanged' : 'existing', changes, itemDiffs: {}, existingWidget };
-          newWidgetSelected[w.id] = !unchanged;
-          if (!unchanged) {
-            newWidgetFieldUpdates[w.id] = {
-              name: changes.has('name'),
-              catalogs: changes.has('catalogs'),
-              image: changes.has('image')
-            };
-          }
-        } else {
-          // Type mismatch — treat as new
-          const itemDiffs: Record<string, ItemDiff> = {};
-          if (w.type === 'collection.row') {
-            w.dataSource.payload.items.forEach(item => {
-              newItemSelected[item.id] = true;
-              itemDiffs[item.id] = { status: 'new', changes: new Set() };
-            });
-          }
-          newWidgetDiffs[w.id] = { status: 'new', changes: new Set(), itemDiffs };
-          newWidgetSelected[w.id] = true;
-        }
+      const normalized = normalizeFusionConfigDetailed(config, {
+        manifestUrl,
+        replacePlaceholder,
+        catalogs: manifestCatalogs,
+        sanitize: true,
+        allowPartialImport: true,
       });
+      if (normalized.config.widgets.length === 0 && normalized.importIssues.length > 0) {
+        throw new Error(
+          `No supported widgets could be imported. First issue: ${normalized.importIssues[0]?.path} - ${normalized.importIssues[0]?.message}`
+        );
+      }
+      const incomingWidgets: Widget[] = normalized.config.widgets;
+      const reviewState = buildImportReviewState(widgets, incomingWidgets);
 
       setParsedWidgets(incomingWidgets);
-      setWidgetDiffs(newWidgetDiffs);
-      setWidgetSelected(newWidgetSelected);
-      setItemSelected(newItemSelected);
+      setParsedImportIssues(normalized.importIssues);
+      setWidgetDiffs(reviewState.widgetDiffs);
+      setWidgetSelected(reviewState.widgetSelected);
+      setItemSelected(reviewState.itemSelected);
+      setWidgetFieldUpdates(reviewState.widgetFieldUpdates);
+      setItemFieldUpdates(reviewState.itemFieldUpdates);
       setExpandedWidgets(null);
+      setExpandedItems(null);
       
       if (typeof window !== 'undefined') {
         localStorage.setItem('fusion-manager-last-import', input);
@@ -397,8 +244,8 @@ export function ImportMergeDialog({ open, onOpenChange, initialJson, initialFile
 
       setStep('review');
       setError(null);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to parse JSON');
+    } catch (error) {
+      setError(getErrorMessage(error, 'Failed to parse JSON'));
       setSuccess(null);
       setStep('input');
     }
@@ -415,8 +262,9 @@ export function ImportMergeDialog({ open, onOpenChange, initialJson, initialFile
       setItemSelected(prev => {
         const next = { ...prev };
         w.dataSource.payload.items.forEach(item => {
+          const itemKey = getImportItemSelectionKey(w.id, item.id);
           if (diff?.itemDiffs[item.id]?.status !== 'unchanged') {
-            next[item.id] = checked;
+            next[itemKey] = checked;
           }
         });
         return next;
@@ -427,8 +275,9 @@ export function ImportMergeDialog({ open, onOpenChange, initialJson, initialFile
           const next = { ...prev };
           w.dataSource.payload.items.forEach(item => {
             const itemDiff = diff?.itemDiffs[item.id];
+            const itemKey = getImportItemSelectionKey(w.id, item.id);
             if (itemDiff && itemDiff.status !== 'unchanged') {
-              next[item.id] = {
+              next[itemKey] = {
                 name: itemDiff.changes.has('name'),
                 catalogs: itemDiff.changes.has('catalogs'),
                 image: itemDiff.changes.has('image')
@@ -469,18 +318,21 @@ export function ImportMergeDialog({ open, onOpenChange, initialJson, initialFile
       if (mode === 'none') {
         newWidgetSelected[w.id] = false;
         if (w.type === 'collection.row') {
-          w.dataSource.payload.items.forEach(item => { newItemSelected[item.id] = false; });
+          w.dataSource.payload.items.forEach(item => {
+            newItemSelected[getImportItemSelectionKey(w.id, item.id)] = false;
+          });
         }
       } else if (mode === 'all') {
         let anyActionableItem = false;
         if (w.type === 'collection.row') {
           w.dataSource.payload.items.forEach(item => {
             const itemDiff = diff.itemDiffs[item.id];
+            const itemKey = getImportItemSelectionKey(w.id, item.id);
             const isActionable = (itemDiff?.status ?? 'unchanged') !== 'unchanged';
-            newItemSelected[item.id] = isActionable;
+            newItemSelected[itemKey] = isActionable;
             if (isActionable) {
               anyActionableItem = true;
-              newItemFieldUpdates[item.id] = {
+              newItemFieldUpdates[itemKey] = {
                 name: itemDiff?.changes.has('name') ?? false,
                 catalogs: itemDiff?.changes.has('catalogs') ?? false,
                 image: itemDiff?.changes.has('image') ?? false
@@ -493,9 +345,13 @@ export function ImportMergeDialog({ open, onOpenChange, initialJson, initialFile
         let hasNewItems = false;
         if (w.type === 'collection.row') {
           w.dataSource.payload.items.forEach(item => {
-            const isItemNew = diff.itemDiffs[item.id]?.status === 'new';
-            newItemSelected[item.id] = isItemNew;
-            if (isItemNew) hasNewItems = true;
+            const itemKey = getImportItemSelectionKey(w.id, item.id);
+            const itemStatus = diff.itemDiffs[item.id]?.status;
+            const isItemNew = itemStatus === 'new' || itemStatus === 'ambiguous';
+            newItemSelected[itemKey] = isItemNew;
+            if (isItemNew) {
+              hasNewItems = true;
+            }
           });
         }
         newWidgetSelected[w.id] = diff.status === 'new' || hasNewItems;
@@ -508,19 +364,21 @@ export function ImportMergeDialog({ open, onOpenChange, initialJson, initialFile
         if (mode === 'updates-clear') {
           newWidgetSelected[w.id] = false;
           if (w.type === 'collection.row') {
-            w.dataSource.payload.items.forEach(item => { newItemSelected[item.id] = false; });
+            w.dataSource.payload.items.forEach(item => {
+              newItemSelected[getImportItemSelectionKey(w.id, item.id)] = false;
+            });
           }
         } else if (mode === 'updates-all') {
           let hasUpdatedItems = false;
           if (w.type === 'collection.row') {
             w.dataSource.payload.items.forEach(item => {
               const itemDiff = diff.itemDiffs[item.id];
-              // Only select if it's a MODIFICATION, skip NEW in 'updates' mode
-              const isUpdate = (itemDiff?.status !== 'unchanged' && itemDiff?.status !== 'new');
-              newItemSelected[item.id] = isUpdate;
+              const itemKey = getImportItemSelectionKey(w.id, item.id);
+              const isUpdate = itemDiff?.status === 'updated' || itemDiff?.status === 'moved';
+              newItemSelected[itemKey] = isUpdate;
               if (isUpdate) {
                 hasUpdatedItems = true;
-                newItemFieldUpdates[item.id] = {
+                newItemFieldUpdates[itemKey] = {
                   name: itemDiff?.changes.has('name') ?? false,
                   catalogs: itemDiff?.changes.has('catalogs') ?? false,
                   image: itemDiff?.changes.has('image') ?? false
@@ -564,20 +422,21 @@ export function ImportMergeDialog({ open, onOpenChange, initialJson, initialFile
             let anyItemSelected = false;
             w.dataSource.payload.items.forEach(item => {
               const itemDiff = diff.itemDiffs[item.id];
+              const itemKey = getImportItemSelectionKey(w.id, item.id);
               const matches = itemDiff?.changes.has(changeKey) ?? false;
               
               if (forceOff) {
-                const current = newItemFieldUpdates[item.id] || { name: false, catalogs: false, image: false };
-                newItemFieldUpdates[item.id] = { ...current, [changeKey]: false };
-                const anyItemFieldLeft = Object.values(newItemFieldUpdates[item.id]).some(v => v);
-                if (!anyItemFieldLeft) newItemSelected[item.id] = false;
+                const current = newItemFieldUpdates[itemKey] || { name: false, catalogs: false, image: false };
+                newItemFieldUpdates[itemKey] = { ...current, [changeKey]: false };
+                const anyItemFieldLeft = Object.values(newItemFieldUpdates[itemKey]).some(v => v);
+                if (!anyItemFieldLeft) newItemSelected[itemKey] = false;
               } else if (forceOn && matches) {
-                newItemSelected[item.id] = true;
-                const current = newItemFieldUpdates[item.id] || { name: false, catalogs: false, image: false };
-                newItemFieldUpdates[item.id] = { ...current, [changeKey]: true };
+                newItemSelected[itemKey] = true;
+                const current = newItemFieldUpdates[itemKey] || { name: false, catalogs: false, image: false };
+                newItemFieldUpdates[itemKey] = { ...current, [changeKey]: true };
               }
               
-              if (newItemSelected[item.id]) anyItemSelected = true;
+              if (newItemSelected[itemKey]) anyItemSelected = true;
             });
             newWidgetSelected[w.id] = anyItemSelected || (newWidgetSelected[w.id] ?? false);
           }
@@ -595,170 +454,39 @@ export function ImportMergeDialog({ open, onOpenChange, initialJson, initialFile
 
   const executeImport = () => {
     try {
-      const finalWidgets = [...widgets];
-      let widgetsAdded = 0;
-      let widgetsUpdated = 0;
-      let itemsAdded = 0;
-      let itemsUpdated = 0;
-
-      parsedWidgets.forEach(pw => {
-        if (!widgetSelected[pw.id]) { return; }
-
-        const diff = widgetDiffs[pw.id];
-        if (!diff) return;
-
-        if (diff.status === 'new') {
-          if (pw.type === 'collection.row') {
-            const selectedItems = pw.dataSource.payload.items.filter(item => itemSelected[item.id]);
-            if (selectedItems.length > 0) {
-              finalWidgets.push({
-                ...pw,
-                dataSource: {
-                  ...pw.dataSource,
-                  payload: { ...pw.dataSource.payload, items: selectedItems }
-                }
-              } as typeof pw);
-              widgetsAdded++;
-              itemsAdded += selectedItems.length;
-            }
-          } else {
-            finalWidgets.push(pw);
-            widgetsAdded++;
-          }
-        } else if (diff.status === 'existing') {
-          if (pw.type === 'row.classic' && diff.existingWidget) {
-            const existingIdx = finalWidgets.findIndex(fw => fw.id === diff.existingWidget!.id);
-            if (existingIdx !== -1) {
-              const existingW = { ...finalWidgets[existingIdx] } as typeof pw;
-              const updates = widgetFieldUpdates[pw.id];
-              if (updates) {
-                let widgetChanged = false;
-                if (updates.name && diff.changes.has('name')) {
-                  existingW.title = pw.title;
-                  widgetChanged = true;
-                }
-                if (updates.image && diff.changes.has('image')) {
-                  existingW.presentation = { 
-                    ...(existingW.presentation || {}), 
-                    backgroundImageURL: pw.presentation?.backgroundImageURL,
-                    aspectRatio: pw.presentation?.aspectRatio || 'poster'
-                  };
-                  widgetChanged = true;
-                }
-                if (updates.catalogs && diff.changes.has('catalogs')) {
-                  if (keepExistingCatalogs) {
-                    // Merge: keep existing data source, add any new catalogs from incoming that aren't already present
-                    // For row.classic the dataSource is a single object — just keep existing (already preserved)
-                    // Nothing to do: the existing dataSource stays as-is
-                  } else {
-                    existingW.dataSource = pw.dataSource;
-                    widgetChanged = true;
-                  }
-                }
-                
-                if (widgetChanged) {
-                  finalWidgets[existingIdx] = existingW;
-                  widgetsUpdated++;
-                }
-              }
-            }
-          } else if (pw.type === 'collection.row' && diff.existingWidget?.type === 'collection.row') {
-            const existingIdx = finalWidgets.findIndex(fw => fw.id === diff.existingWidget!.id);
-            if (existingIdx !== -1) {
-              const existingW = { ...finalWidgets[existingIdx] } as typeof pw;
-              const existingItems = [...existingW.dataSource.payload.items];
-              let widgetUpdatedFlag = false;
-
-              pw.dataSource.payload.items.forEach(incomingItem => {
-                if (!itemSelected[incomingItem.id]) return;
-                const itemDiff = diff.itemDiffs[incomingItem.id];
-                if (!itemDiff || itemDiff.status === 'unchanged') return;
-
-                if (itemDiff.status === 'new') {
-                  existingItems.push(incomingItem);
-                  itemsAdded++;
-                  widgetUpdatedFlag = true;
-                } else {
-                  const existingItemIdx = existingItems.findIndex(ei => ei.id === itemDiff.matchedExistingItem?.id);
-                  if (existingItemIdx === -1) return;
-                  
-                  const updates = itemFieldUpdates[incomingItem.id];
-                  if (updates) {
-                    const updatedItem = { ...existingItems[existingItemIdx] };
-                    let itemChanged = false;
-                    if (updates.name && itemDiff.changes.has('name')) {
-                      updatedItem.name = incomingItem.name;
-                      itemChanged = true;
-                    }
-                    if (updates.image && itemDiff.changes.has('image')) {
-                      updatedItem.backgroundImageURL = incomingItem.backgroundImageURL;
-                      updatedItem.layout = incomingItem.layout || 'Wide';
-                      itemChanged = true;
-                    }
-                    if (updates.catalogs && itemDiff.changes.has('catalogs')) {
-                      if (keepExistingCatalogs) {
-                        // Merge: keep existing dataSources + add any from incoming that aren't already there
-                        const existingKeys = new Set(
-                          (updatedItem.dataSources || []).map((ds: WidgetDataSource) =>
-                            ds.sourceType === 'aiometadata'
-                              ? `${ds.sourceType}::${ds.payload?.catalogId}::${ds.payload?.catalogType}`
-                              : `${ds.sourceType}::${JSON.stringify(ds.payload)}`
-                          )
-                        );
-                        const toAdd = (incomingItem.dataSources || []).filter((ds: WidgetDataSource) => {
-                          const key = ds.sourceType === 'aiometadata'
-                            ? `${ds.sourceType}::${ds.payload?.catalogId}::${ds.payload?.catalogType}`
-                            : `${ds.sourceType}::${JSON.stringify(ds.payload)}`;
-                          return !existingKeys.has(key);
-                        });
-                        if (toAdd.length > 0) {
-                          updatedItem.dataSources = [...(updatedItem.dataSources || []), ...toAdd];
-                          itemChanged = true;
-                        }
-                      } else {
-                        // Replace entirely
-                        updatedItem.dataSources = incomingItem.dataSources;
-                        itemChanged = true;
-                      }
-                    }
-                    if (itemChanged) {
-                      existingItems[existingItemIdx] = updatedItem;
-                      itemsUpdated++;
-                      widgetUpdatedFlag = true;
-                    }
-                  }
-                }
-              });
-
-              if (widgetUpdatedFlag) {
-                finalWidgets[existingIdx] = {
-                  ...existingW,
-                  dataSource: { ...existingW.dataSource, payload: { items: existingItems } }
-                };
-                widgetsUpdated++;
-              }
-            }
-          }
-        }
+      const applied = applyImportReview(widgets, parsedWidgets, widgetDiffs, {
+        widgetSelected,
+        itemSelected,
+        widgetFieldUpdates,
+        itemFieldUpdates,
+        keepExistingCatalogs,
+        applyMode: 'merge',
       });
 
       const finalConfigResult = normalizeFusionConfigDetailed(
-        { exportType: 'fusionWidgets', exportVersion: 1, widgets: finalWidgets },
+        { exportType: 'fusionWidgets', exportVersion: 1, widgets: applied.widgets },
         { manifestUrl, catalogs: manifestCatalogs, replacePlaceholder }
       );
 
       replaceConfig(finalConfigResult.config);
+      const combinedImportIssues = [...parsedImportIssues, ...finalConfigResult.importIssues];
+      const deduplicatedImportIssues = combinedImportIssues.filter((issue, index, entries) => {
+        const key = `${issue.path}::${issue.label}::${issue.parentLabel || ''}::${issue.message}`;
+        return entries.findIndex((entry) =>
+          `${entry.path}::${entry.label}::${entry.parentLabel || ''}::${entry.message}` === key
+        ) === index;
+      });
       setSuccess({
-        widgetsAdded,
-        widgetsUpdated,
-        itemsAdded,
-        itemsUpdated,
+        widgetsAdded: applied.widgetsAdded,
+        widgetsUpdated: applied.widgetsUpdated,
+        itemsAdded: applied.itemsAdded,
+        itemsUpdated: applied.itemsUpdated,
         repairedCount: finalConfigResult.repairedIds.widgetIds.length + finalConfigResult.repairedIds.itemIds.length,
-        importIssues: finalConfigResult.importIssues,
+        importIssues: deduplicatedImportIssues,
       });
       setStep('success');
-    } catch {
-      setError('Failed to execute import. Please try again.');
+    } catch (error) {
+      setError(getErrorMessage(error, 'Failed to execute import. Please try again.'));
     }
   };
 
@@ -770,8 +498,11 @@ export function ImportMergeDialog({ open, onOpenChange, initialJson, initialFile
       const d = widgetDiffs[w.id];
       if (!d) return;
       
-      const hasNewItems = w.type === 'collection.row' && Object.values(d.itemDiffs).some(id => id.status === 'new');
-      const hasUpdates = d.status === 'existing' && (d.changes.size > 0 || Object.values(d.itemDiffs).some(id => id.status !== 'new' && id.status !== 'unchanged'));
+      const hasNewItems = w.type === 'collection.row'
+        && Object.values(d.itemDiffs).some(id => id.status === 'new' || id.status === 'ambiguous');
+      const hasUpdates = d.status === 'existing'
+        && (d.changes.size > 0
+          || Object.values(d.itemDiffs).some(id => id.status === 'updated' || id.status === 'moved'));
 
       if (d.status === 'new' || hasNewItems) nw.push(w);
       if (hasUpdates) ew.push(w);
@@ -806,7 +537,7 @@ export function ImportMergeDialog({ open, onOpenChange, initialJson, initialFile
   );
 
   const ChangeBadge = ({ type, active, onClick, disabled, className, children, hideIcon, label }: { 
-    type: 'name' | 'catalogs' | 'image' | 'new' | 'updates';
+    type: 'name' | 'catalogs' | 'image' | 'new' | 'updates' | 'moved' | 'ambiguous';
     active?: boolean;
     onClick?: () => void;
     disabled?: boolean;
@@ -818,6 +549,8 @@ export function ImportMergeDialog({ open, onOpenChange, initialJson, initialFile
     const configs = {
       new: { label: 'New', icon: null, cls: 'bg-emerald-500/15 text-emerald-700 dark:bg-emerald-500/25 dark:text-emerald-400 border-emerald-500/20 dark:border-emerald-500/30' },
       updates: { label: 'Updates', icon: null, cls: 'bg-indigo-500/15 text-indigo-700 dark:bg-indigo-500/25 dark:text-indigo-400 border-indigo-500/20 dark:border-indigo-500/30' },
+      moved: { label: 'Moved', icon: null, cls: 'bg-violet-500/15 text-violet-700 dark:bg-violet-500/25 dark:text-violet-400 border-violet-500/20 dark:border-violet-500/30' },
+      ambiguous: { label: 'Ambiguous', icon: null, cls: 'bg-amber-500/15 text-amber-800 dark:bg-amber-500/25 dark:text-amber-300 border-amber-500/20 dark:border-amber-500/30' },
       name: { label: 'Title', icon: <Tag className="size-2.5 max-sm:size-2" />, cls: 'bg-cyan-500/15 text-cyan-700 dark:bg-cyan-500/25 dark:text-cyan-400 border-cyan-500/20 dark:border-cyan-500/30' },
       catalogs: { label: 'Catalogs', icon: <RefreshCw className="size-2.5 max-sm:size-2" />, cls: 'bg-amber-500/15 text-amber-700 dark:bg-amber-500/25 dark:text-amber-400 border-amber-500/20 dark:border-amber-500/30' },
       image: { label: 'Image', icon: <ImageIcon className="size-2.5 max-sm:size-2" />, cls: 'bg-rose-500/15 text-rose-700 dark:bg-rose-500/25 dark:text-rose-400 border-rose-500/20 dark:border-rose-500/30' },
@@ -832,7 +565,7 @@ export function ImportMergeDialog({ open, onOpenChange, initialJson, initialFile
           "h-5 max-sm:h-4.5 px-1.5 max-sm:px-1 flex items-center justify-center gap-1 max-sm:gap-0.5 text-[9px] max-sm:text-[8px] font-black uppercase tracking-[0.14em] transition-all rounded-md border",
           onClick && !disabled && "cursor-pointer hover:scale-105 active:scale-95",
           disabled && "opacity-50 cursor-default",
-          isSelected ? config.cls : "bg-muted/10 text-muted-foreground/50 border-muted-foreground/10 dark:bg-white/5",
+          isSelected ? config.cls : "bg-muted/10 text-muted-foreground/70 border-muted-foreground/20 dark:bg-white/5",
           className
         )}
       >
@@ -861,9 +594,9 @@ export function ImportMergeDialog({ open, onOpenChange, initialJson, initialFile
         alt={alt}
         className={cn(
           "rounded-xl object-cover border border-border/40  bg-zinc-50 transition-all dark:bg-muted/10 dark:border-border/20",
-          isPoster ? "h-24 w-16"   // portrait
-          : isWide  ? "h-12 w-24"  // landscape
-          :            "size-16",   // square
+          isPoster ? "h-28 w-20 max-sm:h-24 max-sm:w-16"   // portrait
+          : isWide  ? "h-16 w-32 max-sm:h-12 max-sm:w-24"  // landscape
+          :            "size-20 max-sm:size-16",   // square
           className
         )}
         onLoad={(e) => {
@@ -893,9 +626,10 @@ export function ImportMergeDialog({ open, onOpenChange, initialJson, initialFile
         if (widgetSelected[w.id] && widgetFieldUpdates[w.id]?.[field]) active++;
       } else if (w.type === 'collection.row') {
         w.dataSource.payload.items.forEach(item => {
+          const itemKey = getImportItemSelectionKey(w.id, item.id);
           if (diff.itemDiffs[item.id]?.changes.has(field)) {
             eligible++;
-            if (itemSelected[item.id] && itemFieldUpdates[item.id]?.[field]) active++;
+            if (itemSelected[itemKey] && itemFieldUpdates[itemKey]?.[field]) active++;
           }
         });
       }
@@ -933,22 +667,21 @@ export function ImportMergeDialog({ open, onOpenChange, initialJson, initialFile
     const isSelected = widgetSelected[w.id];
     const isCollection = w.type === 'collection.row';
     const isUnchanged = diff.status === 'unchanged';
+    const visibleCollectionItems = isCollection
+      ? w.dataSource.payload.items.filter((item) => {
+          const status = diff.itemDiffs[item.id]?.status;
+          if (!status || status === 'unchanged') return false;
+          if (activeTab === 'new' && status !== 'new' && status !== 'ambiguous') return false;
+          if (activeTab === 'updates' && (status === 'new' || status === 'ambiguous')) return false;
+          return true;
+        })
+      : [];
 
     // Check if widget-level checkbox should be indeterminate
     let isIndeterminate = false;
     if (isCollection && isSelected) {
-      const actionableItems = w.type === 'collection.row'
-        ? w.dataSource.payload.items.filter(i => {
-            const s = diff.itemDiffs[i.id]?.status;
-            if (!s || s === 'unchanged') return false;
-            // Mirror the same tab filter used in the item render loop
-            if (activeTab === 'new' && s !== 'new') return false;
-            if (activeTab === 'updates' && s === 'new') return false;
-            return true;
-          })
-        : [];
-      const selectedItems = actionableItems.filter(i => itemSelected[i.id]);
-      isIndeterminate = selectedItems.length > 0 && selectedItems.length < actionableItems.length;
+      const selectedItems = visibleCollectionItems.filter(i => itemSelected[getImportItemSelectionKey(w.id, i.id)]);
+      isIndeterminate = selectedItems.length > 0 && selectedItems.length < visibleCollectionItems.length;
     } else if (!isCollection && isSelected && diff?.status === 'existing') {
       const active = widgetFieldUpdates[w.id] || {};
       const activeCount = [
@@ -964,16 +697,20 @@ export function ImportMergeDialog({ open, onOpenChange, initialJson, initialFile
     // Summary counts for collection (Tab-aware)
     let hasNewItems = false;
     let hasActualUpdates = false;
+    let hasMovedItems = false;
+    let hasAmbiguousItems = false;
 
     if (isCollection && diff.status !== 'unchanged') {
       const diffs = Object.values(diff.itemDiffs);
       
-      const nNew = diffs.filter(d => d.status === 'new').length;
+      const nNew = diffs.filter(d => d.status === 'new' || d.status === 'ambiguous').length;
       
       hasNewItems = nNew > 0;
+      hasMovedItems = diffs.some(id => id.status === 'moved');
+      hasAmbiguousItems = diffs.some(id => id.status === 'ambiguous');
       hasActualUpdates = diff.status === 'existing' && (
         diff.changes.size > 0 || 
-        diffs.some(id => id.status !== 'new' && id.status !== 'unchanged')
+        diffs.some(id => id.status === 'updated' || id.status === 'moved')
       );
 
       // Only show relevant summary parts for the current tab
@@ -1059,15 +796,21 @@ export function ImportMergeDialog({ open, onOpenChange, initialJson, initialFile
                     {(diff.status === 'new' || (hasNewItems && activeTab !== 'updates')) && (
                       <ChangeBadge type="new" disabled={!isSelected} />
                     )}
+                    {hasMovedItems && activeTab !== 'new' && (
+                      <ChangeBadge type="moved" disabled={!isSelected} />
+                    )}
                     {hasActualUpdates && activeTab !== 'new' && (
                       <ChangeBadge type="updates" label="Updates" disabled={!isSelected} />
+                    )}
+                    {hasAmbiguousItems && activeTab !== 'updates' && (
+                      <ChangeBadge type="ambiguous" disabled={!isSelected} />
                     )}
                   </div>
                 )}
                 
                 {/* Field-level indicators (optional when collapsed) - Only show in All/Updates tabs */}
                 {diff.status === 'existing' && activeTab !== 'new' && (
-                  <div className="flex flex-wrap items-center gap-1 ml-1 scale-90 origin-left">
+                  <div className="flex flex-wrap items-center gap-1 ml-1">
                     {diff.changes.has('name') && (
                       <ChangeBadge 
                         type="name" 
@@ -1135,26 +878,23 @@ export function ImportMergeDialog({ open, onOpenChange, initialJson, initialFile
             <div className="flex-1 px-4 max-sm:px-2 pb-4 pt-1 max-sm:pt-2 space-y-2 overflow-hidden">
               <div className="pt-2 pb-2 flex items-center gap-2.5 px-1">
                 <ListTree className="size-3.5 text-muted-foreground/50 shrink-0" />
-                <h3 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/65">Items ({w.dataSource.payload.items.length})</h3>
+                <h3 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/65">Items ({visibleCollectionItems.length})</h3>
               </div>
               <div className="space-y-2">
-              {w.dataSource.payload.items.map((item) => {
+              {visibleCollectionItems.map((item) => {
                 const itemDiff = diff.itemDiffs[item.id];
                 if (!itemDiff || itemDiff.status === 'unchanged') return null;
-
-                // Context-aware item filtering
-                if (activeTab === 'new' && itemDiff.status !== 'new') return null;
-                if (activeTab === 'updates' && itemDiff.status === 'new') return null;
+                const itemKey = getImportItemSelectionKey(w.id, item.id);
 
                 const isItemExpanded = expandedItems === item.id;
-                const isItemSelected = itemSelected[item.id];
+                const isItemSelected = itemSelected[itemKey];
                 const hasImage = !!item.backgroundImageURL;
                 // Indeterminate: item selected but not ALL available change fields are active
                 const itemFieldCount = [itemDiff.changes.has('name'), itemDiff.changes.has('catalogs'), itemDiff.changes.has('image')].filter(Boolean).length;
-                const activeFieldCount = itemFieldUpdates[item.id] ? [
-                  itemDiff.changes.has('name') && itemFieldUpdates[item.id].name,
-                  itemDiff.changes.has('catalogs') && itemFieldUpdates[item.id].catalogs,
-                  itemDiff.changes.has('image') && itemFieldUpdates[item.id].image,
+                const activeFieldCount = itemFieldUpdates[itemKey] ? [
+                  itemDiff.changes.has('name') && itemFieldUpdates[itemKey].name,
+                  itemDiff.changes.has('catalogs') && itemFieldUpdates[itemKey].catalogs,
+                  itemDiff.changes.has('image') && itemFieldUpdates[itemKey].image,
                 ].filter(Boolean).length : 0;
                 const isItemIndeterminate = isItemSelected && itemFieldCount > 1 && activeFieldCount > 0 && activeFieldCount < itemFieldCount;
 
@@ -1177,13 +917,13 @@ export function ImportMergeDialog({ open, onOpenChange, initialJson, initialFile
                         checked={isItemSelected}
                         indeterminate={isItemIndeterminate}
                         onChange={(val) => {
-                          setItemSelected(prev => ({ ...prev, [item.id]: val }));
+                          setItemSelected(prev => ({ ...prev, [itemKey]: val }));
                           if (val) {
                             setWidgetSelected(prev => ({ ...prev, [w.id]: true }));
                             // Auto-select ALL available change fields when item is checked
                             setItemFieldUpdates(prev => ({
                               ...prev,
-                              [item.id]: {
+                              [itemKey]: {
                                 name: itemDiff?.changes.has('name') ?? false,
                                 catalogs: itemDiff?.changes.has('catalogs') ?? false,
                                 image: itemDiff?.changes.has('image') ?? false,
@@ -1193,7 +933,7 @@ export function ImportMergeDialog({ open, onOpenChange, initialJson, initialFile
                             // Bottom-up sync: check if any other items in this widget are still selected
                             setWidgetSelected(prev => {
                               const anyOtherItemsSelected = w.dataSource.payload.items.some(
-                                i => i.id !== item.id && itemSelected[i.id]
+                                i => i.id !== item.id && itemSelected[getImportItemSelectionKey(w.id, i.id)]
                               );
                               return { ...prev, [w.id]: anyOtherItemsSelected };
                             });
@@ -1221,28 +961,35 @@ export function ImportMergeDialog({ open, onOpenChange, initialJson, initialFile
                       </p>
 
                       <div className="flex items-center gap-1.5 shrink-0" onClick={e => e.stopPropagation()}>
-                        {itemDiff.status === 'new' ? (
+                        {itemDiff.status === 'new' && (
                           <ChangeBadge type="new" disabled={!isItemSelected} />
-                        ) : (
+                        )}
+                        {itemDiff.status === 'ambiguous' && (
+                          <ChangeBadge type="ambiguous" disabled={!isItemSelected} />
+                        )}
+                        {itemDiff.status === 'moved' && (
+                          <ChangeBadge type="moved" disabled={!isItemSelected} />
+                        )}
+                        {itemDiff.status !== 'new' && itemDiff.status !== 'ambiguous' && (
                           <>
                             {itemDiff.changes.has('name') && (
                               <ChangeBadge 
                                 type="name" 
-                                active={isItemSelected && itemFieldUpdates[item.id]?.name} 
+                                active={isItemSelected && itemFieldUpdates[itemKey]?.name} 
                                 onClick={() => {
                                   setItemFieldUpdates(p => {
-                                    const current = p[item.id] || { name: false, catalogs: false, image: false };
+                                    const current = p[itemKey] || { name: false, catalogs: false, image: false };
                                     const nextVal = !isItemSelected ? true : !current.name;
                                     // If activating on unselected item: reset all other fields so only this one is ON
                                     const nextFields = !isItemSelected
                                       ? { name: true, catalogs: false, image: false }
                                       : { ...current, name: nextVal };
-                                    const next = { ...p, [item.id]: nextFields };
+                                    const next = { ...p, [itemKey]: nextFields };
                                     if (nextVal) {
-                                      setItemSelected(s => ({ ...s, [item.id]: true }));
+                                      setItemSelected(s => ({ ...s, [itemKey]: true }));
                                       setWidgetSelected(s => ({ ...s, [w.id]: true }));
                                     } else if (!nextFields.name && !nextFields.catalogs && !nextFields.image) {
-                                      setItemSelected(s => ({ ...s, [item.id]: false }));
+                                      setItemSelected(s => ({ ...s, [itemKey]: false }));
                                     }
                                     return next;
                                   });
@@ -1252,21 +999,21 @@ export function ImportMergeDialog({ open, onOpenChange, initialJson, initialFile
                             {itemDiff.changes.has('catalogs') && (
                               <ChangeBadge 
                                 type="catalogs" 
-                                active={isItemSelected && itemFieldUpdates[item.id]?.catalogs} 
+                                active={isItemSelected && itemFieldUpdates[itemKey]?.catalogs} 
                                 onClick={() => {
                                   setItemFieldUpdates(p => {
-                                    const current = p[item.id] || { name: false, catalogs: false, image: false };
+                                    const current = p[itemKey] || { name: false, catalogs: false, image: false };
                                     const nextVal = !isItemSelected ? true : !current.catalogs;
                                     // If activating on unselected item: reset all other fields so only this one is ON
                                     const nextFields = !isItemSelected
                                       ? { name: false, catalogs: true, image: false }
                                       : { ...current, catalogs: nextVal };
-                                    const next = { ...p, [item.id]: nextFields };
+                                    const next = { ...p, [itemKey]: nextFields };
                                     if (nextVal) {
-                                      setItemSelected(s => ({ ...s, [item.id]: true }));
+                                      setItemSelected(s => ({ ...s, [itemKey]: true }));
                                       setWidgetSelected(s => ({ ...s, [w.id]: true }));
                                     } else if (!nextFields.name && !nextFields.catalogs && !nextFields.image) {
-                                      setItemSelected(s => ({ ...s, [item.id]: false }));
+                                      setItemSelected(s => ({ ...s, [itemKey]: false }));
                                     }
                                     return next;
                                   });
@@ -1276,21 +1023,21 @@ export function ImportMergeDialog({ open, onOpenChange, initialJson, initialFile
                             {itemDiff.changes.has('image') && (
                               <ChangeBadge 
                                 type="image" 
-                                active={isItemSelected && itemFieldUpdates[item.id]?.image} 
+                                active={isItemSelected && itemFieldUpdates[itemKey]?.image} 
                                 onClick={() => {
                                   setItemFieldUpdates(p => {
-                                    const current = p[item.id] || { name: false, catalogs: false, image: false };
+                                    const current = p[itemKey] || { name: false, catalogs: false, image: false };
                                     const nextVal = !isItemSelected ? true : !current.image;
                                     // If activating on unselected item: reset all other fields so only this one is ON
                                     const nextFields = !isItemSelected
                                       ? { name: false, catalogs: false, image: true }
                                       : { ...current, image: nextVal };
-                                    const next = { ...p, [item.id]: nextFields };
+                                    const next = { ...p, [itemKey]: nextFields };
                                     if (nextVal) {
-                                      setItemSelected(s => ({ ...s, [item.id]: true }));
+                                      setItemSelected(s => ({ ...s, [itemKey]: true }));
                                       setWidgetSelected(s => ({ ...s, [w.id]: true }));
                                     } else if (!nextFields.name && !nextFields.catalogs && !nextFields.image) {
-                                      setItemSelected(s => ({ ...s, [item.id]: false }));
+                                      setItemSelected(s => ({ ...s, [itemKey]: false }));
                                     }
                                     return next;
                                   });
@@ -1305,7 +1052,7 @@ export function ImportMergeDialog({ open, onOpenChange, initialJson, initialFile
                     {/* Item Expanded Details */}
                     {isItemExpanded && (
                       <div className="px-3 max-sm:px-2.5 pb-3 pt-1 border-t border-border/10 bg-muted/20">
-                        <div className="flex gap-2.5">
+                        <div className="flex gap-2.5 max-sm:flex-col">
                           {/* Catalogs */}
                           <div className="flex-1 min-w-0 space-y-1">
                             {item.dataSources.map((ds, i) => {
@@ -1363,7 +1110,7 @@ export function ImportMergeDialog({ open, onOpenChange, initialJson, initialFile
                               <ImageThumb src={item.backgroundImageURL} alt={item.name} layout={item.layout} className="rounded-xl" />
                             </div>
                           ) : (
-                            <div className="shrink-0 size-16 rounded-xl border border-border/40 bg-zinc-50 flex items-center justify-center  dark:bg-muted/20 dark:border-border/20 transition-colors">
+                            <div className="shrink-0 size-20 max-sm:size-16 rounded-xl border border-border/40 bg-zinc-50 flex items-center justify-center dark:bg-muted/20 dark:border-border/20 transition-colors">
                               <ImageIcon className="size-5 text-muted-foreground/30" />
                             </div>
                           )}
@@ -1373,7 +1120,7 @@ export function ImportMergeDialog({ open, onOpenChange, initialJson, initialFile
                   </div>
                 );
               })}
-            </div>
+              </div>
             </div>
           </div>
         )}
@@ -1390,7 +1137,9 @@ export function ImportMergeDialog({ open, onOpenChange, initialJson, initialFile
   return (
     <Dialog open={open} onOpenChange={(val) => {
       onOpenChange(val);
-      if (!val && step === 'success') resetState();
+      if (!val) {
+        resetState();
+      }
     }}>
       <DialogContent className={cn(
         "rounded-3xl border border-border/40 bg-background !shadow-none p-0 flex flex-col max-h-[90vh] transition-all",
@@ -1442,7 +1191,7 @@ export function ImportMergeDialog({ open, onOpenChange, initialJson, initialFile
                           .finally(() => setIsFetchingTemplate(false));
                       }}
                       disabled={isFetchingTemplate}
-                      className="w-full px-4 py-2 flex-1 rounded-xl bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-500 dark:text-indigo-400 text-[10px] font-black uppercase tracking-[0.15em] transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed border border-indigo-500/20 flex items-center justify-center text-center "
+                      className={cn(editorActionButtonClass, "w-full px-4 py-2 flex-1 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-500 dark:text-indigo-400 text-[10px] tracking-[0.15em] hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed border border-indigo-500/20 flex items-center justify-center text-center")}
                     >
                       {isFetchingTemplate ? 'Loading...' : `LOAD UME TEMPLATE ${defaultTemplateVersion || ''}`.trim()}
                     </button>
@@ -1457,7 +1206,7 @@ export function ImportMergeDialog({ open, onOpenChange, initialJson, initialFile
                         setError(null);
                         parseAndReview(lastImportedJson, loadName);
                       }}
-                      className="w-full px-4 py-2 flex-1 rounded-xl bg-primary/10 hover:bg-primary/20 text-primary text-[10px] font-black uppercase tracking-[0.15em] transition-all hover:scale-[1.02] active:scale-[0.98] border border-primary/20 flex items-center justify-center text-center "
+                      className={cn(editorActionButtonClass, "w-full px-4 py-2 flex-1 bg-primary/10 hover:bg-primary/20 text-primary text-[10px] tracking-[0.15em] hover:scale-[1.02] border border-primary/20 flex items-center justify-center text-center")}
                     >
                       LOAD PREVIOUS TEMPLATE
                     </button>
@@ -1525,7 +1274,7 @@ export function ImportMergeDialog({ open, onOpenChange, initialJson, initialFile
             <div className="space-y-3 w-full min-w-0">
 
               {/* Selected File Header (Streamlined) */}
-              <div className="px-5 py-3.5 bg-zinc-50/50 dark:bg-zinc-900/40 border border-border/10 rounded-xl flex items-center justify-between group">
+              <div className={cn(editorPanelClass, "px-5 py-3.5 bg-zinc-50/50 dark:bg-zinc-900/40 border-border/10 flex items-center justify-between group")}>
                 <div className="flex items-center gap-3 min-w-0 flex-1">
                   <div className="size-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shadow-sm shadow-primary/5">
                     <FileUp className="size-5" />
@@ -1553,7 +1302,7 @@ export function ImportMergeDialog({ open, onOpenChange, initialJson, initialFile
                   
                   {/* High-Fidelity Segmented Control */}
                   <div className="p-2.5 border-b border-zinc-200/60 dark:border-border/5 bg-zinc-50/10 dark:bg-white/[0.02]">
-                    <div className="flex bg-zinc-100/50 dark:bg-zinc-950/40 p-1 rounded-xl relative border border-zinc-200/60 dark:border-white/5 shadow-inner shadow-black/[0.02]">
+                    <div className="flex bg-zinc-100/50 dark:bg-zinc-950/40 p-1 rounded-2xl relative border border-zinc-200/60 dark:border-white/5 shadow-inner shadow-black/[0.02]">
                       {[
                         { id: 'all', label: 'All', count: newWidgets.length + existingWidgets.length },
                         { id: 'new', label: 'New', count: newWidgets.length },
@@ -1563,7 +1312,7 @@ export function ImportMergeDialog({ open, onOpenChange, initialJson, initialFile
                           key={tab.id}
                           onClick={() => setActiveTab(tab.id as 'all' | 'new' | 'updates')}
                           className={cn(
-                            "flex-1 flex items-center justify-center gap-2.5 h-9 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300 relative",
+                            "flex-1 flex items-center justify-center gap-2.5 h-9 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all duration-300 relative",
                             activeTab === tab.id
                               ? "bg-white dark:bg-white/[0.1] shadow-md shadow-primary/5 text-primary border border-zinc-200/60 dark:border-white/10 z-10 scale-[1.02]"
                               : "text-foreground/50 hover:text-foreground hover:bg-white/40 dark:hover:bg-white/[0.06]"
@@ -1587,6 +1336,7 @@ export function ImportMergeDialog({ open, onOpenChange, initialJson, initialFile
                     <div className="flex items-center gap-2">
                       <button 
                         onClick={() => setAllSelections(activeTab === 'new' ? 'new' : activeTab === 'updates' ? 'updates-all' : 'all', activeTab !== 'all')}
+                        data-testid="import-select-all"
                         className="h-7.5 px-3 rounded-xl text-[9px] font-black uppercase tracking-widest text-foreground/65 border border-border/10 bg-white/95 dark:bg-white/[0.06] hover:bg-white dark:hover:bg-white/[0.12] hover:border-primary/20 hover:text-primary transition-all active:scale-95 shadow-sm dark:shadow-none"
                       >
                         All
@@ -1723,69 +1473,77 @@ export function ImportMergeDialog({ open, onOpenChange, initialJson, initialFile
 
             {/* ── Success ── */}
             {step === 'success' && success && (
-              <div className="p-6 rounded-3xl bg-zinc-50/50 dark:bg-zinc-900/50 border border-zinc-200/50 dark:border-border/10  flex flex-col gap-6 animate-in zoom-in-95 duration-300 w-full mb-2">
+              <div className="p-6 rounded-2xl bg-zinc-50/50 dark:bg-zinc-900/50 border border-zinc-200/50 dark:border-border/10 flex flex-col gap-6 animate-in zoom-in-95 duration-300 w-full mb-2">
                 <div className="flex items-center gap-4">
-                  <div className="size-14 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-600 dark:text-emerald-400 ">
+                  <div className="size-14 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
                     <CheckCircle2 className="size-8" />
                   </div>
                   <div>
-                    <p className="text-xl font-black tracking-tight text-foreground">Import successful!</p>
-                    <p className="text-xs font-medium text-muted-foreground/60">Your configuration has been updated.</p>
+                    <h2 data-testid="success-import-message" className="text-xl font-black tracking-tight text-foreground">Import successful!</h2>
+                    <p className="text-[13.5px] font-medium text-muted-foreground/70">Your configuration has been updated.</p>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   {/* Widgets Card */}
-                  <div className="bg-background/80 backdrop-blur-sm rounded-xl p-5 border border-border/40  ring-1 ring-black/5 flex flex-col items-center">
-                    <p className="text-[11px] font-black uppercase tracking-[0.2em] text-muted-foreground/60 mb-4 border-b border-border/20 pb-2 w-full text-center">Widgets</p>
-                    <div className="flex gap-4 w-full justify-center">
-                      <div className="flex flex-col items-center gap-1">
-                        <span className="text-3xl text-foreground font-black tracking-tighter leading-none">{success.widgetsAdded}</span>
-                        <span className="text-[10px] font-bold uppercase text-muted-foreground/45 tracking-widest leading-none">Added: {success.widgetsAdded}</span>
+                  <div className="bg-background/80 backdrop-blur-sm rounded-2xl p-5 border border-border/40  ring-1 ring-black/5 flex flex-col items-center">
+                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/50 mb-5 border-b border-border/20 pb-2 w-full text-center">Widgets</p>
+                    <div className="flex items-center justify-around w-full">
+                      <div className="flex flex-col items-center gap-1.5">
+                        <span data-testid="success-widgets-added" className="text-3xl text-foreground font-black tracking-tighter leading-none">{success.widgetsAdded}</span>
+                        <div className="px-1.5 py-0.5 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-[8px] font-black uppercase tracking-wider">
+                          New
+                        </div>
                       </div>
-                      <div className="w-px bg-border/20 h-8 self-center mx-2" />
-                      <div className="flex flex-col items-center gap-1">
-                        <span className="text-3xl text-foreground font-black tracking-tighter leading-none">{success.widgetsUpdated}</span>
-                        <span className="text-[10px] font-bold uppercase text-muted-foreground/45 tracking-widest leading-none">Updated: {success.widgetsUpdated}</span>
+                      <div className="w-px bg-border/20 h-8" />
+                      <div className="flex flex-col items-center gap-1.5">
+                        <span data-testid="success-widgets-updated" className="text-3xl text-foreground font-black tracking-tighter leading-none">{success.widgetsUpdated}</span>
+                        <div className="px-1.5 py-0.5 rounded-md bg-indigo-500/10 border border-indigo-500/20 text-indigo-600 dark:text-indigo-400 text-[8px] font-black uppercase tracking-wider">
+                          Updated
+                        </div>
                       </div>
                     </div>
                   </div>
 
                   {/* Items Card */}
-                  <div className="bg-background/80 backdrop-blur-sm rounded-xl p-5 border border-border/40  ring-1 ring-black/5 flex flex-col items-center">
-                    <p className="text-[11px] font-black uppercase tracking-[0.2em] text-muted-foreground/60 mb-4 border-b border-border/20 pb-2 w-full text-center">Items</p>
-                    <div className="flex gap-4 w-full justify-center">
-                      <div className="flex flex-col items-center gap-1">
-                        <span className="text-3xl text-foreground font-black tracking-tighter leading-none">{success.itemsAdded}</span>
-                        <span className="text-[10px] font-bold uppercase text-muted-foreground/45 tracking-widest leading-none">Added: {success.itemsAdded}</span>
+                  <div className="bg-background/80 backdrop-blur-sm rounded-2xl p-5 border border-border/40  ring-1 ring-black/5 flex flex-col items-center">
+                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/50 mb-5 border-b border-border/20 pb-2 w-full text-center">Items</p>
+                    <div className="flex items-center justify-around w-full">
+                      <div className="flex flex-col items-center gap-1.5">
+                        <span data-testid="success-items-added" className="text-3xl text-foreground font-black tracking-tighter leading-none">{success.itemsAdded}</span>
+                        <div className="px-1.5 py-0.5 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-[8px] font-black uppercase tracking-wider">
+                          New
+                        </div>
                       </div>
-                      <div className="w-px bg-border/20 h-8 self-center mx-2" />
-                      <div className="flex flex-col items-center gap-1">
-                        <span className="text-3xl text-foreground font-black tracking-tighter leading-none">{success.itemsUpdated}</span>
-                        <span className="text-[10px] font-bold uppercase text-muted-foreground/45 tracking-widest leading-none">Updated: {success.itemsUpdated}</span>
+                      <div className="w-px bg-border/20 h-8" />
+                      <div className="flex flex-col items-center gap-1.5">
+                        <span data-testid="success-items-updated" className="text-3xl text-foreground font-black tracking-tighter leading-none">{success.itemsUpdated}</span>
+                        <div className="px-1.5 py-0.5 rounded-md bg-indigo-500/10 border border-indigo-500/20 text-indigo-600 dark:text-indigo-400 text-[8px] font-black uppercase tracking-wider">
+                          Updated
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
 
                 {success.importIssues.length > 0 && (
-                  <div className="mt-2 rounded-xl border border-amber-500/20 bg-amber-500/5 p-4 text-left text-xs text-amber-700 dark:text-amber-300">
-                    <div className="flex items-center justify-between gap-2 mb-3">
-                      <p className="font-bold flex items-center gap-2 text-sm">
+                  <div className="mt-2 rounded-2xl border border-amber-500/20 bg-amber-500/5 p-5 text-left text-xs text-amber-700 dark:text-amber-300">
+                    <div className="flex items-center justify-between gap-2 mb-4">
+                      <p className="font-black tracking-tight flex items-center gap-2 text-sm uppercase">
                         <AlertCircle className="size-4" />
-                        Skipped Unsupported Entries
+                        Skipped Entries
                       </p>
-                      <div className="rounded-full bg-amber-500/20 px-2 py-0.5 text-[10px] font-bold uppercase">
+                      <div className="rounded-full bg-amber-500/20 px-2 py-0.5 text-[10px] font-black">
                         {success.importIssues.length}
                       </div>
                     </div>
-                    <div className="max-h-48 space-y-2 overflow-y-auto pr-2 rounded-xl bg-background/50 border border-amber-500/10 p-3 text-[11px] leading-relaxed">
+                    <div className="max-h-48 space-y-2 overflow-y-auto pr-2 custom-scrollbar text-[12.5px] leading-relaxed">
                       {success.importIssues.map((issue) => (
-                        <p key={`${issue.label}-${issue.message}`} className="break-words">
-                          <span className="font-bold text-foreground/80">{issue.label}</span>
-                          {issue.parentLabel ? <span className="opacity-70"> in {issue.parentLabel}</span> : null}
-                          <span className="opacity-90">: {issue.message}</span>
-                        </p>
+                        <div key={`${issue.label}-${issue.message}`} className="p-3.5 rounded-xl bg-background/50 border border-amber-500/10">
+                          <p className="font-bold text-foreground inline-block mr-1">{issue.label}</p>
+                          {issue.parentLabel && <span className="text-muted-foreground/60 text-[11px] font-bold uppercase tracking-wider">in {issue.parentLabel}</span>}
+                          <p className="mt-1.5 text-muted-foreground/75 leading-relaxed">{issue.message}</p>
+                        </div>
                       ))}
                     </div>
                   </div>
@@ -1797,40 +1555,41 @@ export function ImportMergeDialog({ open, onOpenChange, initialJson, initialFile
           <div className="mt-auto pt-4 shrink-0 transition-all border-t border-border/20 w-full flex flex-col gap-4">
             
             {/* Contextual Footer Settings */}
-            {step === 'review' && activeTab !== 'new' && selectedCount > 0 && (
+            {step === 'review' && selectedCount > 0 && (
               <div className="mb-4 w-full px-1 fade-in">
-                <button 
-                  onClick={() => setKeepExistingCatalogs(v => !v)}
-                  className={cn(
-                    "w-full flex items-center justify-between p-4 max-sm:p-3.5 rounded-3xl border transition-all duration-300 text-left",
-                    (keepExistingCatalogs && catalogState !== 'none')
-                      ? "border-primary/30 bg-white dark:bg-white/[0.05] ring-1 ring-primary/10 shadow-sm shadow-primary/5"
-                      : "bg-white/95 backdrop-blur-sm dark:bg-white/[0.02] border-border/10 hover:bg-white dark:hover:bg-white/[0.05] hover:border-border/40 hover:shadow-md",
-                    "cursor-pointer group"
-                  )}
-                >
-                  <div className="flex flex-col gap-1 pr-6">
-                    <span className="text-[16px] max-sm:text-sm font-bold tracking-tight text-foreground/90 transition-colors">
-                      Preserve Current Catalogs
-                    </span>
-                    <span className="text-[12px] max-sm:text-[10px] font-medium text-muted-foreground/75 leading-relaxed">
-                      Prevent imported widgets from overwriting your configured catalogs.
-                    </span>
-                  </div>
-                  
-                  {/* iOS Style Switch */}
-                  <div className={cn(
-                    "w-11 h-6 rounded-full relative transition-colors duration-400 shrink-0 ",
-                    (keepExistingCatalogs && catalogState !== 'none') 
-                      ? "bg-primary" 
-                      : "bg-accent-foreground/15 group-hover:bg-accent-foreground/20"
-                  )}>
+                <div className="grid gap-3">
+                  <button 
+                    onClick={() => setKeepExistingCatalogs(v => !v)}
+                    data-testid="import-keep-catalogs-toggle"
+                    className={cn(
+                      "w-full flex items-center justify-between p-4 max-sm:p-3.5 rounded-3xl border transition-all duration-300 text-left cursor-pointer group",
+                      (keepExistingCatalogs && catalogState !== 'none')
+                        ? "border-primary/30 bg-white dark:bg-white/[0.05] ring-1 ring-primary/10 shadow-sm shadow-primary/5"
+                        : "bg-white/95 backdrop-blur-sm dark:bg-white/[0.02] border-border/10 hover:bg-white dark:hover:bg-white/[0.05] hover:border-border/40 hover:shadow-md"
+                    )}
+                  >
+                    <div className="flex flex-col gap-1 pr-6">
+                      <span className="text-[17px] max-sm:text-[15px] font-black tracking-tight text-foreground transition-colors">
+                        Do not overwrite catalogs
+                      </span>
+                      <span className="text-[13.5px] max-sm:text-[12px] font-medium text-muted-foreground/70 leading-relaxed">
+                        Prevent imported widgets from overwriting your configured catalogs.
+                      </span>
+                    </div>
+                    
                     <div className={cn(
-                      "absolute top-[2px] left-[2px] size-5 bg-background rounded-full  transition-transform duration-400 ease-[cubic-bezier(0.34,1.56,0.64,1)]",
-                      (keepExistingCatalogs && catalogState !== 'none') ? "translate-x-5" : "translate-x-0"
-                    )} />
-                  </div>
-                </button>
+                      "w-11 h-6 rounded-full relative transition-colors duration-400 shrink-0 ",
+                      (keepExistingCatalogs && catalogState !== 'none') 
+                        ? "bg-primary" 
+                        : "bg-accent-foreground/15 group-hover:bg-accent-foreground/20"
+                    )}>
+                      <div className={cn(
+                        "absolute top-[2px] left-[2px] size-5 bg-background rounded-full  transition-transform duration-400 ease-[cubic-bezier(0.34,1.56,0.64,1)]",
+                        (keepExistingCatalogs && catalogState !== 'none') ? "translate-x-5" : "translate-x-0"
+                      )} />
+                    </div>
+                  </button>
+                </div>
               </div>
             )}
 
@@ -1839,7 +1598,7 @@ export function ImportMergeDialog({ open, onOpenChange, initialJson, initialFile
                 <Button 
                   variant="ghost" 
                   data-testid="import-dialog-close"
-                  className="w-full sm:flex-1 h-10 rounded-xl font-bold uppercase tracking-[0.12em] text-[12px] text-muted-foreground/60 hover:text-foreground hover:bg-muted/30 transition-all"
+                  className={cn(editorActionButtonClass, editorFooterSecondaryButtonClass, "w-full sm:flex-1 tracking-[0.12em] text-[12px]")}
                 >
                   {step === 'success' ? 'Close' : 'Cancel'}
                 </Button>
@@ -1848,7 +1607,7 @@ export function ImportMergeDialog({ open, onOpenChange, initialJson, initialFile
               {step === 'input' && jsonInput.trim() && (
                 <Button
                   onClick={() => parseAndReview(jsonInput, fileName || 'Import Payload')}
-                  className="w-full sm:flex-1 h-10 rounded-xl font-bold uppercase tracking-[0.12em] text-[12px]  transition-all active:scale-95 px-8 bg-primary hover:bg-primary/90"
+                  className={cn(editorActionButtonClass, editorFooterPrimaryButtonClass, "w-full sm:flex-1 tracking-[0.12em] text-[12px] px-8")}
                 >
                   <span className="flex items-center justify-center gap-2">
                     Review Configuration
@@ -1862,12 +1621,12 @@ export function ImportMergeDialog({ open, onOpenChange, initialJson, initialFile
                   onClick={executeImport}
                   disabled={selectedCount === 0}
                   data-testid="merge-widgets-submit"
-                  className="w-full sm:flex-1 h-10 rounded-xl font-bold uppercase tracking-[0.12em] text-[12px]  transition-all active:scale-95 px-8 bg-primary hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100"
+                  className={cn(editorActionButtonClass, editorFooterPrimaryButtonClass, "w-full sm:flex-1 tracking-[0.12em] text-[12px] px-8 disabled:opacity-50 disabled:cursor-not-allowed")}
                 >
                   <span className="flex items-center justify-center gap-2">
                     Import
                     {selectedCount > 0 && (
-                      <span className="bg-background/20 rounded-md px-1.5 py-0.5 text-[10px] font-black">
+                      <span className="bg-background/25 rounded-md px-1.5 py-0.5 text-[10px] font-black">
                         {selectedCount}
                       </span>
                     )}

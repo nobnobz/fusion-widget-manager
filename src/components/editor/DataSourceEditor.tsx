@@ -51,7 +51,7 @@ export function DataSourceEditor({
               </div>
             ) : (
               hasCatalogId ? (
-                <div className="flex-1 min-w-0 rounded-xl border border-zinc-200 dark:border-border/10 bg-zinc-100 dark:bg-zinc-900/30 px-3.5 h-10 max-sm:h-11 flex items-center">
+                <div className="flex-1 min-w-0 rounded-2xl border border-zinc-200 dark:border-border/10 bg-zinc-100 dark:bg-zinc-900/30 px-3.5 h-10 max-sm:h-11 flex items-center">
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-[11px] font-bold tracking-tight text-foreground/85">
                       {dataSource.payload.catalogId}
@@ -59,7 +59,7 @@ export function DataSourceEditor({
                   </div>
                 </div>
               ) : (
-                <div className="flex-1 flex items-center gap-2 px-3.5 h-10 max-sm:h-11 rounded-xl bg-amber-500/5 border border-amber-500/10 text-[9px] font-bold text-amber-500/60 uppercase tracking-widest">
+                <div className="flex-1 flex items-center gap-2 px-3.5 h-10 max-sm:h-11 rounded-2xl bg-amber-500/5 border border-amber-500/10 text-[9px] font-bold text-amber-500/60 uppercase tracking-widest">
                   <AlertTriangle className="size-3 shrink-0" />
                   <span>Sync manifest first</span>
                 </div>

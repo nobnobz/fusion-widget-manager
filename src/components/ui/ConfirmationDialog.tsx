@@ -74,7 +74,7 @@ export function ConfirmationDialog({
             {cancelText && (
               <Button
                 variant="ghost"
-                className="w-full sm:flex-1 h-11 sm:h-12 rounded-xl max-sm:rounded-[1rem] font-bold uppercase tracking-wider text-xs text-muted-foreground/40 hover:text-muted-foreground hover:bg-muted/30 transition-all"
+                className="w-full sm:flex-1 h-10 rounded-2xl max-sm:rounded-[1rem] border border-zinc-200/70 bg-white/72 font-bold uppercase tracking-wider text-[11px] text-foreground/80 transition-all hover:bg-white/88 hover:border-zinc-300/75 dark:border-white/10 dark:bg-white/[0.045] dark:text-foreground/88 dark:hover:bg-white/[0.07]"
                 onClick={() => onOpenChange(false)}
               >
                 {cancelText}
@@ -82,10 +82,10 @@ export function ConfirmationDialog({
             )}
             <Button
               className={cn(
-                "w-full sm:flex-1 h-11 sm:h-12 rounded-xl max-sm:rounded-[1rem] font-bold uppercase tracking-wider text-xs  transition-all active:scale-95",
+                "w-full sm:flex-1 h-11 rounded-2xl max-sm:rounded-[1rem] font-bold uppercase tracking-wider text-[11px] transition-all active:scale-95 shadow-[0_12px_28px_-18px_rgba(37,99,235,0.58)] hover:shadow-[0_14px_30px_-18px_rgba(37,99,235,0.62)]",
                 isDanger 
-                  ? "bg-destructive text-destructive-foreground hover:bg-destructive/90 " 
-                  : "bg-primary text-primary-foreground hover:bg-primary/90 ",
+                  ? "bg-destructive text-destructive-foreground hover:bg-destructive/90 shadow-[0_12px_28px_-18px_rgba(220,38,38,0.45)] hover:shadow-[0_14px_30px_-18px_rgba(220,38,38,0.5)]" 
+                  : "bg-primary/[0.96] text-primary-foreground hover:bg-primary/90 ",
                 !cancelText && "w-full"
               )}
               onClick={() => {

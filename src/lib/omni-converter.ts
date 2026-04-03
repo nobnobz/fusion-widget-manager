@@ -768,12 +768,10 @@ function normalizeFusionForOmniExport(
         }
 
         const existingMembership = rowMembership.get(key);
-        if (existingMembership && (existingMembership.groupIndex !== mainGroups.length || existingMembership.subgroupIndex !== subgroupIndex)) {
-          const existingGroup = mainGroups[existingMembership.groupIndex];
-          const existingSubgroup = existingGroup?.subgroups[existingMembership.subgroupIndex];
-          throw new Error(
-            `Omni Export Validation Error: Row catalog "${row.catalogId}" is mapped to multiple Collection items ("${existingSubgroup?.name || 'Unknown'}" and "${subgroupName}").`
-          );
+        if (existingMembership) {
+          // Keep one canonical row ownership for export metadata, but still allow
+          // the subgroup to link the same catalog so Omni can show it in multiple places.
+          return;
         }
 
         rowMembership.set(key, { groupIndex: mainGroups.length, subgroupIndex });

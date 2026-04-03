@@ -1,10 +1,10 @@
 "use client";
 
-import { memo, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useConfig } from '@/context/ConfigContext';
 import { SortableWidget } from './SortableWidget';
 import { Button } from '@/components/ui/button';
-import { Plus, Download, Check, Copy, Search, FileJson2, Trash2, RotateCcw, Globe, AlertTriangle, Pencil, Info, ChevronRight } from 'lucide-react';
+import { Plus, Download, Check, Copy, Search, FileJson2, Trash2, RotateCcw, Globe, AlertTriangle, Pencil, Info, ChevronRight, SlidersHorizontal, WandSparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Textarea } from '@/components/ui/textarea';
 import {
@@ -20,10 +20,25 @@ import { ImportMergeDialog } from './ImportMergeDialog';
 import { ConfirmationDialog } from '@/components/ui/ConfirmationDialog';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
-  buildAiometadataSelectionExport,
   collectAiometadataExportInventory,
   type ExportableCatalogDefinition,
+  type ExportableCatalogItemGroup,
+  type ExportableCatalogWidgetGroup,
 } from '@/lib/aiometadata-export-inventory';
+import {
+  buildAiometadataCatalogExport,
+  getDefaultAiometadataExportOverrides,
+  getResolvedAiometadataTargetSettings,
+  sanitizeAiometadataExportOverrides,
+} from '@/lib/aiometadata-export';
+import { AIOMetadataExportSettingsDialog, type AIOMetadataSettingsDialogTarget } from './AIOMetadataExportSettingsDialog';
+import { EMPTY_AIOMETADATA_EXPORT_OVERRIDE_STATE, type AIOMetadataExportOverrideState } from '@/lib/aiometadata-export-settings';
+import {
+  editorActionButtonClass,
+  editorFooterPrimaryButtonClass,
+  editorFooterSecondaryButtonClass,
+  editorPanelClass,
+} from './editorSurfaceStyles';
 import { buildAiometadataMdblistCatalogsOnlyExport, hasUsedMdblistCatalogs } from '@/lib/mdblist-catalog-export';
 import {
   buildAiometadataCatalogsOnlyExport,
@@ -31,7 +46,6 @@ import {
   hasNativeTraktSources,
 } from '@/lib/native-trakt-bridge';
 import {
-  collectUsedAiometadataCatalogKeys,
   type FusionInvalidCatalogExportMode,
   MANIFEST_PLACEHOLDER,
   processConfigWithManifest,
@@ -39,6 +53,8 @@ import {
 } from '@/lib/config-utils';
 import type { FusionWidgetsConfig } from '@/lib/types/widget';
 import { isAIOMetadataDataSource } from '@/lib/widget-domain';
+import { copyTextToClipboard, downloadTextFile } from '@/lib/browser-transfer';
+import { getErrorMessage } from '@/lib/error-utils';
 import {
   DndContext,
   closestCenter,
@@ -65,8 +81,6 @@ interface WidgetSelectionGridProps {
 
 type ExportPreviewStage =
   | 'aiometadata-catalogs-preview'
-  | 'fusion-needs-appletv-catalog-warning'
-  | 'fusion-needs-appletv-device-check'
   | 'fusion-needs-invalid-catalog-confirmation'
   | 'fusion-needs-aiom-sync'
   | 'fusion-preview'
@@ -75,9 +89,43 @@ type ExportPreviewStage =
 
 const FUSION_SYNC_REQUIRED_MESSAGE =
   'Sync your AIOMetadata manifest before Fusion export so the AIOMetadata URL can be embedded in your Fusion setup.';
-const APPLE_TV_FUSION_CATALOG_LIMIT = 200;
-const APPLE_TV_FIXED_CATALOG_COUNT = 34;
-const APPLE_TV_RECOMMENDED_CUSTOM_CATALOG_LIMIT = APPLE_TV_FUSION_CATALOG_LIMIT - APPLE_TV_FIXED_CATALOG_COUNT;
+
+const UME_SORTING_EXPLANATION_SECTIONS = [
+  {
+    groups: ['Streaming Services', 'Decades', 'Genres', 'Directors', 'Actors', 'IMDb Top Shows', 'Oscars 2026', 'Trending'],
+    summary: 'Popularity',
+    refresh: 'Refreshes every 12 hours',
+  },
+  {
+    groups: ['Collections', 'Latest'],
+    summary: 'Release date',
+    detail: 'Newest first',
+    refresh: 'Refreshes every 12 hours',
+  },
+  {
+    groups: ['IMDb Top Movies'],
+    summary: 'Random order',
+    refresh: 'Refreshes every 12 hours',
+  },
+  {
+    groups: ['Academy Awards', 'Emmy Awards', 'Golden Globe Awards', 'Cannes Film Festival', 'Marvel', 'DC', 'DC Universe'],
+    summary: 'Release date',
+    detail: 'Oldest first',
+    refresh: 'Refreshes every 12 hours',
+  },
+  {
+    groups: ['Trakt Watchlist'],
+    summary: 'Added date',
+    detail: 'Oldest first',
+    refresh: 'Refreshes every 30 minutes',
+  },
+];
+
+const aiometadataSectionTitleClass =
+  'text-[11px] font-black uppercase tracking-[0.18em] text-foreground/60';
+
+const aiometadataSectionDescriptionClass =
+  'mt-1.5 max-w-3xl text-sm font-medium leading-6 text-muted-foreground/78 sm:text-[15px]';
 
 function formatCountLabel(count: number, singular: string, plural: string) {
   return `${count} ${count === 1 ? singular : plural}`;
@@ -148,20 +196,28 @@ function WidgetSelectionGridComponent({
   const [copiedAction, setCopiedAction] = useState<'preview' | 'missing-catalogs' | 'full-aiometadata' | null>(null);
   const [isRefreshingManifest, setIsRefreshingManifest] = useState(false);
   const [manifestActionError, setManifestActionError] = useState<string | null>(null);
+  const [exportActionError, setExportActionError] = useState<string | null>(null);
   const [copiedTraktBridgeFingerprint, setCopiedTraktBridgeFingerprint] = useState<string | null>(null);
   const [confirmedBridgeFingerprint, setConfirmedBridgeFingerprint] = useState<string | null>(null);
   const [confirmedFusionInvalidCatalogDecision, setConfirmedFusionInvalidCatalogDecision] = useState<{
     fingerprint: string;
     mode: FusionInvalidCatalogExportMode;
   } | null>(null);
-  const [appleTvDeviceDecision, setAppleTvDeviceDecision] = useState<{ fingerprint: string; usesAppleTv: boolean } | null>(null);
-  const [confirmedAppleTvCatalogWarningFingerprint, setConfirmedAppleTvCatalogWarningFingerprint] = useState<string | null>(null);
   const [aiometadataSearchQuery, setAiometadataSearchQuery] = useState('');
   const [selectedAiometadataCatalogKeys, setSelectedAiometadataCatalogKeys] = useState<string[]>([]);
   const [hasCustomizedAiometadataSelection, setHasCustomizedAiometadataSelection] = useState(false);
   const [expandedAiometadataWidgetKeys, setExpandedAiometadataWidgetKeys] = useState<string[]>([]);
   const [expandedAiometadataItemKeys, setExpandedAiometadataItemKeys] = useState<string[]>([]);
+  const [aiometadataUseUmeSorting, setAiometadataUseUmeSorting] = useState(true);
+  const [isUmeSortingDialogOpen, setIsUmeSortingDialogOpen] = useState(false);
+  const [aiometadataExportOverrides, setAiometadataExportOverrides] = useState<AIOMetadataExportOverrideState>(
+    EMPTY_AIOMETADATA_EXPORT_OVERRIDE_STATE
+  );
+  const [aiometadataSettingsTarget, setAiometadataSettingsTarget] = useState<AIOMetadataSettingsDialogTarget | null>(null);
+  const [isAiometadataSettingsDialogOpen, setIsAiometadataSettingsDialogOpen] = useState(false);
   const copyResetTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const widgetNodeMapRef = useRef<Map<string, HTMLDivElement>>(new Map());
+  const pendingScrollAnchorRef = useRef<{ id: string; top: number } | null>(null);
   const trashCount = trash.length + itemTrash.length;
   const hasTrash = trashCount > 0;
   const isManifestSynced = Boolean(manifestUrl);
@@ -196,11 +252,70 @@ function WidgetSelectionGridComponent({
     });
   }, [widgets, searchQuery]);
 
+  const registerWidgetNode = useCallback((id: string, node: HTMLDivElement | null) => {
+    if (node) {
+      widgetNodeMapRef.current.set(id, node);
+      return;
+    }
+
+    widgetNodeMapRef.current.delete(id);
+  }, []);
+
+  const handleExpandedWidgetChange = useCallback((nextId: string | null) => {
+    if (
+      typeof window !== 'undefined' &&
+      window.matchMedia('(max-width: 639px)').matches &&
+      expandedWidgetId &&
+      nextId &&
+      expandedWidgetId !== nextId
+    ) {
+      const targetNode = widgetNodeMapRef.current.get(nextId);
+      pendingScrollAnchorRef.current = targetNode
+        ? { id: nextId, top: targetNode.getBoundingClientRect().top }
+        : null;
+    } else {
+      pendingScrollAnchorRef.current = null;
+    }
+
+    onExpandedWidgetChange(nextId);
+  }, [expandedWidgetId, onExpandedWidgetChange]);
+
   useEffect(() => {
     if (expandedWidgetId && !widgets.some((widget) => widget.id === expandedWidgetId)) {
       onExpandedWidgetChange(null);
     }
   }, [expandedWidgetId, onExpandedWidgetChange, widgets]);
+
+  useLayoutEffect(() => {
+    const pendingAnchor = pendingScrollAnchorRef.current;
+    if (!pendingAnchor || expandedWidgetId !== pendingAnchor.id || typeof window === 'undefined') {
+      return;
+    }
+
+    const adjustScroll = () => {
+      const targetNode = widgetNodeMapRef.current.get(pendingAnchor.id);
+      if (!targetNode) return;
+
+      const offset = targetNode.getBoundingClientRect().top - pendingAnchor.top;
+      if (Math.abs(offset) > 1) {
+        window.scrollTo({ top: window.scrollY + offset, behavior: 'auto' });
+      }
+    };
+
+    const frameA = window.requestAnimationFrame(() => {
+      adjustScroll();
+      window.requestAnimationFrame(adjustScroll);
+    });
+    const timeout = window.setTimeout(() => {
+      adjustScroll();
+      pendingScrollAnchorRef.current = null;
+    }, 320);
+
+    return () => {
+      window.cancelAnimationFrame(frameA);
+      window.clearTimeout(timeout);
+    };
+  }, [expandedWidgetId]);
 
   const hasUnsyncedAiometadataSources = useMemo(
     () =>
@@ -339,47 +454,6 @@ function WidgetSelectionGridComponent({
   const requiresFusionAiometadataSync =
     exportMode === 'fusion' && fusionPreviewState.error === FUSION_SYNC_REQUIRED_MESSAGE;
 
-  const usedAiometadataCatalogKeys = useMemo(
-    () => (basePreviewState.config ? collectUsedAiometadataCatalogKeys(basePreviewState.config) : []),
-    [basePreviewState.config]
-  );
-
-  const fusionAppleTvCatalogRiskFingerprint = useMemo(() => {
-    if (
-      !showPreview
-      || !basePreviewState.config
-      || !isManifestSynced
-      || manifestCatalogs.length <= APPLE_TV_FUSION_CATALOG_LIMIT
-      || usedAiometadataCatalogKeys.length === 0
-    ) {
-      return null;
-    }
-
-    return JSON.stringify({
-      manifestUrl,
-      manifestCatalogCount: manifestCatalogs.length,
-      usedAiometadataCatalogCount: usedAiometadataCatalogKeys.length,
-    });
-  }, [
-    basePreviewState.config,
-    isManifestSynced,
-    manifestCatalogs.length,
-    manifestUrl,
-    showPreview,
-    usedAiometadataCatalogKeys.length,
-  ]);
-
-  const appleTvCatalogDecisionForCurrentSetup =
-    appleTvDeviceDecision?.fingerprint === fusionAppleTvCatalogRiskFingerprint
-      ? appleTvDeviceDecision.usesAppleTv
-      : null;
-  const requiresFusionAppleTvDeviceCheck =
-    !!fusionAppleTvCatalogRiskFingerprint && appleTvCatalogDecisionForCurrentSetup === null;
-  const requiresFusionAppleTvCatalogWarning =
-    !!fusionAppleTvCatalogRiskFingerprint
-    && appleTvCatalogDecisionForCurrentSetup === true
-    && confirmedAppleTvCatalogWarningFingerprint !== fusionAppleTvCatalogRiskFingerprint;
-
   const nativeTraktBridgeState = useMemo(() => {
     if (!showPreview || !basePreviewState.config) {
       return {
@@ -469,6 +543,30 @@ function WidgetSelectionGridComponent({
     });
   }, [basePreviewState.config, manifestCatalogs, showPreview]);
 
+  const sanitizedAiometadataExportOverrides = useMemo(
+    () => sanitizeAiometadataExportOverrides(aiometadataInventory, aiometadataExportOverrides),
+    [aiometadataExportOverrides, aiometadataInventory]
+  );
+
+  const effectiveAiometadataExportOverrides = useMemo(
+    () => aiometadataUseUmeSorting
+      ? getDefaultAiometadataExportOverrides({
+        inventory: aiometadataInventory,
+        currentOverrides: sanitizedAiometadataExportOverrides,
+      })
+      : sanitizedAiometadataExportOverrides,
+    [aiometadataInventory, aiometadataUseUmeSorting, sanitizedAiometadataExportOverrides]
+  );
+
+  const aiometadataDialogResolvedValues = useMemo(
+    () => getResolvedAiometadataTargetSettings({
+      inventory: aiometadataInventory,
+      target: aiometadataSettingsTarget,
+      exportSettingsOverrides: effectiveAiometadataExportOverrides,
+    }),
+    [aiometadataInventory, aiometadataSettingsTarget, effectiveAiometadataExportOverrides]
+  );
+
   const aiometadataSelectableCatalogKeys = useMemo(
     () =>
       new Set(
@@ -481,20 +579,22 @@ function WidgetSelectionGridComponent({
 
   const omniMissingCatalogsExport = useMemo(() => {
     if (!showPreview) {
-      return null as ReturnType<typeof buildAiometadataSelectionExport> | null;
+      return null as ReturnType<typeof buildAiometadataCatalogExport> | null;
     }
 
     if (isManifestSynced) {
-      return buildAiometadataSelectionExport(
-        aiometadataInventory,
-        aiometadataSelectableCatalogKeys
-      );
+      return buildAiometadataCatalogExport({
+        inventory: aiometadataInventory,
+        selectedCatalogKeys: aiometadataSelectableCatalogKeys,
+        exportSettingsOverrides: effectiveAiometadataExportOverrides,
+      });
     }
 
     return nativeTraktBridgeState.catalogsExport;
   }, [
     aiometadataInventory,
     aiometadataSelectableCatalogKeys,
+    effectiveAiometadataExportOverrides,
     isManifestSynced,
     nativeTraktBridgeState.catalogsExport,
     showPreview,
@@ -511,13 +611,21 @@ function WidgetSelectionGridComponent({
   );
 
   const aiometadataPreviewExport = useMemo(
-    () => buildAiometadataSelectionExport(aiometadataInventory, selectedAiometadataCatalogKeys),
-    [aiometadataInventory, selectedAiometadataCatalogKeys]
+    () => buildAiometadataCatalogExport({
+      inventory: aiometadataInventory,
+      selectedCatalogKeys: selectedAiometadataCatalogKeys,
+      exportSettingsOverrides: effectiveAiometadataExportOverrides,
+    }),
+    [aiometadataInventory, effectiveAiometadataExportOverrides, selectedAiometadataCatalogKeys]
   );
 
   const aiometadataFullSetupExport = useMemo(
-    () => buildAiometadataSelectionExport(aiometadataInventory, aiometadataInventory.catalogs.map((catalog) => catalog.key)),
-    [aiometadataInventory]
+    () => buildAiometadataCatalogExport({
+      inventory: aiometadataInventory,
+      includeAll: true,
+      exportSettingsOverrides: effectiveAiometadataExportOverrides,
+    }),
+    [aiometadataInventory, effectiveAiometadataExportOverrides]
   );
 
   const filteredAiometadataWidgets = useMemo(() => {
@@ -581,7 +689,7 @@ function WidgetSelectionGridComponent({
               if (leftHasSelectable !== rightHasSelectable) {
                 return leftHasSelectable ? -1 : 1;
               }
-              return left.itemIndex - right.itemIndex;
+              return left.itemName.localeCompare(right.itemName, undefined, { sensitivity: 'base' });
             }),
           catalogKeys: sortCatalogKeys(catalogKeys, aiometadataCatalogMap),
         };
@@ -614,12 +722,21 @@ function WidgetSelectionGridComponent({
     [aiometadataInventory.catalogs]
   );
 
+  const fullAiometadataSetupDescription = useMemo(() => {
+    if (existingAiometadataCatalogCount > 0) {
+      return `Includes ${existingAiometadataCatalogCount} synced catalogs and exports everything linked in this setup.`;
+    }
+
+    return 'Exports everything linked in this setup.';
+  }, [existingAiometadataCatalogCount]);
+
   const selectableAiometadataCatalogKeysBySource = useMemo(() => {
     const grouped = {
       trakt: [] as string[],
       mdblist: [] as string[],
       streaming: [] as string[],
       simkl: [] as string[],
+      letterboxd: [] as string[],
     };
 
     aiometadataInventory.catalogs.forEach((catalog) => {
@@ -656,12 +773,6 @@ function WidgetSelectionGridComponent({
       if (requiresFusionAiometadataSync) {
         return 'fusion-needs-aiom-sync';
       }
-      if (requiresFusionAppleTvDeviceCheck) {
-        return 'fusion-needs-appletv-device-check';
-      }
-      if (requiresFusionAppleTvCatalogWarning) {
-        return 'fusion-needs-appletv-catalog-warning';
-      }
       return 'fusion-preview';
     }
 
@@ -676,8 +787,6 @@ function WidgetSelectionGridComponent({
     return 'omni-needs-aiom-bridge';
   }, [
     exportMode,
-    requiresFusionAppleTvCatalogWarning,
-    requiresFusionAppleTvDeviceCheck,
     isBridgeConfirmed,
     requiresFusionAiometadataSync,
     isFusionInvalidCatalogConfirmed,
@@ -729,38 +838,6 @@ function WidgetSelectionGridComponent({
 
     if (exportMode === 'fusion' && fusionPreviewState.error) {
       return `Error: ${fusionPreviewState.error}`;
-    }
-
-    if (exportMode === 'fusion' && requiresFusionAppleTvDeviceCheck) {
-      return [
-        'Do you plan to use this Fusion setup on an Apple TV?',
-      ].join('\n');
-    }
-
-    if (exportMode === 'fusion' && requiresFusionAppleTvCatalogWarning) {
-      if (usedAiometadataCatalogKeys.length <= APPLE_TV_RECOMMENDED_CUSTOM_CATALOG_LIMIT) {
-        return [
-          `Your synced AIOMetadata setup currently contains a large number of catalogs, but this Fusion setup uses only ${usedAiometadataCatalogKeys.length} of them.`,
-          '',
-          `Fusion has an Apple TV bug that can cause the app to crash when AIOMetadata setups are too large. It is recommended to stay below ${APPLE_TV_FUSION_CATALOG_LIMIT} total catalogs.`,
-          '',
-          'This Fusion setup is already within that limit, but your AIOMetadata setup still contains unused catalogs. It is recommended to delete your existing AIOMetadata catalogs and use the AIOMetadata section to export only the used catalogs into AIOMetadata.',
-          '',
-          'Before installing this setup on Apple TV, delete the Fusion app and install it again.',
-        ].join('\n');
-      }
-
-      const recommendedCatalogRemovals =
-        usedAiometadataCatalogKeys.length - APPLE_TV_RECOMMENDED_CUSTOM_CATALOG_LIMIT;
-      return [
-        `Your synced AIOMetadata setup currently contains a large number of catalogs. Fusion has an Apple TV bug that can cause the app to crash when AIOMetadata setups are too large. It is recommended to stay below ${APPLE_TV_FUSION_CATALOG_LIMIT} total catalogs.`,
-        '',
-        `This Fusion setup is over that recommendation, and it is recommended to delete at least ${recommendedCatalogRemovals} catalogs in the manager to reduce the risk of the Apple TV app crashing.`,
-        '',
-        'Then delete all existing catalogs in AIOMetadata and use the AIOMetadata tab in the top right to copy the catalogs from this Fusion setup to your clipboard. To import the catalogs, go to AIOMetadata, open Catalogs > Import Setup, and paste the copied catalogs.',
-        '',
-        'Before installing this setup on Apple TV, delete the Fusion app and install it again.',
-      ].join('\n');
     }
 
     if (exportMode !== 'fusion' && basePreviewState.error) {
@@ -828,14 +905,11 @@ function WidgetSelectionGridComponent({
     isFusionInvalidCatalogConfirmed,
     isManifestSynced,
     omniMissingMdblistState.hasMdblistCatalogs,
-    requiresFusionAppleTvCatalogWarning,
-    requiresFusionAppleTvDeviceCheck,
     requiresFusionAiometadataSync,
     requiresTraktBridgeImport,
     requiresFusionInvalidCatalogConfirmation,
     nativeTraktBridgeState.hasNativeTrakt,
     showPreview,
-    usedAiometadataCatalogKeys.length,
   ]);
 
   useEffect(() => {
@@ -853,36 +927,6 @@ function WidgetSelectionGridComponent({
       setConfirmedFusionInvalidCatalogDecision(null);
     }
   }, [confirmedFusionInvalidCatalogDecision, fusionInvalidCatalogState.fingerprint]);
-
-  useEffect(() => {
-    if (!fusionAppleTvCatalogRiskFingerprint) {
-      if (appleTvDeviceDecision !== null) {
-        setAppleTvDeviceDecision(null);
-      }
-      if (confirmedAppleTvCatalogWarningFingerprint !== null) {
-        setConfirmedAppleTvCatalogWarningFingerprint(null);
-      }
-      return;
-    }
-
-    if (
-      appleTvDeviceDecision
-      && appleTvDeviceDecision.fingerprint !== fusionAppleTvCatalogRiskFingerprint
-    ) {
-      setAppleTvDeviceDecision(null);
-    }
-
-    if (
-      confirmedAppleTvCatalogWarningFingerprint
-      && confirmedAppleTvCatalogWarningFingerprint !== fusionAppleTvCatalogRiskFingerprint
-    ) {
-      setConfirmedAppleTvCatalogWarningFingerprint(null);
-    }
-  }, [
-    appleTvDeviceDecision,
-    confirmedAppleTvCatalogWarningFingerprint,
-    fusionAppleTvCatalogRiskFingerprint,
-  ]);
 
   useEffect(() => {
     if (!nativeTraktBridgeState.hasNativeTrakt) {
@@ -1033,51 +1077,65 @@ function WidgetSelectionGridComponent({
     }, 2000);
   };
 
-  const copyText = (text: string, action: 'preview' | 'missing-catalogs' | 'full-aiometadata') => {
-    navigator.clipboard.writeText(text);
+  const copyText = async (text: string, action: 'preview' | 'missing-catalogs' | 'full-aiometadata') => {
+    await copyTextToClipboard(text);
     setCopyFeedback(action);
   };
 
   const downloadText = (text: string, filename: string) => {
-    const blob = new Blob([text], { type: 'application/octet-stream' });
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement('a');
-    anchor.href = url;
-    anchor.download = filename;
-    anchor.click();
-    URL.revokeObjectURL(url);
+    downloadTextFile(text, filename, 'application/octet-stream');
   };
 
-  const handleCopy = () => {
-    copyText(previewContent, 'preview');
+  const handleCopy = async () => {
+    try {
+      await copyText(previewContent, 'preview');
+    } catch (error) {
+      setExportActionError(getErrorMessage(error, 'The export could not be copied to your clipboard.'));
+    }
   };
 
-  const handleCopyMissingCatalogs = () => {
+  const handleCopyMissingCatalogs = async () => {
     if (!omniMissingCatalogsExport || !nativeTraktBridgeState.fingerprint) {
       return;
     }
 
-    copyText(JSON.stringify(omniMissingCatalogsExport, null, 2), 'missing-catalogs');
-    setCopiedTraktBridgeFingerprint(nativeTraktBridgeState.fingerprint);
+    try {
+      await copyText(JSON.stringify(omniMissingCatalogsExport, null, 2), 'missing-catalogs');
+      setCopiedTraktBridgeFingerprint(nativeTraktBridgeState.fingerprint);
+    } catch (error) {
+      setExportActionError(getErrorMessage(error, 'The missing catalogs could not be copied.'));
+    }
   };
 
-  const handleCopyFullAiometadataCatalogSetup = () => {
-    copyText(JSON.stringify(aiometadataFullSetupExport, null, 2), 'full-aiometadata');
+  const handleCopyFullAiometadataCatalogSetup = async () => {
+    try {
+      await copyText(JSON.stringify(aiometadataFullSetupExport, null, 2), 'full-aiometadata');
+    } catch (error) {
+      setExportActionError(getErrorMessage(error, 'The full AIOMetadata setup could not be copied.'));
+    }
   };
 
   const handleDownloadFullAiometadataCatalogSetup = () => {
-    downloadText(JSON.stringify(aiometadataFullSetupExport, null, 2), 'aiometadata-full-catalog-setup.json');
+    try {
+      downloadText(JSON.stringify(aiometadataFullSetupExport, null, 2), 'aiometadata-full-catalog-setup.json');
+    } catch (error) {
+      setExportActionError(getErrorMessage(error, 'The full AIOMetadata setup could not be downloaded.'));
+    }
   };
 
   const handleDownload = () => {
-    downloadText(
-      previewContent,
-      exportMode === 'fusion'
-        ? 'fusion-widgets.json'
-        : exportMode === 'aiometadata'
-          ? 'aiometadata-selected-catalogs.json'
-          : 'omni-snapshot.json'
-    );
+    try {
+      downloadText(
+        previewContent,
+        exportMode === 'fusion'
+          ? 'fusion-widgets.json'
+          : exportMode === 'aiometadata'
+            ? 'aiometadata-selected-catalogs.json'
+            : 'omni-snapshot.json'
+      );
+    } catch (error) {
+      setExportActionError(getErrorMessage(error, 'The export could not be downloaded.'));
+    }
   };
 
   const handleExportModeChange = (mode: 'fusion' | 'omni' | 'aiometadata') => {
@@ -1123,6 +1181,28 @@ function WidgetSelectionGridComponent({
 
   const replaceAiometadataSelection = (catalogKeys: string[]) => {
     updateSelectedAiometadataCatalogKeys(new Set(catalogKeys));
+  };
+
+  const widgetHasEditableAiometadataSources = (widget: ExportableCatalogWidgetGroup) =>
+    widget.catalogKeys.some((catalogKey) => {
+      const source = aiometadataCatalogMap.get(catalogKey)?.source;
+      return source === 'mdblist' || source === 'trakt' || source === 'streaming' || source === 'letterboxd';
+    });
+
+  const itemHasEditableAiometadataSources = (item: ExportableCatalogItemGroup) =>
+    item.catalogKeys.some((catalogKey) => {
+      const source = aiometadataCatalogMap.get(catalogKey)?.source;
+      return source === 'mdblist' || source === 'trakt' || source === 'streaming' || source === 'letterboxd';
+    });
+
+  const catalogHasEditableAiometadataSettings = (catalogKey: string) => {
+    const source = aiometadataCatalogMap.get(catalogKey)?.source;
+    return source === 'mdblist' || source === 'trakt' || source === 'streaming' || source === 'letterboxd';
+  };
+
+  const openAiometadataSettings = (target: AIOMetadataSettingsDialogTarget) => {
+    setAiometadataSettingsTarget(target);
+    setIsAiometadataSettingsDialogOpen(true);
   };
 
   const toggleAiometadataWidgetExpanded = (widgetKey: string) => {
@@ -1200,7 +1280,7 @@ function WidgetSelectionGridComponent({
             className={cn(
               "mb-4 rounded-3xl px-5 max-sm:mb-3 max-sm:px-4",
               isManifestSynced
-                ? "border border-emerald-200/75 bg-emerald-50/65 py-3.5 dark:border-emerald-500/22 dark:bg-emerald-500/[0.08]"
+                ? "border border-emerald-200/75 bg-emerald-50/65 py-4 dark:border-emerald-500/22 dark:bg-emerald-500/[0.08]"
                 : "border border-amber-200/65 bg-amber-50/50 py-4 dark:border-amber-500/18 dark:bg-amber-500/[0.06]"
             )}
           >
@@ -1253,7 +1333,7 @@ function WidgetSelectionGridComponent({
                       onClick={handleRefreshManifest}
                       variant="secondary"
                       disabled={isRefreshingManifest}
-                      className="h-9 shrink-0 rounded-2xl border border-emerald-300/75 bg-white/80 px-4 text-[10px] font-black uppercase tracking-wider text-stone-900/80 transition-all hover:bg-emerald-50/90 hover:border-emerald-400/60 hover:text-stone-900/88 max-sm:w-full dark:border-emerald-500/24 dark:bg-zinc-950/60 dark:text-emerald-200/90 dark:hover:bg-emerald-500/12 dark:hover:border-emerald-500/34"
+                      className={cn(editorActionButtonClass, "h-10 shrink-0 border border-emerald-300/75 bg-white/80 px-4 text-[10px] text-stone-900/80 hover:bg-emerald-50/90 hover:border-emerald-400/60 hover:text-stone-900/88 max-sm:w-full dark:border-emerald-500/24 dark:bg-zinc-950/60 dark:text-emerald-200/90 dark:hover:bg-emerald-500/12 dark:hover:border-emerald-500/34")}
                     >
                       <RotateCcw className={cn("size-4 mr-2 text-emerald-700/90 dark:text-emerald-300/92", isRefreshingManifest && "animate-spin")} />
                       Refresh
@@ -1261,7 +1341,7 @@ function WidgetSelectionGridComponent({
                     <Button
                       onClick={onSyncManifest}
                       variant="secondary"
-                      className="h-9 shrink-0 rounded-2xl border border-emerald-200/50 bg-white/70 px-4 text-[10px] font-black uppercase tracking-wider text-stone-900/70 transition-all hover:bg-emerald-50/60 hover:border-emerald-300/60 hover:text-stone-900/85 max-sm:w-full dark:border-white/5 dark:bg-zinc-950/60 dark:text-zinc-300/80 dark:hover:bg-zinc-900/85"
+                      className={cn(editorActionButtonClass, "h-10 shrink-0 border border-emerald-200/50 bg-white/70 px-4 text-[10px] text-stone-900/70 hover:bg-emerald-50/60 hover:border-emerald-300/60 hover:text-stone-900/85 max-sm:w-full dark:border-white/5 dark:bg-zinc-950/60 dark:text-zinc-300/80 dark:hover:bg-zinc-900/85")}
                     >
                       <Pencil className="size-4 mr-2 opacity-70" />
                       Edit
@@ -1271,7 +1351,7 @@ function WidgetSelectionGridComponent({
                   <Button
                     onClick={onSyncManifest}
                     variant="secondary"
-                    className="h-10 shrink-0 rounded-2xl border border-amber-300/70 bg-white/80 px-4 text-[10px] font-black uppercase tracking-wider text-stone-900/80 transition-all hover:bg-amber-50/90 hover:border-amber-400/60 hover:text-stone-900/88 max-sm:w-full max-sm:col-span-2 dark:border-amber-500/24 dark:bg-zinc-950/60 dark:text-amber-200/90 dark:hover:bg-amber-500/12 dark:hover:border-amber-500/34"
+                    className={cn(editorActionButtonClass, "h-11 shrink-0 border border-amber-300/70 bg-white/80 px-4 text-[10px] text-stone-900/80 hover:bg-amber-50/90 hover:border-amber-400/60 hover:text-stone-900/88 max-sm:w-full max-sm:col-span-2 dark:border-amber-500/24 dark:bg-zinc-950/60 dark:text-amber-200/90 dark:hover:bg-amber-500/12 dark:hover:border-amber-500/34")}
                   >
                     <Globe className="size-4 mr-2 text-amber-700/90 dark:text-amber-300/92" />
                     Sync Manifest
@@ -1286,7 +1366,7 @@ function WidgetSelectionGridComponent({
               <Button
                 onClick={() => setShowTrash(true)}
                 variant="secondary"
-                className="h-10 rounded-2xl border border-destructive/20 bg-destructive/10 px-4 text-[10px] font-black uppercase tracking-wider text-destructive  transition-all hover:bg-destructive/15  max-sm:h-10 max-sm:w-full max-sm:justify-center dark:border-destructive/25 dark:bg-destructive/12 dark:hover:bg-destructive/16"
+                className={cn(editorActionButtonClass, "h-11 border border-destructive/20 bg-destructive/10 px-4 text-[10px] text-destructive hover:bg-destructive/15 max-sm:h-11 max-sm:w-full max-sm:justify-center dark:border-destructive/25 dark:bg-destructive/12 dark:hover:bg-destructive/16")}
                 title="Trash"
               >
                 <Trash2 className="mr-2 size-4 opacity-90" />
@@ -1295,8 +1375,8 @@ function WidgetSelectionGridComponent({
             </div>
           )}
 
-          <div className="p-4 max-sm:p-3 rounded-3xl max-sm:rounded-[1.5rem] bg-zinc-50/50 dark:bg-zinc-900/50 border border-zinc-200/50 dark:border-border/10 backdrop-blur-2xl">
-            <div className="flex flex-col md:flex-row items-stretch md:items-center gap-2 max-sm:gap-3">
+          <div className={cn(editorPanelClass, "p-4 max-sm:p-3 rounded-3xl max-sm:rounded-[1.5rem] bg-zinc-50/50 dark:bg-zinc-900/50 border-zinc-200/70 dark:border-border/10 backdrop-blur-2xl")}>
+            <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3 max-sm:gap-3">
               {/* Left Group: Search */}
               <div className="relative flex-1 group min-w-0 rounded-xl">
                 <Search className="pointer-events-none absolute left-5 max-sm:left-4 top-1/2 -translate-y-1/2 size-4 text-muted-foreground/60 group-focus-within:text-primary transition-colors" />
@@ -1322,7 +1402,7 @@ function WidgetSelectionGridComponent({
                 <Button
                   data-testid="new-widget-button"
                   onClick={handleCreateWidget}
-                  className="h-11 max-sm:h-11 px-6 max-sm:px-4 rounded-xl font-black uppercase tracking-wider text-[10px] bg-primary hover:bg-primary/95 text-primary-foreground transition-all active:scale-95 flex-1 md:flex-none order-1"
+                  className={cn(editorActionButtonClass, "h-11 max-sm:h-11 px-6 max-sm:px-4 text-[10px] bg-primary hover:bg-primary/95 text-primary-foreground flex-1 md:flex-none order-1")}
                 >
                   <Plus className="size-4 mr-2" />
                   <span className="sm:hidden">New</span>
@@ -1333,7 +1413,7 @@ function WidgetSelectionGridComponent({
                   data-testid="merge-import-button"
                   onClick={() => setShowImportMergeDialog(true)}
                   variant="secondary"
-                  className="h-11 max-sm:h-11 px-6 max-sm:px-4 rounded-xl font-black uppercase tracking-wider text-[10px] border border-primary/20 bg-primary/10 text-primary hover:bg-primary/20 transition-all order-2 flex-1 md:flex-none dark:border-primary/25 dark:bg-primary/12 dark:hover:bg-primary/18"
+                  className={cn(editorActionButtonClass, "h-11 max-sm:h-11 px-6 max-sm:px-4 text-[10px] border border-primary/20 bg-primary/10 text-primary hover:bg-primary/20 order-2 flex-1 md:flex-none dark:border-primary/25 dark:bg-primary/12 dark:hover:bg-primary/18")}
                   title="Import JSON"
                 >
                   <FileJson2 className="size-4 mr-2" />
@@ -1347,7 +1427,7 @@ function WidgetSelectionGridComponent({
                     onDownload?.();
                   }}
                   variant="secondary"
-                  className="h-11 max-sm:h-11 px-6 max-sm:px-4 rounded-xl font-black uppercase tracking-wider text-[10px] border border-primary/20 bg-primary/10 text-primary hover:bg-primary/20 transition-all order-3 flex-1 md:flex-none dark:border-primary/25 dark:bg-primary/12 dark:hover:bg-primary/18"
+                  className={cn(editorActionButtonClass, "h-11 max-sm:h-11 px-6 max-sm:px-4 text-[10px] border border-primary/20 bg-primary/10 text-primary hover:bg-primary/20 order-3 flex-1 md:flex-none dark:border-primary/25 dark:bg-primary/12 dark:hover:bg-primary/18")}
                   title="Export JSON"
                 >
                   <Download className="size-4 mr-2" />
@@ -1380,8 +1460,9 @@ function WidgetSelectionGridComponent({
                   widget={widget}
                   isSelected={expandedWidgetId === widget.id}
                   onSelect={(id) =>
-                    onExpandedWidgetChange(expandedWidgetId === id ? null : id)
+                    handleExpandedWidgetChange(expandedWidgetId === id ? null : id)
                   }
+                  onNodeChange={registerWidgetNode}
                   searchQuery={searchQuery}
                 />
               ))}
@@ -1405,10 +1486,10 @@ function WidgetSelectionGridComponent({
               No active widgets. Create a new one or restore one from trash.
             </p>
             <div className="flex items-center justify-center gap-3 max-sm:flex-col">
-              <Button onClick={handleCreateWidget} className="rounded-xl max-sm:w-full max-sm:h-11">
+              <Button onClick={handleCreateWidget} className="rounded-2xl max-sm:w-full max-sm:h-11">
                 <Plus className="size-4 mr-2" /> Add Widget
               </Button>
-              <Button onClick={() => setShowTrash(true)} variant="outline" className="rounded-xl max-sm:w-full max-sm:h-11">
+              <Button onClick={() => setShowTrash(true)} variant="outline" className="rounded-2xl max-sm:w-full max-sm:h-11">
                 <Trash2 className="size-4 mr-2" /> Trash
               </Button>
             </div>
@@ -1425,7 +1506,7 @@ function WidgetSelectionGridComponent({
       <NewWidgetDialog
         isOpen={showNewWidgetDialog}
         onOpenChange={setShowNewWidgetDialog}
-        onCreated={(id) => onExpandedWidgetChange(id)}
+        onCreated={(id) => handleExpandedWidgetChange(id)}
       />
 
       <Dialog
@@ -1486,66 +1567,109 @@ function WidgetSelectionGridComponent({
               </div>
             </div>
 
-            {exportMode === 'aiometadata' && (
-              <div className="mt-5 rounded-3xl border border-primary/20 bg-primary/[0.08] px-5 py-3.5 dark:border-primary/30 dark:bg-primary/[0.12]">
-                <div className="flex items-start gap-3">
-                  <div className="mt-0.5 flex size-10 shrink-0 items-center justify-center rounded-xl border border-primary/15 bg-background/75 text-primary">
-                    <Info className="size-4" />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-[11px] font-black uppercase tracking-[0.16em] text-primary/85">
-                      Custom AIOMetadata export
-                    </p>
-                    <p className="mt-1 text-[13px] font-normal leading-[1.55] text-foreground/72">
-                      Select catalogs to build a catalogs-only AIOMetadata export. Copy the exported catalogs into AIOMetadata under Catalogs &gt; Import Setup, then save your changes.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {exportMode === 'aiometadata' && isManifestSynced && existingAiometadataCatalogCount > 0 && (
-              <div className="mt-4 rounded-3xl border border-zinc-200/80 bg-white/40 px-5 py-5 backdrop-blur-md dark:border-white/10 dark:bg-white/[0.03]">
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="min-w-0">
-                    <p className="text-[11px] font-black uppercase tracking-[0.16em] text-foreground/58">
-                      Export Full Catalog Setup
-                    </p>
-                    <p className="mt-1 text-[13px] font-normal leading-[1.55] text-muted-foreground/72">
-                      Export every linked catalog, including the {existingAiometadataCatalogCount} already in the synced manifest.
-                    </p>
-                  </div>
-                    <div className="flex flex-wrap gap-2 sm:flex-col">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        className="h-10 rounded-xl border border-primary/20 bg-primary/10 px-6 text-[10px] font-black uppercase tracking-widest text-primary hover:bg-primary/20 transition-all dark:border-primary/30 dark:bg-primary/15 dark:hover:bg-primary/25 sm:w-64"
-                        onClick={handleDownloadFullAiometadataCatalogSetup}
-                      >
-                        <Download className="mr-2 size-3.5" />
-                        Download All Catalogs
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        className="h-10 rounded-xl border border-zinc-200 bg-white/80 px-6 text-[10px] font-black uppercase tracking-widest text-foreground/80 hover:bg-zinc-50 hover:text-foreground transition-all dark:border-white/10 dark:bg-zinc-800/80 dark:hover:bg-zinc-700 sm:w-64"
-                        onClick={handleCopyFullAiometadataCatalogSetup}
-                      >
-                        {copiedAction === 'full-aiometadata' ? <Check className="mr-2 size-3.5" /> : <Copy className="mr-2 size-3.5" />}
-                        {copiedAction === 'full-aiometadata' ? 'Copied' : 'Copy All Catalogs'}
-                      </Button>
-                    </div>
-                </div>
-              </div>
-            )}
-
             {exportMode === 'aiometadata' ? (
               <div className="mt-5 flex min-h-0 flex-col gap-4">
-                <div className="min-h-0 rounded-3xl border border-zinc-200 dark:border-white/5 bg-white/70 dark:bg-zinc-950/25 backdrop-blur-xl shadow-sm overflow-hidden">
+                <div className="flex flex-col gap-3">
+                  <div className="rounded-3xl border border-zinc-200/80 bg-white/40 px-5 py-5 backdrop-blur-md dark:border-white/10 dark:bg-white/[0.03]">
+                    <div className="flex h-full flex-col justify-between gap-4">
+                      <div className="min-w-0">
+                        <p className={aiometadataSectionTitleClass}>
+                          Full Catalog Setup
+                        </p>
+                        <p className={aiometadataSectionDescriptionClass}>
+                          {fullAiometadataSetupDescription}
+                        </p>
+                      </div>
+                      <div className="flex flex-col gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className="h-11 w-full rounded-2xl border border-zinc-200 bg-white/80 px-5 text-[10px] font-black uppercase tracking-widest text-foreground/80 transition-all hover:bg-zinc-50 hover:text-foreground dark:border-white/10 dark:bg-zinc-800/80 dark:hover:bg-zinc-700"
+                          onClick={handleDownloadFullAiometadataCatalogSetup}
+                        >
+                          <Download className="mr-2 size-3.5" />
+                          Download All Catalogs
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className="h-11 w-full rounded-2xl border border-primary/20 bg-primary/10 px-5 text-[10px] font-black uppercase tracking-widest text-primary transition-all hover:bg-primary/20 dark:border-primary/30 dark:bg-primary/15 dark:hover:bg-primary/25"
+                          onClick={() => { void handleCopyFullAiometadataCatalogSetup(); }}
+                        >
+                          {copiedAction === 'full-aiometadata' ? <Check className="mr-2 size-3.5" /> : <Copy className="mr-2 size-3.5" />}
+                          {copiedAction === 'full-aiometadata' ? 'Copied' : 'Copy All Catalogs'}
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="rounded-3xl border border-zinc-200/80 bg-white/40 px-5 py-4 backdrop-blur-md dark:border-white/10 dark:bg-white/[0.03]">
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="flex min-w-0 items-center gap-3">
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2">
+                            <p className={aiometadataSectionTitleClass}>
+                              UME Sorting
+                            </p>
+                            <button
+                              type="button"
+                              className="flex size-6 items-center justify-center rounded-full border border-border/10 bg-background/70 text-muted-foreground/65 transition-all hover:border-primary/20 hover:text-primary"
+                              onClick={() => setIsUmeSortingDialogOpen(true)}
+                              aria-label="Show UME sorting details"
+                            >
+                              <Info className="size-3.5" />
+                            </button>
+                          </div>
+                          <p className={aiometadataSectionDescriptionClass}>
+                            Automatic sorting for your AIOMetadata catalogs.
+                          </p>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setAiometadataUseUmeSorting((current) => !current)}
+                        className="group inline-flex items-center"
+                        aria-pressed={aiometadataUseUmeSorting}
+                        aria-label={aiometadataUseUmeSorting ? 'Disable UME Sorting' : 'Enable UME Sorting'}
+                      >
+                        <span
+                          className={cn(
+                            'relative inline-flex h-6 w-11 items-center rounded-full transition-colors',
+                            aiometadataUseUmeSorting ? 'bg-primary/90' : 'bg-foreground/15'
+                          )}
+                        >
+                          <span
+                            className={cn(
+                              'size-5 rounded-full bg-white shadow-sm transition-transform',
+                              aiometadataUseUmeSorting ? 'translate-x-5' : 'translate-x-0.5'
+                            )}
+                          />
+                        </span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="min-h-0 rounded-3xl border border-zinc-200/80 bg-white/40 backdrop-blur-md dark:border-white/10 dark:bg-white/[0.03] shadow-sm overflow-hidden">
+                  <div className="border-b border-zinc-200/60 px-5 py-4 dark:border-border/5">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                      <div className="min-w-0">
+                        <p className={aiometadataSectionTitleClass}>
+                          New Catalogs
+                        </p>
+                        <p className={aiometadataSectionDescriptionClass}>
+                          {isManifestSynced ? 'Only catalogs not yet in AIOMetadata' : 'Current AIOMetadata catalog selection'}
+                        </p>
+                      </div>
+                      <div className="rounded-full border border-primary/15 bg-primary/[0.08] px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-primary">
+                        {selectedAiometadataCatalogCount} Selected
+                      </div>
+                    </div>
+                  </div>
                   {/* Header Stack: Tabs + Action Dock */}
                   <div className="shrink-0 border-b border-zinc-200/60 dark:border-border/5 relative z-50">
                     {/* Header with Search */}
-                    <div className="p-4 border-b border-zinc-200/60 dark:border-border/5 bg-zinc-50/10 dark:bg-white/[0.02]">
+                    <div className="p-4 border-b border-zinc-200/60 dark:border-border/5 bg-black/[0.015] dark:bg-black/10">
                       <div className="relative">
                         <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground/35" />
                         <Input
@@ -1558,8 +1682,8 @@ function WidgetSelectionGridComponent({
                     </div>
 
                     {/* Integrated Action Dock */}
-                    <div className="flex items-center justify-between px-5 max-sm:px-3 h-12 bg-white/30 dark:bg-black/10">
-                      <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-2">
+                    <div className="px-5 max-sm:px-3 py-3 bg-black/[0.02] dark:bg-black/5">
+                      <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
                         <button
                           type="button"
                           onClick={() => replaceAiometadataSelection(Array.from(aiometadataSelectableCatalogKeys))}
@@ -1604,6 +1728,15 @@ function WidgetSelectionGridComponent({
                             Simkl
                           </button>
                         )}
+                        {selectableAiometadataCatalogKeysBySource.letterboxd.length > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => replaceAiometadataSelection(selectableAiometadataCatalogKeysBySource.letterboxd)}
+                            className="h-7.5 px-3 rounded-xl text-[9px] font-black uppercase tracking-widest text-foreground/65 border border-border/10 bg-white/95 dark:bg-white/[0.06] hover:bg-white dark:hover:bg-white/[0.12] hover:border-primary/20 hover:text-primary transition-all active:scale-95 shadow-sm dark:shadow-none shrink-0"
+                          >
+                            Letterboxd
+                          </button>
+                        )}
                         <button
                           type="button"
                           onClick={() => replaceAiometadataSelection([])}
@@ -1612,14 +1745,6 @@ function WidgetSelectionGridComponent({
                         >
                           None
                         </button>
-                      </div>
-
-                      {/* Info Cluster */}
-                      <div className="flex items-center shrink-0">
-                        <div className="text-[11px] font-black uppercase tracking-[0.2em] text-foreground h-5 flex items-center select-none">
-                          <span className="text-primary">{selectedAiometadataCatalogCount}</span>
-                          <span className="text-[9.5px] font-black ml-2 mt-0.5 text-foreground/60 max-sm:hidden">SELECTED</span>
-                        </div>
                       </div>
                     </div>
                   </div>
@@ -1706,7 +1831,7 @@ function WidgetSelectionGridComponent({
                                       'mt-1 text-[10px] font-black uppercase tracking-[0.16em]',
                                       widgetIsSyncedOnly ? 'text-muted-foreground/35' : 'text-muted-foreground/50'
                                     )}>
-                                      {widget.widgetType === 'row.classic' ? 'Standalone row' : 'Collection'}
+                                      {widget.widgetType === 'row.classic' ? 'Classic Row' : 'Collection'}
                                     </p>
                                   </button>
                                 </div>
@@ -1717,6 +1842,24 @@ function WidgetSelectionGridComponent({
                                     ? `${widgetSelectedCount}/${widgetSelectableCatalogKeys.length}`
                                     : 'Synced'}
                                 </span>
+                                {widgetHasEditableAiometadataSources(widget) && (
+                                  <button
+                                    type="button"
+                                    className={cn(
+                                      'flex size-8 items-center justify-center rounded-xl border transition-all',
+                                      widgetIsSyncedOnly
+                                        ? 'border-border/10 bg-background/45 text-muted-foreground/35'
+                                        : 'border-border/15 bg-background/70 text-muted-foreground/55 hover:border-primary/20 hover:bg-primary/5 hover:text-primary'
+                                    )}
+                                    onClick={(event) => {
+                                      event.stopPropagation();
+                                      openAiometadataSettings({ kind: 'widget', widgetId: widget.id });
+                                    }}
+                                    aria-label={`Open export settings for ${widget.widgetTitle || `Widget ${widget.widgetIndex + 1}`}`}
+                                  >
+                                    <SlidersHorizontal className="size-4" />
+                                  </button>
+                                )}
                                 {(widget.rowCatalogKeys.length > 0 || widget.items.length > 0) && (
                                   <button
                                     type="button"
@@ -1778,12 +1921,27 @@ function WidgetSelectionGridComponent({
                                                 ? 'bg-sky-500/10 text-sky-600 dark:text-sky-300'
                                                 : catalog.source === 'mdblist'
                                                   ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-300'
+                                                  : catalog.source === 'letterboxd'
+                                                    ? 'bg-orange-500/10 text-orange-600 dark:text-orange-300'
                                                   : catalog.source === 'simkl'
                                                     ? 'bg-rose-500/10 text-rose-600 dark:text-rose-300'
                                                     : 'bg-amber-500/10 text-amber-600 dark:text-amber-300'
                                             )}>
                                               {catalog.source}
                                             </span>
+                                            {catalogHasEditableAiometadataSettings(catalogKey) && (
+                                              <button
+                                                type="button"
+                                                className="flex size-8 items-center justify-center rounded-xl border border-border/15 bg-background/70 text-muted-foreground/55 transition-all hover:border-primary/20 hover:bg-primary/5 hover:text-primary active:scale-90"
+                                                onClick={(event) => {
+                                                  event.stopPropagation();
+                                                  openAiometadataSettings({ kind: 'catalog', catalogKey });
+                                                }}
+                                                aria-label={`Open export settings for ${catalog.entry.name}`}
+                                              >
+                                                <SlidersHorizontal className="size-4" />
+                                              </button>
+                                            )}
                                             {disabled && (
                                               <span className="rounded-full bg-muted px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-muted-foreground/70">
                                                 Synced
@@ -1889,6 +2047,24 @@ function WidgetSelectionGridComponent({
                                                     ? `${itemSelectedCount}/${itemSelectableCatalogKeys.length}`
                                                     : 'Synced'}
                                                 </span>
+                                                {itemHasEditableAiometadataSources(item) && (
+                                                  <button
+                                                    type="button"
+                                                    className={cn(
+                                                      'flex size-8 items-center justify-center rounded-xl border transition-all',
+                                                      itemIsSyncedOnly
+                                                        ? 'border-border/10 bg-background/45 text-muted-foreground/35'
+                                                        : 'border-border/15 bg-background/70 text-muted-foreground/55 hover:border-primary/20 hover:bg-primary/5 hover:text-primary'
+                                                    )}
+                                                    onClick={(event) => {
+                                                      event.stopPropagation();
+                                                      openAiometadataSettings({ kind: 'item', itemKey: item.id });
+                                                    }}
+                                                    aria-label={`Open export settings for ${item.itemName}`}
+                                                  >
+                                                    <SlidersHorizontal className="size-4" />
+                                                  </button>
+                                                )}
                                                 <button
                                                   type="button"
                                                   className={cn(
@@ -1955,12 +2131,27 @@ function WidgetSelectionGridComponent({
                                                               ? 'bg-sky-500/10 text-sky-600 dark:text-sky-300'
                                                               : catalog.source === 'mdblist'
                                                                 ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-300'
+                                                                : catalog.source === 'letterboxd'
+                                                                  ? 'bg-orange-500/10 text-orange-600 dark:text-orange-300'
                                                                 : catalog.source === 'simkl'
                                                                   ? 'bg-rose-500/10 text-rose-600 dark:text-rose-300'
                                                                   : 'bg-amber-500/10 text-amber-600 dark:text-amber-300'
                                                           )}>
                                                             {catalog.source}
                                                           </span>
+                                                          {catalogHasEditableAiometadataSettings(catalogKey) && (
+                                                            <button
+                                                              type="button"
+                                                              className="flex size-8 items-center justify-center rounded-xl border border-border/15 bg-background/70 text-muted-foreground/55 transition-all hover:border-primary/20 hover:bg-primary/5 hover:text-primary active:scale-90"
+                                                              onClick={(event) => {
+                                                                event.stopPropagation();
+                                                                openAiometadataSettings({ kind: 'catalog', catalogKey });
+                                                              }}
+                                                              aria-label={`Open export settings for ${catalog.entry.name}`}
+                                                            >
+                                                              <SlidersHorizontal className="size-4" />
+                                                            </button>
+                                                          )}
                                                           {disabled && (
                                                             <span className="rounded-full bg-muted px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-muted-foreground/70">
                                                               Synced
@@ -1989,7 +2180,7 @@ function WidgetSelectionGridComponent({
                 </div>
 
                 <div className="min-h-0 rounded-2xl border border-border/10 bg-muted/20 p-4">
-                  <div className="flex items-center justify-between gap-3">
+                  <div>
                     <div>
                       <p className="text-[10px] font-black uppercase tracking-[0.16em] text-foreground/55">
                         Export Preview
@@ -1998,9 +2189,6 @@ function WidgetSelectionGridComponent({
                         {aiometadataPreviewExport.catalogs.length} catalogs in the current export
                       </p>
                     </div>
-                    <span className="rounded-full bg-background/75 px-3 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-muted-foreground/70">
-                      AIOMETADATA
-                    </span>
                   </div>
                   <div className="mt-4 relative group overflow-hidden rounded-xl border border-border/10 bg-background/50 p-1">
                     <Textarea
@@ -2016,23 +2204,15 @@ function WidgetSelectionGridComponent({
               <div className="mt-5">
                 <div className="relative group rounded-2xl border border-border/10 bg-muted/20 p-1 overflow-hidden">
                 {exportStage === 'fusion-needs-invalid-catalog-confirmation'
-                || exportStage === 'fusion-needs-appletv-catalog-warning'
-                || exportStage === 'fusion-needs-appletv-device-check'
                 || exportStage === 'omni-needs-aiom-bridge' ? (
                   <div className="min-h-[320px] max-sm:min-h-[20vh] p-5 max-sm:p-4">
                     <div
                       className={cn(
                         'flex size-9 items-center justify-center rounded-xl border bg-background/75 ',
-                        exportStage === 'fusion-needs-appletv-device-check'
-                          ? 'border-primary/15 text-primary '
-                          : 'border-amber-500/15 text-amber-600 dark:text-amber-300'
+                        'border-amber-500/15 text-amber-600 dark:text-amber-300'
                       )}
                     >
-                      {exportStage === 'fusion-needs-appletv-device-check' ? (
-                        <Info className="size-4" />
-                      ) : (
-                        <AlertTriangle className="size-4" />
-                      )}
+                      <AlertTriangle className="size-4" />
                     </div>
                     <div className="mt-4 max-w-4xl whitespace-pre-wrap break-words font-mono text-xs leading-relaxed text-foreground">
                       {typeof previewContent === 'string' && previewContent.includes('AIOMetadata section') ? (
@@ -2065,12 +2245,12 @@ function WidgetSelectionGridComponent({
             )}
             </div>
 
-            <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-end">
+            <div className="mt-5 flex flex-col gap-2.5 sm:flex-row sm:justify-end">
               {exportStage === 'fusion-needs-invalid-catalog-confirmation' ? (
                 <>
                   <Button
                     variant="secondary"
-                    className="h-11 rounded-xl max-sm:rounded-[1rem] px-6 text-[11px] font-bold uppercase tracking-wider transition-all sm:w-44"
+                    className={cn(editorActionButtonClass, editorFooterSecondaryButtonClass, "max-sm:rounded-[1rem] px-6 sm:w-44")}
                     onClick={() => {
                       if (fusionInvalidCatalogState.fingerprint) {
                         setConfirmedFusionInvalidCatalogDecision({
@@ -2085,7 +2265,7 @@ function WidgetSelectionGridComponent({
                   </Button>
                   {fusionInvalidCatalogState.emptiedItems > 0 ? (
                     <Button
-                      className="h-11 rounded-xl max-sm:rounded-[1rem] px-6 text-[11px] font-bold uppercase tracking-wider   transition-all sm:w-52"
+                      className={cn(editorActionButtonClass, editorFooterPrimaryButtonClass, "max-sm:rounded-[1rem] px-6 sm:w-52")}
                       onClick={() => {
                         if (fusionInvalidCatalogState.fingerprint) {
                           setConfirmedFusionInvalidCatalogDecision({
@@ -2100,52 +2280,9 @@ function WidgetSelectionGridComponent({
                     </Button>
                   ) : null}
                 </>
-              ) : exportStage === 'fusion-needs-appletv-device-check' ? (
-                <>
-                  <Button
-                    className="h-11 rounded-xl max-sm:rounded-[1rem] px-6 text-[11px] font-bold uppercase tracking-wider   transition-all sm:w-40"
-                    onClick={() => {
-                      if (fusionAppleTvCatalogRiskFingerprint) {
-                        setAppleTvDeviceDecision({
-                          fingerprint: fusionAppleTvCatalogRiskFingerprint,
-                          usesAppleTv: false,
-                        });
-                        setCopiedAction(null);
-                      }
-                    }}
-                  >
-                    No
-                  </Button>
-                  <Button
-                    className="h-11 rounded-xl max-sm:rounded-[1rem] px-6 text-[11px] font-bold uppercase tracking-wider   transition-all sm:w-40"
-                    onClick={() => {
-                      if (fusionAppleTvCatalogRiskFingerprint) {
-                        setAppleTvDeviceDecision({
-                          fingerprint: fusionAppleTvCatalogRiskFingerprint,
-                          usesAppleTv: true,
-                        });
-                        setCopiedAction(null);
-                      }
-                    }}
-                  >
-                    Yes
-                  </Button>
-                </>
-              ) : exportStage === 'fusion-needs-appletv-catalog-warning' ? (
-                <Button
-                  className="h-11 rounded-xl max-sm:rounded-[1rem] px-6 text-[11px] font-bold uppercase tracking-wider   transition-all sm:w-44"
-                  onClick={() => {
-                    if (fusionAppleTvCatalogRiskFingerprint) {
-                      setConfirmedAppleTvCatalogWarningFingerprint(fusionAppleTvCatalogRiskFingerprint);
-                      setCopiedAction(null);
-                    }
-                  }}
-                >
-                  Understood
-                </Button>
               ) : exportStage === 'fusion-needs-aiom-sync' ? (
                 <Button
-                  className="h-11 rounded-xl max-sm:rounded-[1rem] px-6 text-[11px] font-bold uppercase tracking-wider   transition-all sm:w-52"
+                  className={cn(editorActionButtonClass, editorFooterPrimaryButtonClass, "max-sm:rounded-[1rem] px-6 sm:w-52")}
                   onClick={handleOpenSyncManifestFromPreview}
                 >
                   <Globe className="size-3.5 mr-1.5" />
@@ -2154,8 +2291,8 @@ function WidgetSelectionGridComponent({
               ) : exportStage === 'omni-needs-aiom-bridge' ? (
                 <>
                   <Button
-                    className="h-11 rounded-xl max-sm:rounded-[1rem] px-6 text-[11px] font-bold uppercase tracking-wider   transition-all sm:w-52"
-                    onClick={handleCopyMissingCatalogs}
+                    className={cn(editorActionButtonClass, editorFooterPrimaryButtonClass, "max-sm:rounded-[1rem] px-6 sm:w-52")}
+                    onClick={() => { void handleCopyMissingCatalogs(); }}
                   >
                     {copiedAction === 'missing-catalogs' ? <Check className="size-3.5 mr-1.5" /> : <Copy className="size-3.5 mr-1.5" />}
                     {copiedAction === 'missing-catalogs'
@@ -2166,7 +2303,7 @@ function WidgetSelectionGridComponent({
                   </Button>
                   <Button
                     variant={hasCopiedRequiredTraktCatalogs && !!nativeTraktBridgeState.fingerprint ? 'default' : 'secondary'}
-                    className="h-11 rounded-xl max-sm:rounded-[1rem] px-6 text-[11px] font-bold uppercase tracking-wider transition-all sm:w-36"
+                    className={cn(editorActionButtonClass, editorFooterSecondaryButtonClass, "max-sm:rounded-[1rem] px-6 sm:w-36", hasCopiedRequiredTraktCatalogs && !!nativeTraktBridgeState.fingerprint && editorFooterPrimaryButtonClass)}
                     onClick={() => {
                       if (hasCopiedRequiredTraktCatalogs && nativeTraktBridgeState.fingerprint) {
                         setConfirmedBridgeFingerprint(nativeTraktBridgeState.fingerprint);
@@ -2183,15 +2320,15 @@ function WidgetSelectionGridComponent({
                 <>
                   <Button
                     variant="secondary"
-                    className="h-11 rounded-xl max-sm:rounded-[1rem] px-6 text-[11px] font-bold uppercase tracking-wider transition-all sm:w-44"
+                    className={cn(editorActionButtonClass, editorFooterSecondaryButtonClass, "max-sm:rounded-[1rem] px-6 sm:w-44")}
                     onClick={handleDownload}
                   >
                     <Download className="size-3.5 mr-1.5" />
                     Download JSON
                   </Button>
                   <Button
-                    className="h-11 rounded-xl max-sm:rounded-[1rem] px-6 text-[11px] font-bold uppercase tracking-wider   transition-all sm:w-52"
-                    onClick={handleCopy}
+                    className={cn(editorActionButtonClass, editorFooterPrimaryButtonClass, "max-sm:rounded-[1rem] px-6 sm:w-52")}
+                    onClick={() => { void handleCopy(); }}
                     disabled={previewContent.startsWith('Error:')}
                   >
                     {copiedAction === 'preview' ? <Check className="size-3.5 mr-1.5" /> : <Copy className="size-3.5 mr-1.5" />}
@@ -2202,15 +2339,15 @@ function WidgetSelectionGridComponent({
                 <>
                   <Button
                     variant="secondary"
-                    className="h-11 rounded-xl max-sm:rounded-[1rem] px-6 text-[11px] font-bold uppercase tracking-wider transition-all sm:w-44"
+                    className={cn(editorActionButtonClass, editorFooterSecondaryButtonClass, "max-sm:rounded-[1rem] px-6 sm:w-44")}
                     onClick={handleDownload}
                   >
                     <Download className="size-3.5 mr-1.5" />
                     Download JSON
                   </Button>
                   <Button
-                    className="h-11 rounded-xl max-sm:rounded-[1rem] px-6 text-[11px] font-bold uppercase tracking-wider   transition-all sm:w-44"
-                    onClick={handleCopy}
+                    className={cn(editorActionButtonClass, editorFooterPrimaryButtonClass, "max-sm:rounded-[1rem] px-6 sm:w-44")}
+                    onClick={() => { void handleCopy(); }}
                     disabled={previewContent.startsWith('Error:')}
                   >
                     {copiedAction === 'preview' ? <Check className="size-3.5 mr-1.5" /> : <Copy className="size-3.5 mr-1.5" />}
@@ -2222,6 +2359,90 @@ function WidgetSelectionGridComponent({
           </div>
         </DialogContent>
       </Dialog>
+      <Dialog open={isUmeSortingDialogOpen} onOpenChange={setIsUmeSortingDialogOpen}>
+        <DialogContent className="max-h-[85vh] max-w-4xl overflow-hidden rounded-3xl border border-border/40 bg-background/95 p-0 backdrop-blur-2xl">
+          <div className="max-h-[85vh] overflow-y-auto px-8 pb-8 pt-10 max-sm:px-5 max-sm:pb-5 max-sm:pt-6 custom-scrollbar">
+            <div className="mx-auto w-full max-w-[860px]">
+              <DialogHeader className="space-y-6 items-start text-left">
+                <div className="flex size-14 items-center justify-center rounded-xl border border-primary/10 bg-primary/5 text-primary shadow-sm shadow-primary/5 max-sm:size-12">
+                  <WandSparkles className="size-6 max-sm:size-5" />
+                </div>
+                <div>
+                  <DialogTitle className="text-2xl font-black tracking-tight max-sm:text-xl">
+                    UME Sorting
+                  </DialogTitle>
+                </div>
+              </DialogHeader>
+
+              <div className="mt-6 space-y-4 px-1 sm:px-2">
+                {UME_SORTING_EXPLANATION_SECTIONS.map((section) => (
+                  <div
+                    key={section.groups.join('|')}
+                    className="rounded-3xl border border-zinc-200/70 bg-white/55 px-5 py-5 backdrop-blur-md dark:border-white/10 dark:bg-white/[0.03] sm:px-6"
+                  >
+                    <div className="grid gap-4 md:grid-cols-[minmax(0,_1fr)_minmax(14rem,_18rem)] md:items-start md:gap-6">
+                      <div>
+                        <p className="text-[11px] font-black uppercase tracking-[0.16em] text-foreground/48">
+                          Applies To
+                        </p>
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          {section.groups.map((group) => (
+                            <span
+                              key={group}
+                              className="rounded-full border border-zinc-200/85 bg-zinc-50/95 px-3 py-1.5 text-sm font-semibold text-foreground/84 shadow-sm shadow-black/[0.035] ring-1 ring-black/[0.02] dark:border-white/12 dark:bg-white/[0.07] dark:ring-white/[0.03] dark:shadow-none"
+                            >
+                              {group}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div>
+                        <p className="text-[11px] font-black uppercase tracking-[0.16em] text-foreground/48 md:text-right">
+                          Sorting
+                        </p>
+                        <div className="mt-3 space-y-1 md:text-right">
+                          <p className="text-base font-semibold leading-relaxed text-foreground/86">
+                            {section.summary}
+                          </p>
+                          {section.detail && (
+                            <p className="text-sm font-medium leading-relaxed text-muted-foreground/78">
+                              {section.detail}
+                            </p>
+                          )}
+                          {section.refresh && (
+                            <p className="text-sm font-medium leading-relaxed text-muted-foreground/72">
+                              {section.refresh}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+      <AIOMetadataExportSettingsDialog
+        key={
+          aiometadataSettingsTarget
+            ? `${isAiometadataSettingsDialogOpen ? 'open' : 'closed'}:${aiometadataSettingsTarget.kind}:${aiometadataSettingsTarget.kind === 'widget'
+              ? aiometadataSettingsTarget.widgetId
+              : aiometadataSettingsTarget.kind === 'item'
+                ? aiometadataSettingsTarget.itemKey
+                : aiometadataSettingsTarget.catalogKey}`
+            : 'aiometadata-settings-dialog'
+        }
+        open={isAiometadataSettingsDialogOpen}
+        onOpenChange={setIsAiometadataSettingsDialogOpen}
+        target={aiometadataSettingsTarget}
+        inventory={aiometadataInventory}
+        overrides={sanitizedAiometadataExportOverrides}
+        resolvedValues={aiometadataDialogResolvedValues}
+        onSave={setAiometadataExportOverrides}
+      />
       <ImportMergeDialog
         open={showImportMergeDialog}
         onOpenChange={setShowImportMergeDialog}
@@ -2336,6 +2557,18 @@ function WidgetSelectionGridComponent({
         onConfirm={() => {
           setManifestActionError(null);
           void handleRefreshManifest();
+        }}
+      />
+      <ConfirmationDialog
+        isOpen={!!exportActionError}
+        onOpenChange={(open) => !open && setExportActionError(null)}
+        title="Export Action Failed"
+        description={exportActionError || ''}
+        variant="danger"
+        confirmText="Close"
+        cancelText=""
+        onConfirm={() => {
+          setExportActionError(null);
         }}
       />
     </div>

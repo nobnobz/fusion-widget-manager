@@ -20,6 +20,7 @@ import {
   analyzeAiometadataManifestDetection,
   getAiometadataManifestDetectionSignature,
 } from '@/lib/aiometadata-manifest-detection';
+import { convertAiometadataImportToFusion, isAiometadataImportPayload } from '@/lib/aiometadata-import';
 import {
   AppState,
   extractImportedManifestState,
@@ -185,14 +186,18 @@ export function ConfigProvider({ children }: { children: React.ReactNode }) {
         replacePlaceholder?: boolean;
         catalogs?: AIOMetadataCatalog[];
       }
-    ) =>
-      normalizeFusionConfigDetailed(config, {
+    ) => {
+      const normalizedInput = isAiometadataImportPayload(config)
+        ? convertAiometadataImportToFusion(config)
+        : config;
+      return normalizeFusionConfigDetailed(normalizedInput, {
         manifestUrl: overrides?.manifestUrl ?? manifestUrl,
         replacePlaceholder: overrides?.replacePlaceholder ?? replacePlaceholder,
         catalogs: overrides?.catalogs ?? manifestCatalogs,
         sanitize: true,
         allowPartialImport: true,
-      }),
+      });
+    },
     [manifestCatalogs, manifestUrl, replacePlaceholder]
   );
 

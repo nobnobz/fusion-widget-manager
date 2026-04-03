@@ -420,9 +420,11 @@ test('bridgeNativeTraktSourcesForOmni converts native trakt sources only in the 
 
   assert.equal(row.dataSource.sourceType, 'aiometadata');
   assert.equal(row.dataSource.payload.catalogId, 'all::trakt.list.42');
+  assert.equal(row.dataSource.payload.catalogType, 'all');
   assert.equal(collection.dataSource.payload.items[0]?.dataSources[0]?.sourceType, 'aiometadata');
   assert.equal(collection.dataSource.payload.items[0]?.dataSources[1]?.sourceType, 'aiometadata');
   assert.equal(collection.dataSource.payload.items[0]?.dataSources[1]?.payload.catalogId, 'all::trakt.list.43');
+  assert.equal(collection.dataSource.payload.items[0]?.dataSources[1]?.payload.catalogType, 'all');
 
   const originalRow = config.widgets[0];
   if (!originalRow || originalRow.type !== 'row.classic') {

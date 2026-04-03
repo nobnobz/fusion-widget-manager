@@ -1,13 +1,36 @@
 # [Landing Page Polish] Premium Light Mode Optimization
 
-Refining the initial landing page (MainEditor welcome view) to align with the professional "Neutral Obsidian" design system, focusing on light mode contrast and modern radii.
+Refining the initial landing page (MainEditor welcome view) to align with the professional "Neutral Obsidian" design system, focusing on light mode contrast and modern radii. The goal is to ensure the fusion-widget-manager is ready for release. This involves fixing linting issues, updating E2E tests for the new UI, and verifying the production build.
 
 ## User Review Required
 
 > [!IMPORTANT]
-> **Design Consistency**: I'll update the main Dropzone (the central interaction area) to use the same premium "Glass" styling as the widget cards, moving away from the muddy `bg-black/15` currently seen in Light Mode.
+> The E2E tests are being updated to interact with the new `Neutral Obsidian` UI components. Specifically, the import process now requires explicit selection in the "Selection Station" during review.
 
 ## Proposed Changes
+
+---
+
+### UI & Component Fixes
+
+#### [MODIFY] [CollectionItemEditor.tsx](file:///Users/marvin/.gemini/antigravity/scratch/fusion-widget-manager/src/components/editor/CollectionItemEditor.tsx)
+- Restore the "Title Hidden" visual indicator in the preview area when the visibility toggle is active. This is required for test parity and user feedback.
+
+---
+
+### E2E Test Suite Modernization
+
+#### [MODIFY] [editor-core.spec.ts](file:///Users/marvin/.gemini/antigravity/scratch/fusion-widget-manager/test/e2e/editor-core.spec.ts)
+- **Import Tests**: Update `merges a partial import` and `shows moved items in review` to click the "All" button in the Selection Station.
+- **Label Updates**: Ensure all tests use the new `Midnight` and `Yeb` instance labels and `PickerField` interactions.
+- **Fixture Stability**: Ensure `InitScript` and `page.goto` sequences are stable.
+
+---
+
+### Maintenance & Cleanliness
+
+#### [MODIFY] [AIOMetadataExportSettingsDialog.tsx](file:///Users/marvin/.gemini/antigravity/scratch/fusion-widget-manager/src/components/editor/AIOMetadataExportSettingsDialog.tsx)
+- [COMPLETE] Removed unused `handleReset` function.
 
 ### 1. Landing Page Refinement
 Update the initial state of the application for better contrast and modern aesthetics.

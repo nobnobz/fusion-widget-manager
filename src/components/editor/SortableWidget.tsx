@@ -17,6 +17,14 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Badge } from '@/components/ui/badge';
 import { isNativeTraktDataSource } from '@/lib/widget-domain';
+import { copyTextToClipboard } from '@/lib/browser-transfer';
+import { getErrorMessage } from '@/lib/error-utils';
+import {
+  editorHeaderIconButtonActiveClass,
+  editorHeaderChevronButtonClass,
+  editorHeaderIconButtonClass,
+  editorHeaderIconButtonDangerClass,
+} from './editorActionButtonStyles';
 
 import { CollectionRowEditor } from './CollectionRowEditor';
 import { RowClassicEditor } from './RowClassicEditor';
@@ -25,6 +33,7 @@ interface SortableWidgetProps {
   widget: Widget;
   isSelected: boolean;
   onSelect: (id: string) => void;
+  onNodeChange?: (id: string, node: HTMLDivElement | null) => void;
   isOverlay?: boolean;
   searchQuery?: string;
 }
@@ -33,6 +42,7 @@ export function SortableWidget({
   widget, 
   isSelected, 
   onSelect, 
+  onNodeChange,
   isOverlay = false,
   searchQuery = ""
 }: SortableWidgetProps) {
@@ -55,8 +65,12 @@ export function SortableWidget({
     transition,
     zIndex: (isDragging || isOverlay) ? 100 : undefined,
   };
+  const handleNodeRef = (node: HTMLDivElement | null) => {
+    setNodeRef(node);
+    onNodeChange?.(widget.id, node);
+  };
 
-  const handleCopy = (e: React.MouseEvent) => {
+  const handleCopy = async (e: React.MouseEvent) => {
     e.stopPropagation();
     
     try {
@@ -98,11 +112,11 @@ export function SortableWidget({
         widgets: [fusionWidget]
       };
       const widgetJson = JSON.stringify(exportData, null, 2);
-      navigator.clipboard.writeText(widgetJson);
+      await copyTextToClipboard(widgetJson);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (error) {
-      alert(error instanceof Error ? error.message : "Failed to copy widget. Please ensure a catalog is selected.");
+      alert(getErrorMessage(error, "Failed to copy widget. Please ensure a catalog is selected."));
     }
   };
 
@@ -140,7 +154,7 @@ export function SortableWidget({
 
   return (
     <motion.div
-      ref={setNodeRef}
+      ref={handleNodeRef}
       style={style}
       data-testid={`widget-card-${widget.id}`}
       className={cn(
@@ -237,8 +251,10 @@ export function SortableWidget({
             variant="ghost"
             size="icon"
             className={cn(
-              "size-10 rounded-xl border border-border/40 bg-background/60 transition-all transition-all duration-300 shrink-0 hover:border-primary/20 hover:bg-primary/5 hover:text-primary dark:border-white/5 dark:bg-zinc-950/40",
-              isSelected ? "rotate-90 bg-primary/10 text-primary border-primary/20 dark:bg-primary/15 dark:border-primary/25" : "text-muted-foreground/60"
+              "size-10 shrink-0",
+              editorHeaderIconButtonClass,
+              editorHeaderChevronButtonClass,
+              isSelected && `rotate-90 ${editorHeaderIconButtonActiveClass}`
             )}
             onClick={(e) => {
               e.stopPropagation();
@@ -255,8 +271,8 @@ export function SortableWidget({
             <Button 
               variant="ghost" 
               size="icon" 
-              className="size-10 rounded-xl border border-border/40 bg-background/60 text-muted-foreground/60  transition-all hover:border-primary/20 hover:bg-primary/5 hover:text-primary dark:border-white/5 dark:bg-zinc-950/40"
-              onClick={handleCopy}
+              className={cn("size-10", editorHeaderIconButtonClass)}
+              onClick={(event) => { void handleCopy(event); }}
               title="Copy widget JSON"
             >
               {copied ? <Check className="size-4 text-emerald-500" /> : <Copy className="size-4" />}
@@ -264,7 +280,7 @@ export function SortableWidget({
             <Button 
               variant="ghost" 
               size="icon" 
-              className="size-10 rounded-xl border border-border/40 bg-background/60 text-destructive/55  transition-all hover:border-destructive/20 hover:bg-destructive/8 hover:text-destructive dark:border-white/5 dark:bg-zinc-950/40 dark:text-destructive/75 dark:hover:bg-destructive/12"
+              className={cn("size-10", editorHeaderIconButtonClass, editorHeaderIconButtonDangerClass)}
               onClick={handleDelete}
               title="Move widget to trash"
             >
@@ -352,8 +368,10 @@ export function SortableWidget({
               variant="ghost" 
               size="icon"
               className={cn(
-                "size-9 rounded-xl border border-border/40 bg-background/60 transition-all duration-300 shrink-0 hover:border-primary/20 hover:bg-primary/5 hover:text-primary dark:border-white/5 dark:bg-zinc-950/40",
-                isSelected ? "rotate-90 bg-primary/10 text-primary border-primary/20 dark:bg-primary/15 dark:border-primary/25" : "text-muted-foreground/60"
+                "size-9 shrink-0",
+                editorHeaderIconButtonClass,
+                editorHeaderChevronButtonClass,
+                isSelected && `rotate-90 ${editorHeaderIconButtonActiveClass}`
               )}
               onClick={(e) => { e.stopPropagation(); onSelect(widget.id); }}
               title={isSelected ? "Collapse widget" : "Expand widget"}
@@ -364,8 +382,8 @@ export function SortableWidget({
             <Button 
               variant="ghost" 
               size="icon"
-              className="size-9 rounded-xl border border-border/40 bg-background/60 text-muted-foreground/60 transition-all hover:border-primary/20 hover:bg-primary/5 hover:text-primary dark:border-white/5 dark:bg-zinc-950/40"
-              onClick={handleCopy}
+              className={cn("size-9", editorHeaderIconButtonClass)}
+              onClick={(event) => { void handleCopy(event); }}
               title="Copy widget JSON"
             >
               {copied ? <Check className="size-4 text-emerald-500" /> : <Copy className="size-4" />}
@@ -373,7 +391,7 @@ export function SortableWidget({
             <Button 
               variant="ghost" 
               size="icon"
-              className="size-9 rounded-xl border border-border/40 bg-background/60 text-destructive/55 transition-all hover:border-destructive/20 hover:bg-destructive/8 hover:text-destructive dark:border-white/5 dark:bg-zinc-950/40 dark:text-destructive/75 dark:hover:bg-destructive/12"
+              className={cn("size-9", editorHeaderIconButtonClass, editorHeaderIconButtonDangerClass)}
               onClick={handleDelete}
               title="Move widget to trash"
             >
@@ -400,7 +418,7 @@ export function SortableWidget({
                    <Button 
                      variant="ghost" 
                      size="sm" 
-                     className="h-8 rounded-xl border border-border/40 bg-zinc-500/[0.03] text-muted-foreground/70 hover:text-primary hover:bg-primary/5 hover:border-primary/20 transition-all font-bold text-[10px] uppercase tracking-widest"
+                     className="h-8 rounded-2xl border border-border/40 bg-zinc-500/[0.03] text-muted-foreground/70 hover:text-primary hover:bg-primary/5 hover:border-primary/20 transition-all font-bold text-[10px] uppercase tracking-widest"
                      onClick={startEditing}
                    >
                      <Pencil className="size-3 mr-2" />
@@ -417,7 +435,7 @@ export function SortableWidget({
                   <Button 
                     variant="ghost" 
                     size="sm" 
-                    className="h-10 px-8 rounded-xl border border-border/40 bg-zinc-500/[0.03] text-muted-foreground/80 hover:bg-primary/5 hover:text-primary hover:border-primary/20 transition-all font-bold text-[10px] uppercase tracking-widest sm:w-auto w-full"
+                    className="h-10 px-8 rounded-2xl border border-border/40 bg-zinc-500/[0.03] text-muted-foreground/80 hover:bg-primary/5 hover:text-primary hover:border-primary/20 transition-all font-bold text-[10px] uppercase tracking-widest sm:w-auto w-full"
                     onClick={(e) => { e.stopPropagation(); onSelect(widget.id); }}
                   >
                     <ChevronUp className="size-3.5 mr-2" />

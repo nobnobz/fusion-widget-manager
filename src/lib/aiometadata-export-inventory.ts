@@ -1,17 +1,24 @@
 import type {
   AIOMetadataCatalog,
   AiometadataCatalogsOnlyEntry,
-  AiometadataCatalogsOnlyExport,
   FusionWidgetsConfig,
 } from './types/widget';
-import { compareCatalogExportOrder, getItemDisplayName } from './aiometadata-catalog-labels';
+import {
+  buildClassicRowCatalogExportName,
+  buildCollectionCatalogExportName,
+  compareCatalogExportOrder,
+  getItemDisplayName,
+  getWidgetDisplayName,
+} from './aiometadata-catalog-labels';
+import { collectUsedLetterboxdCatalogs } from './letterboxd-catalog-export';
 import { collectUsedMdblistCatalogs } from './mdblist-catalog-export';
 import { collectNativeTraktSources } from './native-trakt-bridge';
 import { collectUsedSimklCatalogs } from './simkl-catalog-export';
 import { collectUsedStreamingCatalogs } from './streaming-catalog-export';
 import { collectUsedAiometadataTraktCatalogs } from './trakt-catalog-export';
+import { findCatalog } from './widget-domain';
 
-export type ExportableCatalogSource = 'trakt' | 'mdblist' | 'streaming' | 'simkl';
+export type ExportableCatalogSource = 'trakt' | 'mdblist' | 'streaming' | 'simkl' | 'letterboxd';
 
 export interface ExportableCatalogDefinition {
   key: string;
@@ -30,14 +37,18 @@ export interface ExportableCatalogOccurrence {
   widgetIndex: number;
   widgetType: 'row.classic' | 'collection.row';
   itemId?: string;
+  itemKey?: string;
   itemName?: string;
   itemIndex?: number;
   label: string;
   searchText: string;
+  entry: AiometadataCatalogsOnlyEntry;
+  rawName: string;
 }
 
 export interface ExportableCatalogItemGroup {
   key: string;
+  id: string;
   itemId: string;
   itemName: string;
   itemIndex: number;
@@ -46,6 +57,7 @@ export interface ExportableCatalogItemGroup {
 
 export interface ExportableCatalogWidgetGroup {
   key: string;
+  id: string;
   widgetId: string;
   widgetTitle: string;
   widgetIndex: number;
@@ -74,6 +86,37 @@ function createManifestKey(type: string, id: string): string {
   return `${String(type || '').trim().toLowerCase()}::${String(id || '').trim().toLowerCase()}`;
 }
 
+function inferSpecialCatalogLabelType(
+  source: ExportableCatalogSource,
+  type: string,
+  id: string,
+  manifestCatalogs: AIOMetadataCatalog[]
+): string | undefined {
+  if ((source !== 'trakt' && source !== 'letterboxd') || manifestCatalogs.length === 0) {
+    return undefined;
+  }
+
+  const manifestCatalog = findCatalog(manifestCatalogs, `${type}::${id}`) || findCatalog(manifestCatalogs, id);
+  const normalizedName = String(manifestCatalog?.name || '').trim().toLowerCase();
+  if (!normalizedName) {
+    return undefined;
+  }
+
+  if (/\b(movie|movies|film|films)\b/u.test(normalizedName)) {
+    return 'movie';
+  }
+
+  if (/\b(show|shows|series)\b/u.test(normalizedName)) {
+    return 'series';
+  }
+
+  if (/\banime\b/u.test(normalizedName)) {
+    return 'anime';
+  }
+
+  return undefined;
+}
+
 function createOccurrenceKey(
   catalogKey: string,
   widgetId: string,
@@ -97,6 +140,7 @@ function ensureWidgetGroup(
 
   const next: ExportableCatalogWidgetGroup = {
     key: widgetId,
+    id: widgetId,
     widgetId,
     widgetTitle,
     widgetIndex,
@@ -122,6 +166,7 @@ function ensureItemGroup(
 
   const next: ExportableCatalogItemGroup = {
     key: `${widgetGroup.widgetId}::${itemId}`,
+    id: `${widgetGroup.widgetId}::${itemId}`,
     itemId,
     itemName,
     itemIndex,
@@ -156,6 +201,163 @@ function filterAgainstManifest(
   });
 }
 
+function createExportName(params: {
+  source: ExportableCatalogSource;
+  widgetType: 'row.classic' | 'collection.row';
+  widgetTitle: string;
+  widgetIndex: number;
+  itemName?: string;
+  itemIndex?: number;
+  type: string;
+  id: string;
+  manifestCatalogs: AIOMetadataCatalog[];
+}) {
+  const inferredLabelType = inferSpecialCatalogLabelType(
+    params.source,
+    params.type,
+    params.id,
+    params.manifestCatalogs
+  );
+  const includeTypeLabel = params.source !== 'trakt' && params.source !== 'letterboxd'
+    ? true
+    : inferredLabelType !== undefined;
+  const labelType = inferredLabelType || params.type;
+  if (params.widgetType === 'row.classic') {
+    const rawName = getWidgetDisplayName(params.widgetTitle, params.widgetIndex);
+    return {
+      rawName,
+      exportName: buildClassicRowCatalogExportName({
+        widgetTitle: params.widgetTitle,
+        widgetIndex: params.widgetIndex,
+        type: labelType,
+        includeTypeLabel,
+      }),
+    };
+  }
+
+  const itemName = getItemDisplayName(params.itemName, params.itemIndex);
+  return {
+    rawName: itemName,
+    exportName: buildCollectionCatalogExportName({
+      widgetTitle: params.widgetTitle,
+      widgetIndex: params.widgetIndex,
+      itemName,
+      type: labelType,
+      includeTypeLabel,
+    }),
+  };
+}
+
+function sortAlphabetically<T>(entries: T[], getValue: (entry: T) => string) {
+  return [...entries].sort((left, right) =>
+    getValue(left).localeCompare(getValue(right), undefined, { sensitivity: 'base' })
+  );
+}
+
+function registerOccurrence(params: {
+  catalogMap: Map<string, ExportableCatalogDefinition>;
+  occurrences: ExportableCatalogOccurrence[];
+  widgetMap: Map<string, ExportableCatalogWidgetGroup>;
+  manifestKeys: Set<string>;
+  source: ExportableCatalogSource;
+  id: string;
+  type: string;
+  displayType: string;
+  widgetId: string;
+  widgetTitle: string;
+  widgetIndex: number;
+  itemId?: string;
+  itemName?: string;
+  itemIndex?: number;
+  suffix: string;
+  manifestCatalogs: AIOMetadataCatalog[];
+}) {
+  const catalogKey = createCatalogKey(params.source, params.type, params.id);
+  const widgetType = params.itemId ? 'collection.row' : 'row.classic';
+  const { rawName, exportName } = createExportName({
+    source: params.source,
+    widgetType,
+    widgetTitle: params.widgetTitle,
+    widgetIndex: params.widgetIndex,
+    itemName: params.itemName,
+    itemIndex: params.itemIndex,
+    type: params.type,
+    id: params.id,
+    manifestCatalogs: params.manifestCatalogs,
+  });
+  const entry: AiometadataCatalogsOnlyEntry = {
+    id: params.id,
+    type: params.type,
+    name: exportName,
+    enabled: true,
+    source: params.source,
+    displayType: params.displayType,
+  };
+
+  const existingDefinition = params.catalogMap.get(catalogKey);
+  if (existingDefinition) {
+    existingDefinition.occurrenceCount += 1;
+  } else {
+    params.catalogMap.set(catalogKey, {
+      key: catalogKey,
+      entry,
+      source: params.source,
+      occurrenceCount: 1,
+      isAlreadyInManifest: params.manifestKeys.has(createManifestKey(entry.type, entry.id)),
+    });
+  }
+
+  const widgetGroup = ensureWidgetGroup(
+    params.widgetMap,
+    params.widgetId,
+    params.widgetTitle,
+    params.widgetIndex,
+    widgetType
+  );
+  pushUnique(widgetGroup.catalogKeys, catalogKey);
+
+  if (params.itemId) {
+    const itemGroup = ensureItemGroup(
+      widgetGroup,
+      params.itemId,
+      getItemDisplayName(params.itemName, params.itemIndex),
+      params.itemIndex || 0
+    );
+    pushUnique(itemGroup.catalogKeys, catalogKey);
+  } else {
+    pushUnique(widgetGroup.rowCatalogKeys, catalogKey);
+  }
+
+    params.occurrences.push({
+    key: createOccurrenceKey(catalogKey, params.widgetId, params.itemId, params.suffix),
+    catalogKey,
+    source: params.source,
+    widgetId: params.widgetId,
+    widgetTitle: params.widgetTitle,
+    widgetIndex: params.widgetIndex,
+    widgetType,
+      itemId: params.itemId,
+      itemKey: params.itemId ? `${params.widgetId}::${params.itemId}` : undefined,
+      itemName: params.itemName,
+    itemIndex: params.itemIndex,
+    label: params.itemId ? `${getItemDisplayName(params.itemName, params.itemIndex)} / ${entry.name}` : entry.name,
+    searchText: [
+      params.widgetTitle,
+      params.itemName,
+      rawName,
+      entry.name,
+      entry.id,
+      entry.type,
+      params.source,
+    ]
+      .filter(Boolean)
+      .join(' ')
+      .toLowerCase(),
+    entry,
+    rawName,
+  });
+}
+
 export function collectAiometadataExportInventory(
   config: FusionWidgetsConfig,
   options: InventoryOptions = {}
@@ -169,340 +371,128 @@ export function collectAiometadataExportInventory(
   );
 
   collectNativeTraktSources(config).forEach((reference, occurrenceIndex) => {
-    const catalogKey = createCatalogKey('trakt', 'all', reference.catalogId);
-    const entry: AiometadataCatalogsOnlyEntry = {
+    registerOccurrence({
+      catalogMap,
+      occurrences,
+      widgetMap,
+      manifestKeys,
+      source: 'trakt',
       id: reference.catalogId,
       type: 'all',
-      name: reference.displayName,
-      enabled: true,
-      source: 'trakt',
-    };
-
-    const existingDefinition = catalogMap.get(catalogKey);
-    if (existingDefinition) {
-      existingDefinition.occurrenceCount += 1;
-    } else {
-      catalogMap.set(catalogKey, {
-        key: catalogKey,
-        entry,
-        source: 'trakt',
-        occurrenceCount: 1,
-        isAlreadyInManifest: manifestKeys.has(createManifestKey(entry.type, entry.id)),
-      });
-    }
-
-    const widgetGroup = ensureWidgetGroup(
-      widgetMap,
-      reference.widgetId,
-      reference.widgetTitle,
-      reference.widgetIndex,
-      reference.itemId ? 'collection.row' : 'row.classic'
-    );
-    pushUnique(widgetGroup.catalogKeys, catalogKey);
-
-    if (reference.itemId) {
-      const itemGroup = ensureItemGroup(
-        widgetGroup,
-        reference.itemId,
-        getItemDisplayName(reference.itemName, reference.itemIndex),
-        reference.itemIndex || 0
-      );
-      pushUnique(itemGroup.catalogKeys, catalogKey);
-    } else {
-      pushUnique(widgetGroup.rowCatalogKeys, catalogKey);
-    }
-
-    const label = reference.itemId
-      ? `${getItemDisplayName(reference.itemName, reference.itemIndex)} / ${reference.displayName}`
-      : reference.displayName;
-    occurrences.push({
-      key: createOccurrenceKey(catalogKey, reference.widgetId, reference.itemId, String(occurrenceIndex)),
-      catalogKey,
-      source: 'trakt',
+      displayType: 'all',
       widgetId: reference.widgetId,
       widgetTitle: reference.widgetTitle,
       widgetIndex: reference.widgetIndex,
-      widgetType: reference.itemId ? 'collection.row' : 'row.classic',
       itemId: reference.itemId,
       itemName: reference.itemName,
       itemIndex: reference.itemIndex,
-      label,
-      searchText: [reference.widgetTitle, reference.itemName, reference.displayName, reference.catalogId, 'trakt']
-        .filter(Boolean)
-        .join(' ')
-        .toLowerCase(),
+      suffix: `native-trakt-${occurrenceIndex}`,
+      manifestCatalogs,
     });
   });
 
   collectUsedAiometadataTraktCatalogs(config, manifestCatalogs).forEach((reference, occurrenceIndex) => {
-    const catalogKey = createCatalogKey('trakt', reference.type, reference.id);
-    const entry: AiometadataCatalogsOnlyEntry = {
+    registerOccurrence({
+      catalogMap,
+      occurrences,
+      widgetMap,
+      manifestKeys,
+      source: 'trakt',
       id: reference.id,
       type: reference.type,
-      name: reference.name,
-      enabled: true,
-      source: 'trakt',
       displayType: reference.displayType,
-    };
-
-    const existingDefinition = catalogMap.get(catalogKey);
-    if (existingDefinition) {
-      existingDefinition.occurrenceCount += 1;
-    } else {
-      catalogMap.set(catalogKey, {
-        key: catalogKey,
-        entry,
-        source: 'trakt',
-        occurrenceCount: 1,
-        isAlreadyInManifest: manifestKeys.has(createManifestKey(entry.type, entry.id)),
-      });
-    }
-
-    const widgetType = reference.itemId ? 'collection.row' : 'row.classic';
-    const widgetGroup = ensureWidgetGroup(
-      widgetMap,
-      reference.widgetId,
-      reference.widgetTitle,
-      reference.widgetIndex,
-      widgetType
-    );
-    pushUnique(widgetGroup.catalogKeys, catalogKey);
-
-    if (reference.itemId) {
-      const itemGroup = ensureItemGroup(
-        widgetGroup,
-        reference.itemId,
-        getItemDisplayName(reference.itemName, reference.itemIndex),
-        reference.itemIndex || 0
-      );
-      pushUnique(itemGroup.catalogKeys, catalogKey);
-    } else {
-      pushUnique(widgetGroup.rowCatalogKeys, catalogKey);
-    }
-
-    const label = reference.itemId
-      ? `${getItemDisplayName(reference.itemName, reference.itemIndex)} / ${reference.name}`
-      : reference.name;
-    occurrences.push({
-      key: createOccurrenceKey(catalogKey, reference.widgetId, reference.itemId, `aiom-trakt-${occurrenceIndex}`),
-      catalogKey,
-      source: 'trakt',
       widgetId: reference.widgetId,
       widgetTitle: reference.widgetTitle,
       widgetIndex: reference.widgetIndex,
-      widgetType,
       itemId: reference.itemId,
       itemName: reference.itemName,
       itemIndex: reference.itemIndex,
-      label,
-      searchText: [reference.widgetTitle, reference.itemName, reference.name, reference.id, reference.type, 'trakt']
-        .filter(Boolean)
-        .join(' ')
-        .toLowerCase(),
+      suffix: `aiom-trakt-${occurrenceIndex}`,
+      manifestCatalogs,
     });
   });
 
   collectUsedMdblistCatalogs(config, manifestCatalogs).forEach((reference, occurrenceIndex) => {
-    const catalogKey = createCatalogKey('mdblist', reference.type, reference.id);
-    const entry: AiometadataCatalogsOnlyEntry = {
+    registerOccurrence({
+      catalogMap,
+      occurrences,
+      widgetMap,
+      manifestKeys,
+      source: 'mdblist',
       id: reference.id,
       type: reference.type,
-      name: reference.name,
-      enabled: true,
-      source: 'mdblist',
       displayType: reference.displayType,
-    };
-
-    const existingDefinition = catalogMap.get(catalogKey);
-    if (existingDefinition) {
-      existingDefinition.occurrenceCount += 1;
-    } else {
-      catalogMap.set(catalogKey, {
-        key: catalogKey,
-        entry,
-        source: 'mdblist',
-        occurrenceCount: 1,
-        isAlreadyInManifest: manifestKeys.has(createManifestKey(entry.type, entry.id)),
-      });
-    }
-
-    const widgetType = reference.itemId ? 'collection.row' : 'row.classic';
-    const widgetGroup = ensureWidgetGroup(
-      widgetMap,
-      reference.widgetId,
-      reference.widgetTitle,
-      reference.widgetIndex,
-      widgetType
-    );
-    pushUnique(widgetGroup.catalogKeys, catalogKey);
-
-    if (reference.itemId) {
-      const itemGroup = ensureItemGroup(
-        widgetGroup,
-        reference.itemId,
-        getItemDisplayName(reference.itemName, reference.itemIndex),
-        reference.itemIndex || 0
-      );
-      pushUnique(itemGroup.catalogKeys, catalogKey);
-    } else {
-      pushUnique(widgetGroup.rowCatalogKeys, catalogKey);
-    }
-
-    const label = reference.itemId
-      ? `${getItemDisplayName(reference.itemName, reference.itemIndex)} / ${reference.name}`
-      : reference.name;
-    occurrences.push({
-      key: createOccurrenceKey(catalogKey, reference.widgetId, reference.itemId, `mdblist-${occurrenceIndex}`),
-      catalogKey,
-      source: 'mdblist',
       widgetId: reference.widgetId,
       widgetTitle: reference.widgetTitle,
       widgetIndex: reference.widgetIndex,
-      widgetType,
       itemId: reference.itemId,
       itemName: reference.itemName,
       itemIndex: reference.itemIndex,
-      label,
-      searchText: [reference.widgetTitle, reference.itemName, reference.name, reference.id, reference.type, 'mdblist']
-        .filter(Boolean)
-        .join(' ')
-        .toLowerCase(),
+      suffix: `mdblist-${occurrenceIndex}`,
+      manifestCatalogs,
     });
   });
 
   collectUsedStreamingCatalogs(config, manifestCatalogs).forEach((reference, occurrenceIndex) => {
-    const catalogKey = createCatalogKey('streaming', reference.type, reference.id);
-    const entry: AiometadataCatalogsOnlyEntry = {
+    registerOccurrence({
+      catalogMap,
+      occurrences,
+      widgetMap,
+      manifestKeys,
+      source: 'streaming',
       id: reference.id,
       type: reference.type,
-      name: reference.name,
-      enabled: true,
-      source: 'streaming',
       displayType: reference.displayType,
-    };
-
-    const existingDefinition = catalogMap.get(catalogKey);
-    if (existingDefinition) {
-      existingDefinition.occurrenceCount += 1;
-    } else {
-      catalogMap.set(catalogKey, {
-        key: catalogKey,
-        entry,
-        source: 'streaming',
-        occurrenceCount: 1,
-        isAlreadyInManifest: manifestKeys.has(createManifestKey(entry.type, entry.id)),
-      });
-    }
-
-    const widgetType = reference.itemId ? 'collection.row' : 'row.classic';
-    const widgetGroup = ensureWidgetGroup(
-      widgetMap,
-      reference.widgetId,
-      reference.widgetTitle,
-      reference.widgetIndex,
-      widgetType
-    );
-    pushUnique(widgetGroup.catalogKeys, catalogKey);
-
-    if (reference.itemId) {
-      const itemGroup = ensureItemGroup(
-        widgetGroup,
-        reference.itemId,
-        getItemDisplayName(reference.itemName, reference.itemIndex),
-        reference.itemIndex || 0
-      );
-      pushUnique(itemGroup.catalogKeys, catalogKey);
-    } else {
-      pushUnique(widgetGroup.rowCatalogKeys, catalogKey);
-    }
-
-    const label = reference.itemId
-      ? `${getItemDisplayName(reference.itemName, reference.itemIndex)} / ${reference.name}`
-      : reference.name;
-    occurrences.push({
-      key: createOccurrenceKey(catalogKey, reference.widgetId, reference.itemId, `streaming-${occurrenceIndex}`),
-      catalogKey,
-      source: 'streaming',
       widgetId: reference.widgetId,
       widgetTitle: reference.widgetTitle,
       widgetIndex: reference.widgetIndex,
-      widgetType,
       itemId: reference.itemId,
       itemName: reference.itemName,
       itemIndex: reference.itemIndex,
-      label,
-      searchText: [reference.widgetTitle, reference.itemName, reference.name, reference.id, reference.type, 'streaming']
-        .filter(Boolean)
-        .join(' ')
-        .toLowerCase(),
+      suffix: `streaming-${occurrenceIndex}`,
+      manifestCatalogs,
     });
   });
 
   collectUsedSimklCatalogs(config, manifestCatalogs).forEach((reference, occurrenceIndex) => {
-    const catalogKey = createCatalogKey('simkl', reference.type, reference.id);
-    const entry: AiometadataCatalogsOnlyEntry = {
+    registerOccurrence({
+      catalogMap,
+      occurrences,
+      widgetMap,
+      manifestKeys,
+      source: 'simkl',
       id: reference.id,
       type: reference.type,
-      name: reference.name,
-      enabled: true,
-      source: 'simkl',
       displayType: reference.displayType,
-    };
-
-    const existingDefinition = catalogMap.get(catalogKey);
-    if (existingDefinition) {
-      existingDefinition.occurrenceCount += 1;
-    } else {
-      catalogMap.set(catalogKey, {
-        key: catalogKey,
-        entry,
-        source: 'simkl',
-        occurrenceCount: 1,
-        isAlreadyInManifest: manifestKeys.has(createManifestKey(entry.type, entry.id)),
-      });
-    }
-
-    const widgetType = reference.itemId ? 'collection.row' : 'row.classic';
-    const widgetGroup = ensureWidgetGroup(
-      widgetMap,
-      reference.widgetId,
-      reference.widgetTitle,
-      reference.widgetIndex,
-      widgetType
-    );
-    pushUnique(widgetGroup.catalogKeys, catalogKey);
-
-    if (reference.itemId) {
-      const itemGroup = ensureItemGroup(
-        widgetGroup,
-        reference.itemId,
-        getItemDisplayName(reference.itemName, reference.itemIndex),
-        reference.itemIndex || 0
-      );
-      pushUnique(itemGroup.catalogKeys, catalogKey);
-    } else {
-      pushUnique(widgetGroup.rowCatalogKeys, catalogKey);
-    }
-
-    const label = reference.itemId
-      ? `${getItemDisplayName(reference.itemName, reference.itemIndex)} / ${reference.name}`
-      : reference.name;
-    occurrences.push({
-      key: createOccurrenceKey(catalogKey, reference.widgetId, reference.itemId, `simkl-${occurrenceIndex}`),
-      catalogKey,
-      source: 'simkl',
       widgetId: reference.widgetId,
       widgetTitle: reference.widgetTitle,
       widgetIndex: reference.widgetIndex,
-      widgetType,
       itemId: reference.itemId,
       itemName: reference.itemName,
       itemIndex: reference.itemIndex,
-      label,
-      searchText: [reference.widgetTitle, reference.itemName, reference.name, reference.id, reference.type, 'simkl']
-        .filter(Boolean)
-        .join(' ')
-        .toLowerCase(),
+      suffix: `simkl-${occurrenceIndex}`,
+      manifestCatalogs,
+    });
+  });
+
+  collectUsedLetterboxdCatalogs(config, manifestCatalogs).forEach((reference, occurrenceIndex) => {
+    registerOccurrence({
+      catalogMap,
+      occurrences,
+      widgetMap,
+      manifestKeys,
+      source: 'letterboxd',
+      id: reference.id,
+      type: reference.type,
+      displayType: reference.displayType,
+      widgetId: reference.widgetId,
+      widgetTitle: reference.widgetTitle,
+      widgetIndex: reference.widgetIndex,
+      itemId: reference.itemId,
+      itemName: reference.itemName,
+      itemIndex: reference.itemIndex,
+      suffix: `letterboxd-${occurrenceIndex}`,
+      manifestCatalogs,
     });
   });
 
@@ -526,12 +516,15 @@ export function collectAiometadataExportInventory(
       ...widget,
       catalogKeys: widget.catalogKeys.filter((catalogKey) => allowedKeys.has(catalogKey)),
       rowCatalogKeys: widget.rowCatalogKeys.filter((catalogKey) => allowedKeys.has(catalogKey)),
-      items: widget.items
-        .map((item) => ({
-          ...item,
-          catalogKeys: item.catalogKeys.filter((catalogKey) => allowedKeys.has(catalogKey)),
-        }))
-        .filter((item) => item.catalogKeys.length > 0),
+      items: sortAlphabetically(
+        widget.items
+          .map((item) => ({
+            ...item,
+            catalogKeys: item.catalogKeys.filter((catalogKey) => allowedKeys.has(catalogKey)),
+          }))
+          .filter((item) => item.catalogKeys.length > 0),
+        (item) => item.itemName
+      ),
     }))
     .filter((widget) => widget.catalogKeys.length > 0)
     .sort((left, right) => left.widgetIndex - right.widgetIndex);
@@ -555,20 +548,5 @@ export function collectAiometadataExportInventory(
     ),
     occurrences: filteredOccurrences,
     widgets: filteredWidgets,
-  };
-}
-
-export function buildAiometadataSelectionExport(
-  inventory: ExportableCatalogInventory,
-  selectedCatalogKeys: Iterable<string>,
-  exportedAt = new Date().toISOString()
-): AiometadataCatalogsOnlyExport {
-  const selected = new Set(selectedCatalogKeys);
-  return {
-    version: 1,
-    exportedAt,
-    catalogs: inventory.catalogs
-      .filter((catalog) => selected.has(catalog.key))
-      .map((catalog) => catalog.entry),
   };
 }

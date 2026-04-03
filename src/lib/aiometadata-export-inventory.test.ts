@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  buildAiometadataSelectionExport,
   collectAiometadataExportInventory,
 } from './aiometadata-export-inventory';
+import { buildAiometadataCatalogExport, getDefaultAiometadataExportOverrides } from './aiometadata-export';
 import type {
   AIOMetadataCatalog,
   AIOMetadataDataSource,
@@ -171,6 +171,49 @@ test('collectAiometadataExportInventory includes streaming catalogs', () => {
   );
 });
 
+test('collectAiometadataExportInventory includes letterboxd catalogs and keeps them movie-only', () => {
+  const inventory = collectAiometadataExportInventory(
+    buildConfig([
+      buildRowWidget({
+        id: 'row-letterboxd',
+        title: 'Letterboxd Row',
+        dataSource: buildAioDataSource({ catalogId: 'movie::letterboxd.nVqt6', catalogType: 'movie' }),
+      }),
+      buildCollectionWidget({
+        id: 'collection-letterboxd',
+        title: 'Letterboxd Collection',
+        dataSource: {
+          kind: 'collection',
+          payload: {
+            items: [
+              {
+                id: 'item-letterboxd',
+                name: 'Fans',
+                hideTitle: false,
+                layout: 'Poster',
+                backgroundImageURL: '',
+                dataSources: [buildAioDataSource({ catalogId: 'series::letterboxd.5zIiY', catalogType: 'series' })],
+              },
+            ],
+          },
+        },
+      }),
+    ])
+  );
+
+  assert.deepEqual(
+    inventory.catalogs.map((catalog) => ({
+      id: catalog.entry.id,
+      type: catalog.entry.type,
+      source: catalog.entry.source,
+    })),
+    [
+      { id: 'letterboxd.nVqt6', type: 'movie', source: 'letterboxd' },
+      { id: 'letterboxd.5zIiY', type: 'movie', source: 'letterboxd' },
+    ]
+  );
+});
+
 test('collectAiometadataExportInventory includes AIOMetadata trakt catalogs without treating them as native bridge sources', () => {
   const inventory = collectAiometadataExportInventory(
     buildConfig([
@@ -214,6 +257,68 @@ test('collectAiometadataExportInventory includes AIOMetadata trakt catalogs with
   );
 });
 
+test('collectAiometadataExportInventory re-adds movie labels for synced trakt catalogs when manifest names imply them', () => {
+  const manifestCatalogs: AIOMetadataCatalog[] = [
+    {
+      id: 'trakt.anticipated',
+      name: 'Anticipated Movies',
+      type: 'movie',
+      displayType: 'movie',
+    },
+  ];
+
+  const inventory = collectAiometadataExportInventory(
+    buildConfig([
+      buildRowWidget({
+        id: 'row-trakt-aiom',
+        title: 'Anticipated',
+        dataSource: buildAioDataSource({ catalogId: 'movie::trakt.anticipated', catalogType: 'movie' }),
+      }),
+    ]),
+    { manifestCatalogs }
+  );
+
+  assert.equal(inventory.catalogs[0]?.entry.name, '[Classic Row] Anticipated (Movies) ');
+});
+
+test('collectAiometadataExportInventory re-adds show labels for synced letterboxd catalogs when manifest names imply them', () => {
+  const manifestCatalogs: AIOMetadataCatalog[] = [
+    {
+      id: 'letterboxd.5zIiY',
+      name: 'Fan Favorites Series',
+      type: 'series',
+      displayType: 'series',
+    },
+  ];
+
+  const inventory = collectAiometadataExportInventory(
+    buildConfig([
+      buildCollectionWidget({
+        id: 'collection-letterboxd',
+        title: 'Letterboxd Collection',
+        dataSource: {
+          kind: 'collection',
+          payload: {
+            items: [
+              {
+                id: 'item-letterboxd',
+                name: 'Fan Favorites',
+                hideTitle: false,
+                layout: 'Poster',
+                backgroundImageURL: '',
+                dataSources: [buildAioDataSource({ catalogId: 'series::letterboxd.5zIiY', catalogType: 'series' })],
+              },
+            ],
+          },
+        },
+      }),
+    ]),
+    { manifestCatalogs }
+  );
+
+  assert.equal(inventory.catalogs[0]?.entry.name, '[Letterboxd Collection] Fan Favorites (Shows)');
+});
+
 test('collectAiometadataExportInventory can filter to catalogs missing from the manifest', () => {
   const manifestCatalogs: AIOMetadataCatalog[] = [
     {
@@ -249,7 +354,7 @@ test('collectAiometadataExportInventory can filter to catalogs missing from the 
   );
 });
 
-test('buildAiometadataSelectionExport emits only the selected deduplicated catalogs', () => {
+test('buildAiometadataCatalogExport emits only the selected deduplicated catalogs', () => {
   const inventory = collectAiometadataExportInventory(
     buildConfig([
       buildRowWidget({
@@ -265,13 +370,13 @@ test('buildAiometadataSelectionExport emits only the selected deduplicated catal
     ])
   );
 
-  const exported = buildAiometadataSelectionExport(
+  const exported = buildAiometadataCatalogExport({
     inventory,
-    inventory.catalogs
+    selectedCatalogKeys: inventory.catalogs
       .filter((catalog) => catalog.entry.source === 'trakt')
       .map((catalog) => catalog.key),
-    '2026-03-26T18:41:10.859Z'
-  );
+    exportedAt: '2026-03-26T18:41:10.859Z',
+  });
 
   assert.deepEqual(exported, {
     version: 1,
@@ -280,9 +385,13 @@ test('buildAiometadataSelectionExport emits only the selected deduplicated catal
       {
         id: 'trakt.list.12',
         type: 'all',
-        name: '[Trakt Row] Trakt Row Name',
+        name: '[Classic Row] Trakt Row',
         enabled: true,
         source: 'trakt',
+        displayType: 'all',
+        sort: 'default',
+        sortDirection: 'asc',
+        cacheTTL: 43200,
       },
     ],
   });
@@ -318,7 +427,7 @@ test('collectAiometadataExportInventory uses stable item fallback labels and der
   assert.equal(inventory.widgets[0]?.items[0]?.itemName, 'Item 1');
   assert.deepEqual(
     inventory.catalogs.map((catalog) => catalog.entry.name),
-    ['[Streaming Services] Item 1 Movies', '[Streaming Services] Item 1 Movies 2']
+    ['[Streaming Services] Item 1 (Movies) ', '[Streaming Services] Item 1 (Movies) ']
   );
 });
 
@@ -352,7 +461,7 @@ test('collectAiometadataExportInventory reads collection item titles from export
   });
 
   assert.equal(inventory.widgets[0]?.items[0]?.itemName, 'Hunger Games');
-  assert.equal(inventory.catalogs[0]?.entry.name, '[Streaming Services] Hunger Games Movies');
+  assert.equal(inventory.catalogs[0]?.entry.name, '[Streaming Services] Hunger Games (Movies) ');
 });
 
 test('collectAiometadataExportInventory sorts catalogs by widget order and alphabetically within each widget', () => {
@@ -396,9 +505,128 @@ test('collectAiometadataExportInventory sorts catalogs by widget order and alpha
   assert.deepEqual(
     inventory.catalogs.map((catalog) => catalog.entry.name),
     [
-      '[Collections] Collections Movies',
-      '[Discover] Alpha Movies',
-      '[Discover] Zeta Movies',
+      '[Classic Row] Collections (Movies) ',
+      '[Discover] Alpha (Movies) ',
+      '[Discover] Zeta (Movies) ',
     ]
   );
+});
+
+test('buildAiometadataCatalogExport numbers duplicate final names using omni whitespace semantics', () => {
+  const inventory = collectAiometadataExportInventory(
+    buildConfig([
+      buildCollectionWidget({
+        title: 'Discover',
+        dataSource: {
+          kind: 'collection',
+          payload: {
+            items: [
+              {
+                id: 'dup-item',
+                name: 'Latest Movies',
+                hideTitle: false,
+                layout: 'Poster',
+                backgroundImageURL: '',
+                dataSources: [
+                  buildAioDataSource({ catalogId: 'movie::mdblist.1', catalogType: 'movie' }),
+                  buildAioDataSource({ catalogId: 'movie::mdblist.2', catalogType: 'movie' }),
+                ],
+              },
+            ],
+          },
+        },
+      }),
+    ])
+  );
+
+  const exported = buildAiometadataCatalogExport({
+    inventory,
+    includeAll: true,
+    exportedAt: '2026-03-26T18:41:10.859Z',
+  });
+
+  assert.deepEqual(
+    exported.catalogs.map((catalog) => catalog.name),
+    [
+      '[Discover] Latest Movies (Movies) ',
+      '[Discover] Latest Movies (Movies) 2',
+    ]
+  );
+});
+
+test('getDefaultAiometadataExportOverrides applies UME rules to supported sources and ignores simkl', () => {
+  const inventory = collectAiometadataExportInventory(
+    buildConfig([
+      buildCollectionWidget({
+        title: 'Streaming Services',
+        dataSource: {
+          kind: 'collection',
+          payload: {
+            items: [
+              {
+                id: 'service-item',
+                name: 'IMDb Top Movies',
+                hideTitle: false,
+                layout: 'Poster',
+                backgroundImageURL: '',
+                dataSources: [
+                  buildAioDataSource({ catalogId: 'movie::mdblist.301', catalogType: 'movie' }),
+                  buildAioDataSource({ catalogId: 'movie::streaming.nlz', catalogType: 'movie' }),
+                  buildAioDataSource({ catalogId: 'movie::simkl.animated', catalogType: 'movie' }),
+                ],
+              },
+            ],
+          },
+        },
+      }),
+    ])
+  );
+
+  const overrides = getDefaultAiometadataExportOverrides({
+    inventory,
+    currentOverrides: {
+      widgets: {},
+      items: {},
+      catalogs: {},
+    },
+  });
+
+  const mdblistCatalog = inventory.catalogs.find((catalog) => catalog.source === 'mdblist');
+  const streamingCatalog = inventory.catalogs.find((catalog) => catalog.source === 'streaming');
+  const simklCatalog = inventory.catalogs.find((catalog) => catalog.source === 'simkl');
+
+  assert.deepEqual(
+    overrides.catalogs[mdblistCatalog?.key || ''],
+    {
+      sort: 'random',
+      order: 'asc',
+      cacheTTL: 43200,
+    }
+  );
+  assert.equal(overrides.catalogs[streamingCatalog?.key || ''], undefined);
+  assert.equal(overrides.catalogs[simklCatalog?.key || ''], undefined);
+});
+
+test('getDefaultAiometadataExportOverrides ignores letterboxd catalogs', () => {
+  const inventory = collectAiometadataExportInventory(
+    buildConfig([
+      buildRowWidget({
+        id: 'row-letterboxd',
+        title: 'Letterboxd Row',
+        dataSource: buildAioDataSource({ catalogId: 'movie::letterboxd.nVqt6', catalogType: 'movie' }),
+      }),
+    ])
+  );
+
+  const overrides = getDefaultAiometadataExportOverrides({
+    inventory,
+    currentOverrides: {
+      widgets: {},
+      items: {},
+      catalogs: {},
+    },
+  });
+
+  const letterboxdCatalog = inventory.catalogs.find((catalog) => catalog.source === 'letterboxd');
+  assert.equal(overrides.catalogs[letterboxdCatalog?.key || ''], undefined);
 });

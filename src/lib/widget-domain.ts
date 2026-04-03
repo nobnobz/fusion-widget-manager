@@ -160,7 +160,10 @@ export function findCatalog(catalogs: AIOMetadataCatalog[], id: string): AIOMeta
 
 export function resolveFusionCatalogType(catalogId: string, currentType?: string): string {
   const lowId = catalogId.toLowerCase();
-  if (lowId.startsWith('all::') || lowId.includes('mdblist.upnext')) {
+  if (lowId.startsWith('all::')) {
+    return 'all';
+  }
+  if (lowId.includes('mdblist.upnext')) {
     return 'series';
   }
   if (lowId.startsWith('series::')) return 'series';

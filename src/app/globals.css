@@ -154,6 +154,15 @@
     overflow-x: hidden;
     overscroll-behavior-y: auto;
   }
+
+  /* Prevent iOS Safari from auto-zooming editable text controls on focus. */
+  @media (hover: none) and (pointer: coarse) {
+    input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="color"]),
+    textarea,
+    select {
+      font-size: 16px;
+    }
+  }
 }
 
 @layer utilities {

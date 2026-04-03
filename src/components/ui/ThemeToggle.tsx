@@ -13,7 +13,13 @@ import { cn } from "@/lib/utils";
 
 import { motion, AnimatePresence } from "framer-motion";
 
-export function ThemeToggle({ className }: { className?: string }) {
+export function ThemeToggle({
+  className,
+  trigger,
+}: {
+  className?: string;
+  trigger?: React.ReactNode;
+}) {
   const { setTheme, theme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = React.useState(false);
 
@@ -28,12 +34,16 @@ export function ThemeToggle({ className }: { className?: string }) {
   ];
 
   if (!mounted) {
+    if (trigger) {
+      return <>{trigger}</>;
+    }
+
     return (
       <Button 
         variant="ghost" 
         size="icon" 
         className={cn(
-          "size-10 rounded-2xl bg-white/5 dark:bg-black/20 border border-border/40 opacity-50",
+          "size-10 rounded-xl border border-zinc-200/75 bg-white/72 text-muted-foreground/60 opacity-60 shadow-sm dark:border-white/10 dark:bg-white/[0.04] dark:text-zinc-300/75 dark:shadow-none",
           className
         )}
       >
@@ -43,53 +53,59 @@ export function ThemeToggle({ className }: { className?: string }) {
   }
 
   const isDark = resolvedTheme === "dark";
+  const toggleButtonClass = isDark
+    ? "hover:border-primary/20"
+    : "hover:border-zinc-300/85";
+  const activeIconClass = isDark ? "text-primary" : "text-amber-500";
 
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          className={cn(
-            "size-10 rounded-xl border transition-all group relative overflow-hidden",
-            isDark 
-              ? "bg-indigo-500/[0.08] border-indigo-500/25 hover:bg-indigo-500/15 hover:border-indigo-500/35 text-indigo-400" 
-              : "bg-amber-500/[0.04] border-amber-500/20 hover:bg-amber-500/10 hover:border-amber-500/30 text-amber-500",
-            className
-          )}
-        >
-          <div className="absolute inset-0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000 bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
-          <div className="relative size-5 flex items-center justify-center overflow-hidden">
-            <AnimatePresence mode="wait" initial={false}>
-              {isDark ? (
-                <motion.div
-                  key="moon"
-                  initial={{ y: 20, rotate: 90, opacity: 0 }}
-                  animate={{ y: 0, rotate: 0, opacity: 1 }}
-                  exit={{ y: -20, rotate: -90, opacity: 0 }}
-                  transition={{ duration: 0.3, ease: "backOut" }}
-                  className="text-indigo-400"
-                >
-                  <Moon className="size-5" />
-                </motion.div>
-              ) : (
-                <motion.div
-                  key="sun"
-                  initial={{ y: 20, rotate: 90, opacity: 0 }}
-                  animate={{ y: 0, rotate: 0, opacity: 1 }}
-                  exit={{ y: -20, rotate: -90, opacity: 0 }}
-                  transition={{ duration: 0.3, ease: "backOut" }}
-                  className="text-amber-500"
-                >
-                  <Sun className="size-5" />
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-          <span className="sr-only">Toggle theme</span>
-        </Button>
+        {trigger ? (
+          trigger
+        ) : (
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className={cn(
+              "size-10 rounded-xl border border-zinc-200/75 bg-white/72 text-muted-foreground/72 shadow-sm transition-all group relative overflow-hidden hover:bg-white hover:text-foreground dark:border-white/10 dark:bg-white/[0.04] dark:text-zinc-300/80 dark:shadow-none dark:hover:border-white/14 dark:hover:bg-white/[0.07]",
+              toggleButtonClass,
+              className
+            )}
+          >
+            <div className="absolute inset-0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000 bg-gradient-to-r from-transparent via-primary/12 to-transparent pointer-events-none" />
+            <div className="relative size-5 flex items-center justify-center overflow-hidden">
+              <AnimatePresence mode="wait" initial={false}>
+                {isDark ? (
+                  <motion.div
+                    key="moon"
+                    initial={{ y: 20, rotate: 90, opacity: 0 }}
+                    animate={{ y: 0, rotate: 0, opacity: 1 }}
+                    exit={{ y: -20, rotate: -90, opacity: 0 }}
+                    transition={{ duration: 0.3, ease: "backOut" }}
+                    className={activeIconClass}
+                  >
+                    <Moon className="size-5" />
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key="sun"
+                    initial={{ y: 20, rotate: 90, opacity: 0 }}
+                    animate={{ y: 0, rotate: 0, opacity: 1 }}
+                    exit={{ y: -20, rotate: -90, opacity: 0 }}
+                    transition={{ duration: 0.3, ease: "backOut" }}
+                    className={activeIconClass}
+                  >
+                    <Sun className="size-5" />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+            <span className="sr-only">Toggle theme</span>
+          </Button>
+        )}
       </PopoverTrigger>
-      <PopoverContent align="end" className="w-36 p-1 bg-white/90 dark:bg-black/90 backdrop-blur-xl border-border/40 rounded-2xl ">
+      <PopoverContent align="end" className="w-36 rounded-2xl border border-zinc-200/75 bg-white/96 p-1 shadow-xl shadow-black/10 backdrop-blur-xl dark:border-white/12 dark:bg-zinc-950/94 dark:shadow-black/40">
         <div className="flex flex-col gap-1">
           {themes.map((t) => (
             <button

@@ -10,11 +10,13 @@ import {
 import { convertFusionToOmni, convertOmniToFusion, validateOmniExport } from './omni-converter';
 import {
   extractImportedManifestState,
+  isAIOMetadataDataSource,
   MANIFEST_PLACEHOLDER,
   mergeWidgetLists,
   normalizeFusionConfigDetailed,
   normalizeLoadedState,
   parseFusionConfig,
+  resolveFusionCatalogType,
 } from './widget-domain';
 import type {
   AIOMetadataDataSource,
@@ -105,8 +107,20 @@ function buildConfig(widgets: Widget[]): FusionWidgetsConfig {
   };
 }
 
+function decodeSnapshotValue<T>(value: unknown): T {
+  if (!value || typeof value !== 'object' || !('_data' in value) || typeof value._data !== 'string') {
+    throw new Error('Expected Omni snapshot value with _data.');
+  }
+
+  return JSON.parse(atob(value._data)) as T;
+}
+
 test('parseFusionConfig rejects malformed payloads', () => {
   assert.throws(() => parseFusionConfig({ widgets: [] }), /exportType/);
+});
+
+test('resolveFusionCatalogType keeps all-prefixed catalogs as all', () => {
+  assert.equal(resolveFusionCatalogType('all::trakt.list.29034789', 'movie'), 'all');
 });
 
 test('legacy collection item dataSource normalizes into dataSources', () => {
@@ -525,7 +539,7 @@ test('mixed imports keep AIOMetadata catalogs and native trakt distinct', () => 
                 layout: 'Wide',
                 backgroundImageURL: '',
                 dataSources: [
-                  buildAioDataSource({ catalogId: 'all::trakt.list.29034789', catalogType: 'series' }),
+                  buildAioDataSource({ catalogId: 'all::trakt.list.29034789', catalogType: 'all' }),
                   buildTraktDataSource({ listName: 'Mixed Trakt', listSlug: 'mixed-trakt', traktId: 99 }),
                 ],
               },
@@ -1078,6 +1092,88 @@ test('validateOmniExport makes duplicate subgroup names unique', () => {
   }
   assert.equal(collectionWidgets[0].dataSource.payload.items[0]?.name, 'Netflix');
   assert.equal(collectionWidgets[1].dataSource.payload.items[0]?.name, 'Netflix (Second)');
+});
+
+test('convertFusionToOmni allows the same row catalog in multiple collections', () => {
+  const firstCollection = buildCollectionWidget({
+    id: 'collection-1',
+    title: 'Featured',
+    dataSource: {
+      kind: 'collection',
+      payload: {
+        items: [
+          {
+            id: 'featured-item',
+            name: 'Featured Picks',
+            hideTitle: false,
+            layout: 'Wide',
+            backgroundImageURL: '',
+            dataSources: [buildAioDataSource({ catalogId: 'movie::catalog-one' })],
+          },
+        ],
+      },
+    },
+  });
+
+  const secondCollection = buildCollectionWidget({
+    id: 'collection-2',
+    title: 'Awards',
+    dataSource: {
+      kind: 'collection',
+      payload: {
+        items: [
+          {
+            id: 'awards-item',
+            name: '2026 Awards Season',
+            hideTitle: false,
+            layout: 'Wide',
+            backgroundImageURL: '',
+            dataSources: [buildAioDataSource({ catalogId: 'movie::catalog-one' })],
+          },
+        ],
+      },
+    },
+  });
+
+  assert.doesNotThrow(() =>
+    validateOmniExport(
+      buildConfig([
+        firstCollection,
+        secondCollection,
+        buildRowWidget({ title: 'Catalog One', dataSource: buildAioDataSource({ catalogId: 'movie::catalog-one' }) }),
+      ])
+    )
+  );
+
+  const snapshot = convertFusionToOmni(
+    buildConfig([
+      firstCollection,
+      secondCollection,
+      buildRowWidget({ title: 'Catalog One', dataSource: buildAioDataSource({ catalogId: 'movie::catalog-one' }) }),
+    ])
+  );
+
+  const catalogGroups = decodeSnapshotValue<Record<string, string[]>>(snapshot.values.catalog_groups);
+  assert.deepEqual(catalogGroups['Featured Picks'], ['movie:catalog-one']);
+  assert.deepEqual(catalogGroups['2026 Awards Season'], ['movie:catalog-one']);
+
+  const converted = convertOmniToFusion(snapshot);
+  const collectionWidgets = converted.widgets.filter((widget) => widget.type === 'collection.row');
+  assert.equal(collectionWidgets.length, 2);
+
+  const featuredCollection = collectionWidgets.find((widget) => widget.title === 'Featured');
+  const awardsCollection = collectionWidgets.find((widget) => widget.title === 'Awards');
+  if (featuredCollection?.type !== 'collection.row' || awardsCollection?.type !== 'collection.row') {
+    throw new Error('Expected converted collection widgets.');
+  }
+
+  const featuredDataSource = featuredCollection.dataSource.payload.items[0]?.dataSources[0];
+  const awardsDataSource = awardsCollection.dataSource.payload.items[0]?.dataSources[0];
+
+  assert.ok(isAIOMetadataDataSource(featuredDataSource));
+  assert.ok(isAIOMetadataDataSource(awardsDataSource));
+  assert.equal(featuredDataSource.payload.catalogId, 'movie::catalog-one');
+  assert.equal(awardsDataSource.payload.catalogId, 'movie::catalog-one');
 });
 
 test('validateOmniExport rejects native trakt sources', () => {

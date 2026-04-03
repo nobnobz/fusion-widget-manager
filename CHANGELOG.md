@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.5.0] - 2026-04-03
+### Added
+- **Letterboxd Catalog Support**: Seamlessly integrate and manage Letterboxd-based catalogs directly within the manager.
+- **Custom AIOMetadata Export Sorting**:
+  - Configure catalog sort order (Popularity, Release Date, etc.) directly during export.
+  - Set global refresh intervals for all catalogs at once, removing the need for manual configuration in AIOMetadata.
+
+### Improved
+- **Smart Import & Move Detection**: Dramatically improved reliability when updating existing setups; moved items are now correctly recognized across widgets to prevent duplication.
+- **Mobile Design Evolution**: Comprehensive "Neutral Obsidian" refinement for small screens, including improved touch targets, spacing, and interaction flows.
+- **Stability & Performance**: General optimizations for smoother navigation and faster configuration processing.
+
+### Fixed
+- **Omni Import Compatibility**: Resolved several edge cases where Omni snapshots would fail to import due to structural variations.
+- **UI Refinements**: Numerous minor visual fixes and layout adjustments for a more premium, cohesive experience.
+
+
 ## [0.4.0] - 2026-03-31
 ### Added
 - **Smart Import & Merge System**: Completely redesigned import engine allowing users to merge widgets from external configurations into existing setups.

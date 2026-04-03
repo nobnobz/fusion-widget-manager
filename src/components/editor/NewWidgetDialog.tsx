@@ -18,6 +18,7 @@ import { cn } from '@/lib/utils';
 import { useConfig } from '@/context/ConfigContext';
 import { MANIFEST_PLACEHOLDER } from '@/lib/config-utils';
 import { Widget } from '@/lib/types/widget';
+import { editorActionButtonClass, editorFormSurfaceClass } from './editorSurfaceStyles';
 
 interface NewWidgetDialogProps {
   isOpen: boolean;
@@ -68,113 +69,117 @@ export function NewWidgetDialog({ isOpen, onOpenChange, onCreated }: NewWidgetDi
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[550px] rounded-3xl border border-border/40 bg-background/95 backdrop-blur-2xl  p-0 overflow-hidden">
+      <DialogContent className="sm:max-w-[550px] max-sm:w-[calc(100vw-1rem)] rounded-3xl border border-zinc-200/80 bg-zinc-50/96 p-0 overflow-hidden backdrop-blur-2xl dark:border-white/12 dark:bg-zinc-950/93">
         <DialogTitle className="sr-only">Add New Widget</DialogTitle>
-        <div className="p-8 pt-10 max-sm:p-5 max-sm:pt-6">
-          <DialogHeader className="space-y-6 items-start text-left">
-            <div className="size-14 rounded-xl bg-primary/5 border border-primary/10 flex items-center justify-center text-primary  max-sm:size-12">
-               <Sparkles className="size-7 max-sm:size-6" />
-            </div>
-            <div className="space-y-1">
-              <DialogTitle className="text-2xl font-black tracking-tight max-sm:text-xl">Add New Widget</DialogTitle>
-              <DialogDescription className="text-muted-foreground/60 text-xs font-medium leading-relaxed max-w-[360px] max-sm:text-[11px] max-sm:max-w-none">
-                Create a new widget to organize your Fusion content.
-              </DialogDescription>
-            </div>
-          </DialogHeader>
-
-          <div className="space-y-8 py-8 max-sm:space-y-6 max-sm:py-6">
-            <div className="space-y-2.5">
-              <Label htmlFor="widget-title" className="text-xs font-bold uppercase tracking-widest text-muted-foreground/40 ml-1">Widget Title</Label>
-              <div className="relative group bg-zinc-100 dark:bg-muted/20 rounded-xl border border-zinc-200 dark:border-border/10 focus-within:border-primary/30 transition-all p-1">
-                <Input
-                  data-testid="new-widget-title-input"
-                  id="widget-title"
-                  placeholder="e.g. Recommended for You"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  className="h-12 max-sm:h-11 bg-transparent border-none focus-visible:ring-0 px-4 font-semibold text-base sm:text-sm transition-all text-foreground/85"
-                  autoFocus
-                  onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
-                />
+        <div className="flex max-h-[min(100dvh-1rem,46rem)] min-h-0 flex-col">
+          <div className="min-h-0 flex-1 overflow-y-auto px-8 pb-6 pt-10 max-sm:px-5 max-sm:pb-5 max-sm:pt-6">
+            <DialogHeader className="space-y-5 items-start text-left">
+              <div className="size-14 rounded-xl border border-primary/12 bg-primary/[0.06] flex items-center justify-center text-primary max-sm:size-11">
+                 <Sparkles className="size-7 max-sm:size-[1.375rem]" />
               </div>
-            </div>
+              <div className="space-y-1.5">
+                <DialogTitle className="text-2xl font-black tracking-tight max-sm:text-[1.35rem]">Add New Widget</DialogTitle>
+                <DialogDescription className="max-w-[360px] text-xs font-medium leading-relaxed text-muted-foreground/64 max-sm:max-w-none max-sm:text-[11px]">
+                  Add a new widget to organize your Fusion content.
+                </DialogDescription>
+              </div>
+            </DialogHeader>
 
-            <div className="space-y-2.5">
-              <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground/40 ml-1">Widget Type</Label>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                <button
-                  type="button"
-                  onClick={() => setType('collection.row')}
-                  className={cn(
-                    "flex flex-col items-start gap-4 p-5 max-sm:p-4 rounded-xl border transition-all relative overflow-hidden group/btn min-h-[156px] max-sm:min-h-[132px]",
-                    type === 'collection.row' 
-                      ? "bg-primary/5 border-primary " 
-                      : "bg-muted/10 border-transparent hover:bg-muted/20 hover:border-border/30"
-                  )}
-                >
-                  <div className={cn(
-                    "size-10 rounded-xl flex items-center justify-center transition-colors ",
-                    type === 'collection.row' ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground group-hover/btn:bg-muted/80"
-                  )}>
-                    <Box className="size-5" />
-                  </div>
-                  <div className="text-left">
-                    <p className="font-bold text-sm">Collection</p>
-                    <p className="text-xs text-muted-foreground/60 font-medium leading-tight mt-1">Create collection with different catalogs and custom images.</p>
-                  </div>
-                  {type === 'collection.row' && (
-                    <div className="absolute top-4 right-4 animate-in fade-in zoom-in">
-                      <Check className="size-4 text-primary" />
-                    </div>
-                  )}
-                </button>
+            <div className="space-y-7 py-7 max-sm:space-y-5 max-sm:py-5">
+              <div className="space-y-2.5">
+                <Label htmlFor="widget-title" className="ml-1 text-[10px] font-bold uppercase tracking-[0.16em] text-muted-foreground/48">Widget Title</Label>
+                <div className={cn(editorFormSurfaceClass, "relative group p-1 transition-all focus-within:border-primary/30 dark:focus-within:border-primary/28")}>
+                  <Input
+                    data-testid="new-widget-title-input"
+                    id="widget-title"
+                    placeholder="e.g. Recommended for You"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    className="h-11 bg-transparent border-none px-4 text-base font-semibold text-foreground/85 transition-all focus-visible:ring-0 sm:text-sm"
+                    autoFocus
+                    onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
+                  />
+                </div>
+              </div>
 
-                <button
-                  type="button"
-                  onClick={() => setType('row.classic')}
-                  className={cn(
-                    "flex flex-col items-start gap-4 p-5 max-sm:p-4 rounded-xl border transition-all relative overflow-hidden group/btn min-h-[156px] max-sm:min-h-[132px]",
-                    type === 'row.classic' 
-                      ? "bg-indigo-500/5 border-indigo-500 " 
-                      : "bg-muted/10 border-transparent hover:bg-muted/20 hover:border-border/30"
-                  )}
-                >
-                  <div className={cn(
-                    "size-10 rounded-xl flex items-center justify-center transition-colors ",
-                    type === 'row.classic' ? "bg-indigo-500 text-white" : "bg-muted text-muted-foreground group-hover/btn:bg-muted/80"
-                  )}>
-                    <Layers className="size-5" />
-                  </div>
-                  <div className="text-left">
-                    <p className="font-bold text-sm">Classic Row</p>
-                    <p className="text-xs text-muted-foreground/60 font-medium leading-tight mt-1">Show a single catalog on your homescreen.</p>
-                  </div>
-                  {type === 'row.classic' && (
-                    <div className="absolute top-4 right-4 animate-in fade-in zoom-in">
-                      <Check className="size-4 text-indigo-500" />
+              <div className="space-y-2.5">
+                <Label className="ml-1 text-[10px] font-bold uppercase tracking-[0.16em] text-muted-foreground/48">Widget Type</Label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                  <button
+                    type="button"
+                    onClick={() => setType('collection.row')}
+                    className={cn(
+                      "group/btn relative flex min-h-[132px] flex-col items-start gap-3 overflow-hidden rounded-2xl border p-4 transition-all sm:min-h-[156px] sm:p-5",
+                      type === 'collection.row'
+                        ? "border-primary bg-primary/[0.06]"
+                        : "border-zinc-200/65 bg-zinc-50/58 hover:border-zinc-300/75 hover:bg-zinc-50/82 dark:border-white/8 dark:bg-white/[0.03] dark:hover:border-white/12 dark:hover:bg-white/[0.05]"
+                    )}
+                  >
+                    <div className={cn(
+                      "flex size-10 items-center justify-center rounded-xl transition-colors",
+                      type === 'collection.row' ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground group-hover/btn:bg-muted/80"
+                    )}>
+                      <Box className="size-5" />
                     </div>
-                  )}
-                </button>
+                    <div className="text-left">
+                      <p className="text-sm font-bold">Collection</p>
+                      <p className="mt-1 text-[11px] font-medium leading-tight text-muted-foreground/62">Add a collection with different catalogs and custom images.</p>
+                    </div>
+                    {type === 'collection.row' && (
+                      <div className="absolute right-4 top-4 animate-in fade-in zoom-in">
+                        <Check className="size-4 text-primary" />
+                      </div>
+                    )}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setType('row.classic')}
+                    className={cn(
+                      "group/btn relative flex min-h-[132px] flex-col items-start gap-3 overflow-hidden rounded-2xl border p-4 transition-all sm:min-h-[156px] sm:p-5",
+                      type === 'row.classic'
+                        ? "border-indigo-500 bg-indigo-500/6"
+                        : "border-zinc-200/65 bg-zinc-50/58 hover:border-zinc-300/75 hover:bg-zinc-50/82 dark:border-white/8 dark:bg-white/[0.03] dark:hover:border-white/12 dark:hover:bg-white/[0.05]"
+                    )}
+                  >
+                    <div className={cn(
+                      "flex size-10 items-center justify-center rounded-xl transition-colors",
+                      type === 'row.classic' ? "bg-indigo-500 text-white" : "bg-muted text-muted-foreground group-hover/btn:bg-muted/80"
+                    )}>
+                      <Layers className="size-5" />
+                    </div>
+                    <div className="text-left">
+                      <p className="text-sm font-bold">Classic Row</p>
+                      <p className="mt-1 text-[11px] font-medium leading-tight text-muted-foreground/62">Show a single catalog on your homescreen.</p>
+                    </div>
+                    {type === 'row.classic' && (
+                      <div className="absolute right-4 top-4 animate-in fade-in zoom-in">
+                        <Check className="size-4 text-indigo-500" />
+                      </div>
+                    )}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
 
-          <DialogFooter className="flex-col sm:flex-row gap-3 sm:gap-4 mt-4">
-            <DialogClose asChild>
-              <Button variant="ghost" className="w-full sm:flex-1 h-11 sm:h-12 rounded-xl font-bold uppercase tracking-wider text-xs text-muted-foreground/40 hover:text-muted-foreground hover:bg-muted/30 transition-all">
-                Cancel
+          <div className="px-8 pb-8 pt-1 max-sm:px-5 max-sm:pb-5 max-sm:pt-0">
+            <DialogFooter className="flex-col sm:flex-row gap-3 sm:gap-4">
+              <DialogClose asChild>
+                <Button variant="ghost" className={cn(editorActionButtonClass, "h-11 w-full text-xs text-muted-foreground/52 hover:bg-white/72 hover:text-muted-foreground sm:h-12 sm:flex-1 dark:hover:bg-white/[0.06]")}>
+                  Cancel
+                </Button>
+              </DialogClose>
+              <Button 
+                data-testid="new-widget-submit"
+                onClick={handleCreate}
+                disabled={!title.trim()}
+                className={cn(editorActionButtonClass, "h-11 w-full text-xs sm:h-12 sm:flex-1")}
+              >
+                Add Widget
               </Button>
-            </DialogClose>
-            <Button 
-              data-testid="new-widget-submit"
-              onClick={handleCreate}
-              disabled={!title.trim()}
-              className="w-full sm:flex-1 h-11 sm:h-12 rounded-xl font-bold uppercase tracking-wider text-xs   transition-all active:scale-95"
-            >
-              Create
-            </Button>
-          </DialogFooter>
+            </DialogFooter>
+          </div>
         </div>
       </DialogContent>
     </Dialog>

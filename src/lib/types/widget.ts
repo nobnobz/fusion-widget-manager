@@ -26,8 +26,12 @@ export interface AiometadataCatalogsOnlyEntry {
   type: string;
   name: string;
   enabled: true;
-  source: 'trakt' | 'mdblist' | 'streaming' | 'simkl';
+  source: 'trakt' | 'mdblist' | 'streaming' | 'simkl' | 'letterboxd';
   displayType?: string;
+  sort?: string;
+  order?: 'asc' | 'desc';
+  sortDirection?: 'asc' | 'desc';
+  cacheTTL?: number;
 }
 
 export interface AiometadataCatalogsOnlyExport {

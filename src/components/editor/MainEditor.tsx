@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
@@ -15,15 +14,25 @@ import {
   Copy,
   Github,
   Heart,
+  Ellipsis,
   ChevronDown,
   Book,
   ClipboardPaste,
   UploadCloud,
+  Moon,
+  Sun,
 } from 'lucide-react';
 import Image from 'next/image';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
+import { useTheme } from 'next-themes';
 import { ManagerSwitcher } from '@/components/ui/ManagerSwitcher';
+import {
+  editorActionButtonClass,
+  editorFooterPrimaryButtonClass,
+  editorFooterSecondaryButtonClass,
+} from './editorSurfaceStyles';
 import LogoImage from '@/../public/branding/clown_logo.png';
+import { convertAiometadataImportToFusion, isAiometadataImportPayload } from '@/lib/aiometadata-import';
 import { convertOmniToFusion } from '@/lib/omni-converter';
 import { shouldPromptForAiometadataManifestSetup } from '@/lib/aiometadata-manifest-detection';
 
@@ -34,19 +43,24 @@ import {
   Dialog,
   DialogContent,
   DialogHeader,
-  DialogTitle,
   DialogDescription,
+  DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog';
 import { NewWidgetDialog } from './NewWidgetDialog';
 import { ImportMergeDialog } from './ImportMergeDialog';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { FusionSetupGuide } from './FusionSetupGuide';
 import {
   fetchTemplateRepository,
   formatTemplateLabel,
   type RepositoryTemplate,
 } from '@/lib/template-repository';
 import { normalizeFusionConfigDetailed } from '@/lib/widget-domain';
+import { copyTextToClipboard, downloadTextFile } from '@/lib/browser-transfer';
+import { getErrorMessage } from '@/lib/error-utils';
+
+type JsonRecord = Record<string, unknown>;
 
 function isHttpUrlInput(value: string): boolean {
   if (!value || /\s/.test(value)) {
@@ -61,7 +75,24 @@ function isHttpUrlInput(value: string): boolean {
   }
 }
 
+function isJsonRecord(value: unknown): value is JsonRecord {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function isOmniSnapshotPayload(value: unknown): value is JsonRecord {
+  return isJsonRecord(value) && 'includedKeys' in value && 'values' in value;
+}
+
+function isFusionWidgetsPayload(value: unknown): value is JsonRecord & { widgets: unknown[] } {
+  return isJsonRecord(value) && value.exportType === 'fusionWidgets' && Array.isArray(value.widgets);
+}
+
+function parseJsonText(input: string): unknown {
+  return JSON.parse(input) as unknown;
+}
+
 export function MainEditor() {
+  const { resolvedTheme } = useTheme();
   const [showManifestModal, setShowManifestModal] = useState(false);
   const [showRestartConfirm, setShowRestartConfirm] = useState(false);
   const [expandedWidgetId, setExpandedWidgetId] = useState<string | null>(null);
@@ -100,6 +131,8 @@ export function MainEditor() {
   const [initialImportJson, setInitialImportJson] = useState<string | undefined>(undefined);
   const [initialImportFileName, setInitialImportFileName] = useState<string | undefined>(undefined);
   const [isImportFocused, setIsImportFocused] = useState(false);
+  const [showWelcomeMobileMenu, setShowWelcomeMobileMenu] = useState(false);
+  const [showEditorMobileMenu, setShowEditorMobileMenu] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const omniFileInputRef = useRef<HTMLInputElement>(null);
@@ -193,7 +226,10 @@ export function MainEditor() {
   const shouldOpenManifestModalForImportedConfig = useCallback((config: unknown) => {
     if (manifestUrl) return false;
     try {
-      const normalized = normalizeFusionConfigDetailed(config, {
+      const normalizedInput = isAiometadataImportPayload(config)
+        ? convertAiometadataImportToFusion(config)
+        : config;
+      const normalized = normalizeFusionConfigDetailed(normalizedInput, {
         sanitize: true,
         allowPartialImport: true,
       });
@@ -204,8 +240,8 @@ export function MainEditor() {
   }, [manifestUrl]);
 
   const importParsedPayload = useCallback(
-    (payload: any, options?: { allowTextareaFallback?: boolean }) => {
-      if (payload?.includedKeys && payload?.values) {
+    (payload: unknown, options?: { allowTextareaFallback?: boolean }) => {
+      if (isOmniSnapshotPayload(payload)) {
         const fusionConfig = convertOmniToFusion(payload);
         applyImportConfig(fusionConfig);
         if (shouldOpenManifestModalForImportedConfig(fusionConfig)) {
@@ -221,11 +257,26 @@ export function MainEditor() {
         return true;
       }
 
-      if (payload?.exportType === 'fusionWidgets' || Array.isArray(payload?.widgets)) {
+      if (isFusionWidgetsPayload(payload)) {
         applyImportConfig(payload);
         if (shouldOpenManifestModalForImportedConfig(payload)) {
           setShowManifestModal(true);
         }
+        return true;
+      }
+
+      if (isAiometadataImportPayload(payload)) {
+        applyImportConfig(payload);
+        if (shouldOpenManifestModalForImportedConfig(payload)) {
+          setShowManifestModal(true);
+        }
+        setAlertDialog({
+          isOpen: true,
+          title: 'AIOMetadata JSON detected',
+          message: 'The AIOMetadata payload has been automatically converted and imported.',
+          variant: 'info',
+          confirmText: 'CONTINUE',
+        });
         return true;
       }
 
@@ -270,9 +321,9 @@ export function MainEditor() {
     try {
       const response = await fetch(selectedTemplateUrl);
       if (!response.ok) throw new Error('Failed to load template');
-      const json = await response.json();
+      const json = await response.json() as unknown;
 
-      if (json.exportType === 'fusionWidgets' || Array.isArray(json.widgets)) {
+      if (isFusionWidgetsPayload(json)) {
         if (widgets.length === 0) {
           applyImportConfig(json);
           if (shouldOpenManifestModalForImportedConfig(json)) {
@@ -296,13 +347,13 @@ export function MainEditor() {
           setShowImportMergeDialog(true);
         }
       }
-    } catch {
+    } catch (error) {
         setAlertDialog({
           isOpen: true,
           title: 'Loading Failed',
-        message: 'Could not load the selected UME template.',
-        variant: 'danger'
-      });
+          message: getErrorMessage(error, 'Could not load the selected UME template.'),
+          variant: 'danger'
+        });
     } finally {
       setIsLoadingTemplates(false);
     }
@@ -327,16 +378,16 @@ export function MainEditor() {
     const reader = new FileReader();
     reader.onload = (event) => {
       try {
-        const json = JSON.parse(event.target?.result as string);
+        const json = parseJsonText(event.target?.result as string);
         const fusionConfig = convertOmniToFusion(json);
         setInitialImportJson(JSON.stringify(fusionConfig, null, 2));
         setInitialImportFileName(`Converted: ${file.name}`);
         setShowImportMergeDialog(true);
-      } catch {
+      } catch (error) {
         setAlertDialog({
           isOpen: true,
           title: 'Conversion Failed',
-          message: 'The Omni JSON could not be converted.',
+          message: getErrorMessage(error, 'The Omni JSON could not be converted.'),
           variant: 'danger'
         });
       }
@@ -368,16 +419,16 @@ export function MainEditor() {
       reader.onload = (event) => {
         try {
           const content = event.target?.result as string;
-          const imported = importParsedPayload(JSON.parse(content), { allowTextareaFallback: true });
+          const imported = importParsedPayload(parseJsonText(content), { allowTextareaFallback: true });
 
           if (!imported) {
             setPastedJson(content);
           }
-        } catch {
+        } catch (error) {
           setAlertDialog({
             isOpen: true,
             title: 'Invalid File',
-            message: 'The file does not contain valid JSON.',
+            message: getErrorMessage(error, 'The file does not contain valid JSON.'),
             variant: 'danger'
           });
         }
@@ -394,16 +445,16 @@ export function MainEditor() {
       try {
         const response = await fetch(trimmedInput);
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        const json = await response.json();
+        const json = await response.json() as unknown;
         setInitialImportJson(JSON.stringify(json, null, 2));
         setInitialImportFileName('Imported from URL');
         setShowImportMergeDialog(true);
         setPastedJson('');
-      } catch (err: any) {
+      } catch (error) {
         setAlertDialog({
           isOpen: true,
           title: 'URL Load Failed',
-          message: err.message || 'Could not fetch JSON from the provided URL.',
+          message: getErrorMessage(error, 'Could not fetch JSON from the provided URL.'),
           variant: 'danger'
         });
       }
@@ -412,14 +463,14 @@ export function MainEditor() {
 
     if (widgets.length === 0) {
       try {
-        const parsed = JSON.parse(trimmedInput);
+        const parsed = parseJsonText(trimmedInput);
         applyImportConfig(parsed);
         setPastedJson('');
-      } catch (err: any) {
+      } catch (error) {
         setAlertDialog({
           isOpen: true,
           title: 'Invalid JSON',
-          message: err.message || 'The pasted content is not a valid JSON structure.',
+          message: getErrorMessage(error, 'The pasted content is not a valid JSON structure.'),
           variant: 'danger'
         });
       }
@@ -438,22 +489,19 @@ export function MainEditor() {
     try {
       const response = await fetch(template.rawUrl);
       if (!response.ok) throw new Error('Download failed');
-      const json = await response.json();
-      
-      // Force JSON download for iOS compatibility
-      const blob = new Blob([JSON.stringify(json, null, 2)], { type: 'application/json' });
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      
-      link.download = template.filename.endsWith('.json') ? template.filename : `${template.filename}.json`;
-      
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
+      const json = await response.json() as unknown;
+
+      downloadTextFile(
+        JSON.stringify(json, null, 2),
+        template.filename.endsWith('.json') ? template.filename : `${template.filename}.json`
+      );
     } catch (error) {
-      console.error('Error downloading template:', error);
+      setAlertDialog({
+        isOpen: true,
+        title: 'Download Failed',
+        message: getErrorMessage(error, 'The selected template could not be downloaded.'),
+        variant: 'danger',
+      });
     }
   };
 
@@ -471,7 +519,7 @@ export function MainEditor() {
     if (!aiostreamsTemplate?.rawUrl) return;
 
     try {
-      await navigator.clipboard.writeText(aiostreamsTemplate.rawUrl);
+      await copyTextToClipboard(aiostreamsTemplate.rawUrl);
       setAlertDialog({
         isOpen: true,
         title: 'URL Copied',
@@ -491,7 +539,18 @@ export function MainEditor() {
     }
   };
 
+  const openSupportLink = () => {
+    window.open('https://ko-fi.com/botbidraiser', '_blank', 'noopener,noreferrer');
+  };
+
   const selectedTemplate = githubTemplates.find((template) => template.rawUrl === selectedTemplateUrl);
+  const mobileHeaderShellClass = "rounded-[1.45rem] border border-zinc-200/80 bg-white/82 px-3.5 py-2.5 shadow-[0_16px_42px_-28px_rgba(15,23,42,0.38)] backdrop-blur-xl dark:border-white/12 dark:bg-zinc-950/84 dark:shadow-[0_20px_46px_-34px_rgba(0,0,0,0.9)]";
+  const mobileHeaderActionClass = "size-9 rounded-[1rem] border border-zinc-200/80 bg-white/76 text-muted-foreground/72 shadow-sm transition-all hover:border-primary/20 hover:bg-white hover:text-foreground dark:border-white/10 dark:bg-white/[0.045] dark:text-zinc-300/80 dark:shadow-none dark:hover:border-white/14 dark:hover:bg-white/[0.075]";
+  const mobileHeaderMenuButtonClass = "flex w-full items-center gap-3 rounded-2xl border border-transparent px-3.5 py-3 text-left text-[12px] font-bold tracking-tight text-foreground/80 transition-all hover:border-primary/10 hover:bg-primary/[0.06] hover:text-primary dark:text-zinc-200/84 dark:hover:bg-white/[0.055]";
+  const mobileHeaderMenuMetaClass = "flex min-w-0 flex-col";
+  const mobileHeaderMenuIconClass = "flex size-9 shrink-0 items-center justify-center rounded-[1rem] border border-zinc-200/70 bg-white/80 text-muted-foreground/72 shadow-sm dark:border-white/10 dark:bg-white/[0.045] dark:text-zinc-300/80 dark:shadow-none";
+  const mobileHeaderMenuTitleClass = "text-[12px] font-bold tracking-tight text-foreground/80 dark:text-zinc-200/84";
+  const MobileThemeIcon = resolvedTheme === 'dark' ? Moon : Sun;
 
   const openManifestModal = useCallback(() => {
     setShowManifestModal(true);
@@ -519,6 +578,7 @@ export function MainEditor() {
             <ManagerSwitcher currentManager="fusion" className="h-9 px-3 text-[13px]" />
             <div className="w-px h-4 bg-border/45 mx-0.5" />
             <Button
+              data-testid="open-setup-guide"
               variant="ghost"
               size="icon"
               className="size-9 rounded-xl hover:bg-primary/10 hover:text-primary transition-all overflow-hidden"
@@ -531,13 +591,16 @@ export function MainEditor() {
               variant="ghost"
               size="icon"
               className="size-9 rounded-xl hover:bg-red-500/10 hover:text-red-500 transition-all overflow-hidden"
-              onClick={() => window.open('https://ko-fi.com/botbidraiser', '_blank')}
+              onClick={openSupportLink}
               title="Support Me"
             >
               <Heart className="size-4.5" />
             </Button>
             <div className="w-px h-4 bg-border/45 mx-0.5" />
             <ThemeToggle className="size-9 rounded-xl" />
+            <Button variant="ghost" size="icon" className="size-9 rounded-xl hover:bg-zinc-500/10 hover:text-zinc-600 transition-all overflow-hidden dark:hover:text-zinc-300" onClick={() => setShowRestartConfirm(true)} title="Back to Start">
+              <RotateCcw className="size-4" />
+            </Button>
           </div>
 
           {/* Branding Section */}
@@ -571,7 +634,7 @@ export function MainEditor() {
                 <Button
                   type="button"
                   variant="ghost"
-                  className="col-span-1 h-10 sm:h-[2.2rem] rounded-xl border border-border/65 bg-background/65 hover:border-primary/35 hover:bg-primary/[0.04] transition-all font-bold uppercase tracking-[0.14em] text-[9px] px-2 sm:px-3 text-muted-foreground/68 hover:text-primary whitespace-nowrap shrink-0 justify-center"
+                  className={cn(editorActionButtonClass, "col-span-1 h-10 sm:h-[2.2rem] border border-border/65 bg-background/65 hover:border-primary/35 hover:bg-primary/[0.04] text-[9px] px-2 sm:px-3 text-muted-foreground/68 hover:text-primary whitespace-nowrap shrink-0 justify-center")}
                   onClick={handleDownloadMetadata}
                   disabled={isLoadingTemplates || (!aiometadataTemplate && !aiometadataCatalogsOnlyTemplate)}
                 >
@@ -581,7 +644,7 @@ export function MainEditor() {
                 <Button
                   type="button"
                   variant="ghost"
-                  className="col-span-1 h-10 sm:h-[2.2rem] rounded-xl border border-border/65 bg-background/65 hover:border-primary/35 hover:bg-primary/[0.04] transition-all font-bold uppercase tracking-[0.14em] text-[9px] px-2 sm:px-3 text-muted-foreground/68 hover:text-primary whitespace-nowrap shrink-0 justify-center"
+                  className={cn(editorActionButtonClass, "col-span-1 h-10 sm:h-[2.2rem] border border-border/65 bg-background/65 hover:border-primary/35 hover:bg-primary/[0.04] text-[9px] px-2 sm:px-3 text-muted-foreground/68 hover:text-primary whitespace-nowrap shrink-0 justify-center")}
                   onClick={handleDownloadAiostreams}
                   disabled={isLoadingTemplates || !aiostreamsTemplate}
                 >
@@ -591,7 +654,7 @@ export function MainEditor() {
                 <Button
                   type="button"
                   variant="ghost"
-                  className="col-span-2 sm:col-span-1 h-10 sm:h-[2.2rem] rounded-xl border border-primary/20 bg-primary/5 hover:border-primary/40 hover:bg-primary/10 transition-all font-bold uppercase tracking-[0.14em] text-[10px] sm:text-[9px] px-3.5 sm:px-3 text-primary whitespace-nowrap shrink-0 justify-center"
+                  className={cn(editorActionButtonClass, "col-span-2 sm:col-span-1 h-10 sm:h-[2.2rem] border border-primary/20 bg-primary/5 hover:border-primary/40 hover:bg-primary/10 text-[10px] sm:text-[9px] px-3.5 sm:px-3 text-primary whitespace-nowrap shrink-0 justify-center")}
                   onClick={() => omniFileInputRef.current?.click()}
                 >
                   <FileJson2 className="size-3.5 mr-2" />
@@ -617,7 +680,7 @@ export function MainEditor() {
                 onBlur={() => setIsImportFocused(false)}
                 placeholder={isImportFocused ? "Paste JSON payload here..." : (isDraggingFile ? "Drop your JSON file here!" : "Paste your Fusion widget export, a JSON URL, or drag & drop a file here...")}
                 className={cn(
-                  "min-h-[200px] max-sm:min-h-[100px] pt-32 max-sm:pt-28 pb-10 max-sm:pb-5 font-mono text-base sm:text-[13px] max-sm:text-[11px] bg-white/40 dark:bg-white/[0.03] border-2 border-dashed border-zinc-200/80 dark:border-white/10 rounded-xl max-sm:rounded-xl px-10 max-sm:px-5 text-center focus:text-left focus-visible:ring-primary/20 transition-all leading-relaxed placeholder:text-center focus:placeholder:text-left placeholder:text-muted-foreground/60 placeholder:font-sans resize-none overflow-hidden backdrop-blur-sm",
+                  "min-h-[200px] max-sm:min-h-[100px] pt-32 max-sm:pt-28 pb-10 max-sm:pb-5 font-mono text-base sm:text-[13px] max-sm:text-[11px] bg-white/40 dark:bg-white/[0.03] border-2 border-dashed border-zinc-200/80 dark:border-white/10 rounded-3xl max-sm:rounded-2xl px-10 max-sm:px-5 text-center focus:text-left focus-visible:ring-primary/20 transition-all leading-relaxed placeholder:text-center focus:placeholder:text-left placeholder:text-muted-foreground/60 placeholder:font-sans resize-none overflow-hidden backdrop-blur-sm",
                   "hover:bg-white/60 dark:hover:bg-white/[0.05] hover:border-primary/40",
                   isDraggingFile && "border-primary bg-primary/5 ring-8 ring-primary/5 scale-[1.01]"
                 )}
@@ -644,7 +707,7 @@ export function MainEditor() {
                   data-testid="welcome-load-configuration"
                   onClick={handlePasteImport}
                   size="lg"
-                  className="h-11 sm:h-[3.05rem] w-full sm:min-w-[224px] rounded-xl sm:rounded-xl font-black uppercase tracking-[0.14em] text-[11px] sm:text-[10px] bg-primary hover:bg-primary/90 hover:scale-[1.01] active:scale-[0.98] transition-all overflow-hidden group/load shadow-md shadow-primary/10"
+                  className={cn(editorActionButtonClass, "h-11 sm:h-[3.05rem] w-full sm:min-w-[224px] text-[11px] sm:text-[10px] bg-primary hover:bg-primary/90 hover:scale-[1.01] overflow-hidden group/load shadow-md shadow-primary/10")}
                 >
                   <ClipboardPaste className="size-4 sm:size-5 mr-3 shrink-0" />
                   Load Configuration
@@ -652,7 +715,7 @@ export function MainEditor() {
               ) : (
                 <Button
                   data-testid="welcome-create-widget-button"
-                  className="h-11 sm:h-[3.05rem] w-full sm:min-w-[224px] rounded-xl sm:rounded-xl font-black uppercase tracking-[0.14em] text-[11px] sm:text-[10px] bg-primary hover:bg-primary/95 hover:scale-[1.01] active:scale-[0.98] transition-all shadow-md shadow-primary/10 group/create overflow-hidden"
+                  className={cn(editorActionButtonClass, "h-11 sm:h-[3.05rem] w-full sm:min-w-[224px] text-[11px] sm:text-[10px] bg-primary hover:bg-primary/95 hover:scale-[1.01] shadow-md shadow-primary/10 group/create overflow-hidden")}
                   onClick={handleAddFirstWidget}
                 >
                   <Plus className="size-4 sm:size-5 mr-3 shrink-0" />
@@ -678,14 +741,14 @@ export function MainEditor() {
                   <div className="flex gap-1.5 sm:gap-2 p-1.5 rounded-2xl sm:rounded-3xl border border-zinc-200/60 dark:border-white/5 bg-white/60 dark:bg-card/55 backdrop-blur-sm transition-all focus-within:border-primary/30 h-11 sm:h-[3.25rem] items-center">
                     <Popover open={isTemplatePopoverOpen} onOpenChange={setIsTemplatePopoverOpen}>
                       <PopoverTrigger asChild>
-                        <button className="flex-1 h-full min-w-0 bg-transparent border-none focus:outline-none text-[11px] sm:text-[12px] font-bold pl-3 pr-4 appearance-none cursor-pointer hover:bg-muted/10 rounded-xl transition-all text-left flex items-center justify-between group/select">
+                        <button className="flex-1 h-full min-w-0 bg-transparent border-none focus:outline-none text-[11px] sm:text-[12px] font-bold pl-3 pr-4 appearance-none cursor-pointer hover:bg-muted/10 rounded-2xl transition-all text-left flex items-center justify-between group/select">
                           <span className="truncate">
                             {selectedTemplate ? formatTemplateLabel('UME Fusion Template', selectedTemplate) : 'Select Template...'}
                           </span>
                           <ChevronDown className={cn("size-3.5 text-muted-foreground/50 group-hover/select:text-primary transition-all shrink-0", isTemplatePopoverOpen && "rotate-180")} />
                         </button>
                       </PopoverTrigger>
-                      <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-1 rounded-xl border-border/40 bg-card/95 backdrop-blur-xl " align="start">
+                      <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-1 rounded-2xl border-border/40 bg-card/95 backdrop-blur-xl " align="start">
                         <div className="flex flex-col gap-0.5 max-h-[160px] overflow-y-auto pr-1">
                           {githubTemplates.map((template) => (
                             <button
@@ -695,7 +758,7 @@ export function MainEditor() {
                                 setIsTemplatePopoverOpen(false);
                               }}
                               className={cn(
-                                "w-full px-4 py-3 rounded-xl text-[12px] font-bold text-left transition-all flex items-center justify-between group active:scale-[0.98]",
+                                "w-full px-4 py-3 rounded-2xl text-[12px] font-bold text-left transition-all flex items-center justify-between group active:scale-[0.98]",
                                 selectedTemplateUrl === template.rawUrl 
                                   ? "bg-primary/10 text-primary" 
                                   : "hover:bg-muted text-foreground/80 hover:text-foreground"
@@ -713,14 +776,14 @@ export function MainEditor() {
                       disabled={isLoadingTemplates || !selectedTemplateUrl}
                       size="sm"
                       data-testid="welcome-load-template"
-                      className="h-11 sm:h-full min-w-[90px] sm:min-w-[120px] px-4 sm:px-6 rounded-xl font-black uppercase tracking-[0.14em] text-[11px] sm:text-[10px] bg-primary hover:bg-primary/90 transition-all shadow-md shadow-primary/10"
+                      className={cn(editorActionButtonClass, "h-11 sm:h-full min-w-[90px] sm:min-w-[120px] px-4 sm:px-6 text-[11px] sm:text-[10px] bg-primary hover:bg-primary/90 shadow-md shadow-primary/10")}
                     >
                       {isLoadingTemplates ? <RotateCcw className="size-4 animate-spin" /> : <><Download className="size-4 mr-2" />Load</>}
                     </Button>
                   </div>
                 </div>
               ) : (
-                <Button variant="ghost" className="h-12 w-full max-w-sm rounded-xl border border-dashed border-border/60 bg-muted/10" disabled={isLoadingTemplates}>
+                <Button variant="ghost" className="h-12 w-full max-w-sm rounded-2xl border border-dashed border-border/60 bg-muted/10" disabled={isLoadingTemplates}>
                   <Github className={cn("size-4 text-primary/80", isLoadingTemplates && "animate-pulse")} />
                   <span className="text-[10px] font-bold uppercase tracking-widest text-primary/80 ml-2">
                     {isLoadingTemplates ? 'Fetching Templates...' : 'UME Templates - No templates available'}
@@ -753,54 +816,123 @@ export function MainEditor() {
 
       <main className="flex-1 flex flex-col min-w-0 relative z-10">
         <header className="sticky top-0 z-50 w-full px-3 pt-[calc(env(safe-area-inset-top)+0.75rem)] pb-2 sm:hidden">
-          <div className="rounded-[1.6rem] border border-border/60 bg-background/80 px-4 py-3 backdrop-blur-xl">
+          <div className={mobileHeaderShellClass}>
             {view === 'welcome' ? (
-              <div className="flex items-center justify-between gap-3">
-                <ManagerSwitcher currentManager="fusion" className="h-9 min-w-0 px-3 text-xs shadow-none" />
-                <div className="flex shrink-0 items-center gap-2">
+              <div className="flex items-center justify-between gap-2.5">
+                <ManagerSwitcher currentManager="fusion" className="h-[2.125rem] min-w-0 px-2.5 text-[11px] shadow-none" />
+                <div className="flex shrink-0 items-center gap-1.5">
                   <Button
+                    data-testid="open-setup-guide"
                     variant="ghost" size="icon"
-                    className="size-10 rounded-xl border border-primary/20 bg-primary/5 text-primary/80 hover:bg-primary/10 transition-all"
+                    className={cn(mobileHeaderActionClass, "text-primary/80 hover:text-primary")}
                     onClick={() => setShowHowToUse(true)}
                   >
+                    <span className="sr-only">Open setup guide</span>
                     <Book className="size-4" />
                   </Button>
-                  <Button
-                    variant="ghost" size="icon"
-                    className="size-10 rounded-xl border border-red-500/20 bg-red-500/5 text-red-500/75 hover:bg-red-500/10 transition-all"
-                    onClick={() => window.open('https://ko-fi.com/botbidraiser', '_blank')}
-                  >
-                    <Heart className="size-4 fill-current" />
-                  </Button>
-                  <ThemeToggle className="size-10 rounded-xl transition-all" />
+                  <Popover open={showWelcomeMobileMenu} onOpenChange={setShowWelcomeMobileMenu}>
+                    <PopoverTrigger asChild>
+                      <Button variant="ghost" size="icon" className={mobileHeaderActionClass}>
+                        <Ellipsis className="size-4" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent align="end" className="w-56 rounded-[1.5rem] border border-zinc-200/80 bg-white/97 p-2 shadow-xl shadow-black/10 backdrop-blur-xl dark:border-white/12 dark:bg-zinc-950/94 dark:shadow-black/40">
+                      <ThemeToggle
+                        trigger={
+                          <button type="button" className={mobileHeaderMenuButtonClass}>
+                            <span className={mobileHeaderMenuIconClass}>
+                              <MobileThemeIcon className={cn("size-4", resolvedTheme === 'dark' ? "text-primary" : "text-amber-500")} />
+                            </span>
+                            <div className={mobileHeaderMenuMetaClass}>
+                              <span className={mobileHeaderMenuTitleClass}>Theme</span>
+                            </div>
+                          </button>
+                        }
+                      />
+                      <button
+                        type="button"
+                        className={mobileHeaderMenuButtonClass}
+                        onClick={() => {
+                          setShowWelcomeMobileMenu(false);
+                          openSupportLink();
+                        }}
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          <span className={mobileHeaderMenuIconClass}>
+                            <Heart className="size-4 shrink-0 text-red-500" />
+                          </span>
+                          <div className={mobileHeaderMenuMetaClass}>
+                            <span className={mobileHeaderMenuTitleClass}>Support My Work</span>
+                          </div>
+                        </div>
+                      </button>
+                    </PopoverContent>
+                  </Popover>
                 </div>
               </div>
             ) : (
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex min-w-0 flex-1 items-center gap-2.5">
-                  <div className="relative size-14 shrink-0 overflow-hidden">
+              <div className="flex items-center justify-between gap-2.5">
+                <div className="flex min-w-0 flex-1 items-center gap-2">
+                  <div className="relative size-12 shrink-0 overflow-hidden">
                     <Image src={LogoImage} alt="Logo" fill className="object-contain" priority />
                   </div>
-                  <div className="flex min-w-0 flex-1 flex-col -space-y-0.5">
-                    <h1 className="truncate text-[14px] font-black leading-none tracking-[-0.03em]">Fusion Widget</h1>
-                    <span className="truncate pt-1 text-[11px] font-black uppercase tracking-[0.18em] text-primary/90 leading-none">Manager</span>
+                  <div className="flex min-w-0 flex-1 flex-col">
+                    <h1 className="truncate text-[13px] font-black leading-none tracking-[-0.03em]">Fusion Widget</h1>
+                    <span className="truncate pt-0.5 text-[10px] font-black uppercase tracking-[0.16em] text-primary/90 leading-none">Manager</span>
                   </div>
                 </div>
                 <div className="flex shrink-0 items-center gap-1.5">
-                  <Button variant="ghost" size="icon" className="size-10 rounded-xl border border-primary/20 bg-primary/5 text-primary/80 transition-all hover:bg-primary/10" onClick={() => setShowHowToUse(true)}>
+                  <Button data-testid="open-setup-guide" variant="ghost" size="icon" className={cn(mobileHeaderActionClass, "text-primary/80 hover:text-primary")} onClick={() => setShowHowToUse(true)}>
+                    <span className="sr-only">Open setup guide</span>
                     <Book className="size-4" />
                   </Button>
                   <Button
-                    variant="ghost" size="icon"
-                    className="size-10 rounded-xl border border-red-500/20 bg-red-500/5 text-red-500/75 hover:bg-red-500/10 transition-all overflow-hidden"
-                    onClick={() => window.open('https://ko-fi.com/botbidraiser', '_blank')}
+                    variant="ghost"
+                    size="icon"
+                    className={mobileHeaderActionClass}
+                    onClick={() => setShowRestartConfirm(true)}
                   >
-                    <Heart className="size-4 fill-current" />
-                  </Button>
-                  <ThemeToggle className="size-10 rounded-xl transition-all" />
-                  <Button variant="ghost" size="icon" className="size-10 rounded-xl border border-zinc-500/10 bg-zinc-500/[0.04] text-zinc-500/80 hover:bg-zinc-500/10 transition-all" onClick={() => setShowRestartConfirm(true)}>
+                    <span className="sr-only">Back to start</span>
                     <RotateCcw className="size-4" />
                   </Button>
+                  <Popover open={showEditorMobileMenu} onOpenChange={setShowEditorMobileMenu}>
+                    <PopoverTrigger asChild>
+                      <Button variant="ghost" size="icon" className={mobileHeaderActionClass}>
+                        <Ellipsis className="size-4" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent align="end" className="w-56 rounded-[1.5rem] border border-zinc-200/80 bg-white/97 p-2 shadow-xl shadow-black/10 backdrop-blur-xl dark:border-white/12 dark:bg-zinc-950/94 dark:shadow-black/40">
+                      <ThemeToggle
+                        trigger={
+                          <button type="button" className={mobileHeaderMenuButtonClass}>
+                            <span className={mobileHeaderMenuIconClass}>
+                              <MobileThemeIcon className={cn("size-4", resolvedTheme === 'dark' ? "text-primary" : "text-amber-500")} />
+                            </span>
+                            <div className={mobileHeaderMenuMetaClass}>
+                              <span className={mobileHeaderMenuTitleClass}>Theme</span>
+                            </div>
+                          </button>
+                        }
+                      />
+                      <button
+                        type="button"
+                        className={mobileHeaderMenuButtonClass}
+                        onClick={() => {
+                          setShowEditorMobileMenu(false);
+                          openSupportLink();
+                        }}
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          <span className={mobileHeaderMenuIconClass}>
+                            <Heart className="size-4 shrink-0 text-red-500" />
+                          </span>
+                          <div className={mobileHeaderMenuMetaClass}>
+                            <span className={mobileHeaderMenuTitleClass}>Support My Work</span>
+                          </div>
+                        </div>
+                      </button>
+                    </PopoverContent>
+                  </Popover>
                 </div>
               </div>
             )}
@@ -821,10 +953,10 @@ export function MainEditor() {
                   </div>
                 </div>
                 <div className="flex shrink-0 items-center gap-1">
-                  <Button variant="ghost" size="sm" className="h-10 px-4 rounded-xl border border-primary/10 bg-primary/[0.04] text-[10px] font-black uppercase tracking-wider text-primary/80 hover:bg-primary/10 transition-all overflow-hidden" onClick={() => setShowHowToUse(true)}>
+                  <Button data-testid="open-setup-guide" variant="ghost" size="sm" className={cn(editorActionButtonClass, "h-10 px-4 border border-primary/10 bg-primary/[0.04] text-[10px] text-primary/80 hover:bg-primary/10 overflow-hidden")} onClick={() => setShowHowToUse(true)}>
                     <Book className="size-3.5 mr-2" />How To Use
                   </Button>
-                  <Button variant="ghost" size="sm" className="h-10 px-4 rounded-xl border border-red-500/10 bg-red-500/[0.04] text-[10px] font-black uppercase tracking-wider text-red-500/80 hover:bg-red-500/10 transition-all overflow-hidden" onClick={() => window.open('https://ko-fi.com/botbidraiser', '_blank')}>
+                  <Button variant="ghost" size="sm" className={cn(editorActionButtonClass, "h-10 px-4 border border-red-500/10 bg-red-500/[0.04] text-[10px] text-red-500/80 hover:bg-red-500/10 overflow-hidden")} onClick={openSupportLink}>
                     <Heart className="size-3.5 mr-2 fill-current" />Support Me
                   </Button>
                   <div className="w-[1px] h-4 bg-border mx-2" />
@@ -846,7 +978,7 @@ export function MainEditor() {
           </a>
           <div className="flex flex-col items-center gap-1 opacity-45">
             <div className="flex items-center gap-2 text-[9.5px] font-mono tracking-[0.2em] font-medium uppercase text-muted-foreground/80">
-              <span>V0.4.0</span><span className="size-1 rounded-full bg-foreground/20" /><span>BY BOT-BID-RAISER</span>
+              <span>V0.5.0</span><span className="size-1 rounded-full bg-foreground/20" /><span>BY BOT-BID-RAISER</span>
             </div>
             <div className="text-[8.5px] font-mono tracking-[0.3em] uppercase opacity-75 text-foreground/80">BUILT WITH ANTIGRAVITY</div>
           </div>
@@ -887,7 +1019,7 @@ export function MainEditor() {
             <div className="mt-8 grid gap-3 max-sm:mt-6">
               {[aiometadataTemplate, aiometadataCatalogsOnlyTemplate].map((t, i) => (
                 <Button
-                  key={i} variant="outline" className="h-auto min-h-[5.25rem] w-full rounded-xl border-border/50 bg-background/55 px-4 py-3 text-left transition-all hover:bg-primary/[0.04]"
+                  key={i} variant="outline" className="h-auto min-h-[5.25rem] w-full rounded-2xl border-border/50 bg-background/55 px-4 py-3 text-left transition-all hover:bg-primary/[0.04]"
                   onClick={async () => { await downloadTemplateFile(t); setShowAiometadataActions(false); }} disabled={!t}
                 >
                   <div className="flex w-full items-center gap-3">
@@ -912,46 +1044,21 @@ export function MainEditor() {
                 <DialogDescription className="text-muted-foreground/60 text-xs font-medium">Choose to copy the URL or download the file directly.</DialogDescription>
               </div>
             </DialogHeader>
-            <DialogFooter className="flex-col gap-3 mt-8">
-              <Button variant="outline" className="h-11 rounded-xl font-bold uppercase tracking-wider text-xs" onClick={handleCopyAiostreamsUrl} disabled={!aiostreamsTemplate?.rawUrl}><Copy className="size-4 mr-2" />Copy URL</Button>
-              <Button className="h-11 rounded-xl font-bold uppercase tracking-wider text-xs" onClick={async () => { await downloadTemplateFile(aiostreamsTemplate); setShowAiostreamsActions(false); }} disabled={!aiostreamsTemplate}><Download className="size-4 mr-2" />Download</Button>
+            <DialogFooter className="mt-6 flex-col gap-2.5">
+              <Button variant="outline" className={cn(editorActionButtonClass, editorFooterSecondaryButtonClass)} onClick={handleCopyAiostreamsUrl} disabled={!aiostreamsTemplate?.rawUrl}><Copy className="size-4 mr-2" />Copy URL</Button>
+              <Button className={cn(editorActionButtonClass, editorFooterPrimaryButtonClass)} onClick={async () => { await downloadTemplateFile(aiostreamsTemplate); setShowAiostreamsActions(false); }} disabled={!aiostreamsTemplate}><Download className="size-4 mr-2" />Download</Button>
             </DialogFooter>
           </div>
         </DialogContent>
       </Dialog>
 
-      <Dialog open={showHowToUse} onOpenChange={setShowHowToUse}>
-        <DialogContent className="max-w-2xl bg-white/95 dark:bg-black/90 backdrop-blur-2xl border-border/40 rounded-3xl p-0 overflow-hidden">
-          <DialogTitle className="sr-only">How To Use</DialogTitle>
-          <div className="max-h-[85vh] overflow-y-auto custom-scrollbar p-8 pt-10 max-sm:p-5 text-left">
-            <DialogHeader className="space-y-6 items-start mb-8">
-              <div className="size-14 rounded-2xl bg-primary/5 border border-primary/10 flex items-center justify-center text-primary"><Book className="size-7" /></div>
-              <div className="space-y-1">
-                <DialogTitle className="text-2xl font-black tracking-tight">How To Use</DialogTitle>
-                <DialogDescription className="text-muted-foreground/60 text-xs font-medium">Step-by-step setup for Fusion Widget Manager.</DialogDescription>
-              </div>
-            </DialogHeader>
-            <div className="space-y-3.5">
-              {[
-                { t: 'AIOMetadata Setup', d: 'Download template, upload to AIOMetadata, add addon to Fusion.', n: 'Add MDBList API key in AIOMetadata.' },
-                { t: 'Import Configuration', d: 'Drag in Omni/Fusion snapshot or start from scratch.' },
-                { t: 'Sync Catalogs', d: 'Paste your AIOMetadata Manifest URL when prompted.' },
-                { t: 'Personalize & Export', d: 'Edit widgets, then use Export and Copy to clipboard.', n: 'Paste JSON in Fusion under Widgets -> Import.' }
-              ].map((s, i) => (
-                <section key={i} className="rounded-2xl border border-border/45 bg-background/78 p-5 flex items-start gap-4">
-                  <div className="size-10 shrink-0 flex items-center justify-center rounded-2xl border border-primary/12 bg-primary/10 text-[12px] font-black text-primary">{i+1}</div>
-                  <div className="min-w-0 flex-1 space-y-2">
-                    <h3 className="text-[1.1rem] font-bold tracking-tight">{s.t}</h3>
-                    <p className="text-[14px] font-medium leading-7 text-muted-foreground/78">{s.d}</p>
-                    {s.n && <div className="rounded-2xl border border-blue-500/20 bg-blue-500/[0.1] px-5 py-4 text-[12px] font-semibold text-blue-500/90"><strong>Note:</strong> {s.n}</div>}
-                  </div>
-                </section>
-              ))}
-            </div>
-            <div className="flex justify-end pt-8"><Button className="h-12 px-10 rounded-xl" onClick={() => setShowHowToUse(false)}>Understood</Button></div>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <FusionSetupGuide
+        open={showHowToUse}
+        onOpenChange={setShowHowToUse}
+        aiometadataTemplate={aiometadataTemplate}
+        isTemplateLoading={isLoadingTemplates}
+        onDownloadAiometadataTemplate={() => downloadTemplateFile(aiometadataTemplate)}
+      />
     </div>
   );
 }
