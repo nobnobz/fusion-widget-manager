@@ -1,8 +1,13 @@
-"use client";
-
 import { useMemo, useState, type ReactNode } from 'react';
-import { Check, ChevronDown } from 'lucide-react';
+import { Check, ChevronDown, SlidersHorizontal } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import {
+  Drawer,
+  DrawerContent,
+  DrawerDescription,
+  DrawerHeader,
+  DrawerTitle,
+} from "@/components/ui/drawer"
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
@@ -30,6 +35,7 @@ import {
   editorFooterPrimaryButtonClass,
   editorFooterSecondaryButtonClass,
 } from './editorSurfaceStyles';
+import { useMobile } from '@/hooks/use-mobile';
 
 export type AIOMetadataSettingsDialogTarget =
   | { kind: 'widget'; widgetId: string }
@@ -100,25 +106,17 @@ function getTargetMeta(target: AIOMetadataSettingsDialogTarget | null, inventory
   };
 }
 
-function SourceSection({
-  title,
-  onReset,
-  children,
-}: {
-  title: string;
-  onReset?: () => void;
-  children: ReactNode;
-}) {
+function SourceSection({ title, onReset, children }: { title: string; onReset: () => void; children: ReactNode }) {
   return (
-    <div className="rounded-2xl border border-zinc-200/50 bg-zinc-50/50 p-5 dark:border-white/5 dark:bg-white/[0.035] backdrop-blur-sm shadow-sm relative group/section">
+    <div className="space-y-4 rounded-3xl border border-zinc-200/60 bg-zinc-50/50 p-6 max-sm:p-5 dark:border-white/5 dark:bg-white/[0.02] backdrop-blur-sm shadow-sm relative group/section">
       <div className="flex items-center justify-between border-b border-border/10 pb-2.5 mb-4.5">
-        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/45">
+        <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-foreground/45">
           {title}
         </p>
         {onReset && (
           <button
             onClick={onReset}
-            className="text-[9px] font-black uppercase tracking-widest text-foreground/40 hover:text-red-500/80 transition-all bg-zinc-200/50 dark:bg-white/5 hover:bg-zinc-300 dark:hover:bg-white/10 px-2 py-1 rounded-lg border border-zinc-300/30 dark:border-white/5 active:scale-95"
+            className="text-[9px] font-bold uppercase tracking-widest text-foreground/40 hover:text-red-500/80 transition-all bg-zinc-200/50 dark:bg-white/5 hover:bg-zinc-300 dark:hover:bg-white/10 px-2 py-1 rounded-lg border border-zinc-300/30 dark:border-white/5 active:scale-95"
           >
             Reset
           </button>
@@ -130,7 +128,7 @@ function SourceSection({
 }
 
 function FieldLabel({ children }: { children: ReactNode }) {
-  return <p className="mb-2 text-[10px] font-black uppercase tracking-[0.16em] text-foreground/40">{children}</p>;
+  return <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.16em] text-foreground/40">{children}</p>;
 }
 
 function PickerField({
@@ -150,7 +148,7 @@ function PickerField({
       <PopoverTrigger asChild>
         <button
           type="button"
-          className="flex h-11 w-full items-center justify-between rounded-xl border border-zinc-200/80 bg-white/70 px-4 text-[13.5px] font-bold text-left outline-none transition-all hover:border-primary/40 hover:bg-white dark:border-white/10 dark:bg-zinc-950/40 dark:hover:border-primary/40 dark:hover:bg-zinc-950/60 shadow-sm"
+          className="flex h-10 w-full items-center justify-between rounded-xl border border-zinc-200/80 bg-white/70 px-4 text-[15.5px] sm:text-[14px] font-semibold text-left outline-none transition-all hover:border-primary/40 hover:bg-white dark:border-white/10 dark:bg-zinc-950/40 dark:hover:border-primary/40 dark:hover:bg-zinc-950/60 shadow-sm"
         >
           <span>{selectedOption?.label}</span>
           <ChevronDown className={cn("size-4 text-muted-foreground/50 transition-transform", open && "rotate-180")} />
@@ -173,7 +171,7 @@ function PickerField({
                   setOpen(false);
                 }}
                 className={cn(
-                  "flex w-full items-center justify-between rounded-xl px-4 py-2.5 text-[13px] font-bold transition-all active:scale-[0.98]",
+                  "flex w-full items-center justify-between rounded-xl px-4 py-2.5 text-base sm:text-[13px] font-bold transition-all active:scale-[0.98]",
                   selected 
                     ? "bg-primary text-primary-foreground shadow-md shadow-primary/10" 
                     : "text-foreground/75 hover:bg-muted"
@@ -205,10 +203,10 @@ function CacheTtlField({
       <PopoverTrigger asChild>
         <button
           type="button"
-          className="flex h-11 w-full items-center justify-between rounded-xl border border-zinc-200/80 bg-white/70 px-4 text-left outline-none transition-all hover:border-primary/40 hover:bg-white dark:border-white/10 dark:bg-zinc-950/40 dark:hover:border-primary/40 dark:hover:bg-zinc-950/60 shadow-sm"
+          className="flex h-10 w-full items-center justify-between rounded-xl border border-zinc-200/80 bg-white/70 px-4 text-left outline-none transition-all hover:border-primary/40 hover:bg-white dark:border-white/10 dark:bg-zinc-950/40 dark:hover:border-primary/40 dark:hover:bg-zinc-950/60 shadow-sm"
         >
           <div className="min-w-0">
-            <p className="truncate text-[13.5px] font-black">{formatCacheTtlLabel(value)}</p>
+            <p className="truncate text-[15.5px] sm:text-[14px] font-semibold">{formatCacheTtlLabel(value)}</p>
           </div>
           <ChevronDown className={cn("size-4 shrink-0 text-muted-foreground/50 transition-transform", open && "rotate-180")} />
         </button>
@@ -230,7 +228,7 @@ function CacheTtlField({
                   setOpen(false);
                 }}
                 className={cn(
-                  "flex w-full items-center justify-between rounded-xl px-4 py-2.5 text-left text-[13px] font-bold transition-all active:scale-[0.98]",
+                  "flex w-full items-center justify-between rounded-xl px-4 py-2.5 text-left text-base sm:text-[13px] font-bold transition-all active:scale-[0.98]",
                   selected 
                     ? "bg-primary text-primary-foreground shadow-md shadow-primary/10" 
                     : "text-foreground/75 hover:bg-muted"
@@ -264,6 +262,7 @@ export function AIOMetadataExportSettingsDialog({
   resolvedValues: AIOMetadataSourceScopedOverrideMap;
   onSave: (nextValue: AIOMetadataExportOverrideState) => void;
 }) {
+  const isMobile = useMobile();
   const [draftOverrides, setDraftOverrides] = useState<AIOMetadataExportOverrideState>(cloneOverrides(overrides));
 
   const targetMeta = useMemo(() => getTargetMeta(target, inventory), [inventory, target]);
@@ -331,159 +330,193 @@ export function AIOMetadataExportSettingsDialog({
     onOpenChange(false);
   };
 
+  const Content = (
+    <>
+      <div className="flex-1 overflow-y-auto custom-scrollbar p-8 pt-10 max-sm:px-5 max-sm:pt-6">
+        <DialogHeader className="space-y-6 items-start text-left shrink-0">
+          <div className="size-14 rounded-xl bg-primary/5 border border-primary/10 flex items-center justify-center text-primary max-sm:size-12">
+            <SlidersHorizontal className="size-7 max-sm:size-6" />
+          </div>
+          <div className="space-y-1">
+            <DialogTitle className="text-2xl font-black tracking-tight max-sm:text-[1.35rem] truncate w-full">
+              {targetMeta?.title || 'AIOMetadata Export Settings'}
+            </DialogTitle>
+            <DialogDescription className="text-xs font-medium leading-relaxed text-muted-foreground/64 max-sm:text-[11px]">
+              {targetMeta?.description || 'Adjust source-specific AIOMetadata export settings.'}
+            </DialogDescription>
+          </div>
+        </DialogHeader>
+        
+        <div className="px-8 py-6 space-y-6">
+          {targetMeta?.sources.includes('mdblist') && (
+            <SourceSection title="MDBList" onReset={() => updateSourceOverride('mdblist', undefined)}>
+              <div>
+                <FieldLabel>Sort</FieldLabel>
+                <PickerField
+                  value={(getSourceOverride('mdblist') as AIOMetadataMDBListExportOverride | undefined)?.sort}
+                  onChange={(value) => updateSourceOverride('mdblist', {
+                    ...(getSourceOverride('mdblist') as AIOMetadataMDBListExportOverride | undefined),
+                    sort: value as AIOMetadataMDBListExportOverride['sort'],
+                  })}
+                  options={MDBLIST_SORT_OPTIONS}
+                />
+              </div>
+              <div>
+                <FieldLabel>Order</FieldLabel>
+                <PickerField
+                  value={(getSourceOverride('mdblist') as AIOMetadataMDBListExportOverride | undefined)?.order}
+                  onChange={(value) => updateSourceOverride('mdblist', {
+                    ...(getSourceOverride('mdblist') as AIOMetadataMDBListExportOverride | undefined),
+                    order: value as AIOMetadataMDBListExportOverride['order'],
+                  })}
+                  options={[
+                    { value: 'asc', label: 'Ascending' },
+                    { value: 'desc', label: 'Descending' },
+                  ]}
+                />
+              </div>
+              <div>
+                <FieldLabel>Refresh every</FieldLabel>
+                <CacheTtlField
+                  value={(getSourceOverride('mdblist') as AIOMetadataMDBListExportOverride | undefined)?.cacheTTL}
+                  onChange={(value) => updateSourceOverride('mdblist', {
+                    ...(getSourceOverride('mdblist') as AIOMetadataMDBListExportOverride | undefined),
+                    cacheTTL: value,
+                  })}
+                />
+              </div>
+            </SourceSection>
+          )}
+
+          {targetMeta?.sources.includes('trakt') && (
+            <SourceSection title="Trakt" onReset={() => updateSourceOverride('trakt', undefined)}>
+              <div>
+                <FieldLabel>Sort</FieldLabel>
+                <PickerField
+                  value={(getSourceOverride('trakt') as AIOMetadataTraktExportOverride | undefined)?.sort}
+                  onChange={(value) => updateSourceOverride('trakt', {
+                    ...(getSourceOverride('trakt') as AIOMetadataTraktExportOverride | undefined),
+                    sort: value as AIOMetadataTraktExportOverride['sort'],
+                  })}
+                  options={TRAKT_SORT_OPTIONS}
+                />
+              </div>
+              <div>
+                <FieldLabel>Direction</FieldLabel>
+                <PickerField
+                  value={(getSourceOverride('trakt') as AIOMetadataTraktExportOverride | undefined)?.sortDirection}
+                  onChange={(value) => updateSourceOverride('trakt', {
+                    ...(getSourceOverride('trakt') as AIOMetadataTraktExportOverride | undefined),
+                    sortDirection: value as AIOMetadataTraktExportOverride['sortDirection'],
+                  })}
+                  options={[
+                    { value: 'asc', label: 'Ascending' },
+                    { value: 'desc', label: 'Descending' },
+                  ]}
+                />
+              </div>
+              <div>
+                <FieldLabel>Refresh every</FieldLabel>
+                <CacheTtlField
+                  value={(getSourceOverride('trakt') as AIOMetadataTraktExportOverride | undefined)?.cacheTTL}
+                  onChange={(value) => updateSourceOverride('trakt', {
+                    ...(getSourceOverride('trakt') as AIOMetadataTraktExportOverride | undefined),
+                    cacheTTL: value,
+                  })}
+                />
+              </div>
+            </SourceSection>
+          )}
+
+          {targetMeta?.sources.includes('streaming') && (
+            <SourceSection title="Streaming" onReset={() => updateSourceOverride('streaming', undefined)}>
+              <div>
+                <FieldLabel>Sort</FieldLabel>
+                <PickerField
+                  value={(getSourceOverride('streaming') as AIOMetadataStreamingExportOverride | undefined)?.sort}
+                  onChange={(value) => updateSourceOverride('streaming', {
+                    ...(getSourceOverride('streaming') as AIOMetadataStreamingExportOverride | undefined),
+                    sort: value as AIOMetadataStreamingExportOverride['sort'],
+                  })}
+                  options={STREAMING_SORT_OPTIONS}
+                />
+              </div>
+              <div>
+                <FieldLabel>Direction</FieldLabel>
+                <PickerField
+                  value={(getSourceOverride('streaming') as AIOMetadataStreamingExportOverride | undefined)?.sortDirection}
+                  onChange={(value) => updateSourceOverride('streaming', {
+                    ...(getSourceOverride('streaming') as AIOMetadataStreamingExportOverride | undefined),
+                    sortDirection: value as AIOMetadataStreamingExportOverride['sortDirection'],
+                  })}
+                  options={[
+                    { value: 'asc', label: 'Ascending' },
+                    { value: 'desc', label: 'Descending' },
+                  ]}
+                />
+              </div>
+            </SourceSection>
+          )}
+
+          {targetMeta?.sources.includes('letterboxd') && (
+            <SourceSection title="Letterboxd" onReset={() => updateSourceOverride('letterboxd', undefined)}>
+              <div>
+                <FieldLabel>Refresh every</FieldLabel>
+                <CacheTtlField
+                  value={(getSourceOverride('letterboxd') as AIOMetadataLetterboxdExportOverride | undefined)?.cacheTTL}
+                  onChange={(value) => updateSourceOverride('letterboxd', {
+                    ...(getSourceOverride('letterboxd') as AIOMetadataLetterboxdExportOverride | undefined),
+                    cacheTTL: value,
+                  })}
+                />
+              </div>
+            </SourceSection>
+          )}
+        </div>
+      </div>
+
+      <div className="p-8 pt-4 pb-8 max-sm:px-6 max-sm:pb-8 shrink-0 transition-all border-t border-zinc-200/40 dark:border-white/5 w-full bg-zinc-50/30 dark:bg-zinc-950/10">
+        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 shrink-0">
+          <Button
+            variant="secondary"
+            className={cn(editorActionButtonClass, editorFooterSecondaryButtonClass, "w-full sm:flex-1 h-11 text-[13px] font-bold uppercase tracking-wider")}
+            onClick={() => onOpenChange(false)}
+          >
+            Cancel
+          </Button>
+          <Button 
+             className={cn(editorActionButtonClass, editorFooterPrimaryButtonClass, "w-full sm:flex-1 h-11 text-[13px] font-bold uppercase tracking-wider")} 
+             onClick={handleSave}
+          >
+            Save Changes
+          </Button>
+        </div>
+      </div>
+    </>
+  );
+
+  if (isMobile) {
+    return (
+      <Drawer open={open} onOpenChange={onOpenChange}>
+        <DrawerContent className="max-h-[96dvh] border-zinc-200/80 bg-white dark:border-white/10 dark:bg-zinc-950 rounded-t-[2.5rem]">
+          <DrawerHeader className="sr-only">
+            <DrawerTitle>{targetMeta?.title || 'AIOMetadata Export Settings'}</DrawerTitle>
+            <DrawerDescription>{targetMeta?.description || 'Adjust source-specific AIOMetadata export settings.'}</DrawerDescription>
+          </DrawerHeader>
+          {Content}
+        </DrawerContent>
+      </Drawer>
+    );
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[85vh] flex flex-col p-0 border-zinc-200/80 bg-white/84 backdrop-blur-xl dark:border-white/10 dark:bg-zinc-950/84 sm:max-w-[34rem] rounded-3xl overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-300">
-        <div className="flex-1 overflow-y-auto custom-scrollbar">
-          <div className="p-8 pb-6 border-b border-zinc-200/40 dark:border-white/5">
-            <DialogHeader className="text-left flex flex-col items-start">
-              <DialogTitle className="text-2xl font-black tracking-tight text-foreground">{targetMeta?.title || 'AIOMetadata Export Settings'}</DialogTitle>
-              <DialogDescription className="text-[13.5px] font-medium text-muted-foreground/65 mt-1.5 max-w-sm">{targetMeta?.description || 'Adjust source-specific AIOMetadata export settings.'}</DialogDescription>
-            </DialogHeader>
-          </div>
-          
-          <div className="px-8 py-6 space-y-6">
-            {targetMeta?.sources.includes('mdblist') && (
-              <SourceSection title="MDBList" onReset={() => updateSourceOverride('mdblist', undefined)}>
-                <div>
-                  <FieldLabel>Sort</FieldLabel>
-                  <PickerField
-                    value={(getSourceOverride('mdblist') as AIOMetadataMDBListExportOverride | undefined)?.sort}
-                    onChange={(value) => updateSourceOverride('mdblist', {
-                      ...(getSourceOverride('mdblist') as AIOMetadataMDBListExportOverride | undefined),
-                      sort: value as AIOMetadataMDBListExportOverride['sort'],
-                    })}
-                    options={MDBLIST_SORT_OPTIONS}
-                  />
-                </div>
-                <div>
-                  <FieldLabel>Order</FieldLabel>
-                  <PickerField
-                    value={(getSourceOverride('mdblist') as AIOMetadataMDBListExportOverride | undefined)?.order}
-                    onChange={(value) => updateSourceOverride('mdblist', {
-                      ...(getSourceOverride('mdblist') as AIOMetadataMDBListExportOverride | undefined),
-                      order: value as AIOMetadataMDBListExportOverride['order'],
-                    })}
-                    options={[
-                      { value: 'asc', label: 'Ascending' },
-                      { value: 'desc', label: 'Descending' },
-                    ]}
-                  />
-                </div>
-                <div>
-                  <FieldLabel>Refresh every</FieldLabel>
-                  <CacheTtlField
-                    value={(getSourceOverride('mdblist') as AIOMetadataMDBListExportOverride | undefined)?.cacheTTL}
-                    onChange={(value) => updateSourceOverride('mdblist', {
-                      ...(getSourceOverride('mdblist') as AIOMetadataMDBListExportOverride | undefined),
-                      cacheTTL: value,
-                    })}
-                  />
-                </div>
-              </SourceSection>
-            )}
-
-            {targetMeta?.sources.includes('trakt') && (
-              <SourceSection title="Trakt" onReset={() => updateSourceOverride('trakt', undefined)}>
-                <div>
-                  <FieldLabel>Sort</FieldLabel>
-                  <PickerField
-                    value={(getSourceOverride('trakt') as AIOMetadataTraktExportOverride | undefined)?.sort}
-                    onChange={(value) => updateSourceOverride('trakt', {
-                      ...(getSourceOverride('trakt') as AIOMetadataTraktExportOverride | undefined),
-                      sort: value as AIOMetadataTraktExportOverride['sort'],
-                    })}
-                    options={TRAKT_SORT_OPTIONS}
-                  />
-                </div>
-                <div>
-                  <FieldLabel>Direction</FieldLabel>
-                  <PickerField
-                    value={(getSourceOverride('trakt') as AIOMetadataTraktExportOverride | undefined)?.sortDirection}
-                    onChange={(value) => updateSourceOverride('trakt', {
-                      ...(getSourceOverride('trakt') as AIOMetadataTraktExportOverride | undefined),
-                      sortDirection: value as AIOMetadataTraktExportOverride['sortDirection'],
-                    })}
-                    options={[
-                      { value: 'asc', label: 'Ascending' },
-                      { value: 'desc', label: 'Descending' },
-                    ]}
-                  />
-                </div>
-                <div>
-                  <FieldLabel>Refresh every</FieldLabel>
-                  <CacheTtlField
-                    value={(getSourceOverride('trakt') as AIOMetadataTraktExportOverride | undefined)?.cacheTTL}
-                    onChange={(value) => updateSourceOverride('trakt', {
-                      ...(getSourceOverride('trakt') as AIOMetadataTraktExportOverride | undefined),
-                      cacheTTL: value,
-                    })}
-                  />
-                </div>
-              </SourceSection>
-            )}
-
-            {targetMeta?.sources.includes('streaming') && (
-              <SourceSection title="Streaming" onReset={() => updateSourceOverride('streaming', undefined)}>
-                <div>
-                  <FieldLabel>Sort</FieldLabel>
-                  <PickerField
-                    value={(getSourceOverride('streaming') as AIOMetadataStreamingExportOverride | undefined)?.sort}
-                    onChange={(value) => updateSourceOverride('streaming', {
-                      ...(getSourceOverride('streaming') as AIOMetadataStreamingExportOverride | undefined),
-                      sort: value as AIOMetadataStreamingExportOverride['sort'],
-                    })}
-                    options={STREAMING_SORT_OPTIONS}
-                  />
-                </div>
-                <div>
-                  <FieldLabel>Direction</FieldLabel>
-                  <PickerField
-                    value={(getSourceOverride('streaming') as AIOMetadataStreamingExportOverride | undefined)?.sortDirection}
-                    onChange={(value) => updateSourceOverride('streaming', {
-                      ...(getSourceOverride('streaming') as AIOMetadataStreamingExportOverride | undefined),
-                      sortDirection: value as AIOMetadataStreamingExportOverride['sortDirection'],
-                    })}
-                    options={[
-                      { value: 'asc', label: 'Ascending' },
-                      { value: 'desc', label: 'Descending' },
-                    ]}
-                  />
-                </div>
-              </SourceSection>
-            )}
-
-            {targetMeta?.sources.includes('letterboxd') && (
-              <SourceSection title="Letterboxd" onReset={() => updateSourceOverride('letterboxd', undefined)}>
-                <div>
-                  <FieldLabel>Refresh every</FieldLabel>
-                  <CacheTtlField
-                    value={(getSourceOverride('letterboxd') as AIOMetadataLetterboxdExportOverride | undefined)?.cacheTTL}
-                    onChange={(value) => updateSourceOverride('letterboxd', {
-                      ...(getSourceOverride('letterboxd') as AIOMetadataLetterboxdExportOverride | undefined),
-                      cacheTTL: value,
-                    })}
-                  />
-                </div>
-              </SourceSection>
-            )}
-          </div>
-        </div>
-
-        <div className="p-8 pt-4 shrink-0 transition-all border-t border-zinc-200/40 dark:border-white/5 w-full bg-zinc-50/30 dark:bg-zinc-950/10">
-          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 shrink-0">
-            <Button
-              variant="secondary"
-              className={cn(editorActionButtonClass, editorFooterSecondaryButtonClass, "w-full sm:flex-1 h-11 tracking-wider")}
-              onClick={() => onOpenChange(false)}
-            >
-              Cancel
-            </Button>
-            <Button className={cn(editorActionButtonClass, editorFooterPrimaryButtonClass, "w-full sm:flex-1 h-11 tracking-wider")} onClick={handleSave}>
-              Save
-            </Button>
-          </div>
-        </div>
+        <DialogHeader className="sr-only">
+          <DialogTitle>{targetMeta?.title || 'AIOMetadata Export Settings'}</DialogTitle>
+          <DialogDescription>{targetMeta?.description || 'Adjust source-specific AIOMetadata export settings.'}</DialogDescription>
+        </DialogHeader>
+        {Content}
       </DialogContent>
     </Dialog>
   );

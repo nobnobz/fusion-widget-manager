@@ -429,7 +429,7 @@ export function CollectionItemEditor({
                                     onChange={(e) => setEditName(e.target.value)}
                                     onBlur={handleTitleSubmit}
                                     onKeyDown={handleTitleKeyDown}
-                                    className="mt-1.5 h-9 w-full rounded-xl border-zinc-200/80 bg-white/80 px-3 text-sm font-bold tracking-tight text-foreground/88 focus:border-primary/40 focus-visible:ring-0 dark:border-white/10 dark:bg-zinc-950/45"
+                                    className="mt-1.5 h-9 w-full rounded-xl border-zinc-200/80 bg-white/80 px-3 text-base sm:text-sm font-bold tracking-tight text-foreground/88 focus:border-primary/40 focus-visible:ring-0 dark:border-white/10 dark:bg-zinc-950/45"
                                   />
                                 ) : (
                                   <div className="mt-1 truncate text-[15px] font-bold tracking-tight text-foreground/88">
@@ -589,7 +589,7 @@ export function CollectionItemEditor({
                                       autoFocus
                                       ref={backgroundImageUrlInputRef}
                                       placeholder="Paste Image URL (https://...)" 
-                                      className="h-full min-w-0 flex-1 bg-transparent border-none text-[11.5px] font-bold text-foreground/82 placeholder:text-muted-foreground/36 focus:outline-none focus:ring-0 sm:text-[11px]"
+                                      className="h-full min-w-0 flex-1 bg-transparent border-none text-base font-bold text-foreground/82 placeholder:text-muted-foreground/36 focus:outline-none focus:ring-0 sm:text-[11px]"
                                       value={item.backgroundImageURL || ''}
                                       onChange={(e) => onUpdate({ backgroundImageURL: e.target.value })}
                                     />

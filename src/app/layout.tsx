@@ -54,7 +54,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen text-foreground selection:bg-primary/30 overflow-x-hidden relative`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen text-foreground selection:bg-primary/30 overflow-x-hidden relative`.trim().replace(/\s+/g, ' ')}
       >
         <ThemeProvider
           attribute="class"

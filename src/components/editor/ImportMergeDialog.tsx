@@ -13,6 +13,11 @@ import {
   DialogFooter,
   DialogClose
 } from '@/components/ui/dialog';
+import {
+  Drawer,
+  DrawerContent,
+  DrawerTitle,
+} from "@/components/ui/drawer"
 import { 
   AlertCircle, CheckCircle2, ChevronDown, ChevronRight, 
   CloudUpload, FileJson, FileUp, Image as ImageIcon, RefreshCw, Check, Tag, Trash2, UploadCloud, ArrowRight, Sparkles, ListTree
@@ -39,6 +44,7 @@ import {
   editorFooterSecondaryButtonClass,
   editorPanelClass,
 } from './editorSurfaceStyles';
+import { useMobile } from '@/hooks/use-mobile';
 
 interface ImportMergeDialogProps {
   open: boolean;
@@ -50,9 +56,12 @@ interface ImportMergeDialogProps {
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export function ImportMergeDialog({ open, onOpenChange, initialJson, initialFileName }: ImportMergeDialogProps) {
+  const isMobile = useMobile();
   const { widgets, replaceConfig, manifestUrl, replacePlaceholder, manifestCatalogs } = useConfig();
   
   const [step, setStep] = useState<'input' | 'review' | 'success'>('input');
+  
+  // ... rest of state stays the same ...
   const [jsonInput, setJsonInput] = useState('');
   const [isDragging, setIsDragging] = useState(false);
   const [fileName, setFileName] = useState<string | null>(null);
@@ -780,7 +789,7 @@ export function ImportMergeDialog({ open, onOpenChange, initialJson, initialFile
               <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
                 {/* Type indicator */}
                 <div className={cn(
-                  "px-1.5 py-0.5 rounded-md text-[9px] font-black uppercase tracking-[0.14em] border transition-opacity",
+                  "h-5 px-1.5 rounded-md text-[9px] font-black uppercase tracking-[0.14em] flex items-center justify-center border transition-opacity leading-none",
                   isCollection 
                     ? "bg-sky-500/15 text-sky-700 dark:bg-sky-500/20 dark:text-sky-400 border-sky-500/20 dark:border-sky-500/30" 
                     : "bg-teal-500/15 text-teal-700 dark:bg-teal-500/20 dark:text-teal-400 border-teal-500/20 dark:border-teal-500/30",
@@ -1134,19 +1143,9 @@ export function ImportMergeDialog({ open, onOpenChange, initialJson, initialFile
 
   // ─── Render ──────────────────────────────────────────────────────────────────
 
-  return (
-    <Dialog open={open} onOpenChange={(val) => {
-      onOpenChange(val);
-      if (!val) {
-        resetState();
-      }
-    }}>
-      <DialogContent className={cn(
-        "rounded-3xl border border-border/40 bg-background !shadow-none p-0 flex flex-col max-h-[90vh] transition-all",
-        step === 'review' ? "sm:max-w-[660px] w-full" : "sm:max-w-[550px]"
-      )}>
-        <DialogTitle className="sr-only">{step === 'review' ? 'Review Import' : 'Import from Template'}</DialogTitle>
-        <div className="overflow-y-auto w-full p-8 pt-10 max-sm:p-5 max-sm:pt-6">
+  const Content = (
+    <div className="overflow-y-auto w-full p-8 pt-10 max-sm:p-5 max-sm:pt-6">
+
           <DialogHeader className="space-y-6 items-start text-left shrink-0">
             <div className="size-14 rounded-xl bg-primary/5 border border-primary/10 flex items-center justify-center text-primary  max-sm:size-12">
               <CloudUpload className="size-7 max-sm:size-6" />
@@ -1226,7 +1225,7 @@ export function ImportMergeDialog({ open, onOpenChange, initialJson, initialFile
                     placeholder={isDragging ? "Drop your JSON file here!" : "Paste your Fusion widget export, a JSON URL, or drag & drop a file here..."}
                     className={cn(
                       "min-h-[240px] max-sm:min-h-[140px] pb-10 max-sm:pb-6 transition-all leading-relaxed placeholder:text-muted-foreground/40 placeholder:font-bold placeholder:font-sans resize-none overflow-hidden",
-                      "font-mono text-base sm:text-sm max-sm:text-[10px] bg-zinc-50/50 dark:bg-muted/10 border-2 border-dashed border-zinc-200 dark:border-border/60 rounded-3xl max-sm:rounded-2xl px-10 max-sm:px-6",
+                      "font-mono text-base sm:text-sm bg-zinc-50/50 dark:bg-muted/10 border-2 border-dashed border-zinc-200 dark:border-border/60 rounded-3xl max-sm:rounded-2xl px-10 max-sm:px-6",
                     "hover:bg-zinc-50/50 dark:hover:bg-muted/15 hover:border-primary/30",
                     "focus:border-primary/40 focus:bg-white dark:focus:bg-muted/20 focus-visible:ring-primary/10 focus-visible:ring-offset-0 text-left",
                     !jsonInput.trim() ? "pt-40 max-sm:pt-24" : "pt-10 max-sm:pt-6",
@@ -1635,7 +1634,36 @@ export function ImportMergeDialog({ open, onOpenChange, initialJson, initialFile
               )}
             </DialogFooter>
           </div>
-        </div>
+    </div>
+  );
+
+  if (isMobile) {
+    return (
+      <Drawer open={open} onOpenChange={(val) => {
+        onOpenChange(val);
+        if (!val) resetState();
+      }}>
+        <DrawerContent className="bg-background border-border/40">
+          <DrawerTitle className="sr-only">{step === 'review' ? 'Review Import' : 'Import from Template'}</DrawerTitle>
+          {Content}
+        </DrawerContent>
+      </Drawer>
+    )
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={(val) => {
+      onOpenChange(val);
+      if (!val) {
+        resetState();
+      }
+    }}>
+      <DialogContent className={cn(
+        "rounded-3xl border border-border/40 bg-background !shadow-none p-0 flex flex-col max-h-[90vh] transition-all",
+        step === 'review' ? "sm:max-w-[660px] w-full" : "sm:max-w-[550px]"
+      )}>
+        <DialogTitle className="sr-only">{step === 'review' ? 'Review Import' : 'Import from Template'}</DialogTitle>
+        {Content}
       </DialogContent>
     </Dialog>
   );

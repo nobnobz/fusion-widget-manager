@@ -1,0 +1,108 @@
+
+> fusion-widget-manager@0.4.0 test:e2e
+> playwright test -c playwright.e2e.config.ts
+
+
+Running 20 tests using 4 workers
+
+  ✓   2 [chromium] › test/e2e/editor-core.spec.ts:22:5 › opens the Fusion setup guide with dynamic template and recommended AIOMetadata instances (4.7s)
+  ✓   1 [chromium] › test/e2e/editor-core.spec.ts:46:5 › imports a fixture from the welcome screen and opens export preview (5.2s)
+  ✓   4 [chromium] › test/e2e/editor-core.spec.ts:68:5 › loads the mocked template, syncs the manifest, and creates a widget (5.2s)
+  ✓   3 [chromium] › test/e2e/editor-core.spec.ts:95:5 › merges a partial import and keeps the result after reload (8.6s)
+  ✓   5 [chromium] › test/e2e/editor-core.spec.ts:136:5 › shows the item title visibility toggle inside configuration and preview (5.3s)
+  ✓   7 [chromium] › test/e2e/editor-core.spec.ts:355:5 › applies AIOMetadata export settings only after save and resets unsaved dialog changes (4.9s)
+  -  10 [chromium] › test/e2e/editor-core.spec.ts:420:5 › keeps the setup guide usable on mobile
+  ✓   8 [chromium] › test/e2e/editor-core.spec.ts:384:5 › moves a widget to trash and restores it (3.3s)
+  ✓   9 [chromium] › test/e2e/editor-core.spec.ts:401:5 › reorders widgets through drag and drop on desktop (2.7s)
+  ✓  11 [mobile-chrome] › test/e2e/editor-core.spec.ts:22:5 › opens the Fusion setup guide with dynamic template and recommended AIOMetadata instances (2.5s)
+  ✓  12 [mobile-chrome] › test/e2e/editor-core.spec.ts:46:5 › imports a fixture from the welcome screen and opens export preview (3.3s)
+  ✓  13 [mobile-chrome] › test/e2e/editor-core.spec.ts:68:5 › loads the mocked template, syncs the manifest, and creates a widget (4.1s)
+  ✓  15 [mobile-chrome] › test/e2e/editor-core.spec.ts:136:5 › shows the item title visibility toggle inside configuration and preview (3.7s)
+  ✓  14 [mobile-chrome] › test/e2e/editor-core.spec.ts:95:5 › merges a partial import and keeps the result after reload (6.3s)
+  -  18 [mobile-chrome] › test/e2e/editor-core.spec.ts:384:5 › moves a widget to trash and restores it
+  -  19 [mobile-chrome] › test/e2e/editor-core.spec.ts:401:5 › reorders widgets through drag and drop on desktop
+  ✓  17 [mobile-chrome] › test/e2e/editor-core.spec.ts:355:5 › applies AIOMetadata export settings only after save and resets unsaved dialog changes (3.5s)
+  ✓  20 [mobile-chrome] › test/e2e/editor-core.spec.ts:420:5 › keeps the setup guide usable on mobile (2.0s)
+  ✘  16 [mobile-chrome] › test/e2e/editor-core.spec.ts:236:5 › shows moved items in review and applies cross-widget moves without duplication (13.7s)
+  ✘   6 [chromium] › test/e2e/editor-core.spec.ts:236:5 › shows moved items in review and applies cross-widget moves without duplication (14.7s)
+
+
+  1) [chromium] › test/e2e/editor-core.spec.ts:236:5 › shows moved items in review and applies cross-widget moves without duplication 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoHaveText[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator: getByTestId('success-items-updated')
+    Expected: [32m"1"[39m
+    Timeout: 10000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toHaveText" with timeout 10000ms[22m
+    [2m  - waiting for getByTestId('success-items-updated')[22m
+
+
+      325 |   await page.getByTestId('merge-widgets-submit').click();
+      326 |   await expect(page.getByTestId('success-import-message')).toBeVisible();
+    > 327 |   await expect(page.getByTestId('success-items-updated')).toHaveText('1');
+          |                                                           ^
+      328 |
+      329 |   const result = await page.evaluate(() => {
+      330 |     const raw = window.localStorage.getItem('fusion-widgets-config');
+        at /Users/marvin/.gemini/antigravity/scratch/fusion-widget-manager/test/e2e/editor-core.spec.ts:327:59
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/e2e/editor-core-shows-moved-it-dfcaf-t-moves-without-duplication-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/e2e/editor-core-shows-moved-it-dfcaf-t-moves-without-duplication-chromium/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/e2e/editor-core-shows-moved-it-dfcaf-t-moves-without-duplication-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/e2e/editor-core-shows-moved-it-dfcaf-t-moves-without-duplication-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) [mobile-chrome] › test/e2e/editor-core.spec.ts:236:5 › shows moved items in review and applies cross-widget moves without duplication 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoHaveText[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator: getByTestId('success-items-updated')
+    Expected: [32m"1"[39m
+    Timeout: 10000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toHaveText" with timeout 10000ms[22m
+    [2m  - waiting for getByTestId('success-items-updated')[22m
+
+
+      325 |   await page.getByTestId('merge-widgets-submit').click();
+      326 |   await expect(page.getByTestId('success-import-message')).toBeVisible();
+    > 327 |   await expect(page.getByTestId('success-items-updated')).toHaveText('1');
+          |                                                           ^
+      328 |
+      329 |   const result = await page.evaluate(() => {
+      330 |     const raw = window.localStorage.getItem('fusion-widgets-config');
+        at /Users/marvin/.gemini/antigravity/scratch/fusion-widget-manager/test/e2e/editor-core.spec.ts:327:59
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/e2e/editor-core-shows-moved-it-dfcaf-t-moves-without-duplication-mobile-chrome/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/e2e/editor-core-shows-moved-it-dfcaf-t-moves-without-duplication-mobile-chrome/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/e2e/editor-core-shows-moved-it-dfcaf-t-moves-without-duplication-mobile-chrome/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/e2e/editor-core-shows-moved-it-dfcaf-t-moves-without-duplication-mobile-chrome/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2 failed
+    [chromium] › test/e2e/editor-core.spec.ts:236:5 › shows moved items in review and applies cross-widget moves without duplication 
+    [mobile-chrome] › test/e2e/editor-core.spec.ts:236:5 › shows moved items in review and applies cross-widget moves without duplication 
+  3 skipped
+  15 passed (55.0s)

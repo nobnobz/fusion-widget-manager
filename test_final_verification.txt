@@ -1,0 +1,193 @@
+
+> fusion-widget-manager@0.4.0 test:e2e
+> playwright test -c playwright.e2e.config.ts
+
+
+Running 20 tests using 4 workers
+
+  ✓   4 [chromium] › test/e2e/editor-core.spec.ts:22:5 › opens the Fusion setup guide with dynamic template and recommended AIOMetadata instances (4.9s)
+  ✓   3 [chromium] › test/e2e/editor-core.spec.ts:46:5 › imports a fixture from the welcome screen and opens export preview (5.1s)
+  ✓   2 [chromium] › test/e2e/editor-core.spec.ts:68:5 › loads the mocked template, syncs the manifest, and creates a widget (5.3s)
+  ✓   6 [chromium] › test/e2e/editor-core.spec.ts:228:5 › shows moved items in review and applies cross-widget moves without duplication (4.0s)
+  ✓   7 [chromium] › test/e2e/editor-core.spec.ts:346:5 › applies AIOMetadata export settings only after save and resets unsaved dialog changes (4.3s)
+  ✓   8 [chromium] › test/e2e/editor-core.spec.ts:375:5 › moves a widget to trash and restores it (2.6s)
+  -  10 [chromium] › test/e2e/editor-core.spec.ts:411:5 › keeps the setup guide usable on mobile
+  ✓   9 [chromium] › test/e2e/editor-core.spec.ts:392:5 › reorders widgets through drag and drop on desktop (2.5s)
+  ✘   1 [chromium] › test/e2e/editor-core.spec.ts:95:5 › merges a partial import and keeps the result after reload (15.8s)
+  ✓  11 [mobile-chrome] › test/e2e/editor-core.spec.ts:22:5 › opens the Fusion setup guide with dynamic template and recommended AIOMetadata instances (3.2s)
+  ✓  12 [mobile-chrome] › test/e2e/editor-core.spec.ts:46:5 › imports a fixture from the welcome screen and opens export preview (3.2s)
+  ✓  15 [mobile-chrome] › test/e2e/editor-core.spec.ts:68:5 › loads the mocked template, syncs the manifest, and creates a widget (2.8s)
+  ✓  16 [mobile-chrome] › test/e2e/editor-core.spec.ts:228:5 › shows moved items in review and applies cross-widget moves without duplication (2.4s)
+  ✓  17 [mobile-chrome] › test/e2e/editor-core.spec.ts:346:5 › applies AIOMetadata export settings only after save and resets unsaved dialog changes (2.6s)
+  -  18 [mobile-chrome] › test/e2e/editor-core.spec.ts:375:5 › moves a widget to trash and restores it
+  -  19 [mobile-chrome] › test/e2e/editor-core.spec.ts:392:5 › reorders widgets through drag and drop on desktop
+  ✓  20 [mobile-chrome] › test/e2e/editor-core.spec.ts:411:5 › keeps the setup guide usable on mobile (1.8s)
+  ✘  13 [mobile-chrome] › test/e2e/editor-core.spec.ts:95:5 › merges a partial import and keeps the result after reload (13.4s)
+  ✘   5 [chromium] › test/e2e/editor-core.spec.ts:136:5 › shows the item title visibility toggle inside configuration and preview (15.5s)
+  ✘  14 [mobile-chrome] › test/e2e/editor-core.spec.ts:136:5 › shows the item title visibility toggle inside configuration and preview (1.0m)
+
+
+  1) [chromium] › test/e2e/editor-core.spec.ts:95:5 › merges a partial import and keeps the result after reload 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: getByText(/Added: 1/)
+    Expected: visible
+    Timeout: 10000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 10000ms[22m
+    [2m  - waiting for getByText(/Added: 1/)[22m
+
+
+      108 |
+      109 |   await expect(page.getByText('Import successful!')).toBeVisible();
+    > 110 |   await expect(page.getByText(/Added: 1/)).toBeVisible();
+          |                                            ^
+      111 |
+      112 |   await page.getByTestId('import-dialog-close').click();
+      113 |   await expect(
+        at /Users/marvin/.gemini/antigravity/scratch/fusion-widget-manager/test/e2e/editor-core.spec.ts:110:44
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/e2e/editor-core-merges-a-parti-58983-eps-the-result-after-reload-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/e2e/editor-core-merges-a-parti-58983-eps-the-result-after-reload-chromium/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/e2e/editor-core-merges-a-parti-58983-eps-the-result-after-reload-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/e2e/editor-core-merges-a-parti-58983-eps-the-result-after-reload-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) [chromium] › test/e2e/editor-core.spec.ts:136:5 › shows the item title visibility toggle inside configuration and preview 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: getByText('Title Hidden')
+    Expected: visible
+    Timeout: 10000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 10000ms[22m
+    [2m  - waiting for getByText('Title Hidden')[22m
+
+
+      204 |
+      205 |   await expect(hideTitleSwitch).toHaveAttribute('aria-checked', 'true');
+    > 206 |   await expect(page.getByText('Title Hidden')).toBeVisible();
+          |                                                ^
+      207 |   await expect
+      208 |     .poll(async () => {
+      209 |       return page.evaluate(({ targetWidgetId, targetItemId }: { targetWidgetId: string; targetItemId: string }) => {
+        at /Users/marvin/.gemini/antigravity/scratch/fusion-widget-manager/test/e2e/editor-core.spec.ts:206:48
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/e2e/editor-core-shows-the-item-6876a-e-configuration-and-preview-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/e2e/editor-core-shows-the-item-6876a-e-configuration-and-preview-chromium/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/e2e/editor-core-shows-the-item-6876a-e-configuration-and-preview-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/e2e/editor-core-shows-the-item-6876a-e-configuration-and-preview-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  3) [mobile-chrome] › test/e2e/editor-core.spec.ts:95:5 › merges a partial import and keeps the result after reload 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: getByText(/Added: 1/)
+    Expected: visible
+    Timeout: 10000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 10000ms[22m
+    [2m  - waiting for getByText(/Added: 1/)[22m
+
+
+      108 |
+      109 |   await expect(page.getByText('Import successful!')).toBeVisible();
+    > 110 |   await expect(page.getByText(/Added: 1/)).toBeVisible();
+          |                                            ^
+      111 |
+      112 |   await page.getByTestId('import-dialog-close').click();
+      113 |   await expect(
+        at /Users/marvin/.gemini/antigravity/scratch/fusion-widget-manager/test/e2e/editor-core.spec.ts:110:44
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/e2e/editor-core-merges-a-parti-58983-eps-the-result-after-reload-mobile-chrome/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/e2e/editor-core-merges-a-parti-58983-eps-the-result-after-reload-mobile-chrome/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/e2e/editor-core-merges-a-parti-58983-eps-the-result-after-reload-mobile-chrome/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/e2e/editor-core-merges-a-parti-58983-eps-the-result-after-reload-mobile-chrome/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  4) [mobile-chrome] › test/e2e/editor-core.spec.ts:136:5 › shows the item title visibility toggle inside configuration and preview 
+
+    [31mTest timeout of 60000ms exceeded.[39m
+
+    Error: locator.click: Test timeout of 60000ms exceeded.
+    Call log:
+    [2m  - waiting for getByText('Preview Toggle Item', { exact: true }).first()[22m
+    [2m    - locator resolved to <span class="text-sm font-bold tracking-tight text-foreground/90 truncate">Preview Toggle Item</span>[22m
+    [2m  - attempting click action[22m
+    [2m    2 × waiting for element to be visible, enabled and stable[22m
+    [2m      - element is not visible[22m
+    [2m    - retrying click action[22m
+    [2m    - waiting 20ms[22m
+    [2m    2 × waiting for element to be visible, enabled and stable[22m
+    [2m      - element is not visible[22m
+    [2m    - retrying click action[22m
+    [2m      - waiting 100ms[22m
+    [2m    112 × waiting for element to be visible, enabled and stable[22m
+    [2m        - element is not visible[22m
+    [2m      - retrying click action[22m
+    [2m        - waiting 500ms[22m
+
+
+      191 |
+      192 |   await page.getByTestId(`widget-card-${widgetId}`).click();
+    > 193 |   await page.getByText(itemName, { exact: true }).first().click();
+          |                                                           ^
+      194 |
+      195 |   const hideTitleSwitch = page.getByRole('switch', { name: 'Hide item title' });
+      196 |   if ((await hideTitleSwitch.getAttribute('aria-checked')) === 'true') {
+        at /Users/marvin/.gemini/antigravity/scratch/fusion-widget-manager/test/e2e/editor-core.spec.ts:193:59
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/e2e/editor-core-shows-the-item-6876a-e-configuration-and-preview-mobile-chrome/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/e2e/editor-core-shows-the-item-6876a-e-configuration-and-preview-mobile-chrome/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/e2e/editor-core-shows-the-item-6876a-e-configuration-and-preview-mobile-chrome/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/e2e/editor-core-shows-the-item-6876a-e-configuration-and-preview-mobile-chrome/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  4 failed
+    [chromium] › test/e2e/editor-core.spec.ts:95:5 › merges a partial import and keeps the result after reload 
+    [chromium] › test/e2e/editor-core.spec.ts:136:5 › shows the item title visibility toggle inside configuration and preview 
+    [mobile-chrome] › test/e2e/editor-core.spec.ts:95:5 › merges a partial import and keeps the result after reload 
+    [mobile-chrome] › test/e2e/editor-core.spec.ts:136:5 › shows the item title visibility toggle inside configuration and preview 
+  3 skipped
+  13 passed (1.5m)

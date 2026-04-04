@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.1] - 2026-04-04
+### Improved
+- **Export & Mobile Optimization**: Refined AIOMetadata export workflows and centralized catalog handling for better reliability.
+- **Mobile Usability**: Enhanced responsiveness and layout consistency across various mobile viewports, focusing on premium "Neutral Obsidian" aesthetics.
+- **Maintenance**: General codebase cleanup and stability improvements.
+
+
 ## [0.5.0] - 2026-04-03
 ### Added
 - **Letterboxd Catalog Support**: Seamlessly integrate and manage Letterboxd-based catalogs directly within the manager.

@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useConfig } from '@/context/ConfigContext';
 import { CollectionRowWidget, CollectionItem } from '@/lib/types/widget';
 import { Button } from '@/components/ui/button';
-import { Plus, ListTree, Layers, SortAsc, SortDesc, Pencil } from 'lucide-react';
+import { Plus, ListTree, Layers, SortAsc, SortDesc, Pencil, Trash2 } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
 import { CollectionItemEditor } from './CollectionItemEditor';
@@ -26,7 +26,17 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 
-export function CollectionRowEditor({ widget, searchQuery = "", onRename }: { widget: CollectionRowWidget, searchQuery?: string, onRename?: () => void }) {
+export function CollectionRowEditor({ 
+  widget, 
+  searchQuery = "", 
+  onRename, 
+  onDelete 
+}: { 
+  widget: CollectionRowWidget, 
+  searchQuery?: string, 
+  onRename?: () => void,
+  onDelete?: (e: React.MouseEvent) => void 
+}) {
   const {
     addCollectionItem,
     reorderCollectionItems,
@@ -170,6 +180,18 @@ export function CollectionRowEditor({ widget, searchQuery = "", onRename }: { wi
                     title="Rename Widget"
                   >
                     <Pencil className="size-3.5" />
+                  </Button>
+                )}
+
+                {onDelete && (
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="h-9 w-9 rounded-xl border border-transparent p-0 text-red-500/60 transition-all shrink-0 hover:border-red-500/20 hover:bg-red-500/5 hover:text-red-500 sm:hidden"
+                    onClick={onDelete}
+                    title="Delete Widget"
+                  >
+                    <Trash2 className="size-3.5" />
                   </Button>
                 )}
               </div>

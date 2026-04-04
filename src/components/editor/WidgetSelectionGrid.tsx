@@ -4,9 +4,8 @@ import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useStat
 import { useConfig } from '@/context/ConfigContext';
 import { SortableWidget } from './SortableWidget';
 import { Button } from '@/components/ui/button';
-import { Plus, Download, Check, Copy, Search, FileJson2, Trash2, RotateCcw, Globe, AlertTriangle, Pencil, Info, ChevronRight, SlidersHorizontal, WandSparkles } from 'lucide-react';
+import { Plus, Download, Check, Copy, Search, FileJson2, FileCode, Trash2, RotateCcw, Globe, AlertTriangle, Pencil, Info, ChevronRight, SlidersHorizontal, WandSparkles, XCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Textarea } from '@/components/ui/textarea';
 import {
   Dialog,
   DialogContent,
@@ -18,6 +17,15 @@ import { Input } from '@/components/ui/input';
 import { NewWidgetDialog } from './NewWidgetDialog';
 import { ImportMergeDialog } from './ImportMergeDialog';
 import { ConfirmationDialog } from '@/components/ui/ConfirmationDialog';
+import { useMobile } from '@/hooks/use-mobile';
+import {
+  Drawer,
+  DrawerClose,
+  DrawerContent,
+  DrawerDescription,
+  DrawerHeader,
+  DrawerTitle,
+} from '@/components/ui/drawer';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   collectAiometadataExportInventory,
@@ -79,13 +87,6 @@ interface WidgetSelectionGridProps {
   onExpandedWidgetChange: (id: string | null) => void;
 }
 
-type ExportPreviewStage =
-  | 'aiometadata-catalogs-preview'
-  | 'fusion-needs-invalid-catalog-confirmation'
-  | 'fusion-needs-aiom-sync'
-  | 'fusion-preview'
-  | 'omni-needs-aiom-bridge'
-  | 'omni-ready';
 
 const FUSION_SYNC_REQUIRED_MESSAGE =
   'Sync your AIOMetadata manifest before Fusion export so the AIOMetadata URL can be embedded in your Fusion setup.';
@@ -170,6 +171,7 @@ function WidgetSelectionGridComponent({
   expandedWidgetId,
   onExpandedWidgetChange,
 }: WidgetSelectionGridProps) {
+  const isMobile = useMobile();
   const {
     widgets,
     trash,
@@ -189,6 +191,8 @@ function WidgetSelectionGridComponent({
   } = useConfig();
   const [exportMode, setExportMode] = useState<'fusion' | 'omni' | 'aiometadata'>('fusion');
   const [searchQuery, setSearchQuery] = useState('');
+
+
   const [showPreview, setShowPreview] = useState(false);
   const [showNewWidgetDialog, setShowNewWidgetDialog] = useState(false);
   const [showImportMergeDialog, setShowImportMergeDialog] = useState(false);
@@ -577,28 +581,6 @@ function WidgetSelectionGridComponent({
     [aiometadataInventory.catalogs, isManifestSynced]
   );
 
-  const omniMissingCatalogsExport = useMemo(() => {
-    if (!showPreview) {
-      return null as ReturnType<typeof buildAiometadataCatalogExport> | null;
-    }
-
-    if (isManifestSynced) {
-      return buildAiometadataCatalogExport({
-        inventory: aiometadataInventory,
-        selectedCatalogKeys: aiometadataSelectableCatalogKeys,
-        exportSettingsOverrides: effectiveAiometadataExportOverrides,
-      });
-    }
-
-    return nativeTraktBridgeState.catalogsExport;
-  }, [
-    aiometadataInventory,
-    aiometadataSelectableCatalogKeys,
-    effectiveAiometadataExportOverrides,
-    isManifestSynced,
-    nativeTraktBridgeState.catalogsExport,
-    showPreview,
-  ]);
 
   const aiometadataCatalogMap = useMemo(
     () => new Map(aiometadataInventory.catalogs.map((catalog) => [catalog.key, catalog])),
@@ -710,45 +692,11 @@ function WidgetSelectionGridComponent({
     aiometadataSelectableCatalogKeys,
   ]);
 
-  const selectedAiometadataCatalogCount = useMemo(
-    () => selectedAiometadataCatalogKeys.filter((catalogKey) => aiometadataSelectableCatalogKeys.has(catalogKey)).length,
-    [aiometadataSelectableCatalogKeys, selectedAiometadataCatalogKeys]
-  );
 
 
 
-  const existingAiometadataCatalogCount = useMemo(
-    () => aiometadataInventory.catalogs.filter((catalog) => catalog.isAlreadyInManifest).length,
-    [aiometadataInventory.catalogs]
-  );
 
-  const fullAiometadataSetupDescription = useMemo(() => {
-    if (existingAiometadataCatalogCount > 0) {
-      return `Includes ${existingAiometadataCatalogCount} synced catalogs and exports everything linked in this setup.`;
-    }
 
-    return 'Exports everything linked in this setup.';
-  }, [existingAiometadataCatalogCount]);
-
-  const selectableAiometadataCatalogKeysBySource = useMemo(() => {
-    const grouped = {
-      trakt: [] as string[],
-      mdblist: [] as string[],
-      streaming: [] as string[],
-      simkl: [] as string[],
-      letterboxd: [] as string[],
-    };
-
-    aiometadataInventory.catalogs.forEach((catalog) => {
-      if (!aiometadataSelectableCatalogKeys.has(catalog.key)) {
-        return;
-      }
-
-      grouped[catalog.source].push(catalog.key);
-    });
-
-    return grouped;
-  }, [aiometadataInventory.catalogs, aiometadataSelectableCatalogKeys]);
 
   const isBridgeConfirmed =
     !!nativeTraktBridgeState.fingerprint
@@ -757,43 +705,7 @@ function WidgetSelectionGridComponent({
   const requiresTraktBridgeImport =
     nativeTraktBridgeState.hasNativeTrakt
     && (nativeTraktBridgeState.catalogsExport?.catalogs.length || 0) > 0;
-  const hasCopiedRequiredTraktCatalogs =
-    !!nativeTraktBridgeState.fingerprint
-    && copiedTraktBridgeFingerprint === nativeTraktBridgeState.fingerprint;
 
-  const exportStage: ExportPreviewStage = useMemo(() => {
-    if (exportMode === 'aiometadata') {
-      return 'aiometadata-catalogs-preview';
-    }
-
-    if (exportMode === 'fusion') {
-      if (requiresFusionInvalidCatalogConfirmation && !isFusionInvalidCatalogConfirmed) {
-        return 'fusion-needs-invalid-catalog-confirmation';
-      }
-      if (requiresFusionAiometadataSync) {
-        return 'fusion-needs-aiom-sync';
-      }
-      return 'fusion-preview';
-    }
-
-    if (!nativeTraktBridgeState.hasNativeTrakt || !requiresTraktBridgeImport) {
-      return 'omni-ready';
-    }
-
-    if (isBridgeConfirmed) {
-      return 'omni-ready';
-    }
-
-    return 'omni-needs-aiom-bridge';
-  }, [
-    exportMode,
-    isBridgeConfirmed,
-    requiresFusionAiometadataSync,
-    isFusionInvalidCatalogConfirmed,
-    nativeTraktBridgeState.hasNativeTrakt,
-    requiresFusionInvalidCatalogConfirmation,
-    requiresTraktBridgeImport,
-  ]);
 
   const previewContent = useMemo(() => {
     if (!showPreview) return '';
@@ -814,7 +726,7 @@ function WidgetSelectionGridComponent({
           : null;
       const emptyModeRowSummary =
         fusionInvalidCatalogWidgetsStillSkippedInEmptyMode > 0
-          ? `${formatCountLabel(fusionInvalidCatalogWidgetsStillSkippedInEmptyMode, 'classic row', 'classic rows')} will still be skipped because Fusion requires a valid catalog.`
+          ? `${formatCountLabel(fusionInvalidCatalogWidgetsStillSkippedInEmptyMode, 'classic row', 'classic rows')} will still be skipped because Fusion requires a valid catalog for an export.`
           : null;
 
       return [
@@ -827,7 +739,7 @@ function WidgetSelectionGridComponent({
           : 'If you skip invalid entries, the affected parts of this setup will be removed from the Fusion export.',
         '',
         emptyItemSummary
-          ? `If you export invalid items as empty items, ${emptyItemSummary}${emptyModeRowSummary ? ` ${emptyModeRowSummary}` : ''}`
+          ? `If you include invalid items they will be exported as empty items. This means ${emptyItemSummary}${emptyModeRowSummary ? ` ${emptyModeRowSummary}` : ''}`
           : 'Only skipping is available for this export because the affected entries cannot be kept as empty items.',
       ].join('\n');
     }
@@ -1094,18 +1006,6 @@ function WidgetSelectionGridComponent({
     }
   };
 
-  const handleCopyMissingCatalogs = async () => {
-    if (!omniMissingCatalogsExport || !nativeTraktBridgeState.fingerprint) {
-      return;
-    }
-
-    try {
-      await copyText(JSON.stringify(omniMissingCatalogsExport, null, 2), 'missing-catalogs');
-      setCopiedTraktBridgeFingerprint(nativeTraktBridgeState.fingerprint);
-    } catch (error) {
-      setExportActionError(getErrorMessage(error, 'The missing catalogs could not be copied.'));
-    }
-  };
 
   const handleCopyFullAiometadataCatalogSetup = async () => {
     try {
@@ -1179,9 +1079,6 @@ function WidgetSelectionGridComponent({
     updateSelectedAiometadataCatalogKeys(next);
   };
 
-  const replaceAiometadataSelection = (catalogKeys: string[]) => {
-    updateSelectedAiometadataCatalogKeys(new Set(catalogKeys));
-  };
 
   const widgetHasEditableAiometadataSources = (widget: ExportableCatalogWidgetGroup) =>
     widget.catalogKeys.some((catalogKey) => {
@@ -1257,10 +1154,988 @@ function WidgetSelectionGridComponent({
     }
   };
 
-  const handleOpenSyncManifestFromPreview = () => {
-    setShowPreview(false);
-    setCopiedAction(null);
-    onSyncManifest?.();
+  const renderAiometadataWidgetRow = (widget: ExportableCatalogWidgetGroup, keyPrefix: string = "") => {
+    const itemCatalogKeys = new Set(widget.items.flatMap((i) => i.catalogKeys));
+    const widgetSelectableCatalogKeys = widget.catalogKeys.filter((key) => aiometadataSelectableCatalogKeys.has(key));
+    const topLevelOnlyCatalogKeys = widget.catalogKeys.filter((key) => !itemCatalogKeys.has(key));
+    const widgetSelectedKeys = widgetSelectableCatalogKeys.filter((key) => selectedAiometadataCatalogKeySet.has(key));
+    const widgetSelectedCount = widgetSelectedKeys.length;
+    const widgetAllSelected = widgetSelectableCatalogKeys.length > 0 && widgetSelectedCount === widgetSelectableCatalogKeys.length;
+    const widgetPartiallySelected = widgetSelectedCount > 0 && widgetSelectedCount < widgetSelectableCatalogKeys.length;
+    const widgetExpanded = expandedAiometadataWidgetKeys.includes(widget.id);
+    const widgetIsSyncedOnly = widgetSelectableCatalogKeys.length === 0;
+
+    return (
+      <div key={`${keyPrefix}${widget.id}`} className="rounded-3xl border border-zinc-200/80 bg-white/40 p-4 transition-all hover:bg-white/60 dark:border-white/10 dark:bg-white/[0.03] dark:hover:bg-white/[0.05]">
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex min-w-0 flex-1 items-center gap-4">
+            <div
+              onClick={() => {
+                if (!widgetIsSyncedOnly) toggleAiometadataCatalogGroup(widgetSelectableCatalogKeys, !widgetAllSelected);
+              }}
+              className={cn(
+                "size-[1.125rem] rounded-[0.35rem] border-2 transition-all cursor-pointer flex items-center justify-center shrink-0",
+                widgetAllSelected || widgetPartiallySelected
+                  ? "bg-primary border-primary "
+                  : "bg-zinc-950/40 border-white/10 hover:border-primary/40",
+                widgetIsSyncedOnly && "opacity-30 cursor-not-allowed"
+              )}
+            >
+              {widgetPartiallySelected
+                ? <div className="w-2.5 h-0.5 bg-primary-foreground rounded-full" />
+                : widgetAllSelected && <Check className="size-3 text-primary-foreground stroke-[3.5px]" />
+              }
+            </div>
+            <div
+              className="min-w-0 flex-1 cursor-pointer"
+              onClick={() => toggleAiometadataWidgetExpanded(widget.id)}
+            >
+              <button
+                type="button"
+                className="inline-block max-w-full text-left"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  toggleAiometadataCatalogGroup(widgetSelectableCatalogKeys, !widgetAllSelected);
+                }}
+                disabled={widgetSelectableCatalogKeys.length === 0}
+              >
+                <p className={cn(
+                  'truncate text-sm font-semibold',
+                  widgetIsSyncedOnly ? 'text-foreground/55' : 'text-foreground'
+                )}>
+                  {widget.widgetTitle}
+                </p>
+                <span className="text-[9px] font-black uppercase tracking-[0.15em] text-muted-foreground/50">
+                  {widget.widgetType === 'collection.row' ? 'Collection' : 'Classic Row'}
+                </span>
+              </button>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <span className="rounded-full bg-background/80 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-muted-foreground/70">
+              {widgetSelectableCatalogKeys.length > 0
+                ? `${widgetSelectedCount}/${widgetSelectableCatalogKeys.length}`
+                : 'Synced'}
+            </span>
+            {widgetHasEditableAiometadataSources(widget) && (
+              <button
+                type="button"
+                className={cn(
+                  'flex size-8 items-center justify-center rounded-xl border transition-all',
+                  widgetIsSyncedOnly
+                    ? 'border-border/10 bg-background/45 text-muted-foreground/35'
+                    : 'border-border/15 bg-background/70 text-muted-foreground/55 hover:border-primary/20 hover:bg-primary/5 hover:text-primary'
+                )}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  openAiometadataSettings({ kind: 'widget', widgetId: widget.id });
+                }}
+                aria-label={`Open export settings for ${widget.widgetTitle}`}
+              >
+                <SlidersHorizontal className="size-4" />
+              </button>
+            )}
+            <button
+              type="button"
+              className={cn(
+                'flex size-8 items-center justify-center rounded-xl border transition-all',
+                widgetIsSyncedOnly
+                  ? 'border-border/10 bg-background/45 text-muted-foreground/35'
+                  : 'border-border/15 bg-background/70 text-muted-foreground/55 hover:border-primary/20 hover:bg-primary/5 hover:text-primary'
+              )}
+              onClick={() => toggleAiometadataWidgetExpanded(widget.id)}
+            >
+              <ChevronRight className={cn('size-4 transition-transform', widgetExpanded && 'rotate-90')} />
+            </button>
+          </div>
+        </div>
+
+        <AnimatePresence initial={false}>
+          {widgetExpanded && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.2, ease: 'easeInOut' }}
+              className="overflow-hidden"
+            >
+              <div className="mt-3.5 p-3.5 max-sm:px-2 max-sm:py-3 rounded-xl bg-zinc-100/80 dark:bg-zinc-900/30 border border-zinc-200/60 dark:border-white/5 space-y-2">
+                {/* Row-level Catalogs (filtered out those in items) */}
+                {topLevelOnlyCatalogKeys.map((catalogKey) => {
+                  const catalog = aiometadataCatalogMap.get(catalogKey) as ExportableCatalogDefinition | undefined;
+                  if (!catalog) return null;
+                  const checked = selectedAiometadataCatalogKeySet.has(catalogKey);
+                  const disabled = isManifestSynced && catalog.isAlreadyInManifest;
+
+                  return (
+                    <label
+                      key={`${keyPrefix}${catalogKey}`}
+                      className={cn(
+                        'flex items-center gap-3 rounded-xl border border-zinc-200/60 dark:border-white/5 bg-white/80 dark:bg-white/[0.015] px-3 py-2.5 transition-all hover:bg-zinc-50 dark:hover:bg-white/[0.03]',
+                        disabled && 'opacity-55'
+                      )}
+                    >
+                      <div
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (!disabled) toggleAiometadataCatalogKey(catalogKey);
+                        }}
+                        className={cn(
+                          "size-[1.125rem] rounded-[0.35rem] border-2 transition-all cursor-pointer flex items-center justify-center shrink-0",
+                          checked
+                            ? "bg-primary border-primary "
+                            : "bg-zinc-950/40 border-white/10 hover:border-primary/40",
+                          disabled && "opacity-30 cursor-not-allowed"
+                        )}
+                      >
+                        {checked && <Check className="size-3 text-primary-foreground stroke-[3.5px]" />}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-semibold text-foreground">{catalog.entry.name}</p>
+                        <div className="mt-1 flex flex-wrap items-center gap-1.5 sm:gap-2">
+                          <p className="truncate text-[10px] sm:text-[11px] font-medium text-muted-foreground/65">
+                            {catalog.entry.type} / {catalog.entry.id}
+                          </p>
+                          <span className={cn(
+                            'inline-flex shrink-0 items-center justify-center rounded-full px-2 py-0.5 sm:px-2.5 sm:py-1 text-[9px] sm:text-[10px] font-black uppercase tracking-[0.12em] sm:tracking-[0.14em]',
+                            catalog.source === 'trakt'
+                              ? 'bg-sky-500/10 text-sky-600 dark:text-sky-300'
+                              : catalog.source === 'mdblist'
+                                ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-300'
+                                : catalog.source === 'letterboxd'
+                                  ? 'bg-orange-500/10 text-orange-600 dark:text-orange-300'
+                                  : catalog.source === 'simkl'
+                                    ? 'bg-rose-500/10 text-rose-600 dark:text-rose-300'
+                                    : 'bg-amber-500/10 text-amber-600 dark:text-amber-300'
+                          )}>
+                            {catalog.source}
+                          </span>
+                        </div>
+                      </div>
+                      {catalogHasEditableAiometadataSettings(catalogKey) && (
+                        <button
+                          type="button"
+                          className="flex size-8 items-center justify-center rounded-xl border border-border/15 bg-background/70 text-muted-foreground/55 transition-all hover:border-primary/20 hover:bg-primary/5 hover:text-primary active:scale-90"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            openAiometadataSettings({ kind: 'catalog', catalogKey });
+                          }}
+                          aria-label={`Open export settings for ${catalog.entry.name}`}
+                        >
+                          <SlidersHorizontal className="size-4" />
+                        </button>
+                      )}
+                      {disabled && (
+                        <span className="rounded-full bg-muted px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-muted-foreground/70">
+                          Synced
+                        </span>
+                      )}
+                    </label>
+                  );
+                })}
+
+                {/* Collection Items */}
+                {widget.items.length > 0 && (
+                  <div className="mt-4 space-y-3">
+                    <p className="text-[10px] font-black uppercase tracking-[0.16em] text-muted-foreground/60 px-1">
+                      Collection Items
+                    </p>
+                    {widget.items.map((item) => {
+                      const itemSelectableCatalogKeys = item.catalogKeys.filter((key) => aiometadataSelectableCatalogKeys.has(key));
+                      const itemSelectedKeys = itemSelectableCatalogKeys.filter((key) => selectedAiometadataCatalogKeySet.has(key));
+                      const itemSelectedCount = itemSelectedKeys.length;
+                      const itemAllSelected = itemSelectableCatalogKeys.length > 0 && itemSelectedCount === itemSelectableCatalogKeys.length;
+                      const itemPartiallySelected = itemSelectedCount > 0 && itemSelectedCount < itemSelectableCatalogKeys.length;
+                      const itemExpanded = expandedAiometadataItemKeys.includes(item.key);
+                      const itemIsSyncedOnly = itemSelectableCatalogKeys.length === 0;
+
+                      return (
+                        <div key={`${keyPrefix}${item.key}`} className="rounded-2xl border border-zinc-200/60 bg-white/50 p-3 dark:border-white/5 dark:bg-white/[0.02]">
+                          <div className="flex items-center justify-between gap-3">
+                            <div className="flex min-w-0 flex-1 items-center gap-3">
+                              <div
+                                onClick={() => {
+                                  if (!itemIsSyncedOnly) toggleAiometadataCatalogGroup(itemSelectableCatalogKeys, !itemAllSelected);
+                                }}
+                                className={cn(
+                                  "size-4 rounded-[0.3rem] border-2 transition-all cursor-pointer flex items-center justify-center shrink-0",
+                                  itemAllSelected || itemPartiallySelected
+                                    ? "bg-primary border-primary "
+                                    : "bg-zinc-950/40 border-white/10 hover:border-primary/40",
+                                  itemIsSyncedOnly && "opacity-30 cursor-not-allowed"
+                                )}
+                              >
+                                {itemPartiallySelected
+                                  ? <div className="w-2 h-0.5 bg-primary-foreground rounded-full" />
+                                  : itemAllSelected && <Check className="size-2.5 text-primary-foreground stroke-[4px]" />
+                                }
+                              </div>
+                              <div
+                                className="min-w-0 flex-1 cursor-pointer"
+                                onClick={() => toggleAiometadataItemExpanded(item.key)}
+                              >
+                                <p className="truncate text-xs font-bold text-foreground">{item.itemName}</p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-1.5 shrink-0">
+                              <span className="rounded-full bg-background/60 px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.12em] text-muted-foreground/60">
+                                {itemSelectableCatalogKeys.length > 0
+                                  ? `${itemSelectedCount}/${itemSelectableCatalogKeys.length}`
+                                  : 'Synced'}
+                              </span>
+                              {itemHasEditableAiometadataSources(item) && (
+                                <button
+                                  type="button"
+                                  className={cn(
+                                    'flex size-7 items-center justify-center rounded-lg border transition-all',
+                                    itemIsSyncedOnly
+                                      ? 'border-border/10 bg-background/45 text-muted-foreground/35'
+                                      : 'border-border/15 bg-background/70 text-muted-foreground/55 hover:border-primary/20 hover:bg-primary/5 hover:text-primary'
+                                  )}
+                                  onClick={(event) => {
+                                    event.stopPropagation();
+                                    openAiometadataSettings({ kind: 'item', itemKey: item.id });
+                                  }}
+                                  aria-label={`Open export settings for ${item.itemName}`}
+                                >
+                                  <SlidersHorizontal className="size-3.5" />
+                                </button>
+                              )}
+                              <button
+                                type="button"
+                                className="flex size-7 items-center justify-center rounded-lg border border-border/10 bg-background/50 text-muted-foreground/50 transition-all hover:border-primary/20 hover:text-primary"
+                                onClick={() => toggleAiometadataItemExpanded(item.key)}
+                              >
+                                <ChevronRight className={cn('size-3.5 transition-transform', itemExpanded && 'rotate-90')} />
+                              </button>
+                            </div>
+                          </div>
+                          <AnimatePresence initial={false}>
+                            {itemExpanded && (
+                              <motion.div
+                                initial={{ height: 0, opacity: 0 }}
+                                animate={{ height: 'auto', opacity: 1 }}
+                                exit={{ height: 0, opacity: 0 }}
+                                transition={{ duration: 0.2, ease: 'easeInOut' }}
+                                className="overflow-hidden"
+                              >
+                                <div className="mt-2.5 space-y-1.5 pt-1">
+                                  {item.catalogKeys.map((itemCatalogKey) => {
+                                    const catalog = aiometadataCatalogMap.get(itemCatalogKey) as ExportableCatalogDefinition | undefined;
+                                    if (!catalog) return null;
+                                    const checked = selectedAiometadataCatalogKeySet.has(itemCatalogKey);
+                                    const disabled = isManifestSynced && catalog.isAlreadyInManifest;
+
+                                    return (
+                                      <label
+                                        key={`${keyPrefix}${itemCatalogKey}`}
+                                        className={cn(
+                                          'flex items-center gap-2.5 rounded-lg border border-zinc-200/40 bg-zinc-50/50 px-2.5 py-2 transition-all hover:bg-zinc-100 dark:border-white/5 dark:bg-white/[0.015] dark:hover:bg-white/[0.03]',
+                                          disabled && 'opacity-55'
+                                        )}
+                                      >
+                                        <div
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            if (!disabled) toggleAiometadataCatalogKey(itemCatalogKey);
+                                          }}
+                                          className={cn(
+                                            "size-3.5 rounded-[0.25rem] border-2 transition-all cursor-pointer flex items-center justify-center shrink-0",
+                                            checked
+                                              ? "bg-primary border-primary "
+                                              : "bg-zinc-950/40 border-white/10 hover:border-primary/40",
+                                            disabled && "opacity-30 cursor-not-allowed"
+                                          )}
+                                        >
+                                          {checked && <Check className="size-2.5 text-primary-foreground stroke-[4px]" />}
+                                        </div>
+                                        <div className="min-w-0 flex-1">
+                                          <p className="truncate text-[11px] font-semibold text-foreground/80">{catalog.entry.name}</p>
+                                          <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
+                                            <p className="truncate text-[9px] font-medium text-muted-foreground/60">
+                                              {catalog.entry.type} / {catalog.entry.id}
+                                            </p>
+                                            <span className={cn(
+                                              'inline-flex shrink-0 items-center justify-center rounded-full px-1.5 py-0.5 text-[8px] font-black uppercase tracking-[0.1em]',
+                                              catalog.source === 'trakt'
+                                                ? 'bg-sky-500/10 text-sky-600 dark:text-sky-300'
+                                                : catalog.source === 'mdblist'
+                                                  ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-300'
+                                                  : catalog.source === 'letterboxd'
+                                                    ? 'bg-orange-500/10 text-orange-600 dark:text-orange-300'
+                                                    : catalog.source === 'simkl'
+                                                      ? 'bg-rose-500/10 text-rose-600 dark:text-rose-300'
+                                                      : 'bg-amber-500/10 text-amber-600 dark:text-amber-300'
+                                            )}>
+                                              {catalog.source}
+                                            </span>
+                                          </div>
+                                        </div>
+                                        {catalogHasEditableAiometadataSettings(itemCatalogKey) && (
+                                          <button
+                                            type="button"
+                                            className="flex size-7 items-center justify-center rounded-lg border border-border/10 bg-background/60 text-muted-foreground/50 transition-all hover:border-primary/20 hover:text-primary active:scale-95"
+                                            onClick={(event) => {
+                                              event.stopPropagation();
+                                              openAiometadataSettings({ kind: 'catalog', catalogKey: itemCatalogKey });
+                                            }}
+                                            aria-label={`Open export settings for ${catalog.entry.name}`}
+                                          >
+                                            <SlidersHorizontal className="size-3" />
+                                          </button>
+                                        )}
+                                        {disabled && (
+                                          <span className="rounded-full bg-muted/50 px-2 py-0.5 text-[8px] font-black uppercase tracking-[0.1em] text-muted-foreground/50">
+                                            Synced
+                                          </span>
+                                        )}
+                                      </label>
+                                    );
+                                  })}
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    );
+  };
+
+
+  const ExportContent = (
+    <div className="flex h-[87dvh] sm:h-[700px] flex-col w-full overflow-hidden bg-background">
+      <div className="flex-1 overflow-y-auto w-full custom-scrollbar p-8 pt-10 max-sm:px-5 max-sm:pt-6">
+        <DialogHeader className="space-y-6 items-start text-left w-full overflow-x-hidden">
+          <div className="size-14 shrink-0 rounded-xl bg-primary/5 border border-primary/10 flex items-center justify-center text-primary max-sm:size-12">
+            <FileJson2 className="size-7 max-sm:size-6" />
+          </div>
+          <div className="space-y-1">
+            <DialogTitle className="text-2xl font-black tracking-tight max-sm:text-[1.35rem] truncate w-full">Export JSON</DialogTitle>
+            <DialogDescription className="text-xs font-medium leading-relaxed text-muted-foreground/64 max-sm:text-[11px]">
+              Choose a format and export your configuration for Fusion or Omni.
+            </DialogDescription>
+          </div>
+        </DialogHeader>
+
+        <div className="mt-2.5 flex justify-end max-sm:mt-5 max-sm:justify-end w-full">
+          <div className="flex flex-wrap sm:w-auto rounded-2xl border border-border/10 bg-muted/20 p-1.5">
+            <button
+              onClick={() => handleExportModeChange('fusion')}
+              className={cn(
+                'px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all',
+                exportMode === 'fusion'
+                  ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/20'
+                  : 'text-muted-foreground/65 hover:text-foreground hover:bg-background/40'
+              )}
+            >
+              Fusion
+            </button>
+            <button
+              onClick={() => handleExportModeChange('omni')}
+              className={cn(
+                'px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all',
+                exportMode === 'omni'
+                  ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/20'
+                  : 'text-muted-foreground/65 hover:text-foreground hover:bg-background/40'
+              )}
+            >
+              Omni
+            </button>
+            <button
+              onClick={() => handleExportModeChange('aiometadata')}
+              disabled={aiometadataInventory.catalogs.length === 0}
+              className={cn(
+                'px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all',
+                exportMode === 'aiometadata'
+                  ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/20'
+                  : 'text-muted-foreground/65 hover:text-foreground hover:bg-background/40',
+                aiometadataInventory.catalogs.length === 0 && 'cursor-not-allowed opacity-30 hover:text-muted-foreground/65'
+              )}
+            >
+              AIOMETADATA
+            </button>
+          </div>
+        </div>
+
+        {exportMode === 'aiometadata' ? (
+          <div className="mt-5 flex min-h-0 flex-1 flex-col gap-6">
+            {/* Section 1: UME Sorting */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 px-1">
+                <h3 className="text-[11px] font-black uppercase tracking-[0.18em] text-foreground/60">
+                  UME Sorting
+                </h3>
+              </div>
+              <div className="rounded-3xl border border-zinc-200/80 bg-white/40 px-5 py-4 backdrop-blur-md dark:border-white/10 dark:bg-white/[0.03]">
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex min-w-0 items-center gap-3">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <p className={aiometadataSectionTitleClass}>
+                          Automatic Sorting
+                        </p>
+                        <button
+                          type="button"
+                          className="flex size-6 items-center justify-center rounded-full border border-border/10 bg-background/70 text-muted-foreground/65 transition-all hover:border-primary/20 hover:text-primary"
+                          onClick={() => setIsUmeSortingDialogOpen(true)}
+                          aria-label="Show UME sorting details"
+                        >
+                          <Info className="size-3.5" />
+                        </button>
+                      </div>
+                      <p className={aiometadataSectionDescriptionClass}>
+                        Enable automatic cloud-based sorting for all catalogs.
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setAiometadataUseUmeSorting((current) => !current)}
+                    className="group inline-flex items-center"
+                    aria-pressed={aiometadataUseUmeSorting}
+                  >
+                    <span
+                      className={cn(
+                        'relative inline-flex h-6 w-11 items-center rounded-full transition-colors',
+                        aiometadataUseUmeSorting ? 'bg-primary/90' : 'bg-foreground/15'
+                      )}
+                    >
+                      <span
+                        className={cn(
+                          'size-5 rounded-full bg-white shadow-sm transition-transform',
+                          aiometadataUseUmeSorting ? 'translate-x-5' : 'translate-x-0.5'
+                        )}
+                      />
+                    </span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Section 2: All Catalogs */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 px-1">
+                <h3 className="text-[11px] font-black uppercase tracking-[0.18em] text-foreground/60">
+                  All Catalogs
+                </h3>
+              </div>
+              <div className="flex flex-col sm:flex-row gap-3 px-1">
+                <Button
+                  variant="outline"
+                  className="flex-1 rounded-2xl border-primary/20 bg-background/50 hover:bg-primary/10 hover:border-primary/30 transition-all h-11 text-[11px] font-bold uppercase tracking-widest"
+                  onClick={handleDownloadFullAiometadataCatalogSetup}
+                >
+                  <Download className="size-3.5 mr-2" />
+                  Download All Catalogs
+                </Button>
+                <Button
+                  className="flex-1 rounded-2xl bg-primary shadow-lg shadow-primary/20 h-11 text-[11px] font-bold uppercase tracking-widest"
+                  onClick={() => { void handleCopyFullAiometadataCatalogSetup(); }}
+                >
+                  {copiedAction === 'full-aiometadata' ? <Check className="size-3.5 mr-2" /> : <Copy className="size-3.5 mr-2" />}
+                  {copiedAction === 'full-aiometadata' ? 'Copied' : 'Copy All Catalogs'}
+                </Button>
+              </div>
+            </div>
+
+            {/* Section 3: New Catalogs */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 px-1">
+                <h3 className="text-[11px] font-black uppercase tracking-[0.18em] text-foreground/60">
+                  New Catalogs
+                </h3>
+              </div>
+              <div className="flex flex-col gap-3">
+                {(() => {
+                  const newWidgets = aiometadataInventory.widgets.filter((widget) =>
+                    widget.catalogKeys.some(key => !aiometadataCatalogMap.get(key)?.isAlreadyInManifest)
+                  );
+
+                  if (newWidgets.length === 0) {
+                    return (
+                      <div className="rounded-3xl border border-dashed border-emerald-500/20 bg-emerald-500/[0.02] py-8 text-center">
+                        <p className="text-[10px] font-black uppercase tracking-widest text-emerald-600/40 dark:text-emerald-400/30">
+                          All catalogs are already synced
+                        </p>
+                      </div>
+                    );
+                  }
+
+                  return newWidgets.map((widget) => renderAiometadataWidgetRow(widget, "new-"));
+                })()}
+              </div>
+            </div>
+
+            {/* Preview Section */}
+            <div className="min-h-0 rounded-3xl border border-zinc-200/50 dark:border-white/5 bg-zinc-100/30 dark:bg-muted/20 p-5 mt-4">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-[0.16em] text-foreground/40 dark:text-foreground/55">
+                    Export Preview
+                  </p>
+                  <p className="mt-1 text-xs font-medium text-muted-foreground/75">
+                    {aiometadataPreviewExport.catalogs.length} catalogs in the current selection
+                  </p>
+                </div>
+              </div>
+              <div className="relative group overflow-hidden rounded-2xl border border-zinc-200/50 dark:border-white/5 bg-zinc-900 dark:bg-zinc-950 px-5 py-6 max-sm:p-4 shadow-xl shadow-black/10">
+                <textarea
+                  readOnly
+                  data-testid="export-preview-textarea"
+                  value={previewContent}
+                  className="h-[380px] max-sm:h-[20vh] w-full resize-none overflow-y-auto border-none bg-transparent font-mono text-base max-sm:text-[10px] sm:text-xs leading-relaxed text-zinc-400 focus-visible:ring-0 custom-scrollbar"
+                />
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="mt-4 flex-1 min-h-0 flex flex-col">
+            {exportMode === 'fusion' && requiresFusionInvalidCatalogConfirmation && !isFusionInvalidCatalogConfirmed ? (
+              <div className="relative group flex flex-col flex-1 min-h-0">
+                <div className="flex flex-col items-start justify-start py-6 px-6 max-sm:px-4 rounded-3xl border border-amber-200/50 dark:border-white/5 bg-amber-50/30 dark:bg-zinc-950 shadow-xl shadow-amber-500/5 dark:shadow-black/20 overflow-hidden">
+                  <div className="flex items-center space-x-4 mb-4 text-left">
+                    <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-500 shadow-lg shadow-amber-500/5">
+                      <AlertTriangle className="size-5" />
+                    </div>
+                    <h4 className="text-sm font-bold text-amber-950 dark:text-zinc-100 leading-tight">
+                      Some AIOMetadata catalogs in this setup are missing or invalid.
+                    </h4>
+                  </div>
+                  <div className="space-y-2.5 max-w-2xl text-left">
+                    {previewContent.split('\n\n').slice(1).map((line, idx) => (
+                      <p key={idx} className="text-sm leading-relaxed text-amber-900/80 dark:text-zinc-400 font-medium">
+                        {line}
+                      </p>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ) : exportMode === 'fusion' && requiresFusionAiometadataSync ? (
+              <div className="relative group flex flex-col flex-1 min-h-0">
+                <div className="flex flex-col items-start justify-start py-6 px-6 max-sm:px-4 rounded-3xl border border-amber-200/50 dark:border-white/5 bg-amber-50/30 dark:bg-zinc-950 shadow-xl shadow-amber-500/5 dark:shadow-black/20 overflow-hidden">
+                  <div className="flex items-center space-x-4 mb-4 text-left">
+                    <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-500 shadow-lg shadow-amber-500/5">
+                      <AlertTriangle className="size-5" />
+                    </div>
+                    <h4 className="text-sm font-bold text-amber-950 dark:text-zinc-100 leading-tight">
+                      AIOMetadata Sync Required
+                    </h4>
+                  </div>
+                  <div className="space-y-2.5 max-w-2xl text-left">
+                    <p className="text-sm leading-relaxed text-amber-900/80 dark:text-zinc-400 font-medium">
+                      {FUSION_SYNC_REQUIRED_MESSAGE}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center pt-8 pb-10 px-8 text-center space-y-8 flex-1 min-h-0 overflow-hidden">
+                <div className="flex flex-col items-center space-y-5">
+                  <div className="size-16 rounded-[2rem] bg-primary/8 border border-primary/20 flex items-center justify-center text-primary shadow-2xl shadow-primary/10">
+                    <FileCode className="size-8" />
+                  </div>
+                  <div className="space-y-2 max-w-sm">
+                    <h3 className="text-2xl font-black tracking-tight text-foreground capitalize">
+                      {exportMode} Export Ready
+                    </h3>
+                    <p className="text-sm font-medium text-muted-foreground/65 leading-relaxed px-4">
+                      Your {exportMode === 'fusion' ? 'Fusion' : 'Omni'} JSON configuration has been generated and is ready for download or copy.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="w-full max-w-md rounded-[2.5rem] border border-zinc-200/60 dark:border-white/[0.08] bg-zinc-100/50 dark:bg-white/[0.02] p-6 shadow-2xl shadow-black/10 dark:shadow-black/40 flex flex-col min-h-0">
+                  <div className="flex items-center justify-between mb-4 px-1">
+                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/40 dark:text-muted-foreground/40">JSON Preview</span>
+                    <span className="text-[10px] font-bold text-primary/60 dark:text-primary/60 tabular-nums">{previewContent.length} bytes</span>
+                  </div>
+                  <div className="h-80 max-sm:h-52 w-full overflow-hidden relative rounded-2xl bg-zinc-900 dark:bg-zinc-950 border border-white/[0.03] shadow-inner">
+                    <textarea
+                      readOnly
+                      data-testid="export-preview-textarea"
+                      value={previewContent}
+                      className="w-full h-full bg-transparent p-4 border-none text-[10px] font-mono leading-relaxed text-zinc-400/90 resize-none overflow-y-auto custom-scrollbar"
+                    />
+                    <div className="absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-zinc-900 dark:from-zinc-950 via-zinc-900/40 dark:via-zinc-950/40 to-transparent pointer-events-none" />
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      <div className="shrink-0 border-t border-zinc-200/40 dark:border-white/5 bg-background/50 backdrop-blur-md p-6 max-sm:px-5 max-sm:py-4">
+        <div className="grid grid-cols-2 sm:flex sm:justify-end gap-3 sm:gap-4">
+          {exportMode === 'fusion' && requiresFusionInvalidCatalogConfirmation && !isFusionInvalidCatalogConfirmed ? (
+            <>
+              <Button
+                variant="secondary"
+                className={cn(editorActionButtonClass, editorFooterSecondaryButtonClass, "max-sm:rounded-[1rem] px-3 sm:px-6 sm:w-52 h-11 text-[13px] font-bold uppercase tracking-wider")}
+                onClick={() => setConfirmedFusionInvalidCatalogDecision({
+                  fingerprint: fusionInvalidCatalogState.fingerprint!,
+                  mode: 'skip'
+                })}
+              >
+                <XCircle className="size-3.5 mr-1.5 sm:hidden" />
+                <span className="sm:hidden">Skip</span>
+                <span className="hidden sm:inline">Skip Invalid</span>
+              </Button>
+              <Button
+                disabled={fusionInvalidCatalogEmptiedItems === 0}
+                className={cn(editorActionButtonClass, editorFooterPrimaryButtonClass, "max-sm:rounded-[1rem] px-3 sm:px-6 sm:w-52 h-11 text-[13px] font-bold uppercase tracking-wider")}
+                onClick={() => setConfirmedFusionInvalidCatalogDecision({
+                  fingerprint: fusionInvalidCatalogState.fingerprint!,
+                  mode: 'empty-items'
+                })}
+              >
+                <FileJson2 className="size-3.5 mr-1.5 sm:hidden" />
+                <span className="sm:hidden">Include</span>
+                <span className="hidden sm:inline">Include Invalid</span>
+              </Button>
+            </>
+          ) : exportMode === 'fusion' && requiresFusionAiometadataSync ? (
+            <Button
+              className={cn(editorActionButtonClass, editorFooterPrimaryButtonClass, "col-span-2 sm:w-64 h-11 text-[13px] font-bold uppercase tracking-wider")}
+              onClick={onSyncManifest}
+            >
+              <Globe className="size-4 mr-2" />
+              Sync Manifest
+            </Button>
+          ) : exportMode === 'aiometadata' ? (
+            <>
+              <Button
+                variant="secondary"
+                className={cn(editorActionButtonClass, editorFooterSecondaryButtonClass, "max-sm:rounded-[1rem] px-3 sm:px-6 sm:w-52 h-11 text-[13px] font-bold uppercase tracking-wider")}
+                onClick={handleDownload}
+              >
+                <Download className="size-3.5 mr-1.5" />
+                <span className="sm:hidden">Download</span>
+                <span className="hidden sm:inline">Download JSON</span>
+              </Button>
+              <Button
+                className={cn(editorActionButtonClass, editorFooterPrimaryButtonClass, "max-sm:rounded-[1rem] px-3 sm:px-6 sm:w-52 h-11 text-[13px] font-bold uppercase tracking-wider")}
+                onClick={() => { void handleCopy(); }}
+              >
+                {copiedAction === 'preview' ? <Check className="size-3.5 mr-1.5" /> : <Copy className="size-3.5 mr-1.5" />}
+                <span className="sm:hidden">{copiedAction === 'preview' ? 'Copied' : 'Copy'}</span>
+                <span className="hidden sm:inline">{copiedAction === 'preview' ? 'Copied' : 'Copy Catalogs'}</span>
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button
+                variant="secondary"
+                className={cn(editorActionButtonClass, editorFooterSecondaryButtonClass, "max-sm:rounded-[1rem] px-3 sm:px-6 sm:w-52 h-11 text-[13px] font-bold uppercase tracking-wider")}
+                onClick={handleDownload}
+              >
+                <Download className="size-3.5 mr-1.5" />
+                <span className="sm:hidden">Download</span>
+                <span className="hidden sm:inline">Download JSON</span>
+              </Button>
+              <Button
+                className={cn(editorActionButtonClass, editorFooterPrimaryButtonClass, "max-sm:rounded-[1rem] px-3 sm:px-6 sm:w-52 h-11 text-[13px] font-bold uppercase tracking-wider")}
+                onClick={() => { void handleCopy(); }}
+              >
+                {copiedAction === 'preview' ? <Check className="size-3.5 mr-1.5" /> : <Copy className="size-3.5 mr-1.5" />}
+                <span className="sm:hidden">{copiedAction === 'preview' ? 'Copied' : 'Copy'}</span>
+                <span className="hidden sm:inline">{copiedAction === 'preview' ? 'Copied' : 'Copy JSON'}</span>
+              </Button>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+
+
+  const renderExportDialog = () => {
+    if (isMobile) {
+      return (
+        <Drawer
+          open={showPreview}
+          onOpenChange={(open) => {
+            setShowPreview(open);
+            setCopiedAction(null);
+          }}
+        >
+          <DrawerContent className="bg-background border-border/40 max-h-[94dvh] rounded-t-[2.5rem]">
+            <div className="absolute right-4 top-4 z-50">
+              <DrawerClose asChild>
+                <button
+                  type="button"
+                  className="flex h-10 w-10 items-center justify-center rounded-full bg-muted/30 hover:bg-muted/50 backdrop-blur-md transition-all active:scale-95"
+                >
+                  <Plus className="size-6 rotate-45 text-muted-foreground" />
+                  <span className="sr-only">Close</span>
+                </button>
+              </DrawerClose>
+            </div>
+            <DrawerHeader className="sr-only">
+              <DrawerTitle>Export JSON</DrawerTitle>
+              <DrawerDescription>Export your widgets or catalogs to JSON format.</DrawerDescription>
+            </DrawerHeader>
+            {ExportContent}
+          </DrawerContent>
+        </Drawer>
+      );
+    }
+
+    return (
+      <Dialog
+        open={showPreview}
+        onOpenChange={(open) => {
+          setShowPreview(open);
+          setCopiedAction(null);
+        }}
+      >
+        <DialogContent className="flex sm:max-h-[92vh] max-w-2xl flex-col overflow-hidden rounded-3xl border border-border/40 bg-background/95 p-0  backdrop-blur-2xl">
+          <DialogTitle className="sr-only">Export JSON</DialogTitle>
+          {ExportContent}
+        </DialogContent>
+      </Dialog>
+    );
+  };
+
+  const UmeSortingContent = (
+    <div className="mx-auto w-full max-w-[860px]">
+      <div className="space-y-6 items-start text-left mb-8">
+        <div className="flex size-14 items-center justify-center rounded-xl border border-primary/10 bg-primary/5 text-primary shadow-sm shadow-primary/5 max-sm:size-12">
+          <WandSparkles className="size-6 max-sm:size-5" />
+        </div>
+        <div>
+          <h2 className="text-2xl font-black tracking-tight max-sm:text-xl">
+            UME Sorting
+          </h2>
+        </div>
+      </div>
+
+      <div className="space-y-4 px-1 sm:px-2">
+        {UME_SORTING_EXPLANATION_SECTIONS.map((section) => (
+          <div
+            key={section.groups.join('|')}
+            className="rounded-3xl border border-zinc-200/70 bg-white/55 px-5 py-5 backdrop-blur-md dark:border-white/10 dark:bg-black sm:px-6 shadow-sm shadow-black/5"
+          >
+            <div className="grid gap-4 md:grid-cols-[minmax(0,_1fr)_minmax(14rem,_18rem)] md:items-start md:gap-6">
+              <div>
+                <p className="text-[11px] font-black uppercase tracking-[0.16em] text-foreground/48">
+                  Applies To
+                </p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {section.groups.map((group) => (
+                    <span
+                      key={group}
+                      className="rounded-full border border-zinc-200/85 bg-zinc-50/95 px-3 py-1.5 text-sm font-semibold text-foreground/84 shadow-sm shadow-black/[0.035] ring-1 ring-black/[0.02] dark:border-white/12 dark:bg-white/[0.07] dark:ring-white/[0.03] dark:shadow-none"
+                    >
+                      {group}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <p className="text-[11px] font-black uppercase tracking-[0.16em] text-foreground/48 md:text-right">
+                  Sorting
+                </p>
+                <div className="mt-3 space-y-1 md:text-right">
+                  <p className="text-base font-semibold leading-relaxed text-foreground/86">
+                    {section.summary}
+                  </p>
+                  {section.detail && (
+                    <p className="text-sm font-medium leading-relaxed text-muted-foreground/78">
+                      {section.detail}
+                    </p>
+                  )}
+                  {section.refresh && (
+                    <p className="text-sm font-medium leading-relaxed text-muted-foreground/72">
+                      {section.refresh}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  const renderUmeSortingDialog = () => {
+    if (isMobile) {
+      return (
+        <Drawer open={isUmeSortingDialogOpen} onOpenChange={setIsUmeSortingDialogOpen}>
+          <DrawerContent className="bg-background border-border/40 max-h-[94dvh] rounded-t-[2.5rem]">
+            <div className="absolute right-4 top-4 z-50">
+              <DrawerClose asChild>
+                <button
+                  type="button"
+                  className="flex h-10 w-10 items-center justify-center rounded-full bg-muted/30 hover:bg-muted/50 backdrop-blur-md transition-all active:scale-95"
+                >
+                  <Plus className="size-6 rotate-45 text-muted-foreground" />
+                  <span className="sr-only">Close</span>
+                </button>
+              </DrawerClose>
+            </div>
+            <DrawerHeader className="sr-only">
+              <DrawerTitle>UME Sorting</DrawerTitle>
+              <DrawerDescription>Automatic sorting for your AIOMetadata catalogs.</DrawerDescription>
+            </DrawerHeader>
+            <div className="overflow-y-auto px-6 pt-10 pb-12 custom-scrollbar h-[87dvh]">
+              {UmeSortingContent}
+            </div>
+          </DrawerContent>
+        </Drawer>
+      );
+    }
+    return (
+      <Dialog open={isUmeSortingDialogOpen} onOpenChange={setIsUmeSortingDialogOpen}>
+        <DialogContent className="max-h-[85vh] max-w-4xl overflow-hidden rounded-3xl border border-border/40 bg-background/95 p-0 backdrop-blur-2xl">
+          <div className="max-h-[85vh] overflow-y-auto px-8 pb-8 pt-10 custom-scrollbar">
+            {UmeSortingContent}
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  };
+
+  const TrashContent = (
+    <div className="w-full">
+      <div className="mb-4 flex items-center justify-between">
+        <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/50">
+          Deleted ({trashCount})
+        </h3>
+        {hasTrash && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-8 px-3 rounded-lg text-[10px] font-bold uppercase tracking-widest text-destructive hover:bg-destructive/10 hover:text-destructive transition-all active:scale-95 dark:hover:bg-destructive/12"
+            onClick={emptyTrash}
+          >
+            <Trash2 className="size-3 mr-1.5 opacity-70" />
+            Empty trash
+          </Button>
+        )}
+      </div>
+
+      {!hasTrash ? (
+        <div className="rounded-3xl border border-dashed border-border/40 bg-muted/5 py-16 text-center dark:border-white/10 dark:bg-zinc-900/55">
+          <div className="flex flex-col items-center gap-4">
+            <div className="rounded-2xl bg-muted/10 p-4 dark:bg-white/[0.04]">
+              <Trash2 className="size-8 text-muted-foreground/20 dark:text-zinc-500/40" />
+            </div>
+            <p className="text-sm font-semibold text-muted-foreground/40 uppercase tracking-widest dark:text-zinc-500/70">
+              Trash is empty
+            </p>
+          </div>
+        </div>
+      ) : (
+        <div className="flex max-h-[440px] flex-col gap-3 overflow-y-auto pr-2 custom-scrollbar">
+          {trashEntries.map((entry) => (
+            <div
+              key={entry.key}
+              className="group flex items-center justify-between gap-4 rounded-xl border border-border/40 bg-muted/5 px-6 py-5 hover:bg-muted/10 hover:border-border/60 transition-all duration-300 backdrop-blur-sm dark:border-white/10 dark:bg-zinc-900/50 dark:hover:bg-zinc-900/75 dark:hover:border-white/15"
+            >
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className={cn(
+                    "inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.15em]  dark:shadow-none",
+                    entry.typeClassName
+                  )}>
+                    {entry.typeLabel}
+                  </span>
+                  {entry.subtitle && (
+                    <>
+                      <div className="size-1 rounded-full bg-border" />
+                      <span className="truncate text-[9px] font-bold text-muted-foreground/60 dark:text-zinc-400/75">
+                        {entry.subtitle}
+                      </span>
+                    </>
+                  )}
+                </div>
+                <p className="truncate text-base font-bold text-foreground tracking-tight group-hover:text-primary transition-colors dark:text-zinc-100 dark:group-hover:text-primary/90">
+                  {entry.title}
+                </p>
+              </div>
+              <Button
+                size="sm"
+                variant="outline"
+                className={cn(
+                  "rounded-xl shrink-0 h-9 px-5 border-border/60 bg-background/50 text-[11px] font-black uppercase tracking-widest transition-all  dark:border-white/10 dark:bg-zinc-950/75 dark:text-zinc-100",
+                  entry.canRestore
+                    ? "hover:bg-primary hover:text-primary-foreground hover:border-primary active:scale-95 dark:hover:bg-primary dark:hover:text-primary-foreground dark:hover:border-primary"
+                    : "text-muted-foreground/40 dark:text-zinc-500/60"
+                )}
+                onClick={entry.onRestore}
+                disabled={!entry.canRestore}
+              >
+                <RotateCcw className="size-3.5 mr-2" />
+                {entry.restoreLabel}
+              </Button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+
+  const renderTrashDialog = () => {
+    if (isMobile) {
+      return (
+        <Drawer open={showTrash} onOpenChange={setShowTrash}>
+          <DrawerContent className="bg-background border-border/40 max-h-[94dvh] rounded-t-[2.5rem]">
+            <div className="absolute right-4 top-4 z-50">
+              <DrawerClose asChild>
+                <button
+                  type="button"
+                  className="flex h-10 w-10 items-center justify-center rounded-full bg-muted/30 hover:bg-muted/50 backdrop-blur-md transition-all active:scale-95"
+                >
+                  <Plus className="size-6 rotate-45 text-muted-foreground" />
+                  <span className="sr-only">Close</span>
+                </button>
+              </DrawerClose>
+            </div>
+            <DrawerHeader className="text-left px-6 pt-10 pb-4">
+              <div className="size-14 rounded-xl border border-destructive/10 bg-destructive/10 text-destructive flex items-center justify-center mb-6">
+                <Trash2 className="size-7" />
+              </div>
+              <DrawerTitle className="text-2xl font-black tracking-tight">Trash</DrawerTitle>
+              <DrawerDescription>Deleted widgets and items stay here until restored or emptied.</DrawerDescription>
+            </DrawerHeader>
+            <div className="overflow-y-auto px-6 pb-12 custom-scrollbar h-[87dvh]">
+              {TrashContent}
+            </div>
+          </DrawerContent>
+        </Drawer>
+      );
+    }
+    return (
+      <Dialog open={showTrash} onOpenChange={setShowTrash}>
+        <DialogContent className="max-w-2xl p-0 overflow-hidden border-border/40 backdrop-blur-xl bg-background/95 dark:border-white/10 dark:bg-zinc-950/95">
+          <div className="p-8 pt-10 max-sm:px-5 max-sm:pt-6">
+            <DialogHeader className="space-y-6 items-start text-left">
+              <div className="size-14 rounded-xl border border-destructive/10 bg-destructive/10 text-destructive  flex items-center justify-center max-sm:size-12">
+                <Trash2 className="size-7 max-sm:size-6" />
+              </div>
+              <div className="space-y-1">
+                <DialogTitle className="text-2xl font-black tracking-tight max-sm:text-[1.35rem]">Trash</DialogTitle>
+                <DialogDescription className="text-xs font-medium leading-relaxed text-muted-foreground/64 max-sm:text-[11px]">Deleted widgets and items stay here until restored or emptied.</DialogDescription>
+              </div>
+            </DialogHeader>
+          </div>
+          <div className="px-8 pb-8 max-sm:px-5 max-sm:pb-6">
+            {TrashContent}
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
   };
 
   return (
@@ -1319,9 +2194,9 @@ function WidgetSelectionGridComponent({
                       ? 'Catalog validation and placeholder replacement are active.'
                       : manifestAutoSyncIssue
                         ? manifestAutoSyncIssue
-                      : hasUnsyncedAiometadataSources
-                        ? 'Sync your AIOMetadata manifest to replace placeholders and add new catalogs.'
-                        : 'Add your AIOMetadata manifest URL for catalog validation and automatic placeholder replacement.'}
+                        : hasUnsyncedAiometadataSources
+                          ? 'Sync your AIOMetadata manifest to replace placeholders and add new catalogs.'
+                          : 'Add your AIOMetadata manifest URL for catalog validation and automatic placeholder replacement.'}
                   </p>
                 </div>
               </div>
@@ -1388,7 +2263,7 @@ function WidgetSelectionGridComponent({
                   onChange={(event) => setSearchQuery(event.target.value)}
                 />
                 {searchQuery && (
-                  <button 
+                  <button
                     onClick={() => setSearchQuery('')}
                     className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-xl hover:bg-muted/50 text-muted-foreground/20 hover:text-muted-foreground transition-all"
                   >
@@ -1509,922 +2384,9 @@ function WidgetSelectionGridComponent({
         onCreated={(id) => handleExpandedWidgetChange(id)}
       />
 
-      <Dialog
-        open={showPreview}
-        onOpenChange={(open) => {
-          setShowPreview(open);
-          setCopiedAction(null);
-        }}
-      >
-        <DialogContent className="flex sm:max-h-[92vh] max-w-2xl flex-col overflow-hidden rounded-3xl border border-border/40 bg-background/95 p-0  backdrop-blur-2xl">
-          <DialogTitle className="sr-only">Export JSON</DialogTitle>
-          <div className="flex min-h-0 flex-1 flex-col p-8 pt-10 max-sm:p-5 max-sm:pt-6">
-            <div className="min-h-0 flex-1 overflow-y-auto pr-1 custom-scrollbar">
-            <DialogHeader className="space-y-6 items-start text-left">
-              <div className="size-14 rounded-xl bg-primary/5 border border-primary/10 flex items-center justify-center text-primary  max-sm:size-12">
-                <FileJson2 className="size-7 max-sm:size-6" />
-              </div>
-              <DialogTitle className="text-2xl font-black tracking-tight max-sm:text-xl">Export JSON</DialogTitle>
-            </DialogHeader>
+      {renderExportDialog()}
+      {renderUmeSortingDialog()}
 
-            <div className="mt-8 flex justify-end max-sm:mt-5 max-sm:justify-start">
-              <div className="flex flex-wrap rounded-2xl border border-border/10 bg-muted/20 p-1.5">
-                <button
-                  onClick={() => handleExportModeChange('fusion')}
-                  className={cn(
-                    'px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all',
-                    exportMode === 'fusion' 
-                      ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/20' 
-                      : 'text-muted-foreground/65 hover:text-foreground hover:bg-background/40'
-                  )}
-                >
-                  Fusion
-                </button>
-                <button
-                  onClick={() => handleExportModeChange('omni')}
-                  className={cn(
-                    'px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all',
-                    exportMode === 'omni' 
-                      ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/20' 
-                      : 'text-muted-foreground/65 hover:text-foreground hover:bg-background/40'
-                  )}
-                >
-                  Omni
-                </button>
-                <button
-                  onClick={() => handleExportModeChange('aiometadata')}
-                  disabled={aiometadataInventory.catalogs.length === 0}
-                  className={cn(
-                    'px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all',
-                    exportMode === 'aiometadata'
-                      ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/20'
-                      : 'text-muted-foreground/65 hover:text-foreground hover:bg-background/40',
-                    aiometadataInventory.catalogs.length === 0 && 'cursor-not-allowed opacity-30 hover:text-muted-foreground/65'
-                  )}
-                >
-                  AIOMETADATA
-                </button>
-              </div>
-            </div>
-
-            {exportMode === 'aiometadata' ? (
-              <div className="mt-5 flex min-h-0 flex-col gap-4">
-                <div className="flex flex-col gap-3">
-                  <div className="rounded-3xl border border-zinc-200/80 bg-white/40 px-5 py-5 backdrop-blur-md dark:border-white/10 dark:bg-white/[0.03]">
-                    <div className="flex h-full flex-col justify-between gap-4">
-                      <div className="min-w-0">
-                        <p className={aiometadataSectionTitleClass}>
-                          Full Catalog Setup
-                        </p>
-                        <p className={aiometadataSectionDescriptionClass}>
-                          {fullAiometadataSetupDescription}
-                        </p>
-                      </div>
-                      <div className="flex flex-col gap-2">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          className="h-11 w-full rounded-2xl border border-zinc-200 bg-white/80 px-5 text-[10px] font-black uppercase tracking-widest text-foreground/80 transition-all hover:bg-zinc-50 hover:text-foreground dark:border-white/10 dark:bg-zinc-800/80 dark:hover:bg-zinc-700"
-                          onClick={handleDownloadFullAiometadataCatalogSetup}
-                        >
-                          <Download className="mr-2 size-3.5" />
-                          Download All Catalogs
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          className="h-11 w-full rounded-2xl border border-primary/20 bg-primary/10 px-5 text-[10px] font-black uppercase tracking-widest text-primary transition-all hover:bg-primary/20 dark:border-primary/30 dark:bg-primary/15 dark:hover:bg-primary/25"
-                          onClick={() => { void handleCopyFullAiometadataCatalogSetup(); }}
-                        >
-                          {copiedAction === 'full-aiometadata' ? <Check className="mr-2 size-3.5" /> : <Copy className="mr-2 size-3.5" />}
-                          {copiedAction === 'full-aiometadata' ? 'Copied' : 'Copy All Catalogs'}
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="rounded-3xl border border-zinc-200/80 bg-white/40 px-5 py-4 backdrop-blur-md dark:border-white/10 dark:bg-white/[0.03]">
-                    <div className="flex items-center justify-between gap-4">
-                      <div className="flex min-w-0 items-center gap-3">
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-2">
-                            <p className={aiometadataSectionTitleClass}>
-                              UME Sorting
-                            </p>
-                            <button
-                              type="button"
-                              className="flex size-6 items-center justify-center rounded-full border border-border/10 bg-background/70 text-muted-foreground/65 transition-all hover:border-primary/20 hover:text-primary"
-                              onClick={() => setIsUmeSortingDialogOpen(true)}
-                              aria-label="Show UME sorting details"
-                            >
-                              <Info className="size-3.5" />
-                            </button>
-                          </div>
-                          <p className={aiometadataSectionDescriptionClass}>
-                            Automatic sorting for your AIOMetadata catalogs.
-                          </p>
-                        </div>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => setAiometadataUseUmeSorting((current) => !current)}
-                        className="group inline-flex items-center"
-                        aria-pressed={aiometadataUseUmeSorting}
-                        aria-label={aiometadataUseUmeSorting ? 'Disable UME Sorting' : 'Enable UME Sorting'}
-                      >
-                        <span
-                          className={cn(
-                            'relative inline-flex h-6 w-11 items-center rounded-full transition-colors',
-                            aiometadataUseUmeSorting ? 'bg-primary/90' : 'bg-foreground/15'
-                          )}
-                        >
-                          <span
-                            className={cn(
-                              'size-5 rounded-full bg-white shadow-sm transition-transform',
-                              aiometadataUseUmeSorting ? 'translate-x-5' : 'translate-x-0.5'
-                            )}
-                          />
-                        </span>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="min-h-0 rounded-3xl border border-zinc-200/80 bg-white/40 backdrop-blur-md dark:border-white/10 dark:bg-white/[0.03] shadow-sm overflow-hidden">
-                  <div className="border-b border-zinc-200/60 px-5 py-4 dark:border-border/5">
-                    <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-                      <div className="min-w-0">
-                        <p className={aiometadataSectionTitleClass}>
-                          New Catalogs
-                        </p>
-                        <p className={aiometadataSectionDescriptionClass}>
-                          {isManifestSynced ? 'Only catalogs not yet in AIOMetadata' : 'Current AIOMetadata catalog selection'}
-                        </p>
-                      </div>
-                      <div className="rounded-full border border-primary/15 bg-primary/[0.08] px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-primary">
-                        {selectedAiometadataCatalogCount} Selected
-                      </div>
-                    </div>
-                  </div>
-                  {/* Header Stack: Tabs + Action Dock */}
-                  <div className="shrink-0 border-b border-zinc-200/60 dark:border-border/5 relative z-50">
-                    {/* Header with Search */}
-                    <div className="p-4 border-b border-zinc-200/60 dark:border-border/5 bg-black/[0.015] dark:bg-black/10">
-                      <div className="relative">
-                        <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground/35" />
-                        <Input
-                          value={aiometadataSearchQuery}
-                          onChange={(event) => setAiometadataSearchQuery(event.target.value)}
-                          placeholder="Filter catalogs, widgets, or items..."
-                          className="h-10 rounded-xl border-border/30 bg-background/70 pl-11 text-sm sm:text-xs font-medium"
-                        />
-                      </div>
-                    </div>
-
-                    {/* Integrated Action Dock */}
-                    <div className="px-5 max-sm:px-3 py-3 bg-black/[0.02] dark:bg-black/5">
-                      <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
-                        <button
-                          type="button"
-                          onClick={() => replaceAiometadataSelection(Array.from(aiometadataSelectableCatalogKeys))}
-                          disabled={aiometadataSelectableCatalogKeys.size === 0}
-                          className="h-7.5 px-3 rounded-xl text-[9px] font-black uppercase tracking-widest text-foreground/65 border border-border/10 bg-white/95 dark:bg-white/[0.06] hover:bg-white dark:hover:bg-white/[0.12] hover:border-primary/20 hover:text-primary transition-all active:scale-95 shadow-sm dark:shadow-none shrink-0"
-                        >
-                          All
-                        </button>
-                        {selectableAiometadataCatalogKeysBySource.trakt.length > 0 && (
-                          <button
-                            type="button"
-                            onClick={() => replaceAiometadataSelection(selectableAiometadataCatalogKeysBySource.trakt)}
-                            className="h-7.5 px-3 rounded-xl text-[9px] font-black uppercase tracking-widest text-foreground/65 border border-border/10 bg-white/95 dark:bg-white/[0.06] hover:bg-white dark:hover:bg-white/[0.12] hover:border-primary/20 hover:text-primary transition-all active:scale-95 shadow-sm dark:shadow-none shrink-0"
-                          >
-                            Trakt
-                          </button>
-                        )}
-                        {selectableAiometadataCatalogKeysBySource.mdblist.length > 0 && (
-                          <button
-                            type="button"
-                            onClick={() => replaceAiometadataSelection(selectableAiometadataCatalogKeysBySource.mdblist)}
-                            className="h-7.5 px-3 rounded-xl text-[9px] font-black uppercase tracking-widest text-foreground/65 border border-border/10 bg-white/95 dark:bg-white/[0.06] hover:bg-white dark:hover:bg-white/[0.12] hover:border-primary/20 hover:text-primary transition-all active:scale-95 shadow-sm dark:shadow-none shrink-0"
-                          >
-                            MDBList
-                          </button>
-                        )}
-                        {selectableAiometadataCatalogKeysBySource.streaming.length > 0 && (
-                          <button
-                            type="button"
-                            onClick={() => replaceAiometadataSelection(selectableAiometadataCatalogKeysBySource.streaming)}
-                            className="h-7.5 px-3 rounded-xl text-[9px] font-black uppercase tracking-widest text-foreground/65 border border-border/10 bg-white/95 dark:bg-white/[0.06] hover:bg-white dark:hover:bg-white/[0.12] hover:border-primary/20 hover:text-primary transition-all active:scale-95 shadow-sm dark:shadow-none shrink-0"
-                          >
-                            Streaming
-                          </button>
-                        )}
-                        {selectableAiometadataCatalogKeysBySource.simkl.length > 0 && (
-                          <button
-                            type="button"
-                            onClick={() => replaceAiometadataSelection(selectableAiometadataCatalogKeysBySource.simkl)}
-                            className="h-7.5 px-3 rounded-xl text-[9px] font-black uppercase tracking-widest text-foreground/65 border border-border/10 bg-white/95 dark:bg-white/[0.06] hover:bg-white dark:hover:bg-white/[0.12] hover:border-primary/20 hover:text-primary transition-all active:scale-95 shadow-sm dark:shadow-none shrink-0"
-                          >
-                            Simkl
-                          </button>
-                        )}
-                        {selectableAiometadataCatalogKeysBySource.letterboxd.length > 0 && (
-                          <button
-                            type="button"
-                            onClick={() => replaceAiometadataSelection(selectableAiometadataCatalogKeysBySource.letterboxd)}
-                            className="h-7.5 px-3 rounded-xl text-[9px] font-black uppercase tracking-widest text-foreground/65 border border-border/10 bg-white/95 dark:bg-white/[0.06] hover:bg-white dark:hover:bg-white/[0.12] hover:border-primary/20 hover:text-primary transition-all active:scale-95 shadow-sm dark:shadow-none shrink-0"
-                          >
-                            Letterboxd
-                          </button>
-                        )}
-                        <button
-                          type="button"
-                          onClick={() => replaceAiometadataSelection([])}
-                          disabled={selectedAiometadataCatalogCount === 0}
-                          className="h-7.5 px-3 rounded-xl text-[9px] font-black uppercase tracking-widest text-foreground/65 border border-border/10 bg-white/95 dark:bg-white/[0.06] hover:bg-white dark:hover:bg-white/[0.12] hover:border-destructive/20 hover:text-destructive transition-all active:scale-95 shadow-sm dark:shadow-none shrink-0"
-                        >
-                          None
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="p-4 max-h-[400px] min-h-0 space-y-3 overflow-y-auto pr-1 custom-scrollbar bg-zinc-50/20 dark:bg-zinc-950/10">
-                    {filteredAiometadataWidgets.length === 0 ? (
-                      <div className="rounded-2xl border border-dashed border-border/30 bg-background/40 px-4 py-8 text-center">
-                        <p className="text-sm font-semibold text-muted-foreground/60">
-                          No exportable catalogs match the current search.
-                        </p>
-                      </div>
-                    ) : (
-                      filteredAiometadataWidgets.map((widget) => {
-                        const widgetSelectedCount = widget.catalogKeys.filter((catalogKey) =>
-                          selectedAiometadataCatalogKeySet.has(catalogKey)
-                        ).length;
-                        const widgetSelectableCatalogKeys = widget.catalogKeys.filter((catalogKey) =>
-                          aiometadataSelectableCatalogKeys.has(catalogKey)
-                        );
-                        const widgetIsSyncedOnly = widgetSelectableCatalogKeys.length === 0;
-                        const widgetAllSelected =
-                          widgetSelectableCatalogKeys.length > 0 && widgetSelectedCount === widgetSelectableCatalogKeys.length;
-                        const widgetPartiallySelected = widgetSelectedCount > 0 && !widgetAllSelected;
-                        const widgetHasSearchMatch = aiometadataSearchQuery.trim().length > 0;
-                        const widgetExpanded =
-                          widgetHasSearchMatch
-                          || widgetPartiallySelected
-                          || expandedAiometadataWidgetKeys.includes(widget.key);
-
-                        return (
-                          <div
-                            key={widget.key}
-                            className={cn(
-                              'scroll-mt-4 rounded-xl border p-4 ',
-                              widgetIsSyncedOnly
-                                ? 'border-border/10 bg-background/35 opacity-80'
-                                : 'border-border/20 bg-background/55'
-                            )}
-                          >
-                            <div className="flex items-start justify-between gap-3">
-                              <div className="flex min-w-0 flex-1 items-start gap-3">
-                                <input
-                                  type="checkbox"
-                                  className="mt-1 size-4 rounded border-border/60"
-                                  checked={widgetAllSelected}
-                                  disabled={widgetSelectableCatalogKeys.length === 0}
-                                  ref={(node) => {
-                                    if (node) {
-                                      node.indeterminate = widgetPartiallySelected;
-                                    }
-                                  }}
-                                  onChange={(event) => toggleAiometadataCatalogGroup(widgetSelectableCatalogKeys, event.target.checked)}
-                                />
-                                <div
-                                  className="min-w-0 flex-1 cursor-pointer"
-                                  onClick={() => toggleAiometadataWidgetExpanded(widget.key)}
-                                  role="button"
-                                  tabIndex={0}
-                                  onKeyDown={(event) => {
-                                    if (event.key === 'Enter' || event.key === ' ') {
-                                      event.preventDefault();
-                                      toggleAiometadataWidgetExpanded(widget.key);
-                                    }
-                                  }}
-                                  aria-label={widgetExpanded ? 'Collapse widget catalogs' : 'Expand widget catalogs'}
-                                >
-                                  <button
-                                    type="button"
-                                    className="inline-block max-w-full text-left"
-                                    onClick={(event) => {
-                                      event.stopPropagation();
-                                      toggleAiometadataCatalogGroup(widgetSelectableCatalogKeys, !widgetAllSelected);
-                                    }}
-                                    aria-label={widgetAllSelected ? 'Clear widget selection' : 'Select widget catalogs'}
-                                    disabled={widgetSelectableCatalogKeys.length === 0}
-                                  >
-                                    <p className={cn(
-                                      'truncate text-sm font-bold tracking-tight',
-                                      widgetIsSyncedOnly ? 'text-foreground/55' : 'text-foreground'
-                                    )}>
-                                      {widget.widgetTitle || `Widget ${widget.widgetIndex + 1}`}
-                                    </p>
-                                    <p className={cn(
-                                      'mt-1 text-[10px] font-black uppercase tracking-[0.16em]',
-                                      widgetIsSyncedOnly ? 'text-muted-foreground/35' : 'text-muted-foreground/50'
-                                    )}>
-                                      {widget.widgetType === 'row.classic' ? 'Classic Row' : 'Collection'}
-                                    </p>
-                                  </button>
-                                </div>
-                              </div>
-                              <div className="flex items-center gap-2 shrink-0">
-                                <span className="rounded-full bg-muted px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-muted-foreground/70">
-                                  {widgetSelectableCatalogKeys.length > 0
-                                    ? `${widgetSelectedCount}/${widgetSelectableCatalogKeys.length}`
-                                    : 'Synced'}
-                                </span>
-                                {widgetHasEditableAiometadataSources(widget) && (
-                                  <button
-                                    type="button"
-                                    className={cn(
-                                      'flex size-8 items-center justify-center rounded-xl border transition-all',
-                                      widgetIsSyncedOnly
-                                        ? 'border-border/10 bg-background/45 text-muted-foreground/35'
-                                        : 'border-border/15 bg-background/70 text-muted-foreground/55 hover:border-primary/20 hover:bg-primary/5 hover:text-primary'
-                                    )}
-                                    onClick={(event) => {
-                                      event.stopPropagation();
-                                      openAiometadataSettings({ kind: 'widget', widgetId: widget.id });
-                                    }}
-                                    aria-label={`Open export settings for ${widget.widgetTitle || `Widget ${widget.widgetIndex + 1}`}`}
-                                  >
-                                    <SlidersHorizontal className="size-4" />
-                                  </button>
-                                )}
-                                {(widget.rowCatalogKeys.length > 0 || widget.items.length > 0) && (
-                                  <button
-                                    type="button"
-                                    className={cn(
-                                      'flex size-8 items-center justify-center rounded-xl border transition-all',
-                                      widgetIsSyncedOnly
-                                        ? 'border-border/10 bg-background/45 text-muted-foreground/35'
-                                        : 'border-border/15 bg-background/70 text-muted-foreground/55 hover:border-primary/20 hover:bg-primary/5 hover:text-primary'
-                                    )}
-                                    onClick={() => toggleAiometadataWidgetExpanded(widget.key)}
-                                    aria-label={widgetExpanded ? 'Collapse widget catalogs' : 'Expand widget catalogs'}
-                                  >
-                                    <ChevronRight className={cn('size-4 transition-transform', widgetExpanded && 'rotate-90')} />
-                                  </button>
-                                )}
-                              </div>
-                            </div>
-
-                            <AnimatePresence initial={false}>
-                              {widgetExpanded && (
-                                <motion.div
-                                  initial={{ height: 0, opacity: 0 }}
-                                  animate={{ height: 'auto', opacity: 1 }}
-                                  exit={{ height: 0, opacity: 0 }}
-                                  transition={{ duration: 0.22, ease: 'easeInOut' }}
-                                  className="overflow-hidden"
-                                >
-                                  {widget.rowCatalogKeys.length > 0 && (
-                                    <div className="mt-3 space-y-2">
-                                      {widget.rowCatalogKeys.map((catalogKey) => {
-                                        const catalog = aiometadataCatalogMap.get(catalogKey) as ExportableCatalogDefinition | undefined;
-                                        if (!catalog) return null;
-                                        const checked = selectedAiometadataCatalogKeySet.has(catalogKey);
-                                        const disabled = isManifestSynced && catalog.isAlreadyInManifest;
-                                        return (
-                                          <label
-                                            key={catalogKey}
-                                            className={cn(
-                                              'flex items-center gap-3 rounded-xl border border-border/15 bg-muted/15 px-3 py-2.5',
-                                              disabled && 'opacity-55'
-                                            )}
-                                          >
-                                            <input
-                                              type="checkbox"
-                                              className="size-4 rounded border-border/60"
-                                              checked={checked}
-                                              disabled={disabled}
-                                              onChange={() => toggleAiometadataCatalogKey(catalogKey)}
-                                            />
-                                            <div className="min-w-0 flex-1">
-                                              <p className="truncate text-sm font-semibold text-foreground">{catalog.entry.name}</p>
-                                              <p className="truncate text-[11px] font-medium text-muted-foreground/65">
-                                                {catalog.entry.type} / {catalog.entry.id}
-                                              </p>
-                                            </div>
-                                            <span className={cn(
-                                              'rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.14em]',
-                                              catalog.source === 'trakt'
-                                                ? 'bg-sky-500/10 text-sky-600 dark:text-sky-300'
-                                                : catalog.source === 'mdblist'
-                                                  ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-300'
-                                                  : catalog.source === 'letterboxd'
-                                                    ? 'bg-orange-500/10 text-orange-600 dark:text-orange-300'
-                                                  : catalog.source === 'simkl'
-                                                    ? 'bg-rose-500/10 text-rose-600 dark:text-rose-300'
-                                                    : 'bg-amber-500/10 text-amber-600 dark:text-amber-300'
-                                            )}>
-                                              {catalog.source}
-                                            </span>
-                                            {catalogHasEditableAiometadataSettings(catalogKey) && (
-                                              <button
-                                                type="button"
-                                                className="flex size-8 items-center justify-center rounded-xl border border-border/15 bg-background/70 text-muted-foreground/55 transition-all hover:border-primary/20 hover:bg-primary/5 hover:text-primary active:scale-90"
-                                                onClick={(event) => {
-                                                  event.stopPropagation();
-                                                  openAiometadataSettings({ kind: 'catalog', catalogKey });
-                                                }}
-                                                aria-label={`Open export settings for ${catalog.entry.name}`}
-                                              >
-                                                <SlidersHorizontal className="size-4" />
-                                              </button>
-                                            )}
-                                            {disabled && (
-                                              <span className="rounded-full bg-muted px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-muted-foreground/70">
-                                                Synced
-                                              </span>
-                                            )}
-                                          </label>
-                                        );
-                                      })}
-                                    </div>
-                                  )}
-
-                                  {widget.items.length > 0 && (
-                                    <div className="mt-2 rounded-xl border border-zinc-200/60 dark:border-white/5 bg-zinc-100 dark:bg-zinc-900/30 overflow-hidden">
-                                      {widget.items.map((item) => {
-                                        const itemSelectedCount = item.catalogKeys.filter((catalogKey) =>
-                                          selectedAiometadataCatalogKeySet.has(catalogKey)
-                                        ).length;
-                                        const itemSelectableCatalogKeys = item.catalogKeys.filter((catalogKey) =>
-                                          aiometadataSelectableCatalogKeys.has(catalogKey)
-                                        );
-                                        const itemIsSyncedOnly = itemSelectableCatalogKeys.length === 0;
-                                        const itemAllSelected =
-                                          itemSelectableCatalogKeys.length > 0 && itemSelectedCount === itemSelectableCatalogKeys.length;
-                                        const itemPartiallySelected = itemSelectedCount > 0 && !itemAllSelected;
-                                        const itemExpanded =
-                                          widgetHasSearchMatch
-                                          || itemPartiallySelected
-                                          || expandedAiometadataItemKeys.includes(item.key);
-
-                                        return (
-                                          <div
-                                            key={item.key}
-                                            className={cn(
-                                              'p-3.5 transition-all border-b border-zinc-200/60 dark:border-white/5 last:border-0 bg-white/40 dark:bg-white/[0.008] hover:bg-white/60 dark:hover:bg-white/[0.015]',
-                                              itemIsSyncedOnly
-                                                ? 'dark:bg-white/[0.002] opacity-60'
-                                                : 'relative'
-                                            )}
-                                          >
-                                            <div className="flex items-start justify-between gap-3">
-                              <div className="flex min-w-0 flex-1 items-start gap-3">
-                                  <div className="mt-1 shrink-0">
-                                    <div
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        toggleAiometadataCatalogGroup(itemSelectableCatalogKeys, !itemAllSelected);
-                                      }}
-                                      className={cn(
-                                        "size-[1.125rem] rounded-[0.35rem] border-2 transition-all cursor-pointer flex items-center justify-center shrink-0",
-                                        itemAllSelected || itemPartiallySelected
-                                          ? "bg-primary border-primary "
-                                          : "bg-zinc-950/40 border-white/10 hover:border-primary/40",
-                                        itemIsSyncedOnly && "opacity-30 cursor-not-allowed"
-                                      )}
-                                    >
-                                      {itemPartiallySelected
-                                        ? <div className="w-2.5 h-0.5 bg-primary-foreground rounded-full" />
-                                        : itemAllSelected && <Check className="size-3 text-primary-foreground stroke-[3.5px]" />
-                                      }
-                                    </div>
-                                  </div>
-                                                <div
-                                                  className="min-w-0 flex-1 cursor-pointer"
-                                                  onClick={() => toggleAiometadataItemExpanded(item.key)}
-                                                  role="button"
-                                                  tabIndex={0}
-                                                  onKeyDown={(event) => {
-                                                    if (event.key === 'Enter' || event.key === ' ') {
-                                                      event.preventDefault();
-                                                      toggleAiometadataItemExpanded(item.key);
-                                                    }
-                                                  }}
-                                                  aria-label={itemExpanded ? 'Collapse item catalogs' : 'Expand item catalogs'}
-                                                >
-                                                  <button
-                                                    type="button"
-                                                    className="inline-block max-w-full text-left"
-                                                    onClick={(event) => {
-                                                      event.stopPropagation();
-                                                      toggleAiometadataCatalogGroup(itemSelectableCatalogKeys, !itemAllSelected);
-                                                    }}
-                                                    aria-label={itemAllSelected ? 'Clear item selection' : 'Select item catalogs'}
-                                                    disabled={itemSelectableCatalogKeys.length === 0}
-                                                  >
-                                                    <p className={cn(
-                                                      'truncate text-sm font-semibold',
-                                                      itemIsSyncedOnly ? 'text-foreground/55' : 'text-foreground'
-                                                    )}>
-                                                      {item.itemName}
-                                                    </p>
-                                                    <p className={cn(
-                                                      'mt-1 text-[10px] font-black uppercase tracking-[0.16em]',
-                                                      itemIsSyncedOnly ? 'text-muted-foreground/35' : 'text-muted-foreground/50'
-                                                    )}>
-                                                      Item
-                                                    </p>
-                                                  </button>
-                                                </div>
-                                              </div>
-                                              <div className="flex items-center gap-2 shrink-0">
-                                                <span className="rounded-full bg-background/80 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-muted-foreground/70">
-                                                  {itemSelectableCatalogKeys.length > 0
-                                                    ? `${itemSelectedCount}/${itemSelectableCatalogKeys.length}`
-                                                    : 'Synced'}
-                                                </span>
-                                                {itemHasEditableAiometadataSources(item) && (
-                                                  <button
-                                                    type="button"
-                                                    className={cn(
-                                                      'flex size-8 items-center justify-center rounded-xl border transition-all',
-                                                      itemIsSyncedOnly
-                                                        ? 'border-border/10 bg-background/45 text-muted-foreground/35'
-                                                        : 'border-border/15 bg-background/70 text-muted-foreground/55 hover:border-primary/20 hover:bg-primary/5 hover:text-primary'
-                                                    )}
-                                                    onClick={(event) => {
-                                                      event.stopPropagation();
-                                                      openAiometadataSettings({ kind: 'item', itemKey: item.id });
-                                                    }}
-                                                    aria-label={`Open export settings for ${item.itemName}`}
-                                                  >
-                                                    <SlidersHorizontal className="size-4" />
-                                                  </button>
-                                                )}
-                                                <button
-                                                  type="button"
-                                                  className={cn(
-                                                    'flex size-8 items-center justify-center rounded-xl border transition-all',
-                                                    itemIsSyncedOnly
-                                                      ? 'border-border/10 bg-background/45 text-muted-foreground/35'
-                                                      : 'border-border/15 bg-background/70 text-muted-foreground/55 hover:border-primary/20 hover:bg-primary/5 hover:text-primary'
-                                                  )}
-                                                  onClick={() => toggleAiometadataItemExpanded(item.key)}
-                                                  aria-label={itemExpanded ? 'Collapse item catalogs' : 'Expand item catalogs'}
-                                                >
-                                                  <ChevronRight className={cn('size-4 transition-transform', itemExpanded && 'rotate-90')} />
-                                                </button>
-                                              </div>
-                                            </div>
-
-                                            <AnimatePresence initial={false}>
-                                              {itemExpanded && (
-                                                <motion.div
-                                                  initial={{ height: 0, opacity: 0 }}
-                                                  animate={{ height: 'auto', opacity: 1 }}
-                                                  exit={{ height: 0, opacity: 0 }}
-                                                  transition={{ duration: 0.2, ease: 'easeInOut' }}
-                                                  className="overflow-hidden"
-                                                >
-                                                  <div className="mt-3.5 p-3.5 rounded-xl bg-zinc-100/80 dark:bg-zinc-900/30 border border-zinc-200/60 dark:border-white/5 space-y-2">
-                                                    {item.catalogKeys.map((catalogKey) => {
-                                                      const catalog = aiometadataCatalogMap.get(catalogKey) as ExportableCatalogDefinition | undefined;
-                                                      if (!catalog) return null;
-                                                      const checked = selectedAiometadataCatalogKeySet.has(catalogKey);
-                                                      const disabled = isManifestSynced && catalog.isAlreadyInManifest;
-                                                      return (
-                                                          <label
-                                                            key={catalogKey}
-                                                            className={cn(
-                                                              'flex items-center gap-3 rounded-xl border border-zinc-200/60 dark:border-white/5 bg-white/80 dark:bg-white/[0.015] px-3 py-2.5 transition-all hover:bg-zinc-50 dark:hover:bg-white/[0.03]',
-                                                              disabled && 'opacity-55'
-                                                            )}
-                                                          >
-                                                          <div
-                                                            onClick={(e) => {
-                                                              e.stopPropagation();
-                                                              if (!disabled) toggleAiometadataCatalogKey(catalogKey);
-                                                            }}
-                                                            className={cn(
-                                                              "size-[1.125rem] rounded-[0.35rem] border-2 transition-all cursor-pointer flex items-center justify-center shrink-0",
-                                                              checked
-                                                                ? "bg-primary border-primary "
-                                                                : "bg-zinc-950/40 border-white/10 hover:border-primary/40",
-                                                              disabled && "opacity-30 cursor-not-allowed"
-                                                            )}
-                                                          >
-                                                            {checked && <Check className="size-3 text-primary-foreground stroke-[3.5px]" />}
-                                                          </div>
-                                                          <div className="min-w-0 flex-1">
-                                                            <p className="truncate text-sm font-semibold text-foreground">{catalog.entry.name}</p>
-                                                            <p className="truncate text-[11px] font-medium text-muted-foreground/65">
-                                                              {catalog.entry.type} / {catalog.entry.id}
-                                                            </p>
-                                                          </div>
-                                                          <span className={cn(
-                                                            'rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.14em]',
-                                                            catalog.source === 'trakt'
-                                                              ? 'bg-sky-500/10 text-sky-600 dark:text-sky-300'
-                                                              : catalog.source === 'mdblist'
-                                                                ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-300'
-                                                                : catalog.source === 'letterboxd'
-                                                                  ? 'bg-orange-500/10 text-orange-600 dark:text-orange-300'
-                                                                : catalog.source === 'simkl'
-                                                                  ? 'bg-rose-500/10 text-rose-600 dark:text-rose-300'
-                                                                  : 'bg-amber-500/10 text-amber-600 dark:text-amber-300'
-                                                          )}>
-                                                            {catalog.source}
-                                                          </span>
-                                                          {catalogHasEditableAiometadataSettings(catalogKey) && (
-                                                            <button
-                                                              type="button"
-                                                              className="flex size-8 items-center justify-center rounded-xl border border-border/15 bg-background/70 text-muted-foreground/55 transition-all hover:border-primary/20 hover:bg-primary/5 hover:text-primary active:scale-90"
-                                                              onClick={(event) => {
-                                                                event.stopPropagation();
-                                                                openAiometadataSettings({ kind: 'catalog', catalogKey });
-                                                              }}
-                                                              aria-label={`Open export settings for ${catalog.entry.name}`}
-                                                            >
-                                                              <SlidersHorizontal className="size-4" />
-                                                            </button>
-                                                          )}
-                                                          {disabled && (
-                                                            <span className="rounded-full bg-muted px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-muted-foreground/70">
-                                                              Synced
-                                                            </span>
-                                                          )}
-                                                        </label>
-                                                      );
-                                                    })}
-                                                  </div>
-                                                </motion.div>
-                                              )}
-                                            </AnimatePresence>
-                                          </div>
-                                        );
-                                      })}
-                                    </div>
-                                  )}
-                                </motion.div>
-                              )}
-                            </AnimatePresence>
-                          </div>
-                        );
-                      })
-                    )}
-                  </div>
-                </div>
-
-                <div className="min-h-0 rounded-2xl border border-border/10 bg-muted/20 p-4">
-                  <div>
-                    <div>
-                      <p className="text-[10px] font-black uppercase tracking-[0.16em] text-foreground/55">
-                        Export Preview
-                      </p>
-                      <p className="mt-1 text-xs font-medium text-muted-foreground/75">
-                        {aiometadataPreviewExport.catalogs.length} catalogs in the current export
-                      </p>
-                    </div>
-                  </div>
-                  <div className="mt-4 relative group overflow-hidden rounded-xl border border-border/10 bg-background/50 p-1">
-                    <Textarea
-                      data-testid="export-preview-textarea"
-                      readOnly
-                      value={previewContent}
-                      className="h-[320px] max-sm:h-[20vh] w-full resize-none overflow-y-auto border-none bg-transparent p-5 max-sm:p-3 font-mono text-base max-sm:text-[10px] sm:text-xs leading-relaxed focus-visible:ring-0 custom-scrollbar"
-                    />
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="mt-5">
-                <div className="relative group rounded-2xl border border-border/10 bg-muted/20 p-1 overflow-hidden">
-                {exportStage === 'fusion-needs-invalid-catalog-confirmation'
-                || exportStage === 'omni-needs-aiom-bridge' ? (
-                  <div className="min-h-[320px] max-sm:min-h-[20vh] p-5 max-sm:p-4">
-                    <div
-                      className={cn(
-                        'flex size-9 items-center justify-center rounded-xl border bg-background/75 ',
-                        'border-amber-500/15 text-amber-600 dark:text-amber-300'
-                      )}
-                    >
-                      <AlertTriangle className="size-4" />
-                    </div>
-                    <div className="mt-4 max-w-4xl whitespace-pre-wrap break-words font-mono text-xs leading-relaxed text-foreground">
-                      {typeof previewContent === 'string' && previewContent.includes('AIOMetadata section') ? (
-                        <>
-                          {previewContent.split('AIOMetadata section')[0]}
-                          <button
-                            type="button"
-                            onClick={() => handleExportModeChange('aiometadata')}
-                            className="text-primary underline decoration-primary/30 underline-offset-4 transition-colors hover:text-primary/80 hover:decoration-primary/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 rounded-sm font-semibold"
-                          >
-                            AIOMetadata section
-                          </button>
-                          {previewContent.split('AIOMetadata section')[1]}
-                        </>
-                      ) : (
-                        previewContent
-                      )}
-                    </div>
-                  </div>
-                ) : (
-                  <Textarea
-                    data-testid="export-preview-textarea"
-                    readOnly
-                    value={previewContent}
-                    className="h-[320px] max-sm:h-[20vh] w-full resize-none overflow-y-auto border-none bg-transparent p-5 max-sm:p-3 font-mono text-base max-sm:text-[10px] sm:text-xs leading-relaxed focus-visible:ring-0 custom-scrollbar"
-                  />
-                )}
-                </div>
-              </div>
-            )}
-            </div>
-
-            <div className="mt-5 flex flex-col gap-2.5 sm:flex-row sm:justify-end">
-              {exportStage === 'fusion-needs-invalid-catalog-confirmation' ? (
-                <>
-                  <Button
-                    variant="secondary"
-                    className={cn(editorActionButtonClass, editorFooterSecondaryButtonClass, "max-sm:rounded-[1rem] px-6 sm:w-44")}
-                    onClick={() => {
-                      if (fusionInvalidCatalogState.fingerprint) {
-                        setConfirmedFusionInvalidCatalogDecision({
-                          fingerprint: fusionInvalidCatalogState.fingerprint,
-                          mode: 'skip',
-                        });
-                        setCopiedAction(null);
-                      }
-                    }}
-                  >
-                    Skip Invalid
-                  </Button>
-                  {fusionInvalidCatalogState.emptiedItems > 0 ? (
-                    <Button
-                      className={cn(editorActionButtonClass, editorFooterPrimaryButtonClass, "max-sm:rounded-[1rem] px-6 sm:w-52")}
-                      onClick={() => {
-                        if (fusionInvalidCatalogState.fingerprint) {
-                          setConfirmedFusionInvalidCatalogDecision({
-                            fingerprint: fusionInvalidCatalogState.fingerprint,
-                            mode: 'empty-items',
-                          });
-                          setCopiedAction(null);
-                        }
-                      }}
-                    >
-                      Export Empty Items
-                    </Button>
-                  ) : null}
-                </>
-              ) : exportStage === 'fusion-needs-aiom-sync' ? (
-                <Button
-                  className={cn(editorActionButtonClass, editorFooterPrimaryButtonClass, "max-sm:rounded-[1rem] px-6 sm:w-52")}
-                  onClick={handleOpenSyncManifestFromPreview}
-                >
-                  <Globe className="size-3.5 mr-1.5" />
-                  Sync AIOMetadata
-                </Button>
-              ) : exportStage === 'omni-needs-aiom-bridge' ? (
-                <>
-                  <Button
-                    className={cn(editorActionButtonClass, editorFooterPrimaryButtonClass, "max-sm:rounded-[1rem] px-6 sm:w-52")}
-                    onClick={() => { void handleCopyMissingCatalogs(); }}
-                  >
-                    {copiedAction === 'missing-catalogs' ? <Check className="size-3.5 mr-1.5" /> : <Copy className="size-3.5 mr-1.5" />}
-                    {copiedAction === 'missing-catalogs'
-                      ? 'Copied'
-                      : isManifestSynced
-                        ? 'Copy Missing Catalogs'
-                        : 'Copy Trakt Catalogs'}
-                  </Button>
-                  <Button
-                    variant={hasCopiedRequiredTraktCatalogs && !!nativeTraktBridgeState.fingerprint ? 'default' : 'secondary'}
-                    className={cn(editorActionButtonClass, editorFooterSecondaryButtonClass, "max-sm:rounded-[1rem] px-6 sm:w-36", hasCopiedRequiredTraktCatalogs && !!nativeTraktBridgeState.fingerprint && editorFooterPrimaryButtonClass)}
-                    onClick={() => {
-                      if (hasCopiedRequiredTraktCatalogs && nativeTraktBridgeState.fingerprint) {
-                        setConfirmedBridgeFingerprint(nativeTraktBridgeState.fingerprint);
-                        setCopiedAction(null);
-                      } else {
-                        setShowPreview(false);
-                      }
-                    }}
-                  >
-                    {hasCopiedRequiredTraktCatalogs && !!nativeTraktBridgeState.fingerprint ? 'Continue' : 'Skip'}
-                  </Button>
-                </>
-              ) : exportMode === 'aiometadata' ? (
-                <>
-                  <Button
-                    variant="secondary"
-                    className={cn(editorActionButtonClass, editorFooterSecondaryButtonClass, "max-sm:rounded-[1rem] px-6 sm:w-44")}
-                    onClick={handleDownload}
-                  >
-                    <Download className="size-3.5 mr-1.5" />
-                    Download JSON
-                  </Button>
-                  <Button
-                    className={cn(editorActionButtonClass, editorFooterPrimaryButtonClass, "max-sm:rounded-[1rem] px-6 sm:w-52")}
-                    onClick={() => { void handleCopy(); }}
-                    disabled={previewContent.startsWith('Error:')}
-                  >
-                    {copiedAction === 'preview' ? <Check className="size-3.5 mr-1.5" /> : <Copy className="size-3.5 mr-1.5" />}
-                    {copiedAction === 'preview' ? 'Copied' : 'Copy Catalogs'}
-                  </Button>
-                </>
-              ) : (
-                <>
-                  <Button
-                    variant="secondary"
-                    className={cn(editorActionButtonClass, editorFooterSecondaryButtonClass, "max-sm:rounded-[1rem] px-6 sm:w-44")}
-                    onClick={handleDownload}
-                  >
-                    <Download className="size-3.5 mr-1.5" />
-                    Download JSON
-                  </Button>
-                  <Button
-                    className={cn(editorActionButtonClass, editorFooterPrimaryButtonClass, "max-sm:rounded-[1rem] px-6 sm:w-44")}
-                    onClick={() => { void handleCopy(); }}
-                    disabled={previewContent.startsWith('Error:')}
-                  >
-                    {copiedAction === 'preview' ? <Check className="size-3.5 mr-1.5" /> : <Copy className="size-3.5 mr-1.5" />}
-                    {copiedAction === 'preview' ? 'Copied' : 'Copy JSON'}
-                  </Button>
-                </>
-              )}
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-      <Dialog open={isUmeSortingDialogOpen} onOpenChange={setIsUmeSortingDialogOpen}>
-        <DialogContent className="max-h-[85vh] max-w-4xl overflow-hidden rounded-3xl border border-border/40 bg-background/95 p-0 backdrop-blur-2xl">
-          <div className="max-h-[85vh] overflow-y-auto px-8 pb-8 pt-10 max-sm:px-5 max-sm:pb-5 max-sm:pt-6 custom-scrollbar">
-            <div className="mx-auto w-full max-w-[860px]">
-              <DialogHeader className="space-y-6 items-start text-left">
-                <div className="flex size-14 items-center justify-center rounded-xl border border-primary/10 bg-primary/5 text-primary shadow-sm shadow-primary/5 max-sm:size-12">
-                  <WandSparkles className="size-6 max-sm:size-5" />
-                </div>
-                <div>
-                  <DialogTitle className="text-2xl font-black tracking-tight max-sm:text-xl">
-                    UME Sorting
-                  </DialogTitle>
-                </div>
-              </DialogHeader>
-
-              <div className="mt-6 space-y-4 px-1 sm:px-2">
-                {UME_SORTING_EXPLANATION_SECTIONS.map((section) => (
-                  <div
-                    key={section.groups.join('|')}
-                    className="rounded-3xl border border-zinc-200/70 bg-white/55 px-5 py-5 backdrop-blur-md dark:border-white/10 dark:bg-white/[0.03] sm:px-6"
-                  >
-                    <div className="grid gap-4 md:grid-cols-[minmax(0,_1fr)_minmax(14rem,_18rem)] md:items-start md:gap-6">
-                      <div>
-                        <p className="text-[11px] font-black uppercase tracking-[0.16em] text-foreground/48">
-                          Applies To
-                        </p>
-                        <div className="mt-3 flex flex-wrap gap-2">
-                          {section.groups.map((group) => (
-                            <span
-                              key={group}
-                              className="rounded-full border border-zinc-200/85 bg-zinc-50/95 px-3 py-1.5 text-sm font-semibold text-foreground/84 shadow-sm shadow-black/[0.035] ring-1 ring-black/[0.02] dark:border-white/12 dark:bg-white/[0.07] dark:ring-white/[0.03] dark:shadow-none"
-                            >
-                              {group}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-
-                      <div>
-                        <p className="text-[11px] font-black uppercase tracking-[0.16em] text-foreground/48 md:text-right">
-                          Sorting
-                        </p>
-                        <div className="mt-3 space-y-1 md:text-right">
-                          <p className="text-base font-semibold leading-relaxed text-foreground/86">
-                            {section.summary}
-                          </p>
-                          {section.detail && (
-                            <p className="text-sm font-medium leading-relaxed text-muted-foreground/78">
-                              {section.detail}
-                            </p>
-                          )}
-                          {section.refresh && (
-                            <p className="text-sm font-medium leading-relaxed text-muted-foreground/72">
-                              {section.refresh}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
       <AIOMetadataExportSettingsDialog
         key={
           aiometadataSettingsTarget
@@ -2448,104 +2410,7 @@ function WidgetSelectionGridComponent({
         onOpenChange={setShowImportMergeDialog}
       />
 
-      <Dialog open={showTrash} onOpenChange={setShowTrash}>
-        <DialogContent className="max-w-2xl p-0 overflow-hidden border-border/40  backdrop-blur-xl bg-background/95 dark:border-white/10 dark:bg-zinc-950/95">
-          <DialogTitle className="sr-only">Trash</DialogTitle>
-          <div className="p-8 pt-10 max-sm:p-5 max-sm:pt-6">
-            <DialogHeader className="space-y-6 items-start text-left">
-              <div className="size-14 rounded-xl border border-destructive/10 bg-destructive/10 text-destructive  flex items-center justify-center transition-all animate-in zoom-in-75 duration-300 dark:border-destructive/15 dark:bg-destructive/15 max-sm:size-12">
-                <Trash2 className="size-7 max-sm:size-6" />
-              </div>
-              <div className="space-y-1">
-                <DialogTitle className="text-2xl font-black tracking-tight max-sm:text-xl">
-                  Trash
-                </DialogTitle>
-                <DialogDescription className="text-muted-foreground/60 text-xs font-medium leading-relaxed max-sm:text-[11px]">
-                  Deleted widgets and collection items stay here in local storage until you restore them or empty the trash.
-                </DialogDescription>
-              </div>
-            </DialogHeader>
-          </div>
-
-          <div className="px-8 pb-8 max-sm:px-5 max-sm:pb-5">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/50">
-                Deleted ({trashCount})
-              </h3>
-              {hasTrash && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-8 px-3 rounded-lg text-[10px] font-bold uppercase tracking-widest text-destructive hover:bg-destructive/10 hover:text-destructive transition-all active:scale-95 dark:hover:bg-destructive/12"
-                  onClick={emptyTrash}
-                >
-                  <Trash2 className="size-3 mr-1.5 opacity-70" />
-                  Empty trash
-                </Button>
-              )}
-            </div>
-
-            {!hasTrash ? (
-              <div className="rounded-3xl border border-dashed border-border/40 bg-muted/5 py-16 text-center dark:border-white/10 dark:bg-zinc-900/55">
-                <div className="flex flex-col items-center gap-4">
-                  <div className="rounded-2xl bg-muted/10 p-4 dark:bg-white/[0.04]">
-                    <Trash2 className="size-8 text-muted-foreground/20 dark:text-zinc-500/40" />
-                  </div>
-                  <p className="text-sm font-semibold text-muted-foreground/40 uppercase tracking-widest dark:text-zinc-500/70">
-                    Trash is empty
-                  </p>
-                </div>
-              </div>
-            ) : (
-              <div className="flex max-h-[440px] flex-col gap-3 overflow-y-auto pr-2 custom-scrollbar">
-                {trashEntries.map((entry) => (
-                  <div
-                    key={entry.key}
-                    className="group flex items-center justify-between gap-4 rounded-xl border border-border/40 bg-muted/5 px-6 py-5 hover:bg-muted/10 hover:border-border/60 transition-all duration-300 backdrop-blur-sm dark:border-white/10 dark:bg-zinc-900/50 dark:hover:bg-zinc-900/75 dark:hover:border-white/15"
-                  >
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className={cn(
-                          "inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.15em]  dark:shadow-none",
-                          entry.typeClassName
-                        )}>
-                          {entry.typeLabel}
-                        </span>
-                        {entry.subtitle && (
-                          <>
-                            <div className="size-1 rounded-full bg-border" />
-                            <span className="truncate text-[9px] font-bold text-muted-foreground/60 dark:text-zinc-400/75">
-                              {entry.subtitle}
-                            </span>
-                          </>
-                        )}
-                      </div>
-                      <p className="truncate text-base font-bold text-foreground tracking-tight group-hover:text-primary transition-colors dark:text-zinc-100 dark:group-hover:text-primary/90">
-                        {entry.title}
-                      </p>
-                    </div>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className={cn(
-                        "rounded-xl shrink-0 h-9 px-5 border-border/60 bg-background/50 text-[11px] font-black uppercase tracking-widest transition-all  dark:border-white/10 dark:bg-zinc-950/75 dark:text-zinc-100",
-                        entry.canRestore
-                          ? "hover:bg-primary hover:text-primary-foreground hover:border-primary active:scale-95 dark:hover:bg-primary dark:hover:text-primary-foreground dark:hover:border-primary"
-                          : "text-muted-foreground/40 dark:text-zinc-500/60"
-                      )}
-                      onClick={entry.onRestore}
-                      disabled={!entry.canRestore}
-                    >
-                      <RotateCcw className="size-3.5 mr-2" />
-                      {entry.restoreLabel}
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
+      {renderTrashDialog()}
 
       <ConfirmationDialog
         isOpen={!!manifestActionError}

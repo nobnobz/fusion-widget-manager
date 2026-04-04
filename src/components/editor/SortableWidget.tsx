@@ -15,7 +15,6 @@ import {
 import { countInvalidCatalogsInWidget, countTraktWarningsInWidget } from '@/lib/catalog-validation';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Badge } from '@/components/ui/badge';
 import { isNativeTraktDataSource } from '@/lib/widget-domain';
 import { copyTextToClipboard } from '@/lib/browser-transfer';
 import { getErrorMessage } from '@/lib/error-utils';
@@ -212,34 +211,31 @@ export function SortableWidget({
             {/* Metadata Group (Below title) */}
             <div className="flex items-center gap-3 mt-1.5">
               <div className={cn(
-                "px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-[0.15em] ",
+                "h-5 px-2 rounded-md text-[9px] font-black uppercase tracking-[0.1em] flex items-center justify-center border shrink-0 leading-none",
                 widget.type.startsWith('collection') 
-                  ? "bg-primary/10 text-primary border border-primary/20" 
-                  : "bg-indigo-500/10 text-indigo-500 border border-indigo-500/20"
+                  ? "bg-primary/10 text-primary border-primary/20" 
+                  : "bg-indigo-500/10 text-indigo-500 border-indigo-500/20"
               )}>
                 {widget.type.split('.')[0] === 'collection' ? 'Collection' : 'Classic Row'}
               </div>
               {hasNativeTrakt && (
-                <Badge className="bg-emerald-600/10 text-emerald-700 dark:text-emerald-300">
+                <div className="h-5 px-2 rounded-md bg-emerald-600/10 text-emerald-700 dark:text-emerald-300 border border-emerald-600/20 text-[9px] font-black uppercase tracking-[0.1em] flex items-center justify-center shrink-0 leading-none">
                   Native Trakt
-                </Badge>
+                </div>
               )}
               {widget.dataSource.kind === 'collection' && widget.dataSource.payload?.items && (
-                <div className="flex items-center gap-1.5 text-[9px] font-bold text-muted-foreground/40 uppercase tracking-[0.1em]">
-                  <div className="size-1 rounded-full bg-muted-foreground/20" />
-                  <span>{widget.dataSource.payload.items.length} items</span>
+                <div className="h-5 px-2 rounded-md bg-zinc-500/10 text-zinc-600/90 dark:text-zinc-300/80 border border-zinc-500/15 text-[9px] font-black uppercase tracking-[0.1em] flex items-center justify-center shrink-0 leading-none">
+                  {widget.dataSource.payload.items.length} items
                 </div>
               )}
               {hasInvalidCatalog && (
-                <div className="flex items-center gap-1.5 text-[9px] font-bold text-amber-500 uppercase tracking-[0.1em]">
-                  <div className="size-1 rounded-full bg-amber-500/60" />
-                  <span>{invalidCatalogCount} alert{invalidCatalogCount === 1 ? '' : 's'}</span>
+                <div className="h-5 px-2 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 text-[9px] font-black uppercase tracking-[0.1em] flex items-center justify-center gap-1.5 shrink-0 leading-none">
+                  {invalidCatalogCount} alert{invalidCatalogCount === 1 ? '' : 's'}
                 </div>
               )}
               {traktWarningCount > 0 && (
-                <div className="flex items-center gap-1.5 text-[9px] font-bold text-emerald-700 uppercase tracking-[0.1em] dark:text-emerald-300">
-                  <div className="size-1 rounded-full bg-emerald-500/70" />
-                  <span>{traktWarningCount} Trakt warn</span>
+                <div className="h-5 px-2 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-[9px] font-black uppercase tracking-[0.1em] flex items-center justify-center shrink-0 leading-none">
+                  {traktWarningCount} Trakt warn
                 </div>
               )}
             </div>
@@ -316,7 +312,7 @@ export function SortableWidget({
                   onChange={(e) => setEditTitle(e.target.value)}
                   onBlur={handleTitleSubmit}
                   onKeyDown={handleTitleKeyDown}
-                  className="h-8 py-0 px-2.5 text-sm font-bold tracking-tight bg-background/60 border-primary/20 focus:border-primary/40 focus-visible:ring-0 rounded-xl w-full backdrop-blur-sm"
+                  className="h-8 py-0 px-2.5 text-base sm:text-sm font-bold tracking-tight bg-background/60 border-primary/20 focus:border-primary/40 focus-visible:ring-0 rounded-xl w-full backdrop-blur-sm"
                   onClick={(e) => e.stopPropagation()}
                 />
               ) : (
@@ -328,35 +324,32 @@ export function SortableWidget({
             {/* Metadata badges – same style as desktop */}
             <div className="flex items-center gap-2 mt-1 flex-wrap">
               <div className={cn(
-                "px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-[0.15em]",
+                "h-5 px-2 rounded-md text-[9px] font-black uppercase tracking-[0.15em] flex items-center justify-center border shrink-0 leading-none",
                 widget.type.startsWith('collection')
-                  ? "bg-primary/10 text-primary border border-primary/20"
-                  : "bg-indigo-500/10 text-indigo-500 border border-indigo-500/20"
+                  ? "bg-primary/10 text-primary border-primary/20"
+                  : "bg-indigo-500/10 text-indigo-500 border-indigo-500/20"
               )}>
                 {widget.type.split('.')[0] === 'collection' ? 'Collection' : 'Classic Row'}
               </div>
               {hasNativeTrakt && (
-                <div className="flex items-center gap-1">
-                  <div className="size-1 rounded-full bg-emerald-500/70" />
-                  <span className="text-[9px] font-bold uppercase tracking-[0.1em] text-emerald-700 dark:text-emerald-300">Trakt</span>
+                <div className="h-5 px-2 rounded-md bg-emerald-600/10 text-emerald-700 dark:text-emerald-300 border border-emerald-600/20 text-[9px] font-black uppercase tracking-[0.1em] flex items-center justify-center shrink-0 leading-none">
+                  Trakt
                 </div>
               )}
               {widget.dataSource.kind === 'collection' && widget.dataSource.payload?.items && (
-                <div className="flex items-center gap-1">
-                  <div className="size-1 rounded-full bg-muted-foreground/25" />
-                  <span className="text-[9px] font-bold uppercase tracking-[0.1em] text-muted-foreground/50">{widget.dataSource.payload.items.length} items</span>
+                <div className="h-5 px-2 rounded-md bg-zinc-500/10 text-zinc-600/90 dark:text-zinc-300/80 border border-zinc-500/15 text-[9px] font-black uppercase tracking-[0.1em] flex items-center justify-center min-w-[24px] shrink-0 leading-none">
+                  {widget.dataSource.payload.items.length}
                 </div>
               )}
               {hasInvalidCatalog && (
-                <div className="flex items-center gap-1">
-                  <div className="size-1 rounded-full bg-amber-500/60" />
-                  <span className="text-[9px] font-bold uppercase tracking-[0.1em] text-amber-500">{invalidCatalogCount} alert{invalidCatalogCount === 1 ? '' : 's'}</span>
+                <div className="h-5 px-2 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 text-[9px] font-black uppercase tracking-[0.1em] flex items-center justify-center gap-1.5 shrink-0 leading-none">
+                  <AlertTriangle className="size-2.5" />
+                  <span>{invalidCatalogCount}</span>
                 </div>
               )}
               {traktWarningCount > 0 && (
-                <div className="flex items-center gap-1">
-                  <div className="size-1 rounded-full bg-emerald-500/60" />
-                  <span className="text-[9px] font-bold uppercase tracking-[0.1em] text-emerald-700 dark:text-emerald-300">{traktWarningCount} Trakt warn</span>
+                <div className="h-5 px-2 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-[9px] font-black uppercase tracking-[0.1em] flex items-center justify-center gap-1 shrink-0 leading-none">
+                  {traktWarningCount} T
                 </div>
               )}
             </div>
@@ -391,7 +384,7 @@ export function SortableWidget({
             <Button 
               variant="ghost" 
               size="icon"
-              className={cn("size-9", editorHeaderIconButtonClass, editorHeaderIconButtonDangerClass)}
+              className={cn("size-9 hidden sm:flex", editorHeaderIconButtonClass, editorHeaderIconButtonDangerClass)}
               onClick={handleDelete}
               title="Move widget to trash"
             >
@@ -414,20 +407,34 @@ export function SortableWidget({
           >
             <div className="p-4 max-sm:p-3 border-t border-border bg-white dark:bg-black/20">
                {widget.type === 'row.classic' && (
-                 <div className="flex items-center justify-end mb-4 pb-3 border-b border-border/40">
-                   <Button 
-                     variant="ghost" 
-                     size="sm" 
-                     className="h-8 rounded-2xl border border-border/40 bg-zinc-500/[0.03] text-muted-foreground/70 hover:text-primary hover:bg-primary/5 hover:border-primary/20 transition-all font-bold text-[10px] uppercase tracking-widest"
-                     onClick={startEditing}
-                   >
-                     <Pencil className="size-3 mr-2" />
-                     Rename Widget
-                   </Button>
-                 </div>
+                  <div className="flex items-center justify-end gap-2 mb-4 pb-3 border-b border-border/40">
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="h-8 rounded-2xl border border-border/40 bg-zinc-500/[0.03] text-muted-foreground/70 hover:text-primary hover:bg-primary/5 hover:border-primary/20 transition-all font-bold text-[10px] uppercase tracking-widest"
+                      onClick={startEditing}
+                    >
+                      <Pencil className="size-3 mr-2" />
+                      Rename
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="h-8 rounded-2xl border border-red-500/20 bg-red-500/5 text-red-500 hover:bg-red-500/10 hover:border-red-500/30 transition-all font-bold text-[10px] uppercase tracking-widest sm:hidden"
+                      onClick={handleDelete}
+                    >
+                      <Trash2 className="size-3 mr-2" />
+                      Delete
+                    </Button>
+                  </div>
                )}
-               {widget.type === 'collection.row' ? (
-                 <CollectionRowEditor widget={widget} searchQuery={searchQuery} onRename={() => setIsEditing(true)} />
+                {widget.type === 'collection.row' ? (
+                  <CollectionRowEditor 
+                    widget={widget} 
+                    searchQuery={searchQuery} 
+                    onRename={() => setIsEditing(true)} 
+                    onDelete={handleDelete}
+                  />
                ) : (
                  <RowClassicEditor widget={widget} />
                )}

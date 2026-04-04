@@ -680,7 +680,8 @@ export function MainEditor() {
                 onBlur={() => setIsImportFocused(false)}
                 placeholder={isImportFocused ? "Paste JSON payload here..." : (isDraggingFile ? "Drop your JSON file here!" : "Paste your Fusion widget export, a JSON URL, or drag & drop a file here...")}
                 className={cn(
-                  "min-h-[200px] max-sm:min-h-[100px] pt-32 max-sm:pt-28 pb-10 max-sm:pb-5 font-mono text-base sm:text-[13px] max-sm:text-[11px] bg-white/40 dark:bg-white/[0.03] border-2 border-dashed border-zinc-200/80 dark:border-white/10 rounded-3xl max-sm:rounded-2xl px-10 max-sm:px-5 text-center focus:text-left focus-visible:ring-primary/20 transition-all leading-relaxed placeholder:text-center focus:placeholder:text-left placeholder:text-muted-foreground/60 placeholder:font-sans resize-none overflow-hidden backdrop-blur-sm",
+                  "min-h-[200px] max-sm:min-h-[100px] pt-32 max-sm:pt-28 pb-10 max-sm:pb-5 font-mono text-base sm:text-xs",
+                  "bg-white/40 dark:bg-white/[0.03] border-2 border-dashed border-zinc-200/80 dark:border-white/10 rounded-3xl max-sm:rounded-2xl px-10 max-sm:px-5 text-center focus:text-left focus-visible:ring-primary/20 transition-all leading-relaxed placeholder:text-center focus:placeholder:text-left placeholder:text-muted-foreground/60 placeholder:font-sans resize-none overflow-hidden backdrop-blur-sm",
                   "hover:bg-white/60 dark:hover:bg-white/[0.05] hover:border-primary/40",
                   isDraggingFile && "border-primary bg-primary/5 ring-8 ring-primary/5 scale-[1.01]"
                 )}
@@ -978,7 +979,7 @@ export function MainEditor() {
           </a>
           <div className="flex flex-col items-center gap-1 opacity-45">
             <div className="flex items-center gap-2 text-[9.5px] font-mono tracking-[0.2em] font-medium uppercase text-muted-foreground/80">
-              <span>V0.5.0</span><span className="size-1 rounded-full bg-foreground/20" /><span>BY BOT-BID-RAISER</span>
+              <span>V0.5.1</span><span className="size-1 rounded-full bg-foreground/20" /><span>BY BOT-BID-RAISER</span>
             </div>
             <div className="text-[8.5px] font-mono tracking-[0.3em] uppercase opacity-75 text-foreground/80">BUILT WITH ANTIGRAVITY</div>
           </div>
@@ -1004,8 +1005,8 @@ export function MainEditor() {
       <Dialog open={showAiometadataActions} onOpenChange={setShowAiometadataActions}>
         <DialogContent className="sm:max-w-[460px] rounded-3xl border border-border/40 bg-card/95 p-0 backdrop-blur-2xl overflow-hidden max-sm:w-[calc(100vw-1.25rem)] max-sm:rounded-[2rem]">
           <DialogTitle className="sr-only">AIOMetadata Download</DialogTitle>
-          <div className="p-8 pt-10 max-sm:p-5 max-sm:pt-6 text-left">
-            <DialogHeader className="space-y-6 items-start max-sm:space-y-4">
+          <div className="p-8 pt-10 max-sm:px-5 max-sm:pt-6 text-left">
+            <DialogHeader className="space-y-6 items-start">
               <div className="size-14 rounded-xl border border-primary/10 bg-primary/5 text-primary flex items-center justify-center max-sm:size-12">
                 <Download className="size-7 max-sm:size-6" />
               </div>
@@ -1036,9 +1037,9 @@ export function MainEditor() {
       <Dialog open={showAiostreamsActions} onOpenChange={setShowAiostreamsActions}>
         <DialogContent className="sm:max-w-[420px] rounded-3xl border border-border/40 bg-card/95 p-0 backdrop-blur-2xl overflow-hidden max-sm:w-[calc(100vw-1rem)]">
           <DialogTitle className="sr-only">AIOStreams Templates</DialogTitle>
-          <div className="p-8 pt-10 max-sm:p-5 text-left">
+          <div className="p-8 pt-10 max-sm:px-5 max-sm:pt-6 text-left">
             <DialogHeader className="space-y-6 items-start text-left">
-              <div className="size-14 rounded-xl border border-primary/10 bg-primary/5 text-primary flex items-center justify-center max-sm:size-12"><Download className="size-7" /></div>
+              <div className="size-14 rounded-xl border border-primary/10 bg-primary/5 text-primary flex items-center justify-center max-sm:size-12"><Download className="size-7 max-sm:size-6" /></div>
               <div className="space-y-1">
                 <DialogTitle className="text-2xl font-bold tracking-tight">{formatTemplateLabel('AIOStreams Template', aiostreamsTemplate ?? undefined)}</DialogTitle>
                 <DialogDescription className="text-muted-foreground/60 text-xs font-medium">Choose to copy the URL or download the file directly.</DialogDescription>

@@ -1,0 +1,30 @@
+
+> fusion-widget-manager@0.4.0 test:e2e
+> playwright test -c playwright.e2e.config.ts
+
+
+Running 20 tests using 4 workers
+
+  ✓   2 [chromium] › test/e2e/editor-core.spec.ts:46:5 › imports a fixture from the welcome screen and opens export preview (11.7s)
+  ✓   3 [chromium] › test/e2e/editor-core.spec.ts:22:5 › opens the Fusion setup guide with dynamic template and recommended AIOMetadata instances (11.8s)
+  ✓   1 [chromium] › test/e2e/editor-core.spec.ts:68:5 › loads the mocked template, syncs the manifest, and creates a widget (11.8s)
+  ✓   4 [chromium] › test/e2e/editor-core.spec.ts:95:5 › merges a partial import and keeps the result after reload (15.2s)
+  ✓   6 [chromium] › test/e2e/editor-core.spec.ts:236:5 › shows moved items in review and applies cross-widget moves without duplication (4.8s)
+  ✓   5 [chromium] › test/e2e/editor-core.spec.ts:136:5 › shows the item title visibility toggle inside configuration and preview (5.1s)
+  ✓   7 [chromium] › test/e2e/editor-core.spec.ts:355:5 › applies AIOMetadata export settings only after save and resets unsaved dialog changes (5.4s)
+  -  10 [chromium] › test/e2e/editor-core.spec.ts:420:5 › keeps the setup guide usable on mobile
+  ✓   8 [chromium] › test/e2e/editor-core.spec.ts:384:5 › moves a widget to trash and restores it (3.3s)
+  ✓   9 [chromium] › test/e2e/editor-core.spec.ts:401:5 › reorders widgets through drag and drop on desktop (2.9s)
+  ✓  11 [mobile-chrome] › test/e2e/editor-core.spec.ts:46:5 › imports a fixture from the welcome screen and opens export preview (2.3s)
+  ✓  13 [mobile-chrome] › test/e2e/editor-core.spec.ts:136:5 › shows the item title visibility toggle inside configuration and preview (2.2s)
+  ✓  12 [mobile-chrome] › test/e2e/editor-core.spec.ts:95:5 › merges a partial import and keeps the result after reload (4.7s)
+  ✓  14 [mobile-chrome] › test/e2e/editor-core.spec.ts:236:5 › shows moved items in review and applies cross-widget moves without duplication (2.4s)
+  -  16 [mobile-chrome] › test/e2e/editor-core.spec.ts:384:5 › moves a widget to trash and restores it
+  -  17 [mobile-chrome] › test/e2e/editor-core.spec.ts:401:5 › reorders widgets through drag and drop on desktop
+  ✓  15 [mobile-chrome] › test/e2e/editor-core.spec.ts:355:5 › applies AIOMetadata export settings only after save and resets unsaved dialog changes (2.8s)
+  ✓  18 [mobile-chrome] › test/e2e/editor-core.spec.ts:420:5 › keeps the setup guide usable on mobile (2.0s)
+  ✓  19 [mobile-chrome] › test/e2e/editor-core.spec.ts:22:5 › opens the Fusion setup guide with dynamic template and recommended AIOMetadata instances (2.0s)
+  ✓  20 [mobile-chrome] › test/e2e/editor-core.spec.ts:68:5 › loads the mocked template, syncs the manifest, and creates a widget (2.3s)
+
+  3 skipped
+  17 passed (9.5m)

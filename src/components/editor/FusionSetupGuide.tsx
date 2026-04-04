@@ -124,7 +124,7 @@ export function FusionSetupGuide({
             ]}
           />
 
-          <div className="grid gap-3 md:grid-cols-[1.1fr_0.9fr]">
+          <div className="grid gap-3 grid-cols-1">
             <FusionGuidePanel title="Recommended AIOMetadata instances" icon={ExternalLink}>
               <div className="space-y-2.5">
                 {aiometadataInstances.map((instance) => (

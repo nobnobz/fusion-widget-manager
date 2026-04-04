@@ -20,7 +20,6 @@ export function FusionGuideDialog({
   onOpenChange,
   title,
   description,
-  icon: Icon,
   children,
   className,
 }: FusionGuideDialogProps) {
@@ -34,10 +33,9 @@ export function FusionGuideDialog({
         )}
       >
         <DialogTitle className="sr-only">{title}</DialogTitle>
-        <div className="min-h-0 flex-1 overflow-y-auto custom-scrollbar px-5 pb-[calc(env(safe-area-inset-bottom)+1.25rem)] pt-6 sm:px-7 sm:pb-7 sm:pt-7">
+        <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar px-5 pb-[calc(env(safe-area-inset-bottom)+1.25rem)] pt-6 sm:px-7 sm:pb-7 sm:pt-7">
           <DialogHeader className="border-b border-border/55 pb-4 pr-10 text-left sm:pb-5 sm:pr-12">
             <div className="inline-flex w-fit items-center gap-2 rounded-full border border-primary/18 bg-primary/8 px-3 py-1 text-[11px] font-black uppercase tracking-[0.18em] text-primary">
-              <Icon className="size-3.5" />
               Setup Guide
             </div>
             <div className="space-y-2 pt-2">
@@ -74,25 +72,21 @@ type FusionGuideFlowProps = {
 
 export function FusionGuideFlow({ title, items }: FusionGuideFlowProps) {
   return (
-    <section className={cn("mx-2 border border-primary/16 bg-[linear-gradient(180deg,rgba(239,246,255,0.96),rgba(248,250,252,0.92))] p-3.5 shadow-[0_12px_32px_-22px_rgba(59,130,246,0.24)] dark:border-primary/18 dark:bg-[linear-gradient(180deg,rgba(8,23,38,0.9),rgba(9,15,24,0.84))] sm:mx-0 sm:p-4", GUIDE_SECTION_RADIUS)}>
+    <section className={cn("mx-2 border border-primary/14 bg-[linear-gradient(180deg,rgba(239,246,255,0.96),rgba(248,250,252,0.92))] p-3.5 shadow-[0_12px_32px_-22px_rgba(59,130,246,0.24)] dark:border-primary/18 dark:bg-[linear-gradient(180deg,rgba(8,23,38,0.9),rgba(9,15,24,0.84))] sm:mx-0 sm:p-4", GUIDE_SECTION_RADIUS)}>
       <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary/88">{title}</p>
       <ol className="mt-3 grid gap-2.5 md:grid-cols-2 xl:grid-cols-4">
         {items.map((item, index) => {
-          const Icon = item.icon;
           return (
             <li
               key={item.title}
-              className={cn("border border-primary/12 bg-background/72 px-3.5 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.75)] dark:border-white/8 dark:bg-white/[0.03] sm:px-4 sm:py-3.5", GUIDE_SURFACE_RADIUS)}
+              className={cn("border border-primary/12 bg-background/72 px-3.5 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.5)] dark:border-white/8 dark:bg-white/[0.03] dark:shadow-none sm:px-4 sm:py-3.5", GUIDE_SURFACE_RADIUS)}
             >
               <div className="flex min-h-[3rem] items-center gap-3">
                 <div className="inline-flex size-7.5 shrink-0 items-center justify-center rounded-full border border-primary/16 bg-primary/10 text-[11px] font-black text-primary">
                   {index + 1}
                 </div>
-                <div className="flex min-w-0 items-center gap-2.5">
-                  <Icon className="size-[0.95rem] shrink-0 text-primary/88" />
-                  <div className="min-w-0">
-                    <h3 className="text-left text-[14px] font-bold tracking-tight text-foreground">{item.title}</h3>
-                  </div>
+                <div className="min-w-0">
+                  <h3 className="text-left text-[14px] font-bold tracking-tight text-foreground">{item.title}</h3>
                 </div>
               </div>
             </li>
@@ -116,7 +110,6 @@ export function FusionGuideSection({
   step,
   title,
   description,
-  icon: Icon,
   children,
   className,
 }: FusionGuideSectionProps) {
@@ -128,15 +121,12 @@ export function FusionGuideSection({
         className,
       )}
     >
-      <div className="flex items-center gap-3 sm:gap-4">
+      <div className="flex items-center gap-4 sm:gap-5">
         <div className="inline-flex size-10 shrink-0 items-center justify-center rounded-2xl border border-primary/16 bg-primary/10 text-[12px] font-black uppercase tracking-[0.08em] text-primary">
           {step}
         </div>
         <div className="min-w-0">
-          <div className="flex items-center gap-2">
-            <Icon className="size-4 shrink-0 text-primary/88" />
-            <h2 className="text-[1.15rem] font-black tracking-tight text-foreground sm:text-[1.25rem]">{title}</h2>
-          </div>
+          <h2 className="text-[1.15rem] font-black tracking-tight text-foreground sm:text-[1.25rem]">{title}</h2>
           {description ? (
             <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground/76">{description}</p>
           ) : null}
@@ -154,18 +144,17 @@ type FusionGuidePanelProps = {
   className?: string;
 };
 
-export function FusionGuidePanel({ title, icon: Icon, children, className }: FusionGuidePanelProps) {
+export function FusionGuidePanel({ title, children, className }: FusionGuidePanelProps) {
   return (
     <article
       className={cn(
-        "border border-border/50 bg-background/72 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] dark:border-white/8 dark:bg-white/[0.03]",
+        "border border-border/50 bg-background/72 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.5)] dark:border-white/8 dark:bg-white/[0.03] dark:shadow-none",
         GUIDE_SURFACE_RADIUS,
         className,
       )}
     >
       {title ? (
         <div className="flex items-center gap-2">
-          {Icon ? <Icon className="size-4 shrink-0 text-primary/88" /> : null}
           <h3 className="text-[15px] font-bold tracking-tight text-foreground/82 sm:text-base">{title}</h3>
         </div>
       ) : null}

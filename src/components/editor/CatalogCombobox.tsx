@@ -65,7 +65,7 @@ export function CatalogCombobox({
       <button
         type="button"
         className={cn(
-          "flex items-center justify-between w-full h-10 max-sm:h-11 px-4 rounded-xl bg-zinc-100/40 dark:bg-zinc-950/20 text-xs sm:text-[11px] font-bold text-left transition-all outline-none border",
+          "flex items-center justify-between w-full h-10 max-sm:h-11 px-4 rounded-xl bg-zinc-100/40 dark:bg-zinc-950/20 text-base sm:text-[11px] font-bold text-left transition-all outline-none border",
           isOpen 
             ? "ring-1 ring-primary/30 bg-background border-primary/20 dark:bg-zinc-900" 
             : "border-zinc-200 dark:border-white/5 hover:bg-zinc-100/60 dark:hover:bg-zinc-900/60 hover:border-primary/20",
@@ -148,7 +148,7 @@ export function CatalogCombobox({
                   setIsOpen(false);
                 }}
                 className={cn(
-                  "w-full flex items-center justify-between px-3.5 py-3 rounded-2xl text-left text-sm sm:text-xs transition-all mb-1.5 last:mb-0",
+                  "w-full flex items-center justify-between px-3.5 py-3 rounded-2xl text-left text-base sm:text-xs transition-all mb-1.5 last:mb-0",
                   isSelected
                     ? "bg-primary text-primary-foreground  "
                     : isDisabled
