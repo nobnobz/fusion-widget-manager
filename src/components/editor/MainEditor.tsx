@@ -987,80 +987,102 @@ export function MainEditor() {
         </footer>
       </main>
 
-      <ManifestModal isOpen={showManifestModal} onOpenChange={setShowManifestModal} />
-      <ImportMergeDialog
-        open={showImportMergeDialog}
-        onOpenChange={(open) => { setShowImportMergeDialog(open); if (!open) { setInitialImportJson(undefined); setInitialImportFileName(undefined); } }}
-        initialJson={initialImportJson}
-        initialFileName={initialImportFileName}
-      />
-      <NewWidgetDialog isOpen={showNewWidgetDialog} onOpenChange={setShowNewWidgetDialog} onCreated={(id) => onWidgetCreated(id)} />
-      <ConfirmationDialog
-        isOpen={showRestartConfirm} onOpenChange={setShowRestartConfirm} title="Clear & Restart?" variant="danger" description="Are you sure you want to start over? All current widgets will be permanently cleared from temporary storage." confirmText="START OVER"
-        onConfirm={() => { clearConfig(); setView('welcome'); }}
-      />
-      <ConfirmationDialog
-        isOpen={alertDialog.isOpen} onOpenChange={(open) => setAlertDialog(prev => ({ ...prev, isOpen: open }))} title={alertDialog.title} description={alertDialog.message} details={alertDialog.details} variant={alertDialog.variant} confirmText={alertDialog.confirmText || "CONTINUE"} contentClassName={alertDialog.contentClassName} onConfirm={() => { }}
-      />
+      {showManifestModal && (
+        <ManifestModal isOpen={showManifestModal} onOpenChange={setShowManifestModal} />
+      )}
+      {showImportMergeDialog && (
+        <ImportMergeDialog
+          open={showImportMergeDialog}
+          onOpenChange={(open) => { 
+            setShowImportMergeDialog(open); 
+            if (!open) { 
+              setInitialImportJson(undefined); 
+              setInitialImportFileName(undefined); 
+            } 
+          }}
+          initialJson={initialImportJson}
+          initialFileName={initialImportFileName}
+        />
+      )}
+      {showNewWidgetDialog && (
+        <NewWidgetDialog isOpen={showNewWidgetDialog} onOpenChange={setShowNewWidgetDialog} onCreated={(id) => onWidgetCreated(id)} />
+      )}
+      {showRestartConfirm && (
+        <ConfirmationDialog
+          isOpen={showRestartConfirm} onOpenChange={setShowRestartConfirm} title="Clear & Restart?" variant="danger" description="Are you sure you want to start over? All current widgets will be permanently cleared from temporary storage." confirmText="START OVER"
+          onConfirm={() => { clearConfig(); setView('welcome'); }}
+        />
+      )}
+      {alertDialog.isOpen && (
+        <ConfirmationDialog
+          isOpen={alertDialog.isOpen} onOpenChange={(open) => setAlertDialog(prev => ({ ...prev, isOpen: open }))} title={alertDialog.title} description={alertDialog.message} details={alertDialog.details} variant={alertDialog.variant} confirmText={alertDialog.confirmText || "CONTINUE"} contentClassName={alertDialog.contentClassName} onConfirm={() => { }}
+        />
+      )}
 
-      <Dialog open={showAiometadataActions} onOpenChange={setShowAiometadataActions}>
-        <DialogContent className="sm:max-w-[460px] rounded-3xl border border-border/40 bg-card/95 p-0 backdrop-blur-2xl overflow-hidden max-sm:w-[calc(100vw-1.25rem)] max-sm:rounded-[2rem]">
-          <DialogTitle className="sr-only">AIOMetadata Download</DialogTitle>
-          <div className="p-8 pt-10 max-sm:px-5 max-sm:pt-6 text-left">
-            <DialogHeader className="space-y-6 items-start">
-              <div className="size-14 rounded-xl border border-primary/10 bg-primary/5 text-primary flex items-center justify-center max-sm:size-12">
-                <Download className="size-7 max-sm:size-6" />
+      {showAiometadataActions && (
+        <Dialog open={showAiometadataActions} onOpenChange={setShowAiometadataActions}>
+          <DialogContent className="sm:max-w-[460px] rounded-3xl border border-border/40 bg-card/95 p-0 backdrop-blur-2xl overflow-hidden max-sm:w-[calc(100vw-1.25rem)] max-sm:rounded-[2rem]">
+            <DialogTitle className="sr-only">AIOMetadata Download</DialogTitle>
+            <div className="p-8 pt-10 max-sm:px-5 max-sm:pt-6 text-left">
+              <DialogHeader className="space-y-6 items-start">
+                <div className="size-14 rounded-xl border border-primary/10 bg-primary/5 text-primary flex items-center justify-center max-sm:size-12">
+                  <Download className="size-7 max-sm:size-6" />
+                </div>
+                <div className="space-y-1">
+                  <DialogTitle className="text-2xl font-bold tracking-tight">AIOMetadata Download</DialogTitle>
+                  <DialogDescription className="max-w-[34ch] text-xs font-medium leading-relaxed text-muted-foreground/60 max-sm:max-w-none">
+                    Use Full Template for first setup, or Catalogs Only for updates.
+                  </DialogDescription>
+                </div>
+              </DialogHeader>
+              <div className="mt-8 grid gap-3 max-sm:mt-6">
+                {[aiometadataTemplate, aiometadataCatalogsOnlyTemplate].map((t, i) => (
+                  <Button
+                    key={i} variant="outline" className="h-auto min-h-[5.25rem] w-full rounded-2xl border-border/50 bg-background/55 px-4 py-3 text-left transition-all hover:bg-primary/[0.04]"
+                    onClick={async () => { await downloadTemplateFile(t); setShowAiometadataActions(false); }} disabled={!t}
+                  >
+                    <div className="flex w-full items-center gap-3">
+                      <div className="flex min-w-0 flex-1 flex-col items-start font-bold uppercase tracking-[0.16em] text-[11px]">{i === 0 ? 'Full Template' : 'Catalogs Only'}<span className="pt-1 text-[10px] font-medium normal-case text-muted-foreground/58">{t?.filename ?? 'Not available'}</span></div>
+                      <div className="size-11 shrink-0 items-center justify-center rounded-xl border border-primary/12 bg-primary/6 text-primary flex"><Download className="size-4.5" /></div>
+                    </div>
+                  </Button>
+                ))}
               </div>
-              <div className="space-y-1">
-                <DialogTitle className="text-2xl font-bold tracking-tight">AIOMetadata Download</DialogTitle>
-                <DialogDescription className="max-w-[34ch] text-xs font-medium leading-relaxed text-muted-foreground/60 max-sm:max-w-none">
-                  Use Full Template for first setup, or Catalogs Only for updates.
-                </DialogDescription>
-              </div>
-            </DialogHeader>
-            <div className="mt-8 grid gap-3 max-sm:mt-6">
-              {[aiometadataTemplate, aiometadataCatalogsOnlyTemplate].map((t, i) => (
-                <Button
-                  key={i} variant="outline" className="h-auto min-h-[5.25rem] w-full rounded-2xl border-border/50 bg-background/55 px-4 py-3 text-left transition-all hover:bg-primary/[0.04]"
-                  onClick={async () => { await downloadTemplateFile(t); setShowAiometadataActions(false); }} disabled={!t}
-                >
-                  <div className="flex w-full items-center gap-3">
-                    <div className="flex min-w-0 flex-1 flex-col items-start font-bold uppercase tracking-[0.16em] text-[11px]">{i === 0 ? 'Full Template' : 'Catalogs Only'}<span className="pt-1 text-[10px] font-medium normal-case text-muted-foreground/58">{t?.filename ?? 'Not available'}</span></div>
-                    <div className="size-11 shrink-0 items-center justify-center rounded-xl border border-primary/12 bg-primary/6 text-primary flex"><Download className="size-4.5" /></div>
-                  </div>
-                </Button>
-              ))}
             </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+          </DialogContent>
+        </Dialog>
+      )}
 
-      <Dialog open={showAiostreamsActions} onOpenChange={setShowAiostreamsActions}>
-        <DialogContent className="sm:max-w-[420px] rounded-3xl border border-border/40 bg-card/95 p-0 backdrop-blur-2xl overflow-hidden max-sm:w-[calc(100vw-1rem)]">
-          <DialogTitle className="sr-only">AIOStreams Templates</DialogTitle>
-          <div className="p-8 pt-10 max-sm:px-5 max-sm:pt-6 text-left">
-            <DialogHeader className="space-y-6 items-start text-left">
-              <div className="size-14 rounded-xl border border-primary/10 bg-primary/5 text-primary flex items-center justify-center max-sm:size-12"><Download className="size-7 max-sm:size-6" /></div>
-              <div className="space-y-1">
-                <DialogTitle className="text-2xl font-bold tracking-tight">{formatTemplateLabel('AIOStreams Template', aiostreamsTemplate ?? undefined)}</DialogTitle>
-                <DialogDescription className="text-muted-foreground/60 text-xs font-medium">Choose to copy the URL or download the file directly.</DialogDescription>
-              </div>
-            </DialogHeader>
-            <DialogFooter className="mt-6 flex-col gap-2.5">
-              <Button variant="outline" className={cn(editorActionButtonClass, editorFooterSecondaryButtonClass)} onClick={handleCopyAiostreamsUrl} disabled={!aiostreamsTemplate?.rawUrl}><Copy className="size-4 mr-2" />Copy URL</Button>
-              <Button className={cn(editorActionButtonClass, editorFooterPrimaryButtonClass)} onClick={async () => { await downloadTemplateFile(aiostreamsTemplate); setShowAiostreamsActions(false); }} disabled={!aiostreamsTemplate}><Download className="size-4 mr-2" />Download</Button>
-            </DialogFooter>
-          </div>
-        </DialogContent>
-      </Dialog>
+      {showAiostreamsActions && (
+        <Dialog open={showAiostreamsActions} onOpenChange={setShowAiostreamsActions}>
+          <DialogContent className="sm:max-w-[420px] rounded-3xl border border-border/40 bg-card/95 p-0 backdrop-blur-2xl overflow-hidden max-sm:w-[calc(100vw-1rem)]">
+            <DialogTitle className="sr-only">AIOStreams Templates</DialogTitle>
+            <div className="p-8 pt-10 max-sm:px-5 max-sm:pt-6 text-left">
+              <DialogHeader className="space-y-6 items-start text-left">
+                <div className="size-14 rounded-xl border border-primary/10 bg-primary/5 text-primary flex items-center justify-center max-sm:size-12"><Download className="size-7 max-sm:size-6" /></div>
+                <div className="space-y-1">
+                  <DialogTitle className="text-2xl font-bold tracking-tight">{formatTemplateLabel('AIOStreams Template', aiostreamsTemplate ?? undefined)}</DialogTitle>
+                  <DialogDescription className="text-muted-foreground/60 text-xs font-medium">Choose to copy the URL or download the file directly.</DialogDescription>
+                </div>
+              </DialogHeader>
+              <DialogFooter className="mt-6 flex-col gap-2.5">
+                <Button variant="outline" className={cn(editorActionButtonClass, editorFooterSecondaryButtonClass)} onClick={handleCopyAiostreamsUrl} disabled={!aiostreamsTemplate?.rawUrl}><Copy className="size-4 mr-2" />Copy URL</Button>
+                <Button className={cn(editorActionButtonClass, editorFooterPrimaryButtonClass)} onClick={async () => { await downloadTemplateFile(aiostreamsTemplate); setShowAiostreamsActions(false); }} disabled={!aiostreamsTemplate}><Download className="size-4 mr-2" />Download</Button>
+              </DialogFooter>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
 
-      <FusionSetupGuide
-        open={showHowToUse}
-        onOpenChange={setShowHowToUse}
-        aiometadataTemplate={aiometadataTemplate}
-        isTemplateLoading={isLoadingTemplates}
-        onDownloadAiometadataTemplate={() => downloadTemplateFile(aiometadataTemplate)}
-      />
+      {showHowToUse && (
+        <FusionSetupGuide
+          open={showHowToUse}
+          onOpenChange={setShowHowToUse}
+          aiometadataTemplate={aiometadataTemplate}
+          isTemplateLoading={isLoadingTemplates}
+          onDownloadAiometadataTemplate={() => downloadTemplateFile(aiometadataTemplate)}
+        />
+      )}
     </div>
   );
 }

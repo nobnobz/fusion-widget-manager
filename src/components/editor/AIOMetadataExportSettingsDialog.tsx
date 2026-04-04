@@ -498,7 +498,7 @@ export function AIOMetadataExportSettingsDialog({
   if (isMobile) {
     return (
       <Drawer open={open} onOpenChange={onOpenChange}>
-        <DrawerContent className="max-h-[96dvh] border-zinc-200/80 bg-white dark:border-white/10 dark:bg-zinc-950 rounded-t-[2.5rem]">
+        <DrawerContent className="max-h-[94dvh] border-zinc-200/80 bg-white dark:border-white/10 dark:bg-zinc-950 rounded-t-[2.5rem]">
           <DrawerHeader className="sr-only">
             <DrawerTitle>{targetMeta?.title || 'AIOMetadata Export Settings'}</DrawerTitle>
             <DrawerDescription>{targetMeta?.description || 'Adjust source-specific AIOMetadata export settings.'}</DrawerDescription>

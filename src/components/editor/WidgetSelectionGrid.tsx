@@ -1149,7 +1149,7 @@ function WidgetSelectionGridComponent({
     }
   };
 
-  const renderAiometadataWidgetRow = (widget: ExportableCatalogWidgetGroup, keyPrefix: string = "") => {
+  const renderAiometadataWidgetRow = (widget: ExportableCatalogWidgetGroup, keyPrefix: string = "", showOnlyNew: boolean = false) => {
     const itemCatalogKeys = new Set(widget.items.flatMap((i) => i.catalogKeys));
     const widgetSelectableCatalogKeys = widget.catalogKeys.filter((key) => aiometadataSelectableCatalogKeys.has(key));
     const topLevelOnlyCatalogKeys = widget.catalogKeys.filter((key) => !itemCatalogKeys.has(key));
@@ -1258,8 +1258,9 @@ function WidgetSelectionGridComponent({
               className="overflow-hidden"
             >
               <div className="mt-3.5 p-3.5 max-sm:px-2 max-sm:py-3 rounded-xl bg-zinc-100/80 dark:bg-zinc-900/30 border border-zinc-200/60 dark:border-white/5 space-y-2">
-                {/* Row-level Catalogs (filtered out those in items) */}
-                {topLevelOnlyCatalogKeys.map((catalogKey) => {
+                {topLevelOnlyCatalogKeys
+                  .filter((catalogKey) => !showOnlyNew || aiometadataSelectableCatalogKeys.has(catalogKey))
+                  .map((catalogKey) => {
                   const catalog = aiometadataCatalogMap.get(catalogKey) as ExportableCatalogDefinition | undefined;
                   if (!catalog) return null;
                   const checked = selectedAiometadataCatalogKeySet.has(catalogKey);
@@ -1338,7 +1339,9 @@ function WidgetSelectionGridComponent({
                     <p className="text-[10px] font-black uppercase tracking-[0.16em] text-muted-foreground/60 px-1">
                       Collection Items
                     </p>
-                    {widget.items.map((item) => {
+                    {widget.items
+                      .filter((item) => !showOnlyNew || item.catalogKeys.some((key) => aiometadataSelectableCatalogKeys.has(key)))
+                      .map((item) => {
                       const itemSelectableCatalogKeys = item.catalogKeys.filter((key) => aiometadataSelectableCatalogKeys.has(key));
                       const itemSelectedKeys = itemSelectableCatalogKeys.filter((key) => selectedAiometadataCatalogKeySet.has(key));
                       const itemSelectedCount = itemSelectedKeys.length;
@@ -1421,7 +1424,9 @@ function WidgetSelectionGridComponent({
                                 className="overflow-hidden"
                               >
                                 <div className="mt-2.5 space-y-1.5 pt-1">
-                                  {item.catalogKeys.map((itemCatalogKey) => {
+                                  {item.catalogKeys
+                                    .filter((itemCatalogKey) => !showOnlyNew || aiometadataSelectableCatalogKeys.has(itemCatalogKey))
+                                    .map((itemCatalogKey) => {
                                     const catalog = aiometadataCatalogMap.get(itemCatalogKey) as ExportableCatalogDefinition | undefined;
                                     if (!catalog) return null;
                                     const checked = selectedAiometadataCatalogKeySet.has(itemCatalogKey);
@@ -1670,7 +1675,7 @@ function WidgetSelectionGridComponent({
                     );
                   }
 
-                  return newWidgets.map((widget) => renderAiometadataWidgetRow(widget, "new-"));
+                  return newWidgets.map((widget) => renderAiometadataWidgetRow(widget, "new-", true));
                 })()}
               </div>
             </div>

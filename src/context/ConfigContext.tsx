@@ -154,20 +154,24 @@ export function ConfigProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    localStorage.setItem(
-      'fusion-widgets-config',
-      JSON.stringify(
-        buildStoredState({
-          widgets,
-          trash,
-          itemTrash,
-          manifestUrl,
-          replacePlaceholder,
-          manifestCatalogs: [],
-          manifestContent: '',
-        })
-      )
-    );
+    const timer = setTimeout(() => {
+      localStorage.setItem(
+        'fusion-widgets-config',
+        JSON.stringify(
+          buildStoredState({
+            widgets,
+            trash,
+            itemTrash,
+            manifestUrl,
+            replacePlaceholder,
+            manifestCatalogs: [],
+            manifestContent: '',
+          })
+        )
+      );
+    }, 1000);
+
+    return () => clearTimeout(timer);
   }, [widgets, trash, itemTrash, manifestUrl, replacePlaceholder]);
 
   useEffect(() => {
