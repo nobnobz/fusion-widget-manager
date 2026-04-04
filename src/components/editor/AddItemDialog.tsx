@@ -89,7 +89,7 @@ export function AddItemDialog({ onAdd, trigger }: AddItemDialogProps) {
         <header className="relative space-y-5 items-start text-left">
           <button
             onClick={() => setOpen(false)}
-            className="absolute right-0 top-0 rounded-full p-2 text-muted-foreground/40 hover:bg-muted hover:text-foreground transition-all active:scale-95 sm:hidden"
+            className="absolute right-0 top-0.5 rounded-full p-2 text-muted-foreground/40 hover:bg-muted hover:text-foreground transition-all active:scale-95 sm:hidden"
           >
             <X className="size-5" />
           </button>
