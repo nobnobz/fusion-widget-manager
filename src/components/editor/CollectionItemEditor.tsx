@@ -619,8 +619,8 @@ export const CollectionItemEditor = memo(function CollectionItemEditor({
                                   className={cn(
                                     "flex min-w-0 flex-1 items-center rounded-xl border px-3.5 h-11 transition-all active:scale-[0.98] cursor-pointer select-none shadow-sm",
                                     isCopied
-                                      ? "border-emerald-500/20 bg-emerald-500/5 text-emerald-600 dark:text-emerald-400"
-                                      : "border-zinc-200/80 bg-white/70 text-foreground/80 hover:border-primary/30 hover:bg-white dark:border-white/10 dark:bg-zinc-900/40 dark:hover:bg-zinc-900/60"
+                                      ? "border-emerald-500/20 bg-emerald-500/5 text-emerald-600 dark:text-emerald-400 shadow-sm"
+                                      : "border-zinc-200/80 bg-white/70 text-foreground/80 hover:border-primary/30 hover:bg-white dark:border-white/10 dark:bg-zinc-900/40 dark:hover:bg-zinc-900/60 shadow-sm"
                                   )}
                                 >
                                   <div className="flex w-full min-w-0 items-center justify-between gap-3">
@@ -636,14 +636,14 @@ export const CollectionItemEditor = memo(function CollectionItemEditor({
                                 <Button
                                   variant="ghost"
                                   size="icon"
-                                  className="size-11 rounded-xl border border-zinc-200/80 bg-white/70 text-destructive/40 hover:bg-destructive/10 hover:text-destructive active:scale-95 dark:border-white/10 dark:bg-zinc-900/40 hover:border-destructive/20 transition-all shadow-sm"
+                                  className="size-9 rounded-xl border border-zinc-200/80 bg-white/50 text-destructive/40 transition-all hover:bg-destructive/5 hover:text-destructive hover:border-destructive/20 dark:border-white/5 dark:bg-zinc-900/40 dark:text-destructive/60 dark:hover:bg-destructive/10 shadow-sm"
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     handleClearBackgroundImageUrl();
                                   }}
                                   title="Clear URL"
                                 >
-                                  <Trash2 className="size-4" />
+                                  <Trash2 className="size-3" />
                                 </Button>
                               </div>
                             ) : (

@@ -57,7 +57,7 @@ export function DataSourceEditor({
                   trigger={
                     <button
                       type="button"
-                      className="flex-1 min-w-0 flex items-center justify-between gap-3 px-3.5 h-11 rounded-xl border border-zinc-200/60 bg-white/70 dark:border-white/10 dark:bg-zinc-900/40 hover:border-primary/30 hover:bg-primary/[0.03] dark:hover:bg-primary/[0.05] transition-all text-left outline-none group/source shadow-[0_1px_2px_rgba(0,0,0,0.02)]"
+                      className="flex-1 min-w-0 flex items-center justify-between gap-3 px-3.5 h-11 rounded-xl border border-zinc-200/80 bg-white/70 dark:border-white/10 dark:bg-zinc-900/40 hover:border-primary/30 hover:bg-primary/[0.03] dark:hover:bg-primary/[0.05] transition-all text-left outline-none group/source shadow-sm"
                     >
                       <div className="flex items-center gap-3 min-w-0 flex-1">
                         {isSynced ? null : (
