@@ -1012,7 +1012,7 @@ function WidgetSelectionGridComponent({
     countLabel: string;
     content: string;
   }) => (
-    <div className={cn("min-h-0 p-5 mt-3.5 w-full max-sm:p-3 max-sm:mt-1.5 rounded-[2rem]", editorFormSurfaceClass)}>
+    <div className={cn("min-h-0 p-5 mt-3.5 w-full max-sm:px-0 max-sm:py-3 max-sm:mt-1.5 rounded-[2rem]", editorFormSurfaceClass)}>
       <div className="flex items-center justify-between mb-4 px-1.5 max-sm:mb-3">
         <span className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/45 dark:text-foreground/55">
           {title}
@@ -1799,7 +1799,7 @@ function WidgetSelectionGridComponent({
                 </div>
               </div>
             ) : (
-              <div className="flex flex-col items-center justify-center pt-8 pb-10 px-8 text-center space-y-8 max-sm:pt-3 max-sm:pb-5 max-sm:px-5 max-sm:space-y-3.5 flex-1 min-h-0 overflow-hidden">
+              <div className="flex flex-col items-center justify-center pt-8 pb-10 px-8 text-center space-y-8 max-sm:pt-3 max-sm:pb-5 max-sm:px-0 max-sm:space-y-3.5 flex-1 min-h-0 overflow-hidden">
                 <div className="flex flex-col items-center space-y-5 max-sm:space-y-3">
                   <div className="size-16 rounded-[2rem] bg-primary/8 border border-primary/20 flex items-center justify-center text-primary shadow-2xl shadow-primary/10 max-sm:size-12 max-sm:rounded-2xl">
                     <FileCode className="size-8 max-sm:size-6" />
