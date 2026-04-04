@@ -451,7 +451,7 @@ export const CollectionItemEditor = memo(function CollectionItemEditor({
                   className="overflow-hidden"
                 >
                   <div className="p-4 max-sm:p-3 flex flex-col bg-white dark:bg-black/20 border-t border-border">
-                    <div className="flex items-center justify-between min-h-11 gap-4 px-1 mb-6 max-sm:mb-4">
+                    <div className="flex items-center justify-between gap-4 px-3.5 py-2.5 mb-6 max-sm:mb-4 bg-zinc-500/[0.04] dark:bg-white/[0.02] rounded-xl border border-zinc-200/30 dark:border-white/5 backdrop-blur-sm transition-all duration-300">
                       <div className="flex-1 min-w-0">
                         {isEditing ? (
                           <Input
@@ -460,68 +460,56 @@ export const CollectionItemEditor = memo(function CollectionItemEditor({
                             onChange={(e) => setEditName(e.target.value)}
                             onBlur={handleTitleSubmit}
                             onKeyDown={handleTitleKeyDown}
-                            className="h-10 w-full rounded-xl border-zinc-200/80 bg-white/70 px-3.5 text-base sm:text-sm font-bold tracking-tight text-foreground focus:border-primary/40 focus-visible:ring-0 dark:border-white/10 dark:bg-zinc-900/40"
+                            className="h-9 w-full rounded-xl border-zinc-200/80 bg-white/70 px-3 text-base sm:text-sm font-bold tracking-tight text-foreground focus:border-primary/40 focus-visible:ring-0 dark:border-white/10 dark:bg-zinc-900/40"
                           />
                         ) : (
-                          <div className="flex items-start gap-2.5 min-w-0">
-                            <div className="flex flex-col min-w-0">
-                              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/42 mb-2.5">Title</span>
-                              <div className="flex items-center gap-2">
-                                <span className="truncate text-base sm:text-sm font-bold tracking-tight text-foreground/90 leading-tight">
-                                  {itemDisplayName}
-                                </span>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="size-7 shrink-0 text-muted-foreground/35 hover:text-primary hover:bg-primary/5 transition-colors rounded-lg"
-                                  onClick={startEditing}
-                                  title="Rename item"
-                                >
-                                  <Pencil className="size-3" />
-                                </Button>
-                              </div>
-                              {item.hideTitle && (
-                                <div className="flex items-center mt-1.5">
-                                  <span className="h-4.5 px-1.5 rounded-md bg-zinc-500/[0.07] text-[8px] font-black tracking-[0.14em] uppercase text-zinc-500/70 border border-zinc-500/[0.08] dark:bg-zinc-500/10 dark:text-zinc-500/80 dark:border-zinc-500/10 transition-colors shrink-0 flex items-center justify-center">
-                                    Hidden
-                                  </span>
-                                </div>
-                              )}
-                            </div>
+                          <div className="flex items-center gap-2 min-w-0">
+                            <span className="truncate text-base sm:text-sm font-bold tracking-tight text-foreground/90 leading-tight">
+                              {itemDisplayName}
+                            </span>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="size-7 shrink-0 text-muted-foreground/35 hover:text-primary hover:bg-primary/5 transition-colors rounded-lg"
+                              onClick={startEditing}
+                              title="Rename item"
+                            >
+                              <Pencil className="size-3" />
+                            </Button>
+                            {item.hideTitle && (
+                              <span className="h-4.5 px-1.5 rounded-md bg-zinc-500/[0.08] text-[8px] font-black tracking-[0.14em] uppercase text-zinc-500/70 border border-zinc-500/[0.08] dark:bg-zinc-500/10 dark:text-zinc-500/80 dark:border-zinc-500/10 transition-colors shrink-0 flex items-center justify-center">
+                                Hidden
+                              </span>
+                            )}
                           </div>
                         )}
                       </div>
 
-                      <div className="flex flex-col shrink-0">
-                        <div className="text-[10px] font-black uppercase tracking-[0.2em] text-transparent mb-2.5 select-none pointer-events-none">
-                          Hide Label Spacer
+                      <div className="flex items-center gap-3 shrink-0">
+                        <div className="text-[10px] font-black uppercase tracking-[0.16em] text-muted-foreground/35 flex items-center select-none">
+                          Hide
                         </div>
-                        <div className="flex items-center gap-3">
-                          <div className="text-[10px] font-black uppercase tracking-[0.16em] text-muted-foreground/35 flex items-center">
-                            Hide
-                          </div>
 
-                          <button
-                            type="button"
-                            role="switch"
-                            aria-label="Hide item title"
-                            aria-checked={item.hideTitle}
-                            onClick={() => onUpdate({ hideTitle: !item.hideTitle })}
+                        <button
+                          type="button"
+                          role="switch"
+                          aria-label="Hide item title"
+                          aria-checked={item.hideTitle}
+                          onClick={() => onUpdate({ hideTitle: !item.hideTitle })}
+                          className={cn(
+                            "relative inline-flex h-4.5 w-8.5 shrink-0 items-center rounded-full border p-0.5 transition-all outline-none",
+                            item.hideTitle
+                              ? "border-primary/20 bg-primary text-white"
+                              : "border-zinc-200/85 bg-zinc-200/60 dark:border-white/10 dark:bg-white/10"
+                          )}
+                        >
+                          <span
                             className={cn(
-                              "relative inline-flex h-4.5 w-8.5 shrink-0 items-center rounded-full border p-0.5 transition-all outline-none",
-                              item.hideTitle
-                                ? "border-primary/20 bg-primary text-white"
-                                : "border-zinc-200/85 bg-zinc-200/60 dark:border-white/10 dark:bg-white/10"
+                              "size-3 rounded-full bg-white shadow-sm transition-transform",
+                              item.hideTitle ? "translate-x-3.5" : "translate-x-0"
                             )}
-                          >
-                            <span
-                              className={cn(
-                                "size-3 rounded-full bg-white shadow-sm transition-transform",
-                                item.hideTitle ? "translate-x-3.5" : "translate-x-0"
-                              )}
-                            />
-                          </button>
-                        </div>
+                          />
+                        </button>
                       </div>
                     </div>
 
