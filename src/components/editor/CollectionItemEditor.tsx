@@ -525,29 +525,19 @@ export const CollectionItemEditor = memo(function CollectionItemEditor({
                       </div>
                     </div>
 
-                    <div className="lg:grid lg:grid-cols-[1.2fr_1fr] lg:gap-6 p-4 max-sm:p-3 bg-zinc-50/50 dark:bg-white/[0.02] rounded-2xl border border-zinc-200/80 dark:border-white/5 backdrop-blur-sm">
-                      {/* Left Column: Config */}
-                      <div className="flex flex-col gap-4 max-sm:gap-3">
-                        {/* Catalogs Section: Left Column on Desktop */}
-
-                        {/* Catalogs Section: Left Column on Desktop */}
-                        <div className="hidden lg:block">
-                          {catalogsSectionContent}
-                        </div>
-                      </div>
-
+                    <div className="lg:grid lg:grid-cols-[1fr_1.2fr] lg:gap-6 p-4 max-sm:p-3 bg-zinc-50/50 dark:bg-white/[0.02] rounded-2xl border border-zinc-200/80 dark:border-white/5 backdrop-blur-sm">
                       {/* Right Column: Visuals */}
-                      <motion.div 
-                        layout 
-                        className="flex flex-col gap-5 max-sm:gap-3.5 max-lg:mt-4 max-lg:pt-4 max-sm:mt-3.5 max-sm:pt-3.5 max-lg:border-t max-lg:border-zinc-100 max-lg:dark:border-white/5 lg:border-l lg:border-zinc-200/40 lg:dark:border-white/5 lg:pl-6 lg:min-w-[380px]"
+                      <motion.div
+                        layout
+                        className="flex flex-col gap-5 max-sm:gap-3.5 max-lg:mt-4 max-lg:pt-4 max-sm:mt-3.5 max-sm:pt-3.5 max-lg:border-t max-lg:border-zinc-100 max-lg:dark:border-white/5 lg:min-w-[380px]"
                       >
                         {/* Combined Visuals & Layout Selector Row */}
-                        <motion.div 
+                        <motion.div
                           layout
                           className="flex flex-col sm:flex-row items-center justify-center gap-5 sm:gap-7 w-full"
                         >
                           {/* Left/Top: Preview Area */}
-                          <motion.div 
+                          <motion.div
                             layout
                             className="flex-1 flex flex-col items-center justify-center min-h-[180px] sm:min-h-[220px] relative w-full"
                           >
@@ -578,7 +568,7 @@ export const CollectionItemEditor = memo(function CollectionItemEditor({
                           </motion.div>
 
                           {/* Right/Bottom: Horizontal/Vertical Segmented Layout Selector */}
-                          <motion.div 
+                          <motion.div
                             layout
                             className="flex flex-row sm:flex-col gap-1 p-1 rounded-2xl border border-zinc-200/50 bg-white/40 dark:border-white/5 dark:bg-zinc-950/45 shrink-0 self-center backdrop-blur-sm shadow-sm"
                           >
@@ -669,6 +659,14 @@ export const CollectionItemEditor = memo(function CollectionItemEditor({
                             )}
                           </div>
                         </div>
+                      </motion.div>
+
+                      {/* Left Column: Config */}
+                      <div className="flex flex-col gap-4 max-sm:gap-3 lg:border-l lg:border-zinc-200/40 lg:dark:border-white/5 lg:pl-6">
+                        {/* Catalogs Section: Left Column on Desktop */}
+                        <div className="hidden lg:block">
+                          {catalogsSectionContent}
+                        </div>
 
                         {/* Catalogs Section: Bottom on Mobile */}
                         <div className="lg:hidden">
@@ -676,7 +674,7 @@ export const CollectionItemEditor = memo(function CollectionItemEditor({
                             {catalogsSectionContent}
                           </div>
                         </div>
-                      </motion.div>
+                      </div>
                     </div>
                   </div>
                 </motion.div>
