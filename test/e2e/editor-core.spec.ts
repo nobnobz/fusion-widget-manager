@@ -211,7 +211,7 @@ test('shows the item title visibility toggle inside configuration and preview', 
   await hideTitleSwitch.click();
 
   await expect(hideTitleSwitch).toHaveAttribute('aria-checked', 'true');
-  await expect(page.getByText('Title Hidden')).toBeVisible();
+  await expect(page.getByText('Hidden')).toBeVisible();
   await expect
     .poll(async () => {
       return page.evaluate(({ targetWidgetId, targetItemId }: { targetWidgetId: string; targetItemId: string }) => {

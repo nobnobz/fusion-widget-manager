@@ -13,7 +13,7 @@ import {
   convertEditorWidgetToFusionWidget,
 } from '@/lib/config-utils';
 import { countInvalidCatalogsInWidget, countTraktWarningsInWidget } from '@/lib/catalog-validation';
-import { useState } from 'react';
+import { useState, memo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { isNativeTraktDataSource } from '@/lib/widget-domain';
 import { copyTextToClipboard } from '@/lib/browser-transfer';
@@ -38,7 +38,7 @@ interface SortableWidgetProps {
   searchQuery?: string;
 }
 
-export function SortableWidget({ 
+export const SortableWidget = memo(function SortableWidget({ 
   widget, 
   isSelected, 
   onSelect, 
@@ -457,4 +457,4 @@ export function SortableWidget({
       </AnimatePresence>
     </motion.div>
   );
-}
+});

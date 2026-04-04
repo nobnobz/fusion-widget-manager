@@ -53,10 +53,6 @@ export function ThemeToggle({
   }
 
   const isDark = resolvedTheme === "dark";
-  const toggleButtonClass = isDark
-    ? "hover:border-primary/20"
-    : "hover:border-zinc-300/85";
-  const activeIconClass = isDark ? "text-primary" : "text-amber-500";
 
   return (
     <Popover>
@@ -68,13 +64,17 @@ export function ThemeToggle({
             variant="ghost" 
             size="icon" 
             className={cn(
-              "size-10 rounded-xl border border-zinc-200/75 bg-white/72 text-muted-foreground/72 shadow-sm transition-all group relative overflow-hidden hover:bg-white hover:text-foreground dark:border-white/10 dark:bg-white/[0.04] dark:text-zinc-300/80 dark:shadow-none dark:hover:border-white/14 dark:hover:bg-white/[0.07]",
-              toggleButtonClass,
+              "size-10 rounded-full border border-zinc-200/75 bg-white/72 text-muted-foreground/72 shadow-sm transition-all group relative overflow-hidden active:scale-95 hover:scale-110 dark:border-white/10 dark:bg-white/[0.04] dark:text-zinc-300/80 dark:shadow-none",
+              isDark 
+                ? "hover:bg-zinc-800 hover:text-zinc-200 hover:border-white/10" 
+                : "hover:bg-amber-500/10 hover:text-amber-600 hover:border-amber-500/20",
               className
             )}
           >
-            <div className="absolute inset-0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000 bg-gradient-to-r from-transparent via-primary/12 to-transparent pointer-events-none" />
-            <div className="relative size-5 flex items-center justify-center overflow-hidden">
+            <div className={cn(
+              "relative size-5 flex items-center justify-center overflow-hidden transition-colors",
+              isDark ? "group-hover:text-zinc-100" : "group-hover:text-amber-600"
+            )}>
               <AnimatePresence mode="wait" initial={false}>
                 {isDark ? (
                   <motion.div
@@ -83,7 +83,7 @@ export function ThemeToggle({
                     animate={{ y: 0, rotate: 0, opacity: 1 }}
                     exit={{ y: -20, rotate: -90, opacity: 0 }}
                     transition={{ duration: 0.3, ease: "backOut" }}
-                    className={activeIconClass}
+                    className="text-primary"
                   >
                     <Moon className="size-5" />
                   </motion.div>
@@ -94,7 +94,7 @@ export function ThemeToggle({
                     animate={{ y: 0, rotate: 0, opacity: 1 }}
                     exit={{ y: -20, rotate: -90, opacity: 0 }}
                     transition={{ duration: 0.3, ease: "backOut" }}
-                    className={activeIconClass}
+                    className="text-amber-500"
                   >
                     <Sun className="size-5" />
                   </motion.div>

@@ -603,9 +603,9 @@ export function ImportMergeDialog({ open, onOpenChange, initialJson, initialFile
         alt={alt}
         className={cn(
           "rounded-xl object-cover border border-border/40  bg-zinc-50 transition-all dark:bg-muted/10 dark:border-border/20",
-          isPoster ? "h-28 w-20 max-sm:h-36 max-sm:w-24"   // portrait
-          : isWide  ? "h-16 w-32 max-sm:h-20 max-sm:w-40"  // landscape
-          :            "size-20 max-sm:size-24",   // square
+          isPoster ? "h-32 w-24 max-sm:h-44 max-sm:w-30"   // portrait
+          : isWide  ? "h-20 w-40 max-sm:h-28 max-sm:w-56"  // landscape
+          :            "size-24 max-sm:size-32",   // square
           className
         )}
         onLoad={(e) => {
@@ -1062,8 +1062,19 @@ export function ImportMergeDialog({ open, onOpenChange, initialJson, initialFile
                     {isItemExpanded && (
                       <div className="px-3 max-sm:px-2.5 pb-3 pt-1 border-t border-border/10 bg-muted/20">
                         <div className="flex gap-2.5 max-sm:flex-col">
+                          {/* Image Thumbnail */}
+                          {hasImage ? (
+                            <div className="shrink-0 max-sm:mx-auto">
+                              <ImageThumb src={item.backgroundImageURL} alt={item.name} layout={item.layout} className="rounded-xl" />
+                            </div>
+                          ) : (
+                            <div className="shrink-0 size-20 max-sm:size-24 max-sm:mx-auto rounded-xl border border-border/40 bg-zinc-50 flex items-center justify-center dark:bg-muted/20 dark:border-border/20 transition-colors">
+                              <ImageIcon className="size-5 max-sm:size-6 text-muted-foreground/30" />
+                            </div>
+                          )}
+
                           {/* Catalogs */}
-                          <div className="flex-1 min-w-0 space-y-1">
+                          <div className="flex-1 min-w-0 space-y-1 mt-2 max-sm:mt-4 sm:mt-0">
                             {item.dataSources.map((ds, i) => {
                               const catalogMatch = ds.sourceType === 'aiometadata'
                                 ? findCatalog(manifestCatalogs, ds.payload.catalogId)
@@ -1112,17 +1123,6 @@ export function ImportMergeDialog({ open, onOpenChange, initialJson, initialFile
                               );
                             })}
                           </div>
-
-                          {/* Image Thumbnail */}
-                          {hasImage ? (
-                            <div className="shrink-0 max-sm:mx-auto mt-2 max-sm:mt-4">
-                              <ImageThumb src={item.backgroundImageURL} alt={item.name} layout={item.layout} className="rounded-xl" />
-                            </div>
-                          ) : (
-                            <div className="shrink-0 size-20 max-sm:size-24 max-sm:mx-auto mt-2 max-sm:mt-4 rounded-xl border border-border/40 bg-zinc-50 flex items-center justify-center dark:bg-muted/20 dark:border-border/20 transition-colors">
-                              <ImageIcon className="size-5 max-sm:size-6 text-muted-foreground/30" />
-                            </div>
-                          )}
                         </div>
                       </div>
                     )}
@@ -1144,19 +1144,22 @@ export function ImportMergeDialog({ open, onOpenChange, initialJson, initialFile
   // ─── Render ──────────────────────────────────────────────────────────────────
 
   const Content = (
-    <div className="flex flex-col h-full w-full overflow-hidden">
-      <div className="p-8 pt-10 max-sm:p-5 max-sm:pt-8 bg-zinc-50/10 dark:bg-zinc-900/10 border-b border-border/5 shrink-0">
-
-
-          <DialogHeader className="space-y-6 items-start text-left shrink-0">
-            <div className="size-14 rounded-xl bg-primary/5 border border-primary/10 flex items-center justify-center text-primary  max-sm:size-12">
-              <CloudUpload className="size-7 max-sm:size-6" />
+    <div className="flex flex-col flex-1 w-full min-h-0 overflow-hidden">
+      <div 
+        className="flex-1 overflow-y-auto px-8 max-sm:px-5 py-6 max-sm:py-4 w-full min-w-0 min-h-0 overscroll-contain custom-scrollbar"
+        data-vaul-no-drag
+      >
+        {/* Header moved into scrollable area for better mobile utility */}
+        <div className="mb-8 max-sm:mb-4 max-sm:mt-4 p-0 bg-transparent shrink-0">
+          <DialogHeader className="space-y-6 max-sm:space-y-4 items-start text-left shrink-0">
+            <div className="size-14 rounded-xl bg-primary/5 border border-primary/10 flex items-center justify-center text-primary max-sm:size-11">
+              <CloudUpload className="size-7 max-sm:size-[1.375rem]" />
             </div>
             <div className="space-y-1">
-              <DialogTitle className="text-2xl font-black tracking-tight max-sm:text-xl text-foreground">
+              <DialogTitle className="text-2xl font-black tracking-tight max-sm:text-[1.35rem] text-foreground">
                 {step === 'review' ? 'Review Import' : 'Import from Template'}
               </DialogTitle>
-              <DialogDescription className="text-muted-foreground/60 text-[13px] font-medium leading-relaxed max-w-none">
+              <DialogDescription className="text-muted-foreground/60 text-[13px] max-sm:text-[11px] font-medium leading-relaxed max-w-none">
                 {step === 'review'
                   ? 'Changes detected in the import file are shown below. Select what you want to apply.'
                   : 'Bring widgets from different Fusion or Omni setups into your current configuration.'}
@@ -1165,7 +1168,6 @@ export function ImportMergeDialog({ open, onOpenChange, initialJson, initialFile
           </DialogHeader>
         </div>
 
-      <div className="flex-1 overflow-y-auto px-8 max-sm:px-5 py-6 max-sm:py-5 w-full min-w-0 min-h-0 overscroll-contain">
         <div className="space-y-4 w-full">
 
             {/* ── Input Step ── */}
@@ -1438,7 +1440,10 @@ export function ImportMergeDialog({ open, onOpenChange, initialJson, initialFile
                 </div>
 
                   {/* Frame Content: Widget Lists */}
-                  <div className="p-4 w-full min-w-0 space-y-4 overflow-y-auto max-h-[430px] custom-scrollbar bg-zinc-50/20 dark:bg-zinc-950/10 rounded-b-3xl">
+                  <div className={cn(
+                    "p-4 w-full min-w-0 space-y-4 bg-zinc-50/20 dark:bg-zinc-950/10 rounded-b-3xl",
+                    !isMobile && "max-h-[430px] overflow-y-auto custom-scrollbar"
+                  )}>
                   {(activeTab === 'all' || activeTab === 'new') && newWidgets.length > 0 && 
                     newWidgets.map(w => <WidgetRow key={w.id} w={w} />)}
                   {(activeTab === 'all' || activeTab === 'updates') && existingWidgets.length > 0 && 
@@ -1556,7 +1561,7 @@ export function ImportMergeDialog({ open, onOpenChange, initialJson, initialFile
         </div>
       </div>
 
-      <div className="mt-auto px-8 py-6 max-sm:px-5 max-sm:py-5 shrink-0 transition-all border-t border-border/20 w-full flex flex-col gap-4 bg-background">
+      <div className="mt-auto px-8 py-6 max-sm:px-5 max-sm:pt-4 max-sm:pb-[calc(1.25rem+env(safe-area-inset-bottom,0px))] shrink-0 transition-all border-t border-border/20 w-full flex flex-col gap-4 bg-background">
         {/* Contextual Footer Settings */}
         {step === 'review' && selectedCount > 0 && (
           <div className="mb-1 w-full fade-in">
@@ -1565,14 +1570,14 @@ export function ImportMergeDialog({ open, onOpenChange, initialJson, initialFile
                 onClick={() => setKeepExistingCatalogs(v => !v)}
                 data-testid="import-keep-catalogs-toggle"
                 className={cn(
-                  "w-full flex items-center justify-between p-4 max-sm:p-2.5 rounded-3xl border transition-all duration-300 text-left cursor-pointer group",
+                  "w-full flex items-center justify-between p-4 max-sm:px-4 max-sm:py-3.5 rounded-2xl border transition-all duration-300 text-left cursor-pointer group",
                   (keepExistingCatalogs && catalogState !== 'none')
                     ? "border-primary/30 bg-white dark:bg-white/[0.05] ring-1 ring-primary/10 shadow-sm shadow-primary/5"
                     : "bg-white/95 backdrop-blur-sm dark:bg-white/[0.02] border-border/10 hover:bg-white dark:hover:bg-white/[0.05] hover:border-border/40 hover:shadow-md"
                 )}
               >
-                <div className="flex flex-col gap-1 pr-6 max-sm:pr-2">
-                  <span className="text-[17px] max-sm:text-[15px] font-black tracking-tight text-foreground transition-colors">
+                <div className="flex flex-col gap-1.5 pr-6 max-sm:pr-2">
+                  <span className="text-[11px] font-bold uppercase tracking-[0.14em] text-foreground/60 transition-colors">
                     Do not overwrite existing catalogs
                   </span>
                   {!isMobile && (
@@ -1649,9 +1654,9 @@ export function ImportMergeDialog({ open, onOpenChange, initialJson, initialFile
         onOpenChange(val);
         if (!val) resetState();
       }}>
-        <DrawerContent className="bg-background border-border/40 max-h-[94dvh] flex flex-col overflow-hidden rounded-t-[2.5rem]">
+        <DrawerContent className="bg-background border-border/40 h-[94dvh] max-h-[94dvh] flex flex-col overflow-hidden rounded-t-[2.5rem]">
           <DrawerTitle className="sr-only">{step === 'review' ? 'Review Import' : 'Import from Template'}</DrawerTitle>
-          <div className="flex-1 overflow-hidden">
+          <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
             {Content}
           </div>
         </DrawerContent>

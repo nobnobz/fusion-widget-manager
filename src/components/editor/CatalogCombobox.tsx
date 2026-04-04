@@ -65,7 +65,7 @@ export function CatalogCombobox({
       <button
         type="button"
         className={cn(
-          "flex items-center justify-between w-full h-10 max-sm:h-9 px-4 max-sm:px-3.5 rounded-xl bg-zinc-100/40 dark:bg-zinc-950/20 text-base sm:text-[11px] max-sm:text-sm font-bold text-left transition-all outline-none border",
+          "flex items-center justify-between w-full h-10 max-sm:h-9 px-4 max-sm:px-3.5 rounded-xl bg-zinc-100/40 dark:bg-zinc-950/20 text-base sm:text-[11px] max-sm:text-sm font-bold text-left transition-all outline-none border group/combobox",
           isOpen 
             ? "ring-1 ring-primary/30 bg-background border-primary/20 dark:bg-zinc-900" 
             : "border-zinc-200 dark:border-white/5 hover:bg-zinc-100/60 dark:hover:bg-zinc-900/60 hover:border-primary/20",

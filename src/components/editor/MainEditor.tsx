@@ -709,7 +709,7 @@ export function MainEditor() {
                   data-testid="welcome-load-configuration"
                   onClick={handlePasteImport}
                   size="lg"
-                  className={cn(editorActionButtonClass, "h-11 sm:h-[3.05rem] w-full sm:min-w-[224px] text-[11px] sm:text-[10px] bg-primary hover:bg-primary/90 hover:scale-[1.01] overflow-hidden group/load shadow-md shadow-primary/10")}
+                  className={cn(editorActionButtonClass, "h-11 sm:h-[3.05rem] w-full sm:min-w-[224px] text-[11px] sm:text-[10px] bg-primary/10 text-primary border border-primary/20 hover:bg-primary/18 hover:scale-[1.01] overflow-hidden group/load shadow-sm shadow-primary/5")}
                 >
                   <ClipboardPaste className="size-4 sm:size-5 mr-3 shrink-0" />
                   Load Configuration
@@ -717,7 +717,7 @@ export function MainEditor() {
               ) : (
                 <Button
                   data-testid="welcome-create-widget-button"
-                  className={cn(editorActionButtonClass, "h-11 sm:h-[3.05rem] w-full sm:min-w-[224px] text-[11px] sm:text-[10px] bg-primary hover:bg-primary/95 hover:scale-[1.01] shadow-md shadow-primary/10 group/create overflow-hidden")}
+                  className={cn(editorActionButtonClass, "h-11 sm:h-[3.05rem] w-full sm:min-w-[224px] text-[11px] sm:text-[10px] bg-primary/10 text-primary border border-primary/20 hover:bg-primary/18 hover:scale-[1.01] shadow-sm shadow-primary/5 group/create overflow-hidden")}
                   onClick={handleAddFirstWidget}
                 >
                   <Plus className="size-4 sm:size-5 mr-3 shrink-0" />
@@ -954,16 +954,40 @@ export function MainEditor() {
                     <span className="whitespace-nowrap text-[11px] lg:text-[12px] font-black tracking-[0.16em] lg:tracking-[0.2em] text-primary uppercase opacity-90">Manager</span>
                   </div>
                 </div>
-                <div className="flex shrink-0 items-center gap-1">
-                  <Button data-testid="open-setup-guide" variant="ghost" size="sm" className={cn(editorActionButtonClass, "h-10 px-4 border border-primary/10 bg-primary/[0.04] text-[10px] text-primary/80 hover:bg-primary/10 overflow-hidden")} onClick={() => setShowHowToUse(true)}>
-                    <Book className="size-3.5 mr-2" />How To Use
+                <div className="flex shrink-0 items-center gap-1.5 lg:gap-2">
+                  <Button 
+                    data-testid="open-setup-guide" 
+                    variant="ghost" 
+                    size="sm" 
+                    className={cn(
+                      editorActionButtonClass, 
+                      "group h-10 px-4 rounded-full border border-primary/10 bg-primary/[0.04] text-[10px] text-primary/80 transition-all duration-300 hover:bg-primary/10 hover:border-primary/20 hover:text-primary hover:scale-[1.02] active:scale-[0.98] overflow-hidden"
+                    )} 
+                    onClick={() => setShowHowToUse(true)}
+                  >
+                    <Book className="size-3.5 mr-2 transition-colors group-hover:text-primary" />
+                    How To Use
                   </Button>
-                  <Button variant="ghost" size="sm" className={cn(editorActionButtonClass, "h-10 px-4 border border-red-500/10 bg-red-500/[0.04] text-[10px] text-red-500/80 hover:bg-red-500/10 overflow-hidden")} onClick={openSupportLink}>
-                    <Heart className="size-3.5 mr-2 fill-current" />Support Me
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className={cn(
+                      editorActionButtonClass, 
+                      "group h-10 px-4 rounded-full border border-red-500/10 bg-red-500/[0.04] text-[10px] text-red-500/80 transition-all duration-300 hover:bg-red-500/10 hover:border-red-500/20 hover:text-red-500 hover:scale-[1.02] active:scale-[0.98] overflow-hidden"
+                    )} 
+                    onClick={openSupportLink}
+                  >
+                    <Heart className="size-3.5 mr-2 fill-current transition-colors group-hover:text-red-500" />
+                    Support Me
                   </Button>
                   <div className="w-[1px] h-4 bg-border mx-2" />
-                  <ThemeToggle className="size-10 rounded-xl" />
-                  <Button variant="ghost" size="icon" className="size-10 rounded-xl border border-zinc-500/10 bg-zinc-500/[0.04] text-zinc-500/80 hover:bg-zinc-500/10 transition-all" onClick={() => setShowRestartConfirm(true)}>
+                  <ThemeToggle className="size-10 rounded-full" />
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="size-10 rounded-full border border-zinc-500/10 bg-zinc-500/[0.04] text-zinc-500/70 transition-all duration-300 hover:scale-110 active:scale-95 hover:bg-zinc-500/10 hover:border-zinc-500/20 hover:text-zinc-600 dark:border-white/10 dark:bg-white/[0.04] dark:text-zinc-300/80 dark:hover:bg-white/[0.07] dark:hover:text-zinc-100" 
+                    onClick={() => setShowRestartConfirm(true)}
+                  >
                     <RotateCcw className="size-4" />
                   </Button>
                 </div>
@@ -980,7 +1004,7 @@ export function MainEditor() {
           </a>
           <div className="flex flex-col items-center gap-1 opacity-45">
             <div className="flex items-center gap-2 text-[9.5px] font-mono tracking-[0.2em] font-medium uppercase text-muted-foreground/80">
-              <span>V0.5.1</span><span className="size-1 rounded-full bg-foreground/20" /><span>BY BOT-BID-RAISER</span>
+              <span>V0.5.2</span><span className="size-1 rounded-full bg-foreground/20" /><span>BY BOT-BID-RAISER</span>
             </div>
             <div className="text-[8.5px] font-mono tracking-[0.3em] uppercase opacity-75 text-foreground/80">BUILT WITH ANTIGRAVITY</div>
           </div>

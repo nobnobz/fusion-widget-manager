@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.5.2] - 2026-04-04
+### Fixed
+- Fixed visibility toggle state management and badge styling.
+- Resolved E2E test failures related to item visibility indicators.
+
+### Changed
+- Standardized welcome screen actions with the "Primary Blue Soft" design language.
+- Improved layout consistency and spacing across editor panels.
+- Optimized mobile drawer interactions and scrolling behavior.
+
 ## [0.5.1] - 2026-04-04
 ### Improved
 - **Export & Mobile Optimization**: Refined AIOMetadata export workflows and centralized catalog handling for better reliability.

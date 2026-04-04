@@ -1235,15 +1235,19 @@ function WidgetSelectionGridComponent({
             )}
             <button
               type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                toggleAiometadataWidgetExpanded(widget.id);
+              }}
               className={cn(
-                'flex size-8 items-center justify-center rounded-xl border transition-all',
+                "group flex items-center justify-center size-8 rounded-full transition-all hover:scale-110 active:scale-90",
                 widgetIsSyncedOnly
-                  ? 'border-border/10 bg-background/45 text-muted-foreground/35'
-                  : 'border-border/15 bg-background/70 text-muted-foreground/55 hover:border-primary/20 hover:bg-primary/5 hover:text-primary'
+                  ? "border border-border/10 bg-background/45 text-muted-foreground/35 cursor-not-allowed"
+                  : "border border-border/15 bg-background/70 text-muted-foreground/55 hover:border-primary/20 hover:bg-primary/10 hover:text-primary"
               )}
-              onClick={() => toggleAiometadataWidgetExpanded(widget.id)}
+              aria-expanded={widgetExpanded}
             >
-              <ChevronRight className={cn('size-4 transition-transform', widgetExpanded && 'rotate-90')} />
+              <ChevronRight className={cn('size-4 transition-all group-hover:text-primary', widgetExpanded && 'rotate-90 text-primary')} />
             </button>
           </div>
         </div>
@@ -1407,10 +1411,18 @@ function WidgetSelectionGridComponent({
                               )}
                               <button
                                 type="button"
-                                className="flex size-7 items-center justify-center rounded-lg border border-border/10 bg-background/50 text-muted-foreground/50 transition-all hover:border-primary/20 hover:text-primary"
-                                onClick={() => toggleAiometadataItemExpanded(item.key)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setExpandedAiometadataItemKeys((prev) =>
+                                    prev.includes(item.key)
+                                      ? prev.filter((k) => k !== item.key)
+                                      : [...prev, item.key]
+                                  );
+                                }}
+                                className="group flex items-center justify-center size-7 rounded-full hover:bg-primary/10 transition-all hover:scale-110 active:scale-90"
+                                aria-expanded={itemExpanded}
                               >
-                                <ChevronRight className={cn('size-3.5 transition-transform', itemExpanded && 'rotate-90')} />
+                                <ChevronRight className={cn('size-3.5 transition-all group-hover:text-primary', itemExpanded && 'rotate-90 text-primary')} />
                               </button>
                             </div>
                           </div>
@@ -2213,17 +2225,17 @@ function WidgetSelectionGridComponent({
                       onClick={handleRefreshManifest}
                       variant="secondary"
                       disabled={isRefreshingManifest}
-                      className={cn(editorActionButtonClass, "h-10 shrink-0 border border-emerald-300/75 bg-white/80 px-4 text-[10px] text-stone-900/80 hover:bg-emerald-50/90 hover:border-emerald-400/60 hover:text-stone-900/88 max-sm:w-full dark:border-emerald-500/24 dark:bg-zinc-950/60 dark:text-emerald-200/90 dark:hover:bg-emerald-500/12 dark:hover:border-emerald-500/34")}
+                      className={cn(editorActionButtonClass, "group h-10 shrink-0 border border-emerald-300/50 bg-white/60 px-4 text-[10px] text-stone-900/70 transition-all duration-300 hover:bg-emerald-50/80 hover:border-emerald-400/50 hover:text-emerald-700 hover:scale-[1.02] active:scale-[0.98] max-sm:w-full dark:border-emerald-500/20 dark:bg-zinc-950/40 dark:text-emerald-300/80 dark:hover:bg-emerald-500/10 dark:hover:text-emerald-400")}
                     >
-                      <RotateCcw className={cn("size-4 mr-2 text-emerald-700/90 dark:text-emerald-300/92", isRefreshingManifest && "animate-spin")} />
+                      <RotateCcw className={cn("size-4 mr-2 text-emerald-700/60 transition-colors group-hover:text-emerald-700 dark:text-emerald-400/60 dark:group-hover:text-emerald-400", isRefreshingManifest && "animate-spin")} />
                       Refresh
                     </Button>
                     <Button
                       onClick={onSyncManifest}
                       variant="secondary"
-                      className={cn(editorActionButtonClass, "h-10 shrink-0 border border-emerald-200/50 bg-white/70 px-4 text-[10px] text-stone-900/70 hover:bg-emerald-50/60 hover:border-emerald-300/60 hover:text-stone-900/85 max-sm:w-full dark:border-white/5 dark:bg-zinc-950/60 dark:text-zinc-300/80 dark:hover:bg-zinc-900/85")}
+                      className={cn(editorActionButtonClass, "group h-10 shrink-0 border border-emerald-200/40 bg-white/60 px-4 text-[10px] text-stone-900/70 transition-all duration-300 hover:bg-emerald-50/80 hover:border-emerald-300/50 hover:text-emerald-700 hover:scale-[1.02] active:scale-[0.98] max-sm:w-full dark:border-white/5 dark:bg-zinc-950/40 dark:text-zinc-300/80 dark:hover:bg-zinc-900/80 dark:hover:text-primary")}
                     >
-                      <Pencil className="size-4 mr-2 opacity-70" />
+                      <Pencil className="size-4 mr-2 text-emerald-700/60 transition-colors group-hover:text-emerald-700 dark:text-zinc-400/60 dark:group-hover:text-primary" />
                       Edit
                     </Button>
                   </>
@@ -2231,9 +2243,9 @@ function WidgetSelectionGridComponent({
                   <Button
                     onClick={onSyncManifest}
                     variant="secondary"
-                    className={cn(editorActionButtonClass, "h-11 shrink-0 border border-amber-300/70 bg-white/80 px-4 text-[10px] text-stone-900/80 hover:bg-amber-50/90 hover:border-amber-400/60 hover:text-stone-900/88 max-sm:w-full max-sm:col-span-2 dark:border-amber-500/24 dark:bg-zinc-950/60 dark:text-amber-200/90 dark:hover:bg-amber-500/12 dark:hover:border-amber-500/34")}
+                    className={cn(editorActionButtonClass, "group h-11 shrink-0 border border-amber-300/50 bg-white/60 px-4 text-[10px] text-stone-900/70 transition-all duration-300 hover:bg-amber-50/80 hover:border-amber-400/50 hover:text-amber-700 hover:scale-[1.02] active:scale-[0.98] max-sm:w-full max-sm:col-span-2 dark:border-amber-500/20 dark:bg-zinc-950/40 dark:text-amber-300/80 dark:hover:bg-amber-500/10 dark:hover:text-amber-400")}
                   >
-                    <Globe className="size-4 mr-2 text-amber-700/90 dark:text-amber-300/92" />
+                    <Globe className="size-4 mr-2 text-amber-700/60 transition-colors group-hover:text-amber-700 dark:text-amber-400/60 dark:group-hover:text-amber-400" />
                     Sync Manifest
                   </Button>
                 )}
@@ -2246,7 +2258,7 @@ function WidgetSelectionGridComponent({
               <Button
                 onClick={() => setShowTrash(true)}
                 variant="secondary"
-                className={cn(editorActionButtonClass, "h-11 border border-destructive/20 bg-destructive/10 px-4 text-[10px] text-destructive hover:bg-destructive/15 max-sm:h-11 max-sm:w-full max-sm:justify-center dark:border-destructive/25 dark:bg-destructive/12 dark:hover:bg-destructive/16")}
+                className={cn(editorActionButtonClass, "h-11 border border-destructive/20 bg-destructive/10 px-4 text-[10px] text-destructive transition-all duration-300 hover:bg-destructive/15 hover:scale-[1.02] active:scale-[0.98] max-sm:h-11 max-sm:w-full max-sm:justify-center dark:border-destructive/25 dark:bg-destructive/12 dark:hover:bg-destructive/16")}
                 title="Trash"
               >
                 <Trash2 className="mr-2 size-4 opacity-90" />
@@ -2270,7 +2282,7 @@ function WidgetSelectionGridComponent({
                 {searchQuery && (
                   <button
                     onClick={() => setSearchQuery('')}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-xl hover:bg-muted/50 text-muted-foreground/20 hover:text-muted-foreground transition-all"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-xl hover:bg-muted/50 text-muted-foreground/20 hover:text-muted-foreground transition-all hover:scale-110 active:scale-90"
                   >
                     <Plus className="size-4 rotate-45" />
                   </button>
@@ -2282,7 +2294,7 @@ function WidgetSelectionGridComponent({
                 <Button
                   data-testid="new-widget-button"
                   onClick={handleCreateWidget}
-                  className={cn(editorActionButtonClass, "h-11 max-sm:h-11 px-6 max-sm:px-4 text-[10px] bg-primary hover:bg-primary/95 text-primary-foreground flex-1 md:flex-none order-1 transition-all active:scale-95 shadow-lg shadow-primary/20")}
+                  className={cn(editorActionButtonClass, "h-11 max-sm:h-11 px-6 max-sm:px-4 text-[10px] bg-primary hover:bg-primary/95 text-primary-foreground flex-1 md:flex-none order-1 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-primary/20")}
                 >
                   <Plus className="size-4 mr-2" />
                   <span className="sm:hidden">New</span>
@@ -2293,7 +2305,7 @@ function WidgetSelectionGridComponent({
                   data-testid="merge-import-button"
                   onClick={() => setShowImportMergeDialog(true)}
                   variant="secondary"
-                  className={cn(editorActionButtonClass, "h-11 max-sm:h-11 px-6 max-sm:px-4 text-[10px] border border-primary/20 bg-primary/10 text-primary hover:bg-primary/20 order-2 flex-1 md:flex-none dark:border-primary/25 dark:bg-primary/12 dark:hover:bg-primary/18")}
+                  className={cn(editorActionButtonClass, "h-11 max-sm:h-11 px-6 max-sm:px-4 text-[10px] border border-primary/20 bg-primary/10 text-primary transition-all duration-300 hover:bg-primary/20 hover:scale-[1.02] active:scale-[0.98] order-2 flex-1 md:flex-none dark:border-primary/25 dark:bg-primary/12 dark:hover:bg-primary/18")}
                   title="Import JSON"
                 >
                   <FileJson2 className="size-4 mr-2" />

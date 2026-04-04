@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useCallback, memo } from 'react';
 import { useConfig } from '@/context/ConfigContext';
 import { CollectionRowWidget, CollectionItem } from '@/lib/types/widget';
 import { Button } from '@/components/ui/button';
@@ -26,7 +26,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 
-export function CollectionRowEditor({ 
+export const CollectionRowEditor = memo(function CollectionRowEditor({ 
   widget, 
   searchQuery = "", 
   onRename, 
@@ -70,17 +70,17 @@ export function CollectionRowEditor({
     })
   );
 
-  const handleAddItem = (newItem: CollectionItem) => {
+  const handleAddItem = useCallback((newItem: CollectionItem) => {
     addCollectionItem(widget.id, newItem);
-  };
+  }, [addCollectionItem, widget.id]);
 
-  const handleDeleteItem = (itemId: string) => {
+  const handleDeleteItem = useCallback((itemId: string) => {
     removeCollectionItem(widget.id, itemId);
-  };
+  }, [removeCollectionItem, widget.id]);
 
-  const handleUpdateItem = (itemId: string, updates: Partial<CollectionItem>) => {
+  const handleUpdateItem = useCallback((itemId: string, updates: Partial<CollectionItem>) => {
     updateCollectionItem(widget.id, itemId, updates);
-  };
+  }, [updateCollectionItem, widget.id]);
   
   const handleSortCycle = () => {
     let nextMode: 'none' | 'asc' | 'desc';
@@ -149,18 +149,23 @@ export function CollectionRowEditor({
               <AddItemDialog 
                 onAdd={handleAddItem} 
                 trigger={
-                  <Button variant="ghost" size="sm" className="h-10 flex-1 rounded-[1.15rem] border border-primary/20 bg-primary/10 px-4 text-[10px] font-bold uppercase tracking-[0.16em] text-primary transition-all hover:bg-primary/[0.18] dark:border-primary/25 dark:bg-primary/12 dark:hover:bg-primary/[0.18] sm:h-9 sm:flex-none sm:rounded-[1rem]">
-                    <Plus className="size-3.5 mr-2" /> Add Item
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="group h-10 flex-1 rounded-full border border-primary/20 bg-primary/10 px-4 text-[10px] font-bold uppercase tracking-[0.16em] text-primary transition-all duration-300 hover:bg-primary/[0.18] hover:text-primary hover:scale-[1.02] active:scale-[0.98] dark:border-primary/25 dark:bg-primary/12 dark:hover:bg-primary/[0.18] sm:h-9 sm:flex-none"
+                  >
+                    <Plus className="size-3.5 mr-2 transition-colors group-hover:text-primary" /> 
+                    Add Item
                   </Button>
                 }
               />
 
-              <div className="inline-flex items-center gap-1.5 rounded-2xl border border-zinc-200/70 bg-zinc-50/80 p-1 dark:border-white/8 dark:bg-white/[0.04]">
+              <div className="inline-flex items-center gap-1.5 rounded-full border border-zinc-200/70 bg-zinc-50/80 p-1.5 dark:border-white/8 dark:bg-white/[0.04]">
                 <Button 
                   variant="ghost" 
                   size="sm" 
                   className={cn(
-                    "h-9 w-9 rounded-xl border p-0 transition-all shrink-0",
+                    "h-9 w-9 rounded-full border p-0 transition-all shrink-0 hover:scale-110 active:scale-90",
                     sortMode !== 'none' 
                       ? "border-primary/20 bg-primary/[0.08] text-primary hover:bg-primary/12 hover:border-primary/30" 
                       : "border-transparent text-muted-foreground/62 hover:border-primary/10 hover:bg-primary/5 hover:text-primary"
@@ -175,7 +180,7 @@ export function CollectionRowEditor({
                   <Button 
                     variant="ghost" 
                     size="sm" 
-                    className="h-9 w-9 rounded-xl border border-transparent p-0 text-muted-foreground/62 transition-all shrink-0 hover:border-primary/10 hover:bg-primary/5 hover:text-primary"
+                    className="h-9 w-9 rounded-full border border-transparent p-0 text-muted-foreground/62 transition-all shrink-0 hover:scale-110 active:scale-90 hover:border-primary/10 hover:bg-primary/5 hover:text-primary"
                     onClick={onRename}
                     title="Rename Widget"
                   >
@@ -187,7 +192,7 @@ export function CollectionRowEditor({
                   <Button 
                     variant="ghost" 
                     size="sm" 
-                    className="h-9 w-9 rounded-xl border border-transparent p-0 text-red-500/60 transition-all shrink-0 hover:border-red-500/20 hover:bg-red-500/5 hover:text-red-500 sm:hidden"
+                    className="h-9 w-9 rounded-full border border-transparent p-0 text-red-500/60 transition-all shrink-0 hover:scale-110 active:scale-90 hover:border-red-500/20 hover:bg-red-500/5 hover:text-red-500 sm:hidden"
                     onClick={onDelete}
                     title="Delete Widget"
                   >
@@ -241,4 +246,4 @@ export function CollectionRowEditor({
       </div>
     </div>
   );
-}
+});
