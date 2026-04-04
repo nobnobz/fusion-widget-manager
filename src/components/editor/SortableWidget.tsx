@@ -201,12 +201,23 @@ export const SortableWidget = memo(function SortableWidget({
                   onClick={(e) => e.stopPropagation()}
                 />
               ) : (
-                  <h3 className="text-[17px] font-black tracking-tight text-foreground truncate drop-">
-                    {hasInvalidCatalog && (
-                      <AlertTriangle className="size-4 text-amber-500 animate-pulse shrink-0 inline mr-2" />
-                    )}
-                    {widget.title}
-                  </h3>
+                  <div className="flex items-center gap-2 min-w-0 group/edit">
+                    <h3 className="text-[17px] font-black tracking-tight text-foreground truncate">
+                      {hasInvalidCatalog && (
+                        <AlertTriangle className="size-4 text-amber-500 animate-pulse shrink-0 inline mr-2" />
+                      )}
+                      {widget.title}
+                    </h3>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="size-7 shrink-0 opacity-0 group-hover/edit:opacity-100 focus:opacity-100 text-muted-foreground/35 hover:text-primary hover:bg-primary/5 transition-all rounded-lg"
+                      onClick={startEditing}
+                      title="Rename widget"
+                    >
+                      <Pencil className="size-3" />
+                    </Button>
+                  </div>
               )}
             </div>
 
@@ -318,9 +329,20 @@ export const SortableWidget = memo(function SortableWidget({
                   onClick={(e) => e.stopPropagation()}
                 />
               ) : (
-                <h3 className="truncate text-[15px] font-black tracking-tight text-foreground leading-snug">
-                  {widget.title}
-                </h3>
+                <div className="flex items-center gap-1.5 min-w-0 group/edit-mobile">
+                  <h3 className="truncate text-[15px] font-black tracking-tight text-foreground leading-snug">
+                    {widget.title}
+                  </h3>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="size-7 shrink-0 text-muted-foreground/35 hover:text-primary hover:bg-primary/5 transition-all rounded-lg"
+                    onClick={startEditing}
+                    title="Rename widget"
+                  >
+                    <Pencil className="size-3" />
+                  </Button>
+                </div>
               )}
             </div>
             {/* Metadata badges – same style as desktop */}
