@@ -450,8 +450,8 @@ export const CollectionItemEditor = memo(function CollectionItemEditor({
                   transition={{ duration: 0.3, ease: "easeInOut" }}
                   className="overflow-hidden"
                 >
-                  <div className="p-4 max-sm:p-3 flex flex-col bg-white dark:bg-black/20 border-t border-border">
-                    <div className="flex items-center justify-between gap-4 px-3.5 py-2.5 mb-6 max-sm:mb-4 bg-zinc-500/[0.04] dark:bg-white/[0.02] rounded-xl border border-zinc-200/30 dark:border-white/5 backdrop-blur-sm transition-all duration-300">
+                  <div className="p-4 max-sm:p-4 flex flex-col bg-zinc-50/80 dark:bg-white/[0.02] border-t border-zinc-200/80 dark:border-white/5">
+                    <div className="flex items-center justify-between gap-4 px-1 py-1 mb-4">
                       <div className="flex-1 min-w-0">
                         {isEditing ? (
                           <Input
@@ -513,11 +513,13 @@ export const CollectionItemEditor = memo(function CollectionItemEditor({
                       </div>
                     </div>
 
-                    <div className="lg:grid lg:grid-cols-[1fr_1.2fr] lg:gap-6 p-4 max-sm:p-3 bg-zinc-50/50 dark:bg-white/[0.02] rounded-2xl border border-zinc-200/80 dark:border-white/5 backdrop-blur-sm">
+                    <div className="h-px w-full bg-zinc-200/60 dark:bg-white/5 mb-6 max-sm:mb-5" />
+
+                    <div className="lg:grid lg:grid-cols-[1fr_1.2fr] lg:gap-6">
                       {/* Right Column: Visuals */}
                       <motion.div
                         layout
-                        className="flex flex-col gap-4 max-sm:gap-3.5 max-lg:mt-4 max-lg:pt-4 max-sm:mt-3.5 max-sm:pt-3.5 max-lg:border-t max-lg:border-zinc-100 max-lg:dark:border-white/5 lg:min-w-[380px]"
+                        className="flex flex-col gap-4 min-w-0 lg:min-w-[380px]"
                       >
                         <div className="flex flex-col gap-2.5">
                           <div className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/42 flex items-center h-8 px-0.5">
