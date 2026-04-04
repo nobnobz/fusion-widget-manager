@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/button';
 import type { NativeTraktDataSource } from '@/lib/types/widget';
 import { getTraktValidationIssues } from '@/lib/catalog-validation';
 import { AlertTriangle, Trash2 } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { editorDeleteButtonClass } from './editorActionButtonStyles';
 
 interface TraktSourceCardProps {
   dataSource: NativeTraktDataSource;
@@ -73,7 +75,7 @@ export function TraktSourceCard({
         <Button
           variant="ghost"
           size="icon"
-          className="absolute right-3 top-3 size-8 max-sm:size-7 rounded-lg max-sm:rounded-xl border border-border/40 bg-background/55 text-destructive/55  transition-all hover:border-destructive/20 hover:bg-destructive/10 hover:text-destructive dark:border-white/10 dark:bg-zinc-950/70 dark:text-destructive/75 dark:hover:border-destructive/20 dark:hover:bg-destructive/12"
+          className={cn(editorDeleteButtonClass, "absolute right-3 top-3 size-8.5")}
           onClick={onDelete}
           title={deleteTitle}
         >

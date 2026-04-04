@@ -37,6 +37,7 @@ import {
   editorHeaderChevronButtonClass,
   editorHeaderIconButtonClass,
   editorHeaderIconButtonDangerClass,
+  editorDeleteButtonClass,
 } from './editorActionButtonStyles';
 import { editorPanelClass } from './editorSurfaceStyles';
 import { useMobile } from '@/hooks/use-mobile';
@@ -245,9 +246,9 @@ export const CollectionItemEditor = memo(function CollectionItemEditor({
   };
 
   const catalogsSectionContent = (
-    <div className="flex flex-col gap-3.5">
-      <div className="flex items-center justify-between">
-        <div className="text-[10px] font-black uppercase tracking-[0.16em] text-muted-foreground/50 flex items-center h-8">
+    <div className="flex flex-col gap-2.5">
+      <div className="flex items-center justify-between px-0.5">
+        <div className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/40 flex items-center h-8">
           Catalogs
         </div>
         <CatalogCombobox
@@ -452,72 +453,73 @@ export const CollectionItemEditor = memo(function CollectionItemEditor({
                   <div className="p-4 max-sm:p-3 flex flex-col bg-white dark:bg-black/20 border-t border-border">
                     <div className="lg:grid lg:grid-cols-[1.2fr_1fr] lg:gap-6 p-4 max-sm:p-3 bg-zinc-50/50 dark:bg-white/[0.02] rounded-2xl border border-zinc-200/80 dark:border-white/5 backdrop-blur-sm">
                       {/* Left Column: Config */}
-                      <div className="flex flex-col gap-6">
-                        <div className="flex flex-col gap-3.5">
-                          {/* Title & Toggle Section */}
-                          <div className="flex items-center justify-between min-h-8">
-                            <div className="min-w-0 flex-1">
-                              <div className="text-[10px] font-black uppercase tracking-[0.16em] text-muted-foreground/50 mb-1.5 flex items-center">
-                                Title
-                              </div>
-                              {isEditing ? (
-                                <Input
-                                  autoFocus={!isMobile}
-                                  value={editName}
-                                  onChange={(e) => setEditName(e.target.value)}
-                                  onBlur={handleTitleSubmit}
-                                  onKeyDown={handleTitleKeyDown}
-                                  className="h-10 w-full rounded-xl border-zinc-200/80 bg-white/70 px-3.5 text-[15px] sm:text-sm font-bold tracking-tight text-foreground focus:border-primary/40 focus-visible:ring-0 dark:border-white/10 dark:bg-zinc-900/40"
-                                />
-                              ) : (
-                                <div className="flex items-center gap-2.5 min-w-0">
-                                  <span className="truncate text-[15px] sm:text-sm font-bold tracking-tight text-foreground/90 leading-tight">
-                                    {itemDisplayName}
-                                  </span>
-                                  {item.hideTitle && (
-                                    <span className="h-5 px-1.5 rounded-md bg-zinc-500/[0.07] text-[9px] font-black tracking-[0.14em] uppercase text-zinc-500/70 border border-zinc-500/[0.08] dark:bg-zinc-500/10 dark:text-zinc-500/80 dark:border-zinc-500/10 transition-colors shrink-0 flex items-center justify-center">
-                                      Hidden
-                                    </span>
-                                  )}
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="size-7 shrink-0 text-muted-foreground/35 hover:text-primary hover:bg-primary/5 transition-colors"
-                                    onClick={startEditing}
-                                    title="Rename item"
-                                  >
-                                    <Pencil className="size-3" />
-                                  </Button>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-
-                          <div className="flex items-center justify-between gap-3 p-3.5 rounded-2xl border border-zinc-200/60 bg-white/50 dark:border-white/5 dark:bg-zinc-950/25 shadow-sm">
-                            <div className="text-[10px] font-black uppercase tracking-[0.16em] text-foreground/60">
-                              Hide Title
-                            </div>
-
-                            <button
-                              type="button"
-                              role="switch"
-                              aria-label="Hide item title"
-                              aria-checked={item.hideTitle}
-                              onClick={() => onUpdate({ hideTitle: !item.hideTitle })}
-                              className={cn(
-                                "relative inline-flex h-5 w-9 shrink-0 items-center rounded-full border p-0.5 transition-all outline-none",
-                                item.hideTitle
-                                  ? "border-primary/20 bg-primary text-white"
-                                  : "border-zinc-200/85 bg-zinc-200/60 dark:border-white/10 dark:bg-white/10"
-                              )}
-                            >
-                              <span
-                                className={cn(
-                                  "size-3.5 rounded-full bg-white shadow-sm transition-transform",
-                                  item.hideTitle ? "translate-x-4" : "translate-x-0"
+                        <div className="flex flex-col gap-4 max-sm:gap-3">
+                        <div className="flex flex-col gap-2.5 max-sm:gap-2">
+                          <div className="flex flex-col gap-1.5 px-0.5">
+                            <div className="flex items-center justify-between min-h-11 gap-4">
+                              <div className="flex-1 min-w-0">
+                                {isEditing ? (
+                                  <Input
+                                    autoFocus={!isMobile}
+                                    value={editName}
+                                    onChange={(e) => setEditName(e.target.value)}
+                                    onBlur={handleTitleSubmit}
+                                    onKeyDown={handleTitleKeyDown}
+                                    className="h-10 w-full rounded-xl border-zinc-200/80 bg-white/70 px-3.5 text-[15px] sm:text-sm font-bold tracking-tight text-foreground focus:border-primary/40 focus-visible:ring-0 dark:border-white/10 dark:bg-zinc-900/40"
+                                  />
+                                ) : (
+                                  <div className="flex items-center gap-2.5 min-w-0 h-10">
+                                    <div className="flex flex-col">
+                                      <span className="text-[9px] font-black uppercase tracking-[0.18em] text-muted-foreground/45 mb-0.5">Title</span>
+                                      <span className="truncate text-[15px] sm:text-sm font-bold tracking-tight text-foreground/90 leading-tight">
+                                        {itemDisplayName}
+                                      </span>
+                                    </div>
+                                    {item.hideTitle && (
+                                      <span className="h-5 px-1.5 mt-2 rounded-md bg-zinc-500/[0.07] text-[9px] font-black tracking-[0.14em] uppercase text-zinc-500/70 border border-zinc-500/[0.08] dark:bg-zinc-500/10 dark:text-zinc-500/80 dark:border-zinc-500/10 transition-colors shrink-0 flex items-center justify-center">
+                                        Hidden
+                                      </span>
+                                    )}
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="size-7 mt-2 shrink-0 text-muted-foreground/35 hover:text-primary hover:bg-primary/5 transition-colors"
+                                      onClick={startEditing}
+                                      title="Rename item"
+                                    >
+                                      <Pencil className="size-3" />
+                                    </Button>
+                                  </div>
                                 )}
-                              />
-                            </button>
+                              </div>
+
+                              <div className="flex items-center gap-3 shrink-0 self-end mb-2">
+                                <div className="text-[10px] font-black uppercase tracking-[0.16em] text-muted-foreground/35 flex items-center">
+                                  Hide
+                                </div>
+
+                                <button
+                                  type="button"
+                                  role="switch"
+                                  aria-label="Hide item title"
+                                  aria-checked={item.hideTitle}
+                                  onClick={() => onUpdate({ hideTitle: !item.hideTitle })}
+                                  className={cn(
+                                    "relative inline-flex h-4.5 w-8.5 shrink-0 items-center rounded-full border p-0.5 transition-all outline-none",
+                                    item.hideTitle
+                                      ? "border-primary/20 bg-primary text-white"
+                                      : "border-zinc-200/85 bg-zinc-200/60 dark:border-white/10 dark:bg-white/10"
+                                  )}
+                                >
+                                  <span
+                                    className={cn(
+                                      "size-3 rounded-full bg-white shadow-sm transition-transform",
+                                      item.hideTitle ? "translate-x-3.5" : "translate-x-0"
+                                    )}
+                                  />
+                                </button>
+                              </div>
+                            </div>
                           </div>
                         </div>
 
@@ -530,12 +532,12 @@ export const CollectionItemEditor = memo(function CollectionItemEditor({
                       {/* Right Column: Visuals */}
                       <motion.div 
                         layout 
-                        className="flex flex-col gap-6 max-sm:gap-4 max-lg:mt-5 max-lg:pt-5 max-sm:mt-4 max-sm:pt-4 max-lg:border-t max-lg:border-zinc-100 max-lg:dark:border-white/5 lg:border-l lg:border-zinc-200/40 lg:dark:border-white/5 lg:pl-6 lg:min-w-[380px]"
+                        className="flex flex-col gap-5 max-sm:gap-3.5 max-lg:mt-4 max-lg:pt-4 max-sm:mt-3.5 max-sm:pt-3.5 max-lg:border-t max-lg:border-zinc-100 max-lg:dark:border-white/5 lg:border-l lg:border-zinc-200/40 lg:dark:border-white/5 lg:pl-6 lg:min-w-[380px]"
                       >
                         {/* Combined Visuals & Layout Selector Row */}
                         <motion.div 
                           layout
-                          className="flex flex-col sm:flex-row items-center justify-center gap-6 sm:gap-8 w-full"
+                          className="flex flex-col sm:flex-row items-center justify-center gap-5 sm:gap-7 w-full"
                         >
                           {/* Left/Top: Preview Area */}
                           <motion.div 
@@ -604,9 +606,8 @@ export const CollectionItemEditor = memo(function CollectionItemEditor({
                           </motion.div>
                         </motion.div>
 
-                        {/* Image URL Section */}
-                        <div className="flex flex-col gap-3.5">
-                          <div className="text-[10px] font-black uppercase tracking-[0.16em] text-muted-foreground/50 flex items-center">
+                        <div className="flex flex-col gap-2.5">
+                          <div className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/40 flex items-center px-0.5">
                             Image URL
                           </div>
                           <div className="flex items-center gap-1.5 w-full">
@@ -625,7 +626,7 @@ export const CollectionItemEditor = memo(function CollectionItemEditor({
                                 >
                                   <div className="flex w-full min-w-0 items-center justify-between gap-3">
                                     <div className="flex min-w-0 items-center gap-3">
-                                      <span className="truncate text-base sm:text-[13px] font-mono font-medium tracking-tight opacity-70">
+                                      <span className="truncate text-[12px] font-bold tracking-tight text-foreground/70">
                                         {isCopied ? "Link Copied!" : item.backgroundImageURL}
                                       </span>
                                     </div>
@@ -633,31 +634,31 @@ export const CollectionItemEditor = memo(function CollectionItemEditor({
                                   </div>
                                 </div>
 
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="size-9 rounded-xl border border-zinc-200/80 bg-white/50 text-destructive/40 transition-all hover:bg-destructive/5 hover:text-destructive hover:border-destructive/20 dark:border-white/5 dark:bg-zinc-900/40 dark:text-destructive/60 dark:hover:bg-destructive/10 shadow-sm"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleClearBackgroundImageUrl();
-                                  }}
-                                  title="Clear URL"
-                                >
-                                  <Trash2 className="size-3" />
-                                </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className={cn(editorDeleteButtonClass)}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleClearBackgroundImageUrl();
+                                    }}
+                                    title="Clear URL"
+                                  >
+                                    <Trash2 className="size-3.5" />
+                                  </Button>
                               </div>
                             ) : (
                               <div className="group/url-input flex h-11 min-w-0 flex-1 items-center gap-3 rounded-xl border border-zinc-200/80 bg-white/70 px-4 transition-all focus-within:border-primary/40 focus-within:bg-white dark:border-white/10 dark:bg-zinc-900/40 dark:focus-within:bg-zinc-900/60 shadow-sm">
                                 <ImageIcon className="size-4 text-muted-foreground/30 group-focus-within/url-input:text-primary transition-colors" />
-                                <input
-                                  autoFocus={!isMobile}
-                                  ref={backgroundImageUrlInputRef}
-                                  placeholder="Paste Image URL..."
-                                  className="h-full min-w-0 flex-1 bg-transparent border-none text-base sm:text-[13px] font-mono font-medium text-foreground/80 placeholder:text-muted-foreground/30 focus:outline-none focus:ring-0"
-                                  value={item.backgroundImageURL || ''}
-                                  onChange={(e) => onUpdate({ backgroundImageURL: e.target.value })}
-                                />
-                              </div>
+                                  <input
+                                    autoFocus={!isMobile}
+                                    ref={backgroundImageUrlInputRef}
+                                    placeholder="Paste Image URL..."
+                                    className="h-full min-w-0 flex-1 bg-transparent border-none text-[12px] font-bold tracking-tight text-foreground/80 placeholder:text-muted-foreground/30 focus:outline-none focus:ring-0"
+                                    value={item.backgroundImageURL || ''}
+                                    onChange={(e) => onUpdate({ backgroundImageURL: e.target.value })}
+                                  />
+                                </div>
                             )}
                           </div>
                         </div>

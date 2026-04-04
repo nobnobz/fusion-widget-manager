@@ -94,8 +94,8 @@ export function CatalogCombobox({
         "px-6 py-4 border-b border-border/5 flex items-center gap-3 bg-zinc-50/50 dark:bg-white/[0.02]",
         isMobile ? "pt-2 pb-6" : "bg-muted/30"
       )}>
-        <div className="flex-1 flex items-center gap-2.5 px-3.5 h-10 rounded-xl bg-zinc-100/50 dark:bg-white/5 border border-zinc-200/50 dark:border-white/5 focus-within:border-primary/30 transition-all">
-          <Search className="size-3.5 text-muted-foreground/35" />
+        <div className="flex-1 flex items-center gap-2.5 px-3.5 h-10 rounded-2xl bg-zinc-100/50 dark:bg-white/5 border border-zinc-200/50 dark:border-white/5 focus-within:border-primary/30 transition-all">
+          <Search className="size-4 text-muted-foreground/35" />
           <input
             autoFocus={!isMobile}
             type="text"
@@ -156,7 +156,7 @@ export function CatalogCombobox({
                         : "hover:bg-primary/[0.04] dark:hover:bg-white/[0.04] text-foreground/80 hover:text-primary active:scale-[0.985]"
                   )}
                 >
-                  <div className="flex flex-col gap-0.5 min-w-0">
+                  <div className="flex flex-col gap-1 min-w-0">
                     <span className={cn(
                       "font-bold tracking-tight text-base sm:text-sm truncate",
                       isSelected ? "text-primary-foreground" : "text-foreground group-hover/item:text-primary"
@@ -164,10 +164,10 @@ export function CatalogCombobox({
                       {option.name}
                     </span>
                     <span className={cn(
-                      "text-[10px] sm:text-[9px] uppercase tracking-[0.14em] font-black opacity-60",
-                      isSelected ? "text-primary-foreground/75" : "text-muted-foreground/65"
+                      "text-[11px] sm:text-[10px] uppercase tracking-[0.16em] font-bold opacity-55",
+                      isSelected ? "text-primary-foreground/80" : "text-muted-foreground/60"
                     )}>
-                      {option.type} <span className="mx-1 opacity-30">•</span> {option.id}
+                      {option.type} <span className="mx-1 opacity-25">•</span> {option.id}
                     </span>
                   </div>
                   {isSelected && <Check className="size-4 shrink-0 stroke-[3px]" />}
@@ -193,14 +193,7 @@ export function CatalogCombobox({
         </DrawerTrigger>
         <DrawerContent className="max-h-[94dvh] bg-white dark:bg-zinc-950 border-zinc-200/80 dark:border-white/10 rounded-t-[2.5rem]">
           <DrawerHeader className="relative border-b border-border/5 pb-5 pt-2">
-            <div className="flex items-center justify-between">
-              <DrawerTitle className="text-[17px] font-black tracking-tight mx-auto text-foreground/90">Select Catalog</DrawerTitle>
-              <DrawerClose asChild>
-                <button className="absolute right-4 p-2 rounded-xl bg-zinc-100 dark:bg-white/5 text-muted-foreground/60 hover:text-foreground active:scale-95 transition-all">
-                  <X className="size-4" />
-                </button>
-              </DrawerClose>
-            </div>
+            <DrawerTitle className="text-[17px] font-black tracking-tight text-center text-foreground/90">Select Catalog</DrawerTitle>
           </DrawerHeader>
           <div className="flex-1 overflow-hidden">
             {renderContentItems()}

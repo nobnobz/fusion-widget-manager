@@ -87,12 +87,6 @@ export function AddItemDialog({ onAdd, trigger }: AddItemDialogProps) {
     <div className="flex flex-col min-h-0 max-h-[min(100dvh-2rem,48rem)]">
       <div className="min-h-0 flex-1 overflow-y-auto px-8 pb-6 pt-10 max-sm:px-5 max-sm:pb-5 max-sm:pt-6">
         <header className="relative space-y-5 items-start text-left">
-          <button
-            onClick={() => setOpen(false)}
-            className="absolute right-0 top-0.5 rounded-full p-2 text-muted-foreground/40 hover:bg-muted hover:text-foreground transition-all active:scale-95 sm:hidden"
-          >
-            <X className="size-5" />
-          </button>
           <div className="size-14 rounded-xl border border-primary/12 bg-primary/[0.06] flex items-center justify-center text-primary max-sm:size-11">
             <Plus className="size-7 max-sm:size-5" />
           </div>

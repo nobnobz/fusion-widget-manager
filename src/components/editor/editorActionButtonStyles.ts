@@ -9,3 +9,6 @@ export const editorHeaderChevronButtonClass =
 
 export const editorHeaderIconButtonDangerClass =
   "transition-all hover:scale-110 active:scale-90 text-destructive/58 hover:border-destructive/20 hover:bg-destructive/[0.08] hover:text-destructive dark:text-destructive/75 dark:hover:border-destructive/22 dark:hover:bg-destructive/12";
+
+export const editorDeleteButtonClass =
+  "size-9 rounded-xl border border-zinc-200/80 bg-white/50 text-destructive/40 transition-all hover:bg-destructive/5 hover:text-destructive hover:border-destructive/20 dark:border-white/5 dark:bg-zinc-900/40 dark:text-destructive/60 dark:hover:bg-destructive/10 shadow-sm";

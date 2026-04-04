@@ -7,6 +7,7 @@ import { resolveFusionCatalogType } from '@/lib/config-utils';
 import { AIOMetadataDataSource } from '@/lib/types/widget';
 import { CatalogCombobox } from './CatalogCombobox';
 import { cn } from '@/lib/utils';
+import { editorDeleteButtonClass } from './editorActionButtonStyles';
 
 export function DataSourceEditor({ 
   dataSource, 
@@ -65,7 +66,7 @@ export function DataSourceEditor({
                         )}
                         <div className="flex flex-col min-w-0 leading-tight justify-center">
                           <p className={cn(
-                            "truncate text-[11px] font-bold tracking-tight transition-colors",
+                            "truncate text-[12px] font-bold tracking-tight transition-colors",
                             !isSynced && "py-0.5",
                             isSynced 
                               ? "text-foreground/90 group-hover/source:text-primary mb-0.5" 
@@ -74,7 +75,7 @@ export function DataSourceEditor({
                             {primaryName}
                           </p>
                           {isSynced && (
-                            <p className="truncate text-[9px] font-medium text-muted-foreground/65">
+                            <p className="truncate text-[9.5px] font-medium text-muted-foreground/65">
                               {dataSource.payload.catalogId}
                             </p>
                           )}
@@ -89,7 +90,7 @@ export function DataSourceEditor({
               hasCatalogId ? (
                 <div className="flex-1 min-w-0 rounded-xl border border-zinc-200 dark:border-border/10 bg-zinc-100 dark:bg-zinc-900/30 px-3 h-9 flex items-center">
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-[10px] font-bold tracking-tight text-foreground/85">
+                    <p className="truncate text-[12px] font-bold tracking-tight text-foreground/85">
                       {dataSource.payload.catalogId}
                     </p>
                   </div>
@@ -107,11 +108,11 @@ export function DataSourceEditor({
       <Button
         variant="ghost"
         size="icon"
-        className="flex size-9 items-center justify-center rounded-lg border border-zinc-100 bg-white/50 text-destructive/40 transition-all hover:bg-destructive/5 hover:text-destructive hover:border-destructive/20 dark:border-white/5 dark:bg-zinc-900/40 dark:text-destructive/60 dark:hover:bg-destructive/10"
+        className={cn(editorDeleteButtonClass)}
         onClick={onDelete}
         title="Delete data source"
       >
-        <Trash2 className="size-3" />
+        <Trash2 className="size-3.5" />
       </Button>
     </div>
   );

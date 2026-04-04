@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import { Drawer as DrawerPrimitive } from "vaul"
+import { X } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 
@@ -48,9 +49,14 @@ const DrawerContent = React.forwardRef<
       )}
       {...props}
     >
-      <div className="flex-none pt-3 pb-4 border-b border-border/5">
-        <div className="mx-auto h-1.5 w-14 rounded-full bg-zinc-300 dark:bg-zinc-700/60 shadow-sm" />
+      <div className="flex-none py-3">
+        <div className="mx-auto h-1 w-12 rounded-full bg-zinc-300/80 dark:bg-zinc-700/50" />
       </div>
+      <DrawerPrimitive.Close asChild>
+        <button className="absolute right-4 top-4 z-10 flex size-9 items-center justify-center rounded-full bg-zinc-100/80 text-muted-foreground/60 transition-all hover:bg-zinc-200 hover:text-foreground active:scale-95 focus:outline-none dark:bg-white/5 dark:hover:bg-white/10 dark:hover:text-zinc-200" aria-label="Close drawer">
+          <X className="size-4" />
+        </button>
+      </DrawerPrimitive.Close>
       {children}
     </DrawerPrimitive.Content>
   </DrawerPortal>

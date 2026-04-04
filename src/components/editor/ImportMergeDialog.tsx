@@ -1237,13 +1237,6 @@ export function ImportMergeDialog({ open, onOpenChange, initialJson, initialFile
       >
         {/* Header moved into scrollable area for better mobile utility */}
         <div className="relative mb-8 max-sm:mb-4 max-sm:mt-4 p-0 bg-transparent shrink-0">
-          <button
-            onClick={() => onOpenChange(false)}
-            className="absolute right-0 top-0.5 p-2 rounded-xl bg-zinc-100 dark:bg-zinc-800/50 text-muted-foreground/60 hover:text-foreground active:scale-95 transition-all z-50"
-            aria-label="Close dialog"
-          >
-            <X className="size-4" />
-          </button>
           <DialogHeader className="space-y-6 max-sm:space-y-4 items-start text-left shrink-0">
             <div className="size-14 rounded-xl bg-primary/5 border border-primary/10 flex items-center justify-center text-primary max-sm:size-11">
               <CloudUpload className="size-7 max-sm:size-[1.375rem]" />

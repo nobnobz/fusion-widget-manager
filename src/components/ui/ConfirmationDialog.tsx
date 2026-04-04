@@ -117,7 +117,7 @@ export function ConfirmationDialog({
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className={cn(
-        "sm:max-w-[500px] rounded-3xl border border-border/40 bg-card/95 backdrop-blur-2xl  p-0 overflow-hidden [&>button:last-child]:hidden",
+        "sm:max-w-[500px] rounded-3xl border border-border/40 bg-card/95 backdrop-blur-2xl  p-0 overflow-hidden",
         contentClassName
       )}>
         <DialogHeader className="sr-only">
