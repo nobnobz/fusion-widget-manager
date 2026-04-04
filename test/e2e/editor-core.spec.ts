@@ -22,7 +22,7 @@ test.beforeEach(async ({ page }) => {
 test('opens the Fusion setup guide with dynamic template and recommended AIOMetadata instances', async ({ page }) => {
   await gotoWelcomePage(page);
 
-  await page.locator('[data-testid="open-setup-guide"]:visible').first().click();
+  await page.locator('[data-testid^="open-setup-guide"]:visible').first().click();
 
   const guide = page.getByTestId('fusion-setup-guide');
   await expect(guide).toBeVisible();
@@ -422,7 +422,7 @@ test('keeps the setup guide usable on mobile', async ({ page }, testInfo) => {
 
   await gotoWelcomePage(page);
 
-  await page.locator('[data-testid="open-setup-guide"]:visible').first().click();
+  await page.locator('[data-testid^="open-setup-guide"]:visible').first().click();
 
   const guide = page.getByTestId('fusion-setup-guide');
   await expect(guide).toBeVisible();

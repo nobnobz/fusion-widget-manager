@@ -14,18 +14,16 @@ import {
   Copy,
   Github,
   Heart,
-  Ellipsis,
   ChevronDown,
   Book,
   ClipboardPaste,
   UploadCloud,
-  Moon,
-  Sun,
 } from 'lucide-react';
 import Image from 'next/image';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { useTheme } from 'next-themes';
 import { ManagerSwitcher } from '@/components/ui/ManagerSwitcher';
+import { EditorMobileHeader } from './EditorMobileHeader';
 import {
   editorActionButtonClass,
   editorFooterPrimaryButtonClass,
@@ -92,7 +90,6 @@ function parseJsonText(input: string): unknown {
 }
 
 export function MainEditor() {
-  const { resolvedTheme } = useTheme();
   const [showManifestModal, setShowManifestModal] = useState(false);
   const [showRestartConfirm, setShowRestartConfirm] = useState(false);
   const [expandedWidgetId, setExpandedWidgetId] = useState<string | null>(null);
@@ -131,8 +128,6 @@ export function MainEditor() {
   const [initialImportJson, setInitialImportJson] = useState<string | undefined>(undefined);
   const [initialImportFileName, setInitialImportFileName] = useState<string | undefined>(undefined);
   const [isImportFocused, setIsImportFocused] = useState(false);
-  const [showWelcomeMobileMenu, setShowWelcomeMobileMenu] = useState(false);
-  const [showEditorMobileMenu, setShowEditorMobileMenu] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const omniFileInputRef = useRef<HTMLInputElement>(null);
@@ -544,13 +539,6 @@ export function MainEditor() {
   };
 
   const selectedTemplate = githubTemplates.find((template) => template.rawUrl === selectedTemplateUrl);
-  const mobileHeaderShellClass = "rounded-[1.45rem] border border-zinc-200/80 bg-white/82 px-3.5 py-2.5 shadow-[0_16px_42px_-28px_rgba(15,23,42,0.38)] backdrop-blur-xl dark:border-white/12 dark:bg-zinc-950/84 dark:shadow-[0_20px_46px_-34px_rgba(0,0,0,0.9)]";
-  const mobileHeaderActionClass = "size-9 rounded-[1rem] border border-zinc-200/80 bg-white/76 text-muted-foreground/72 shadow-sm transition-all hover:border-primary/20 hover:bg-white hover:text-foreground dark:border-white/10 dark:bg-white/[0.045] dark:text-zinc-300/80 dark:shadow-none dark:hover:border-white/14 dark:hover:bg-white/[0.075]";
-  const mobileHeaderMenuButtonClass = "flex w-full items-center gap-3 rounded-2xl border border-transparent px-3.5 py-3 text-left text-[12px] font-bold tracking-tight text-foreground/80 transition-all hover:border-primary/10 hover:bg-primary/[0.06] hover:text-primary dark:text-zinc-200/84 dark:hover:bg-white/[0.055]";
-  const mobileHeaderMenuMetaClass = "flex min-w-0 flex-col";
-  const mobileHeaderMenuIconClass = "flex size-9 shrink-0 items-center justify-center rounded-[1rem] border border-zinc-200/70 bg-white/80 text-muted-foreground/72 shadow-sm dark:border-white/10 dark:bg-white/[0.045] dark:text-zinc-300/80 dark:shadow-none";
-  const mobileHeaderMenuTitleClass = "text-[12px] font-bold tracking-tight text-foreground/80 dark:text-zinc-200/84";
-  const MobileThemeIcon = resolvedTheme === 'dark' ? Moon : Sun;
 
   const openManifestModal = useCallback(() => {
     setShowManifestModal(true);
@@ -817,129 +805,12 @@ export function MainEditor() {
       </div>
 
       <main className="flex-1 flex flex-col min-w-0 relative z-10">
-        <header className="sticky top-0 z-50 w-full px-3 pt-[calc(env(safe-area-inset-top)+0.75rem)] pb-2 sm:hidden">
-          <div className={mobileHeaderShellClass}>
-            {view === 'welcome' ? (
-              <div className="flex items-center justify-between gap-2.5">
-                <ManagerSwitcher currentManager="fusion" className="h-[2.125rem] min-w-0 px-2.5 text-[11px] shadow-none" />
-                <div className="flex shrink-0 items-center gap-1.5">
-                  <Button
-                    data-testid="open-setup-guide"
-                    variant="ghost" size="icon"
-                    className={cn(mobileHeaderActionClass, "text-primary/80 hover:text-primary")}
-                    onClick={() => setShowHowToUse(true)}
-                  >
-                    <span className="sr-only">Open setup guide</span>
-                    <Book className="size-4" />
-                  </Button>
-                  <Popover open={showWelcomeMobileMenu} onOpenChange={setShowWelcomeMobileMenu}>
-                    <PopoverTrigger asChild>
-                      <Button variant="ghost" size="icon" className={mobileHeaderActionClass}>
-                        <Ellipsis className="size-4" />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent align="end" className="w-56 rounded-[1.5rem] border border-zinc-200/80 bg-white/97 p-2 shadow-xl shadow-black/10 backdrop-blur-xl dark:border-white/12 dark:bg-zinc-950/94 dark:shadow-black/40">
-                      <ThemeToggle
-                        trigger={
-                          <button type="button" className={mobileHeaderMenuButtonClass}>
-                            <span className={mobileHeaderMenuIconClass}>
-                              <MobileThemeIcon className={cn("size-4", resolvedTheme === 'dark' ? "text-primary" : "text-amber-500")} />
-                            </span>
-                            <div className={mobileHeaderMenuMetaClass}>
-                              <span className={mobileHeaderMenuTitleClass}>Theme</span>
-                            </div>
-                          </button>
-                        }
-                      />
-                      <button
-                        type="button"
-                        className={mobileHeaderMenuButtonClass}
-                        onClick={() => {
-                          setShowWelcomeMobileMenu(false);
-                          openSupportLink();
-                        }}
-                      >
-                        <div className="flex items-center gap-3 min-w-0">
-                          <span className={mobileHeaderMenuIconClass}>
-                            <Heart className="size-4 shrink-0 text-red-500" />
-                          </span>
-                          <div className={mobileHeaderMenuMetaClass}>
-                            <span className={mobileHeaderMenuTitleClass}>Support My Work</span>
-                          </div>
-                        </div>
-                      </button>
-                    </PopoverContent>
-                  </Popover>
-                </div>
-              </div>
-            ) : (
-              <div className="flex items-center justify-between gap-2.5">
-                <div className="flex min-w-0 flex-1 items-center gap-2">
-                  <div className="relative size-12 shrink-0 overflow-hidden">
-                    <Image src={LogoImage} alt="Logo" fill className="object-contain" priority />
-                  </div>
-                  <div className="flex min-w-0 flex-1 flex-col">
-                    <h1 className="truncate text-[13px] font-black leading-none tracking-[-0.03em]">Fusion Widget</h1>
-                    <span className="truncate pt-0.5 text-[10px] font-black uppercase tracking-[0.16em] text-primary/90 leading-none">Manager</span>
-                  </div>
-                </div>
-                <div className="flex shrink-0 items-center gap-1.5">
-                  <Button data-testid="open-setup-guide" variant="ghost" size="icon" className={cn(mobileHeaderActionClass, "text-primary/80 hover:text-primary")} onClick={() => setShowHowToUse(true)}>
-                    <span className="sr-only">Open setup guide</span>
-                    <Book className="size-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className={mobileHeaderActionClass}
-                    onClick={() => setShowRestartConfirm(true)}
-                  >
-                    <span className="sr-only">Back to start</span>
-                    <RotateCcw className="size-4" />
-                  </Button>
-                  <Popover open={showEditorMobileMenu} onOpenChange={setShowEditorMobileMenu}>
-                    <PopoverTrigger asChild>
-                      <Button variant="ghost" size="icon" className={mobileHeaderActionClass}>
-                        <Ellipsis className="size-4" />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent align="end" className="w-56 rounded-[1.5rem] border border-zinc-200/80 bg-white/97 p-2 shadow-xl shadow-black/10 backdrop-blur-xl dark:border-white/12 dark:bg-zinc-950/94 dark:shadow-black/40">
-                      <ThemeToggle
-                        trigger={
-                          <button type="button" className={mobileHeaderMenuButtonClass}>
-                            <span className={mobileHeaderMenuIconClass}>
-                              <MobileThemeIcon className={cn("size-4", resolvedTheme === 'dark' ? "text-primary" : "text-amber-500")} />
-                            </span>
-                            <div className={mobileHeaderMenuMetaClass}>
-                              <span className={mobileHeaderMenuTitleClass}>Theme</span>
-                            </div>
-                          </button>
-                        }
-                      />
-                      <button
-                        type="button"
-                        className={mobileHeaderMenuButtonClass}
-                        onClick={() => {
-                          setShowEditorMobileMenu(false);
-                          openSupportLink();
-                        }}
-                      >
-                        <div className="flex items-center gap-3 min-w-0">
-                          <span className={mobileHeaderMenuIconClass}>
-                            <Heart className="size-4 shrink-0 text-red-500" />
-                          </span>
-                          <div className={mobileHeaderMenuMetaClass}>
-                            <span className={mobileHeaderMenuTitleClass}>Support My Work</span>
-                          </div>
-                        </div>
-                      </button>
-                    </PopoverContent>
-                  </Popover>
-                </div>
-              </div>
-            )}
-          </div>
-        </header>
+        <EditorMobileHeader
+          view={view}
+          onShowHowToUse={() => setShowHowToUse(true)}
+          onShowRestartConfirm={() => setShowRestartConfirm(true)}
+          onOpenSupport={openSupportLink}
+        />
 
         {view !== 'welcome' && (
           <header className="sticky top-0 z-50 hidden sm:block w-full px-4 sm:px-6 py-4">

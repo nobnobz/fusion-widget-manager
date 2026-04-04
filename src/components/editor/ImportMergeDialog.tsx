@@ -1664,11 +1664,11 @@ export function ImportMergeDialog({ open, onOpenChange, initialJson, initialFile
               >
                 <div className="flex flex-col gap-1.5 pr-6 max-sm:pr-2">
                   <span className="text-[11px] font-bold uppercase tracking-[0.14em] text-foreground/60 transition-colors">
-                    Do not overwrite existing catalogs
+                    Keep existing catalogs
                   </span>
                   {!isMobile && (
                     <span className="text-[13.5px] max-sm:text-[12px] font-medium text-muted-foreground/70 leading-relaxed">
-                      Prevent imported widgets from overwriting your configured catalogs.
+                      Keep your configured catalogs when importing updates.
                     </span>
                   )}
                 </div>

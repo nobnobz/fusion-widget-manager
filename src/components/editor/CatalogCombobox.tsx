@@ -1,4 +1,6 @@
-import { useMemo, useState } from 'react';
+"use client";
+
+import { useMemo, useState, useEffect } from 'react';
 import { Search, ChevronDown, Check, X, AlertTriangle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import * as Popover from '@radix-ui/react-popover';
@@ -36,6 +38,12 @@ export function CatalogCombobox({
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState('');
   const isMobile = useMobile();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setMounted(true), 0);
+    return () => clearTimeout(timer);
+  }, []);
   
   const disabledValueSet = useMemo(() => new Set(disabledValues), [disabledValues]);
 
@@ -82,15 +90,15 @@ export function CatalogCombobox({
   };
 
   const renderContentItems = () => (
-    <div className="flex flex-col h-full bg-white dark:bg-zinc-950 overflow-hidden shadow-2xl">
+    <div className="flex flex-col min-h-0 bg-transparent overflow-hidden">
       <div className={cn(
-        "px-6 py-4 border-b border-border/5 flex items-center gap-3 bg-zinc-50/50 dark:bg-white/[0.02]",
+        "px-6 py-4 border-b border-border/5 flex items-center gap-3 bg-zinc-50/50 dark:bg-white/[0.02] shrink-0",
         isMobile ? "pt-2 pb-6" : "bg-muted/30"
       )}>
         <div className="flex-1 flex items-center gap-2.5 px-3.5 h-10 rounded-2xl bg-zinc-200/20 dark:bg-white/5 border border-zinc-200/50 dark:border-white/5 focus-within:border-primary/30 transition-all">
           <Search className="size-4 text-muted-foreground/35" />
           <input
-            autoFocus={!isMobile}
+            autoFocus={mounted && !isMobile}
             type="text"
             placeholder="Search catalogs..."
             className="flex-1 bg-transparent border-none outline-none text-base sm:text-[11px] h-full placeholder:text-muted-foreground/30 focus:ring-0 font-bold"
@@ -184,11 +192,11 @@ export function CatalogCombobox({
         <DrawerTrigger asChild>
           {renderTrigger()}
         </DrawerTrigger>
-        <DrawerContent className="max-h-[94dvh] bg-white dark:bg-zinc-950 border-zinc-200/80 dark:border-white/10 rounded-t-[2.5rem]">
-          <DrawerHeader className="relative border-b border-border/5 pb-5 pt-2">
+        <DrawerContent className="max-h-[94dvh] bg-white dark:bg-zinc-950 border-zinc-200/80 dark:border-white/10 rounded-t-[2.5rem] flex flex-col">
+          <DrawerHeader className="relative border-b border-border/5 pb-5 pt-2 shrink-0">
             <DrawerTitle className="text-[17px] font-black tracking-tight text-center text-foreground/90">Select Catalog</DrawerTitle>
           </DrawerHeader>
-          <div className="flex-1 overflow-hidden">
+          <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
             {renderContentItems()}
           </div>
         </DrawerContent>
