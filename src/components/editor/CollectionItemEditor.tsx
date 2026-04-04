@@ -497,31 +497,36 @@ export const CollectionItemEditor = memo(function CollectionItemEditor({
                                 )}
                               </div>
 
-                              <div className="flex items-center gap-3 shrink-0 self-start mt-3.5">
-                                <div className="text-[10px] font-black uppercase tracking-[0.16em] text-muted-foreground/35 flex items-center">
-                                  Hide
+                              <div className="flex flex-col shrink-0">
+                                <div className="text-[9px] font-black uppercase tracking-[0.18em] text-transparent mb-1.5 select-none pointer-events-none">
+                                  Hide Label Spacer
                                 </div>
+                                <div className="flex items-center gap-3">
+                                  <div className="text-[10px] font-black uppercase tracking-[0.16em] text-muted-foreground/35 flex items-center">
+                                    Hide
+                                  </div>
 
-                                <button
-                                  type="button"
-                                  role="switch"
-                                  aria-label="Hide item title"
-                                  aria-checked={item.hideTitle}
-                                  onClick={() => onUpdate({ hideTitle: !item.hideTitle })}
-                                  className={cn(
-                                    "relative inline-flex h-4.5 w-8.5 shrink-0 items-center rounded-full border p-0.5 transition-all outline-none",
-                                    item.hideTitle
-                                      ? "border-primary/20 bg-primary text-white"
-                                      : "border-zinc-200/85 bg-zinc-200/60 dark:border-white/10 dark:bg-white/10"
-                                  )}
-                                >
-                                  <span
+                                  <button
+                                    type="button"
+                                    role="switch"
+                                    aria-label="Hide item title"
+                                    aria-checked={item.hideTitle}
+                                    onClick={() => onUpdate({ hideTitle: !item.hideTitle })}
                                     className={cn(
-                                      "size-3 rounded-full bg-white shadow-sm transition-transform",
-                                      item.hideTitle ? "translate-x-3.5" : "translate-x-0"
+                                      "relative inline-flex h-4.5 w-8.5 shrink-0 items-center rounded-full border p-0.5 transition-all outline-none",
+                                      item.hideTitle
+                                        ? "border-primary/20 bg-primary text-white"
+                                        : "border-zinc-200/85 bg-zinc-200/60 dark:border-white/10 dark:bg-white/10"
                                     )}
-                                  />
-                                </button>
+                                  >
+                                    <span
+                                      className={cn(
+                                        "size-3 rounded-full bg-white shadow-sm transition-transform",
+                                        item.hideTitle ? "translate-x-3.5" : "translate-x-0"
+                                      )}
+                                    />
+                                  </button>
+                                </div>
                               </div>
                             </div>
                           </div>
