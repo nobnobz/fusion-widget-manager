@@ -495,7 +495,7 @@ export const CollectionItemEditor = memo(function CollectionItemEditor({
 
                           <div className="flex items-center justify-between gap-3 p-3.5 rounded-2xl border border-zinc-200/60 bg-white/50 dark:border-white/5 dark:bg-zinc-950/25 shadow-sm">
                             <div className="text-[10px] font-black uppercase tracking-[0.16em] text-foreground/60">
-                              Show Title in UI
+                              Hide Title
                             </div>
 
                             <button
@@ -506,7 +506,7 @@ export const CollectionItemEditor = memo(function CollectionItemEditor({
                               onClick={() => onUpdate({ hideTitle: !item.hideTitle })}
                               className={cn(
                                 "relative inline-flex h-5 w-9 shrink-0 items-center rounded-full border p-0.5 transition-all outline-none",
-                                !item.hideTitle
+                                item.hideTitle
                                   ? "border-primary/20 bg-primary text-white"
                                   : "border-zinc-200/85 bg-zinc-200/60 dark:border-white/10 dark:bg-white/10"
                               )}
@@ -514,7 +514,7 @@ export const CollectionItemEditor = memo(function CollectionItemEditor({
                               <span
                                 className={cn(
                                   "size-3.5 rounded-full bg-white shadow-sm transition-transform",
-                                  !item.hideTitle ? "translate-x-4" : "translate-x-0"
+                                  item.hideTitle ? "translate-x-4" : "translate-x-0"
                                 )}
                               />
                             </button>
