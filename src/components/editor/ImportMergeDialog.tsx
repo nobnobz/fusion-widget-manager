@@ -1162,7 +1162,8 @@ export function ImportMergeDialog({ open, onOpenChange, initialJson, initialFile
                   : 'Bring widgets from different Fusion or Omni setups into your current configuration.'}
               </DialogDescription>
             </div>
-      </div>
+          </DialogHeader>
+        </div>
 
       <div className="flex-1 overflow-y-auto px-8 max-sm:px-5 py-6 max-sm:py-5 w-full min-w-0 min-h-0 overscroll-contain">
         <div className="space-y-4 w-full">
@@ -1640,7 +1641,6 @@ export function ImportMergeDialog({ open, onOpenChange, initialJson, initialFile
         </DialogFooter>
       </div>
     </div>
-  );
   );
 
   if (isMobile) {
