@@ -625,7 +625,7 @@ export const CollectionItemEditor = memo(function CollectionItemEditor({
                                 >
                                   <div className="flex w-full min-w-0 items-center justify-between gap-3">
                                     <div className="flex min-w-0 items-center gap-3">
-                                      <span className="truncate text-base sm:text-sm font-medium tracking-tight">
+                                      <span className="truncate text-base sm:text-[13px] font-mono font-medium tracking-tight opacity-70">
                                         {isCopied ? "Link Copied!" : item.backgroundImageURL}
                                       </span>
                                     </div>
@@ -653,7 +653,7 @@ export const CollectionItemEditor = memo(function CollectionItemEditor({
                                   autoFocus={!isMobile}
                                   ref={backgroundImageUrlInputRef}
                                   placeholder="Paste Image URL..."
-                                  className="h-full min-w-0 flex-1 bg-transparent border-none text-base sm:text-sm font-medium text-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:ring-0"
+                                  className="h-full min-w-0 flex-1 bg-transparent border-none text-base sm:text-[13px] font-mono font-medium text-foreground/80 placeholder:text-muted-foreground/30 focus:outline-none focus:ring-0"
                                   value={item.backgroundImageURL || ''}
                                   onChange={(e) => onUpdate({ backgroundImageURL: e.target.value })}
                                 />
