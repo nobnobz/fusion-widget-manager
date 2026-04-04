@@ -450,7 +450,7 @@ export const CollectionItemEditor = memo(function CollectionItemEditor({
                   transition={{ duration: 0.3, ease: "easeInOut" }}
                   className="overflow-hidden"
                 >
-                  <div className="p-4 max-sm:p-4 flex flex-col bg-zinc-50/80 dark:bg-white/[0.02] border-t border-zinc-200/80 dark:border-white/5">
+                  <div className="px-4 pt-4 pb-6 max-sm:px-4 max-sm:pt-4 max-sm:pb-6 flex flex-col bg-zinc-50/80 dark:bg-white/[0.02] border-t border-zinc-200/80 dark:border-white/5">
                     <div className="flex items-center justify-between gap-4 px-1 py-1 mb-4">
                       <div className="flex-1 min-w-0">
                         {isEditing ? (
@@ -660,7 +660,7 @@ export const CollectionItemEditor = memo(function CollectionItemEditor({
 
                         {/* Catalogs Section: Bottom on Mobile */}
                         <div className="lg:hidden">
-                          <div className="mt-4 pt-4 border-t border-zinc-100 dark:border-white/5">
+                          <div className="mt-7 pt-7 border-t border-zinc-200/60 dark:border-white/5">
                             {catalogsSectionContent}
                           </div>
                         </div>
