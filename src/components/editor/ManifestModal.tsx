@@ -272,7 +272,7 @@ export function ManifestModal({ isOpen, onOpenChange }: ManifestModalProps) {
             <textarea
               data-testid="manifest-manual-textarea"
               placeholder='{ "catalogs": [...] }'
-              className="w-full min-h-[150px] max-sm:min-h-[180px] bg-transparent border-none focus:outline-none transition-all font-mono text-[10px] leading-tight resize-none p-2"
+              className="w-full min-h-[150px] max-sm:min-h-[180px] bg-transparent border-none focus:outline-none transition-all font-mono text-base sm:text-[10px] leading-tight resize-none p-2"
               value={manualJson}
               onChange={(e) => setManualJson(e.target.value)}
             />

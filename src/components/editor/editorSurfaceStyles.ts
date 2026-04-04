@@ -1,8 +1,8 @@
 export const editorPanelClass =
-  "rounded-2xl border border-zinc-200/80 dark:border-white/8 backdrop-blur-sm";
+  "rounded-3xl border border-zinc-200/60 dark:border-white/8 backdrop-blur-md shadow-sm";
 
 export const editorFormSurfaceClass =
-  "rounded-2xl border border-zinc-200/80 bg-zinc-100/90 dark:border-white/10 dark:bg-white/[0.045]";
+  "rounded-3xl border border-zinc-200/50 bg-white/70 backdrop-blur-xl dark:border-white/10 dark:bg-white/[0.04] dark:backdrop-blur-2xl";
 
 export const editorActionButtonClass =
   "rounded-2xl font-bold uppercase tracking-wider transition-all active:scale-95";

@@ -148,7 +148,7 @@ function PickerField({
       <PopoverTrigger asChild>
         <button
           type="button"
-          className="flex h-10 w-full items-center justify-between rounded-xl border border-zinc-200/80 bg-white/70 px-4 text-[15.5px] sm:text-[14px] font-semibold text-left outline-none transition-all hover:border-primary/40 hover:bg-white dark:border-white/10 dark:bg-zinc-950/40 dark:hover:border-primary/40 dark:hover:bg-zinc-950/60 shadow-sm"
+          className="flex h-10 w-full items-center justify-between rounded-xl border border-zinc-200/80 bg-white/70 px-4 text-[14.5px] sm:text-[14px] font-semibold text-left outline-none transition-all hover:border-primary/40 hover:bg-white dark:border-white/10 dark:bg-zinc-950/40 dark:hover:border-primary/40 dark:hover:bg-zinc-950/60 shadow-sm"
         >
           <span>{selectedOption?.label}</span>
           <ChevronDown className={cn("size-4 text-muted-foreground/50 transition-transform", open && "rotate-180")} />
@@ -204,10 +204,10 @@ function CacheTtlField({
         <button
           type="button"
           className="flex h-10 w-full items-center justify-between rounded-xl border border-zinc-200/80 bg-white/70 px-4 text-left outline-none transition-all hover:border-primary/40 hover:bg-white dark:border-white/10 dark:bg-zinc-950/40 dark:hover:border-primary/40 dark:hover:bg-zinc-950/60 shadow-sm"
-        >
-          <div className="min-w-0">
-            <p className="truncate text-[15.5px] sm:text-[14px] font-semibold">{formatCacheTtlLabel(value)}</p>
-          </div>
+          >
+            <div className="min-w-0">
+              <p className="truncate text-[14.5px] sm:text-[14px] font-semibold">{formatCacheTtlLabel(value)}</p>
+            </div>
           <ChevronDown className={cn("size-4 shrink-0 text-muted-foreground/50 transition-transform", open && "rotate-180")} />
         </button>
       </PopoverTrigger>
@@ -333,12 +333,12 @@ export function AIOMetadataExportSettingsDialog({
   const Content = (
     <>
       <div className="flex-1 overflow-y-auto custom-scrollbar p-8 pt-10 max-sm:px-5 max-sm:pt-6">
-        <DialogHeader className="space-y-6 items-start text-left shrink-0">
+        <DialogHeader className="space-y-6 max-sm:space-y-4 items-start text-left shrink-0">
           <div className="size-14 rounded-xl bg-primary/5 border border-primary/10 flex items-center justify-center text-primary max-sm:size-12">
             <SlidersHorizontal className="size-7 max-sm:size-6" />
           </div>
           <div className="space-y-1">
-            <DialogTitle className="text-2xl font-black tracking-tight max-sm:text-[1.35rem] truncate w-full">
+            <DialogTitle className="text-2xl font-black tracking-tight max-sm:text-[1.25rem] truncate w-full">
               {targetMeta?.title || 'AIOMetadata Export Settings'}
             </DialogTitle>
             <DialogDescription className="text-xs font-medium leading-relaxed text-muted-foreground/64 max-sm:text-[11px]">
@@ -347,7 +347,7 @@ export function AIOMetadataExportSettingsDialog({
           </div>
         </DialogHeader>
         
-        <div className="px-8 py-6 space-y-6">
+        <div className="px-8 py-6 max-sm:px-0 space-y-6">
           {targetMeta?.sources.includes('mdblist') && (
             <SourceSection title="MDBList" onReset={() => updateSourceOverride('mdblist', undefined)}>
               <div>

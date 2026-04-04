@@ -465,25 +465,27 @@ export const CollectionItemEditor = memo(function CollectionItemEditor({
                                     onChange={(e) => setEditName(e.target.value)}
                                     onBlur={handleTitleSubmit}
                                     onKeyDown={handleTitleKeyDown}
-                                    className="h-10 w-full rounded-xl border-zinc-200/80 bg-white/70 px-3.5 text-[15px] sm:text-sm font-bold tracking-tight text-foreground focus:border-primary/40 focus-visible:ring-0 dark:border-white/10 dark:bg-zinc-900/40"
+                                    className="h-10 w-full rounded-xl border-zinc-200/80 bg-white/70 px-3.5 text-base sm:text-sm font-bold tracking-tight text-foreground focus:border-primary/40 focus-visible:ring-0 dark:border-white/10 dark:bg-zinc-900/40"
                                   />
                                 ) : (
-                                  <div className="flex items-center gap-2.5 min-w-0 h-10">
-                                    <div className="flex flex-col">
+                                  <div className="flex items-start gap-2.5 min-w-0">
+                                    <div className="flex flex-col flex-1 min-w-0">
                                       <span className="text-[9px] font-black uppercase tracking-[0.18em] text-muted-foreground/45 mb-0.5">Title</span>
-                                      <span className="truncate text-[15px] sm:text-sm font-bold tracking-tight text-foreground/90 leading-tight">
+                                      <span className="truncate text-base sm:text-sm font-bold tracking-tight text-foreground/90 leading-tight">
                                         {itemDisplayName}
                                       </span>
+                                      {item.hideTitle && (
+                                        <div className="flex items-center mt-1.5">
+                                          <span className="h-4.5 px-1.5 rounded-md bg-zinc-500/[0.07] text-[8px] font-black tracking-[0.14em] uppercase text-zinc-500/70 border border-zinc-500/[0.08] dark:bg-zinc-500/10 dark:text-zinc-500/80 dark:border-zinc-500/10 transition-colors shrink-0 flex items-center justify-center">
+                                            Hidden
+                                          </span>
+                                        </div>
+                                      )}
                                     </div>
-                                    {item.hideTitle && (
-                                      <span className="h-5 px-1.5 mt-2 rounded-md bg-zinc-500/[0.07] text-[9px] font-black tracking-[0.14em] uppercase text-zinc-500/70 border border-zinc-500/[0.08] dark:bg-zinc-500/10 dark:text-zinc-500/80 dark:border-zinc-500/10 transition-colors shrink-0 flex items-center justify-center">
-                                        Hidden
-                                      </span>
-                                    )}
                                     <Button
                                       variant="ghost"
                                       size="icon"
-                                      className="size-7 mt-2 shrink-0 text-muted-foreground/35 hover:text-primary hover:bg-primary/5 transition-colors"
+                                      className="size-7 mt-3.5 shrink-0 text-muted-foreground/35 hover:text-primary hover:bg-primary/5 transition-colors"
                                       onClick={startEditing}
                                       title="Rename item"
                                     >
@@ -654,7 +656,7 @@ export const CollectionItemEditor = memo(function CollectionItemEditor({
                                     autoFocus={!isMobile}
                                     ref={backgroundImageUrlInputRef}
                                     placeholder="Paste Image URL..."
-                                    className="h-full min-w-0 flex-1 bg-transparent border-none text-[12px] font-bold tracking-tight text-foreground/80 placeholder:text-muted-foreground/30 focus:outline-none focus:ring-0"
+                                    className="h-full min-w-0 flex-1 bg-transparent border-none text-base sm:text-[12px] font-bold tracking-tight text-foreground/80 placeholder:text-muted-foreground/30 focus:outline-none focus:ring-0"
                                     value={item.backgroundImageURL || ''}
                                     onChange={(e) => onUpdate({ backgroundImageURL: e.target.value })}
                                   />

@@ -1001,6 +1001,42 @@ function WidgetSelectionGridComponent({
     }, 2000);
   };
 
+  const ExportPreview = ({
+    title,
+    count,
+    countLabel,
+    content,
+  }: {
+    title: string;
+    count: number;
+    countLabel: string;
+    content: string;
+  }) => (
+    <div className={cn("min-h-0 p-5 mt-3.5 w-full max-sm:p-3 max-sm:mt-1.5 rounded-[2rem]", editorFormSurfaceClass)}>
+      <div className="flex items-center justify-between mb-4 px-1.5 max-sm:mb-3">
+        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/45 dark:text-foreground/55">
+          {title}
+        </span>
+        <div className="flex flex-col items-end gap-0.5">
+          <span className="text-[10px] font-bold text-primary/65 dark:text-primary/60 tabular-nums">
+            {count} {countLabel}
+          </span>
+          <span className="text-[9px] font-medium text-muted-foreground/45 dark:text-muted-foreground/35 tabular-nums uppercase tracking-widest">
+            {(content.length / 1024).toFixed(1)} kB
+          </span>
+        </div>
+      </div>
+      <div className="relative group overflow-hidden rounded-2xl border border-zinc-200/50 dark:border-white/5 bg-zinc-900 dark:bg-zinc-950 px-7 py-8 max-sm:px-5 max-sm:py-6 shadow-xl shadow-black/10">
+        <textarea
+          readOnly
+          data-testid="export-preview-textarea"
+          value={content}
+          className="h-[380px] max-sm:h-[22vh] w-full resize-none overflow-y-auto border-none bg-transparent font-mono text-base max-sm:text-[10px] sm:text-xs leading-relaxed text-zinc-400 focus-visible:ring-0 custom-scrollbar"
+        />
+      </div>
+    </div>
+  );
+
   const copyText = async (text: string, action: 'preview' | 'missing-catalogs' | 'full-aiometadata') => {
     await copyTextToClipboard(text);
     setCopyFeedback(action);
@@ -1181,18 +1217,19 @@ function WidgetSelectionGridComponent({
       <div key={`${keyPrefix}${widget.id}`} className="rounded-3xl border border-zinc-200/80 bg-white/40 p-4 transition-all hover:bg-white/60 dark:border-white/10 dark:bg-white/[0.03] dark:hover:bg-white/[0.05]">
         <div className="flex items-center justify-between gap-4">
           <div className="flex min-w-0 flex-1 items-center gap-4">
-            <div
-              onClick={() => {
-                if (!widgetIsSyncedOnly) toggleAiometadataCatalogGroup(widgetSelectableCatalogKeys, !widgetAllSelected);
-              }}
-              className={cn(
-                "size-[1.125rem] rounded-[0.35rem] border-2 transition-all cursor-pointer flex items-center justify-center shrink-0",
-                widgetAllSelected || widgetPartiallySelected
-                  ? "bg-primary border-primary "
-                  : "bg-zinc-950/40 border-white/10 hover:border-primary/40",
-                widgetIsSyncedOnly && "opacity-30 cursor-not-allowed"
-              )}
-            >
+              <div
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (!widgetIsSyncedOnly) toggleAiometadataCatalogGroup(widgetSelectableCatalogKeys, !widgetAllSelected);
+                }}
+                className={cn(
+                  "size-[1.125rem] rounded-[0.35rem] border-2 transition-all cursor-pointer flex items-center justify-center shrink-0",
+                  widgetAllSelected || widgetPartiallySelected
+                    ? "bg-primary border-primary"
+                    : "bg-transparent border-zinc-300 dark:border-white/20 hover:border-primary/40",
+                  widgetIsSyncedOnly && "opacity-30 cursor-not-allowed"
+                )}
+              >
               {widgetPartiallySelected
                 ? <div className="w-2.5 h-0.5 bg-primary-foreground rounded-full" />
                 : widgetAllSelected && <Check className="size-3 text-primary-foreground stroke-[3.5px]" />
@@ -1278,7 +1315,12 @@ function WidgetSelectionGridComponent({
               transition={{ duration: 0.2, ease: 'easeInOut' }}
               className="overflow-hidden"
             >
-              <div className="mt-3.5 p-3.5 max-sm:px-2 max-sm:py-3 rounded-xl bg-zinc-100/80 dark:bg-zinc-900/30 border border-zinc-200/60 dark:border-white/5 space-y-2">
+              <div className="mt-4 px-2 sm:px-4 pb-2 space-y-3">
+                {topLevelOnlyCatalogKeys.length > 0 && (
+                  <p className="text-[10px] font-black uppercase tracking-[0.16em] text-muted-foreground/60 px-1">
+                    Catalog
+                  </p>
+                )}
                 {topLevelOnlyCatalogKeys
                   .filter((catalogKey) => !showOnlyNew || aiometadataSelectableCatalogKeys.has(catalogKey))
                   .map((catalogKey) => {
@@ -1288,36 +1330,35 @@ function WidgetSelectionGridComponent({
                     const disabled = isManifestSynced && catalog.isAlreadyInManifest;
 
                     return (
-                      <label
+                      <div
                         key={`${keyPrefix}${catalogKey}`}
+                        onClick={() => {
+                          if (!disabled) toggleAiometadataCatalogKey(catalogKey);
+                        }}
                         className={cn(
-                          'flex items-center gap-3 rounded-xl border border-zinc-200/60 dark:border-white/5 bg-white/80 dark:bg-white/[0.015] px-3 py-2.5 transition-all hover:bg-zinc-50 dark:hover:bg-white/[0.03]',
-                          disabled && 'opacity-55'
+                          'flex items-center gap-3 rounded-[1.25rem] border border-zinc-200/50 dark:border-white/5 bg-white/85 dark:bg-white/[0.03] p-3 transition-all hover:bg-white/95 dark:hover:bg-white/[0.05] shadow-sm backdrop-blur-sm cursor-pointer',
+                          disabled && 'opacity-55 cursor-default'
                         )}
                       >
                         <div
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            if (!disabled) toggleAiometadataCatalogKey(catalogKey);
-                          }}
                           className={cn(
-                            "size-[1.125rem] rounded-[0.35rem] border-2 transition-all cursor-pointer flex items-center justify-center shrink-0",
+                            "size-[1.125rem] rounded-[0.35rem] border-2 transition-all flex items-center justify-center shrink-0",
                             checked
-                              ? "bg-primary border-primary "
-                              : "bg-zinc-950/40 border-white/10 hover:border-primary/40",
-                            disabled && "opacity-30 cursor-not-allowed"
+                              ? "bg-primary border-primary"
+                              : "bg-transparent border-zinc-300 dark:border-white/20",
+                            disabled && "opacity-30"
                           )}
                         >
                           {checked && <Check className="size-3 text-primary-foreground stroke-[3.5px]" />}
                         </div>
                         <div className="min-w-0 flex-1">
-                          <p className="truncate text-sm font-semibold text-foreground">{catalog.entry.name}</p>
+                          <p className="truncate text-sm font-bold text-foreground">{catalog.entry.name}</p>
                           <div className="mt-1 flex flex-wrap items-center gap-1.5 sm:gap-2">
-                            <p className="truncate text-[10px] sm:text-[11px] font-medium text-muted-foreground/65">
+                            <p className="truncate text-[10px] sm:text-[11px] font-bold text-muted-foreground/55 dark:text-muted-foreground/45">
                               {catalog.entry.type} / {catalog.entry.id}
                             </p>
                             <span className={cn(
-                              'inline-flex shrink-0 items-center justify-center rounded-full px-2 py-0.5 sm:px-2.5 sm:py-1 text-[9px] sm:text-[10px] font-black uppercase tracking-[0.12em] sm:tracking-[0.14em]',
+                              'inline-flex shrink-0 items-center justify-center rounded-full px-2 py-0.5 sm:px-2.5 sm:py-1 text-[9px] sm:text-[10px] font-black uppercase tracking-[0.12em] sm:tracking-[0.16em]',
                               catalog.source === 'trakt'
                                 ? 'bg-sky-500/10 text-sky-600 dark:text-sky-300'
                                 : catalog.source === 'mdblist'
@@ -1350,13 +1391,13 @@ function WidgetSelectionGridComponent({
                             Synced
                           </span>
                         )}
-                      </label>
+                      </div>
                     );
                   })}
 
                 {/* Collection Items */}
                 {widget.items.length > 0 && (
-                  <div className="mt-4 space-y-3">
+                  <div className="mt-4 mb-2 space-y-3">
                     <p className="text-[10px] font-black uppercase tracking-[0.16em] text-muted-foreground/60 px-1">
                       Collection Items
                     </p>
@@ -1372,36 +1413,37 @@ function WidgetSelectionGridComponent({
                         const itemIsSyncedOnly = itemSelectableCatalogKeys.length === 0;
 
                         return (
-                          <div key={`${keyPrefix}${item.key}`} className="rounded-2xl border border-zinc-200/60 bg-white/50 p-3 dark:border-white/5 dark:bg-white/[0.02]">
+                          <div key={`${keyPrefix}${item.key}`} className="rounded-[1.25rem] border border-zinc-200/40 bg-white/85 p-3 dark:border-white/5 dark:bg-white/[0.03] backdrop-blur-sm shadow-sm transition-all hover:bg-white/95 ring-offset-background focus-within:ring-2 focus-within:ring-primary/20">
                             <div className="flex items-center justify-between gap-3">
                               <div className="flex min-w-0 flex-1 items-center gap-3">
-                                <div
-                                  onClick={() => {
-                                    if (!itemIsSyncedOnly) toggleAiometadataCatalogGroup(itemSelectableCatalogKeys, !itemAllSelected);
-                                  }}
-                                  className={cn(
-                                    "size-4 rounded-[0.3rem] border-2 transition-all cursor-pointer flex items-center justify-center shrink-0",
-                                    itemAllSelected || itemPartiallySelected
-                                      ? "bg-primary border-primary "
-                                      : "bg-zinc-950/40 border-white/10 hover:border-primary/40",
-                                    itemIsSyncedOnly && "opacity-30 cursor-not-allowed"
-                                  )}
-                                >
+                                  <div
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      if (!itemIsSyncedOnly) toggleAiometadataCatalogGroup(itemSelectableCatalogKeys, !itemAllSelected);
+                                    }}
+                                    className={cn(
+                                      "size-[1.125rem] rounded-[0.35rem] border-2 transition-all cursor-pointer flex items-center justify-center shrink-0",
+                                      itemAllSelected || itemPartiallySelected
+                                        ? "bg-primary border-primary"
+                                        : "bg-transparent border-zinc-300 dark:border-white/20 hover:border-primary/40",
+                                      itemIsSyncedOnly && "opacity-30 cursor-not-allowed"
+                                    )}
+                                  >
                                   {itemPartiallySelected
-                                    ? <div className="w-2 h-0.5 bg-primary-foreground rounded-full" />
-                                    : itemAllSelected && <Check className="size-2.5 text-primary-foreground stroke-[4px]" />
+                                    ? <div className="w-2.5 h-0.5 bg-primary-foreground rounded-full" />
+                                    : itemAllSelected && <Check className="size-3 text-primary-foreground stroke-[3.5px]" />
                                   }
                                 </div>
                                 <div
                                   className="min-w-0 flex-1 cursor-pointer"
                                   onClick={() => toggleAiometadataItemExpanded(item.key)}
                                 >
-                                  <p className="truncate text-xs font-bold text-foreground">{item.itemName}</p>
+                                  <p className="truncate text-sm font-bold text-foreground">{item.itemName}</p>
                                 </div>
                               </div>
                               <div className="flex items-center gap-1.5 shrink-0">
                                 <span className={cn(
-                                  "rounded-full bg-background/60 px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.12em] text-muted-foreground/60",
+                                  "rounded-full bg-background/60 px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.14em] text-muted-foreground/60",
                                   itemSelectableCatalogKeys.length === 0 && "max-sm:hidden"
                                 )}>
                                   {itemSelectableCatalogKeys.length > 0
@@ -1423,7 +1465,7 @@ function WidgetSelectionGridComponent({
                                     }}
                                     aria-label={`Open export settings for ${item.itemName}`}
                                   >
-                                    <SlidersHorizontal className="size-3.5" />
+                                    <SlidersHorizontal className="size-4" />
                                   </button>
                                 )}
                                 <button
@@ -1439,7 +1481,7 @@ function WidgetSelectionGridComponent({
                                   className="group flex items-center justify-center size-7 rounded-full hover:bg-primary/10 transition-all hover:scale-110 active:scale-90"
                                   aria-expanded={itemExpanded}
                                 >
-                                  <ChevronRight className={cn('size-3.5 transition-all group-hover:text-primary', itemExpanded && 'rotate-90 text-primary')} />
+                                  <ChevronRight className={cn('size-4 transition-all group-hover:text-primary', itemExpanded && 'rotate-90 text-primary')} />
                                 </button>
                               </div>
                             </div>
@@ -1462,36 +1504,35 @@ function WidgetSelectionGridComponent({
                                         const disabled = isManifestSynced && catalog.isAlreadyInManifest;
 
                                         return (
-                                          <label
+                                          <div
                                             key={`${keyPrefix}${itemCatalogKey}`}
+                                            onClick={() => {
+                                              if (!disabled) toggleAiometadataCatalogKey(itemCatalogKey);
+                                            }}
                                             className={cn(
-                                              'flex items-center gap-2.5 rounded-lg border border-zinc-200/40 bg-zinc-50/50 px-2.5 py-2 transition-all hover:bg-zinc-100 dark:border-white/5 dark:bg-white/[0.015] dark:hover:bg-white/[0.03]',
-                                              disabled && 'opacity-55'
+                                              'flex items-center gap-2.5 rounded-xl border border-zinc-200/50 bg-white/90 px-2.5 py-2 transition-all hover:bg-white dark:border-white/5 dark:bg-white/[0.025] dark:hover:bg-white/[0.045] shadow-xs cursor-pointer',
+                                              disabled && 'opacity-55 cursor-default'
                                             )}
                                           >
-                                            <div
-                                              onClick={(e) => {
-                                                e.stopPropagation();
-                                                if (!disabled) toggleAiometadataCatalogKey(itemCatalogKey);
-                                              }}
-                                              className={cn(
-                                                "size-3.5 rounded-[0.25rem] border-2 transition-all cursor-pointer flex items-center justify-center shrink-0",
-                                                checked
-                                                  ? "bg-primary border-primary "
-                                                  : "bg-zinc-950/40 border-white/10 hover:border-primary/40",
-                                                disabled && "opacity-30 cursor-not-allowed"
-                                              )}
-                                            >
-                                              {checked && <Check className="size-2.5 text-primary-foreground stroke-[4px]" />}
-                                            </div>
+                                              <div
+                                                className={cn(
+                                                  "size-[1rem] rounded-[0.3rem] border-2 transition-all flex items-center justify-center shrink-0",
+                                                  checked
+                                                    ? "bg-primary border-primary"
+                                                    : "bg-transparent border-zinc-300 dark:border-white/20",
+                                                  disabled && "opacity-30"
+                                                )}
+                                              >
+                                                {checked && <Check className="size-2 text-primary-foreground stroke-[4.5px]" />}
+                                              </div>
                                             <div className="min-w-0 flex-1">
-                                              <p className="truncate text-[11px] font-semibold text-foreground/80">{catalog.entry.name}</p>
+                                              <p className="truncate text-[11px] font-bold text-foreground">{catalog.entry.name}</p>
                                               <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
-                                                <p className="truncate text-[9px] font-medium text-muted-foreground/60">
+                                                <p className="truncate text-[9px] font-bold text-muted-foreground/55 dark:text-muted-foreground/45">
                                                   {catalog.entry.type} / {catalog.entry.id}
                                                 </p>
                                                 <span className={cn(
-                                                  'inline-flex shrink-0 items-center justify-center rounded-full px-1.5 py-0.5 text-[8px] font-black uppercase tracking-[0.1em]',
+                                                  'inline-flex shrink-0 items-center justify-center rounded-full px-1.5 py-0.5 text-[8px] font-black uppercase tracking-[0.12em]',
                                                   catalog.source === 'trakt'
                                                     ? 'bg-sky-500/10 text-sky-600 dark:text-sky-300'
                                                     : catalog.source === 'mdblist'
@@ -1524,7 +1565,7 @@ function WidgetSelectionGridComponent({
                                                 Synced
                                               </span>
                                             )}
-                                          </label>
+                                          </div>
                                         );
                                       })}
                                   </div>
@@ -1710,27 +1751,12 @@ function WidgetSelectionGridComponent({
             </div>
 
             {/* Preview Section */}
-            <div className={cn("min-h-0 p-5 mt-4 w-full", editorFormSurfaceClass)}>
-              <div className="flex items-center justify-between mb-4 px-1">
-                <span className="text-[10px] font-black uppercase tracking-[0.16em] text-foreground/40 dark:text-foreground/55">Export Preview</span>
-                <div className="flex flex-col items-end gap-0.5">
-                  <span className="text-[10px] font-bold text-primary/60 dark:text-primary/60 tabular-nums">
-                    {aiometadataPreviewExport.catalogs.length} catalogs
-                  </span>
-                  <span className="text-[9px] font-medium text-muted-foreground/40 tabular-nums uppercase tracking-wider">
-                    {(previewContent.length / 1024).toFixed(1)} kB
-                  </span>
-                </div>
-              </div>
-              <div className="relative group overflow-hidden rounded-2xl border border-zinc-200/50 dark:border-white/5 bg-zinc-900 dark:bg-zinc-950 px-5 py-6 max-sm:p-4 shadow-xl shadow-black/10">
-                <textarea
-                  readOnly
-                  data-testid="export-preview-textarea"
-                  value={previewContent}
-                  className="h-[380px] max-sm:h-[20vh] w-full resize-none overflow-y-auto border-none bg-transparent font-mono text-base max-sm:text-[10px] sm:text-xs leading-relaxed text-zinc-400 focus-visible:ring-0 custom-scrollbar"
-                />
-              </div>
-            </div>
+            <ExportPreview
+              title="Export Preview"
+              count={aiometadataPreviewExport.catalogs.length}
+              countLabel="catalogs"
+              content={previewContent}
+            />
           </div>
         ) : (
           <div className="mt-4 flex-1 min-h-0 flex flex-col">
@@ -1773,35 +1799,27 @@ function WidgetSelectionGridComponent({
                 </div>
               </div>
             ) : (
-              <div className="flex flex-col items-center justify-center pt-8 pb-10 px-8 text-center space-y-8 flex-1 min-h-0 overflow-hidden">
-                <div className="flex flex-col items-center space-y-5">
-                  <div className="size-16 rounded-[2rem] bg-primary/8 border border-primary/20 flex items-center justify-center text-primary shadow-2xl shadow-primary/10">
-                    <FileCode className="size-8" />
+              <div className="flex flex-col items-center justify-center pt-8 pb-10 px-8 text-center space-y-8 max-sm:pt-3 max-sm:pb-5 max-sm:px-4 max-sm:space-y-3.5 flex-1 min-h-0 overflow-hidden">
+                <div className="flex flex-col items-center space-y-5 max-sm:space-y-3">
+                  <div className="size-16 rounded-[2rem] bg-primary/8 border border-primary/20 flex items-center justify-center text-primary shadow-2xl shadow-primary/10 max-sm:size-12 max-sm:rounded-2xl">
+                    <FileCode className="size-8 max-sm:size-6" />
                   </div>
-                  <div className="space-y-2 max-w-sm">
-                    <h3 className="text-2xl font-black tracking-tight text-foreground capitalize">
+                  <div className="space-y-2 max-sm:space-y-1 max-w-sm">
+                    <h3 className="text-2xl font-black tracking-tight text-foreground capitalize max-sm:text-lg">
                       {exportMode} Export Ready
                     </h3>
-                    <p className="text-sm font-medium text-muted-foreground/65 leading-relaxed px-4">
+                    <p className="text-sm font-medium text-muted-foreground/65 leading-relaxed px-4 max-sm:px-2 max-sm:text-[11px]">
                       Your {exportMode === 'fusion' ? 'Fusion' : 'Omni'} JSON configuration has been generated and is ready for download or copy.
                     </p>
                   </div>
                 </div>
 
-                <div className={cn("min-h-0 p-5 mt-4 w-full", editorFormSurfaceClass)}>
-                  <div className="flex items-center justify-between mb-4 px-1">
-                    <span className="text-[10px] font-black uppercase tracking-[0.16em] text-foreground/40 dark:text-foreground/55">JSON Preview</span>
-                    <span className="text-[10px] font-bold text-primary/60 dark:text-primary/60 tabular-nums">{(previewContent.length / 1024).toFixed(1)} kB</span>
-                  </div>
-                  <div className="relative group overflow-hidden rounded-2xl border border-zinc-200/50 dark:border-white/5 bg-zinc-900 dark:bg-zinc-950 px-5 py-6 max-sm:p-4 shadow-xl shadow-black/10">
-                    <textarea
-                      readOnly
-                      data-testid="export-preview-textarea"
-                      value={previewContent}
-                      className="h-80 max-sm:h-52 w-full resize-none overflow-y-auto border-none bg-transparent font-mono text-base max-sm:text-[10px] sm:text-xs leading-relaxed text-zinc-400 focus-visible:ring-0 custom-scrollbar"
-                    />
-                  </div>
-                </div>
+                <ExportPreview
+                  title={exportMode === 'omni' && requiresTraktBridgeImport && !isBridgeConfirmed ? "Omni Actions Required" : "JSON Preview"}
+                  count={exportMode === 'fusion' ? widgets.length : widgets.length} 
+                  countLabel={exportMode === 'fusion' ? 'widgets' : 'groups'}
+                  content={previewContent}
+                />
               </div>
             )}
           </div>
