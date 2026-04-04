@@ -531,6 +531,63 @@ export const CollectionItemEditor = memo(function CollectionItemEditor({
                         layout
                         className="flex flex-col gap-5 max-sm:gap-3.5 max-lg:mt-4 max-lg:pt-4 max-sm:mt-3.5 max-sm:pt-3.5 max-lg:border-t max-lg:border-zinc-100 max-lg:dark:border-white/5 lg:min-w-[380px]"
                       >
+                        <div className="flex flex-col gap-2.5">
+                          <div className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/42 flex items-center px-0.5">
+                            Image URL
+                          </div>
+                          <div className="flex items-center gap-1.5 w-full">
+                            {item.backgroundImageURL ? (
+                              <div className="flex items-center gap-1.5 w-full">
+                                <div
+                                  role="button"
+                                  tabIndex={0}
+                                  onMouseDown={(event) => { void handleCopy(event); }}
+                                  className={cn(
+                                    "flex min-w-0 flex-1 items-center rounded-xl border px-3.5 h-11 transition-all active:scale-[0.98] cursor-pointer select-none shadow-sm",
+                                    isCopied
+                                      ? "border-emerald-500/20 bg-emerald-500/5 text-emerald-600 dark:text-emerald-400 shadow-sm"
+                                      : "border-zinc-200/80 bg-white/70 text-foreground/80 hover:border-primary/30 hover:bg-white dark:border-white/10 dark:bg-zinc-900/40 dark:hover:bg-zinc-900/60 shadow-sm"
+                                  )}
+                                >
+                                  <div className="flex w-full min-w-0 items-center justify-between gap-3">
+                                    <div className="flex min-w-0 items-center gap-3">
+                                      <span className="truncate text-[12px] font-bold tracking-tight text-foreground/70">
+                                        {isCopied ? "Link Copied!" : item.backgroundImageURL}
+                                      </span>
+                                    </div>
+                                    {isCopied ? <Check className="size-4 shrink-0" /> : <Copy className="size-3.5 shrink-0 opacity-30" />}
+                                  </div>
+                                </div>
+
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className={cn(editorDeleteButtonClass)}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleClearBackgroundImageUrl();
+                                    }}
+                                    title="Clear URL"
+                                  >
+                                    <Trash2 className="size-3.5" />
+                                  </Button>
+                              </div>
+                            ) : (
+                              <div className="group/url-input flex h-11 min-w-0 flex-1 items-center gap-3 rounded-xl border border-zinc-200/80 bg-white/70 px-4 transition-all focus-within:border-primary/40 focus-within:bg-white dark:border-white/10 dark:bg-zinc-900/40 dark:focus-within:bg-zinc-900/60 shadow-sm">
+                                <ImageIcon className="size-4 text-muted-foreground/30 group-focus-within/url-input:text-primary transition-colors" />
+                                  <input
+                                    autoFocus={!isMobile}
+                                    ref={backgroundImageUrlInputRef}
+                                    placeholder="Paste Image URL..."
+                                    className="h-full min-w-0 flex-1 bg-transparent border-none text-base sm:text-[12px] font-bold tracking-tight text-foreground/80 placeholder:text-muted-foreground/30 focus:outline-none focus:ring-0"
+                                    value={item.backgroundImageURL || ''}
+                                    onChange={(e) => onUpdate({ backgroundImageURL: e.target.value })}
+                                  />
+                                </div>
+                            )}
+                          </div>
+                        </div>
+
                         {/* Combined Visuals & Layout Selector Row */}
                         <motion.div
                           layout
@@ -602,63 +659,6 @@ export const CollectionItemEditor = memo(function CollectionItemEditor({
                             ))}
                           </motion.div>
                         </motion.div>
-
-                        <div className="flex flex-col gap-2.5">
-                          <div className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/42 flex items-center px-0.5">
-                            Image URL
-                          </div>
-                          <div className="flex items-center gap-1.5 w-full">
-                            {item.backgroundImageURL ? (
-                              <div className="flex items-center gap-1.5 w-full">
-                                <div
-                                  role="button"
-                                  tabIndex={0}
-                                  onMouseDown={(event) => { void handleCopy(event); }}
-                                  className={cn(
-                                    "flex min-w-0 flex-1 items-center rounded-xl border px-3.5 h-11 transition-all active:scale-[0.98] cursor-pointer select-none shadow-sm",
-                                    isCopied
-                                      ? "border-emerald-500/20 bg-emerald-500/5 text-emerald-600 dark:text-emerald-400 shadow-sm"
-                                      : "border-zinc-200/80 bg-white/70 text-foreground/80 hover:border-primary/30 hover:bg-white dark:border-white/10 dark:bg-zinc-900/40 dark:hover:bg-zinc-900/60 shadow-sm"
-                                  )}
-                                >
-                                  <div className="flex w-full min-w-0 items-center justify-between gap-3">
-                                    <div className="flex min-w-0 items-center gap-3">
-                                      <span className="truncate text-[12px] font-bold tracking-tight text-foreground/70">
-                                        {isCopied ? "Link Copied!" : item.backgroundImageURL}
-                                      </span>
-                                    </div>
-                                    {isCopied ? <Check className="size-4 shrink-0" /> : <Copy className="size-3.5 shrink-0 opacity-30" />}
-                                  </div>
-                                </div>
-
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className={cn(editorDeleteButtonClass)}
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleClearBackgroundImageUrl();
-                                    }}
-                                    title="Clear URL"
-                                  >
-                                    <Trash2 className="size-3.5" />
-                                  </Button>
-                              </div>
-                            ) : (
-                              <div className="group/url-input flex h-11 min-w-0 flex-1 items-center gap-3 rounded-xl border border-zinc-200/80 bg-white/70 px-4 transition-all focus-within:border-primary/40 focus-within:bg-white dark:border-white/10 dark:bg-zinc-900/40 dark:focus-within:bg-zinc-900/60 shadow-sm">
-                                <ImageIcon className="size-4 text-muted-foreground/30 group-focus-within/url-input:text-primary transition-colors" />
-                                  <input
-                                    autoFocus={!isMobile}
-                                    ref={backgroundImageUrlInputRef}
-                                    placeholder="Paste Image URL..."
-                                    className="h-full min-w-0 flex-1 bg-transparent border-none text-base sm:text-[12px] font-bold tracking-tight text-foreground/80 placeholder:text-muted-foreground/30 focus:outline-none focus:ring-0"
-                                    value={item.backgroundImageURL || ''}
-                                    onChange={(e) => onUpdate({ backgroundImageURL: e.target.value })}
-                                  />
-                                </div>
-                            )}
-                          </div>
-                        </div>
                       </motion.div>
 
                       {/* Left Column: Config */}
