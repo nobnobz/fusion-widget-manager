@@ -47,11 +47,11 @@ export function TraktSourceCard({
       </div>
 
       <dl className={`mt-3 grid gap-2 text-xs ${compact ? 'grid-cols-1' : 'grid-cols-1 sm:grid-cols-2'}`}>
-        <div>
+        <div className="min-w-0">
           <dt className="font-bold uppercase tracking-wider text-muted-foreground/60">List Name</dt>
-          <dd className="mt-1 text-foreground/85">{dataSource.payload.listName || 'Missing'}</dd>
+          <dd className="mt-1 text-foreground/85 truncate">{dataSource.payload.listName || 'Missing'}</dd>
         </div>
-        <div>
+        <div className="min-w-0">
           <dt className="font-bold uppercase tracking-wider text-muted-foreground/60">Trakt ID</dt>
           <dd className="mt-1 text-foreground/85">{renderValue(dataSource.payload.traktId)}</dd>
         </div>

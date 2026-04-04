@@ -338,7 +338,7 @@ export const CollectionItemEditor = memo(function CollectionItemEditor({
                   {hasInvalidCatalog && (
                     <AlertTriangle className="size-4 text-amber-500 animate-pulse shrink-0 self-center" />
                   )}
-                  <span className="truncate text-sm font-bold tracking-tight text-foreground/80 leading-tight">
+                  <span className="flex-1 min-w-0 truncate text-sm font-bold tracking-tight text-foreground/80 leading-tight">
                     {itemDisplayName}
                   </span>
                 </div>
@@ -398,7 +398,7 @@ export const CollectionItemEditor = memo(function CollectionItemEditor({
                       <AlertTriangle className="size-4 text-amber-500 animate-pulse shrink-0 self-center" />
                     )}
 
-                    <span className="truncate text-sm font-bold tracking-tight text-foreground/80 leading-tight">
+                    <span className="flex-1 min-w-0 truncate text-sm font-bold tracking-tight text-foreground/80 leading-tight">
                       {itemDisplayName}
                     </span>
 
@@ -536,9 +536,9 @@ export const CollectionItemEditor = memo(function CollectionItemEditor({
                       {/* Right Column: Visuals */}
                       <div className="flex flex-col gap-6 max-sm:gap-4 max-lg:mt-5 max-lg:pt-5 max-sm:mt-4 max-sm:pt-4 max-lg:border-t max-lg:border-zinc-100 max-lg:dark:border-white/5 lg:border-l lg:border-zinc-200/40 lg:dark:border-white/5 lg:pl-6 lg:min-w-[380px]">
                         {/* Combined Visuals & Layout Selector Row */}
-                        <div className="flex flex-row items-center justify-center gap-4 sm:gap-6 w-full">
-                          {/* Left: Preview Area */}
-                          <div className="flex-1 flex flex-col items-center justify-center min-h-[220px] relative">
+                        <div className="flex flex-col sm:flex-row items-center justify-center gap-6 sm:gap-8 w-full">
+                          {/* Left/Top: Preview Area */}
+                          <div className="flex-1 flex flex-col items-center justify-center min-h-[180px] sm:min-h-[220px] relative w-full">
                             <motion.div
                               layout
                               transition={{
@@ -546,10 +546,10 @@ export const CollectionItemEditor = memo(function CollectionItemEditor({
                                 opacity: { duration: 0.2 }
                               }}
                               className={cn(
-                                "rounded-xl border border-zinc-200/60 bg-white/40 dark:border-white/8 dark:bg-zinc-950/45 flex items-center justify-center relative overflow-hidden shadow-sm",
-                                item.layout === 'Poster' ? "aspect-[2/3] h-52 max-sm:h-48" :
-                                  item.layout === 'Wide' ? "aspect-video w-64 max-sm:w-60" :
-                                    "aspect-square w-44 max-sm:w-48"
+                                "rounded-xl border border-zinc-200/60 bg-white/40 dark:border-white/8 dark:bg-zinc-950/45 flex items-center justify-center relative overflow-hidden shadow-sm max-w-full transition-all duration-300",
+                                item.layout === 'Poster' ? "aspect-[2/3] h-52 max-sm:h-44" :
+                                  item.layout === 'Wide' ? "aspect-video w-64 max-sm:w-[min(100%,240px)]" :
+                                    "aspect-square w-44 max-sm:w-40"
                               )}>
 
                               {item.backgroundImageURL ? (
@@ -562,13 +562,11 @@ export const CollectionItemEditor = memo(function CollectionItemEditor({
                               ) : (
                                 <ImageIcon className="size-6 text-muted-foreground/10" />
                               )}
-
-                              {/* Preview Area Reverted: Overlay Removed */}
                             </motion.div>
                           </div>
 
-                          {/* Right: Vertical/Horizontal Segmented Layout Selector */}
-                          <div className="flex flex-col gap-1 p-1 rounded-2xl border border-zinc-200/50 bg-white/40 dark:border-white/5 dark:bg-zinc-950/45 shrink-0 self-center backdrop-blur-sm">
+                          {/* Right/Bottom: Horizontal/Vertical Segmented Layout Selector */}
+                          <div className="flex flex-row sm:flex-col gap-1 p-1 rounded-2xl border border-zinc-200/50 bg-white/40 dark:border-white/5 dark:bg-zinc-950/45 shrink-0 self-center backdrop-blur-sm shadow-sm transition-all duration-300">
                             {[
                               { id: 'Wide', label: 'Wide', icon: RectangleHorizontal },
                               { id: 'Poster', label: 'Poster', icon: RectangleVertical },
@@ -579,7 +577,7 @@ export const CollectionItemEditor = memo(function CollectionItemEditor({
                                 type="button"
                                 onClick={() => onUpdate({ layout: opt.id as CollectionItem['layout'] })}
                                 className={cn(
-                                  "flex flex-col items-center justify-center gap-1.5 rounded-xl px-4 py-2.5 sm:px-3 sm:py-3 min-w-[64px] sm:min-w-[68px] transition-all duration-300 select-none active:scale-[0.98] group/layout relative",
+                                  "flex flex-col items-center justify-center gap-1.5 rounded-xl px-4 py-2.5 sm:px-3 sm:py-3 min-w-[72px] sm:min-w-[68px] transition-all duration-300 select-none active:scale-[0.96] group/layout relative",
                                   item.layout === opt.id
                                     ? "bg-white dark:bg-white/[0.08] text-primary shadow-sm ring-1 ring-zinc-950/5 dark:ring-white/10"
                                     : "text-muted-foreground/35 hover:text-foreground/60 hover:bg-white/40 dark:hover:bg-white/5"

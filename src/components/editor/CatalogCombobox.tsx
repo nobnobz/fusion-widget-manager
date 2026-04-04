@@ -1,10 +1,14 @@
-"use client";
-
 import { useEffect, useMemo, useState } from 'react';
 import { Search, ChevronDown, Check, X, AlertTriangle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import * as Popover from '@radix-ui/react-popover';
-import * as Dialog from '@radix-ui/react-dialog';
+import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from "@/components/ui/drawer";
 import { cn } from '@/lib/utils';
 import { AIOMetadataCatalog } from '@/lib/types/widget';
 import { findCatalog } from '@/lib/config-utils';
@@ -86,23 +90,28 @@ export function CatalogCombobox({
 
   const renderContent = () => (
     <motion.div
-      initial={isMobile ? { opacity: 0, scale: 0.95 } : { opacity: 0, scale: 0.98, y: -4 }}
+      initial={isMobile ? { opacity: 0, y: 10 } : { opacity: 0, scale: 0.98, y: -4 }}
       animate={{ opacity: 1, scale: 1, y: 0 }}
-      exit={isMobile ? { opacity: 0, scale: 0.95 } : { opacity: 0, scale: 0.98, y: -4 }}
-      transition={{ duration: 0.15, ease: "easeOut" }}
+      exit={isMobile ? { opacity: 0, y: 10 } : { opacity: 0, scale: 0.98, y: -4 }}
+      transition={{ duration: 0.2, ease: "easeOut" }}
       className={cn(
-        "bg-popover border border-border  flex flex-col h-full overflow-hidden",
-        isMobile ? "rounded-[2.25rem] w-full max-h-[85vh]" : "rounded-3xl w-full sm:max-h-[380px]"
+        "bg-popover border border-border flex flex-col h-full overflow-hidden",
+        isMobile 
+          ? "rounded-t-[2.5rem] border-none bg-background/80 backdrop-blur-xl dark:bg-zinc-950/80" 
+          : "rounded-3xl w-full sm:max-h-[380px]"
       )}
       onClick={(e) => e.stopPropagation()}
     >
-      <div className="p-3 border-b border-border flex items-center gap-2.5 bg-muted/30">
-        <Search className="size-4 text-muted-foreground/40" />
+      <div className={cn(
+        "p-4 border-b border-border flex items-center gap-3",
+        isMobile ? "px-6 py-5 bg-transparent" : "bg-muted/30"
+      )}>
+        <Search className="size-4 text-muted-foreground/45" />
         <input
           autoFocus={!isMobile}
           type="text"
           placeholder="Search catalogs..."
-          className="flex-1 bg-transparent border-none outline-none text-base sm:text-xs h-8 placeholder:text-muted-foreground/30 focus:ring-0"
+          className="flex-1 bg-transparent border-none outline-none text-base sm:text-xs h-8 placeholder:text-muted-foreground/35 focus:ring-0 font-medium"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           onKeyDown={(e) => {
@@ -117,7 +126,7 @@ export function CatalogCombobox({
               e.stopPropagation();
               setSearch('');
             }} 
-            className="p-1.5 hover:bg-muted rounded-lg transition-colors"
+            className="p-1.5 hover:bg-muted rounded-xl transition-colors shrink-0"
           >
             <X className="size-4 text-muted-foreground/40" />
           </button>
@@ -126,53 +135,60 @@ export function CatalogCombobox({
 
       <div 
         className={cn(
-          "flex-1 min-h-0 overflow-y-auto p-2 custom-scrollbar scrollbar-thin",
-          isMobile ? "max-h-none pb-8" : "max-h-[min(400px,calc(100vh-200px))]"
+          "flex-1 min-h-0 overflow-y-auto custom-scrollbar scrollbar-thin",
+          isMobile ? "px-4 pt-2 pb-14 max-h-[70dvh]" : "p-2 max-h-[min(400px,calc(100vh-200px))]"
         )}
         onWheel={(e) => e.stopPropagation()}
       >
         {filteredOptions.length > 0 ? (
-          filteredOptions.map((option) => {
-            const combinedId = `${option.type}::${option.id}`;
-            const isSelected = combinedId === value;
-            const isDisabled = !isSelected && disabledValueSet.has(combinedId);
-            
-            return (
-              <button
-                key={combinedId}
-                type="button"
-                disabled={isDisabled}
-                onClick={() => {
-                  if (isDisabled) return;
-                  onChange(combinedId);
-                  setIsOpen(false);
-                }}
-                className={cn(
-                  "w-full flex items-center justify-between px-3.5 py-3 rounded-2xl text-left text-base sm:text-xs transition-all mb-1.5 last:mb-0",
-                  isSelected
-                    ? "bg-primary text-primary-foreground  "
-                    : isDisabled
-                      ? "text-muted-foreground/25 cursor-not-allowed opacity-40"
-                      : "hover:bg-muted text-foreground/80 hover:text-foreground active:scale-[0.98]"
-                )}
-              >
-                <div className="flex flex-col gap-0.5">
-                  <span className="font-bold tracking-tight">{option.name}</span>
-                  <span className={cn(
-                    "text-[10px] sm:text-[9px] uppercase tracking-widest opacity-60 font-black",
-                    isSelected ? "text-primary-foreground/70" : "text-muted-foreground/60"
-                  )}>
-                    {option.type} • {option.id}
-                  </span>
-                </div>
-                {isSelected && <Check className="size-4 shrink-0" />}
-              </button>
-            );
-          })
+          <div className={cn("grid grid-cols-1", isMobile ? "gap-2" : "gap-1")}>
+            {filteredOptions.map((option) => {
+              const combinedId = `${option.type}::${option.id}`;
+              const isSelected = combinedId === value;
+              const isDisabled = !isSelected && disabledValueSet.has(combinedId);
+              
+              return (
+                <button
+                  key={combinedId}
+                  type="button"
+                  disabled={isDisabled}
+                  onClick={() => {
+                    if (isDisabled) return;
+                    onChange(combinedId);
+                    setIsOpen(false);
+                  }}
+                  className={cn(
+                    "w-full flex items-center justify-between px-4 py-3.5 rounded-2xl text-left transition-all relative group/item",
+                    isSelected
+                      ? "bg-primary text-primary-foreground shadow-lg shadow-primary/15"
+                      : isDisabled
+                        ? "text-muted-foreground/25 cursor-not-allowed opacity-40 grayscale"
+                        : "hover:bg-primary/[0.04] dark:hover:bg-white/[0.04] text-foreground/80 hover:text-primary active:scale-[0.985]"
+                  )}
+                >
+                  <div className="flex flex-col gap-0.5 min-w-0">
+                    <span className={cn(
+                      "font-bold tracking-tight text-base sm:text-sm truncate",
+                      isSelected ? "text-primary-foreground" : "text-foreground group-hover/item:text-primary"
+                    )}>
+                      {option.name}
+                    </span>
+                    <span className={cn(
+                      "text-[10px] sm:text-[9px] uppercase tracking-[0.14em] font-black opacity-60",
+                      isSelected ? "text-primary-foreground/75" : "text-muted-foreground/65"
+                    )}>
+                      {option.type} <span className="mx-1 opacity-30">•</span> {option.id}
+                    </span>
+                  </div>
+                  {isSelected && <Check className="size-4 shrink-0 stroke-[3px]" />}
+                </button>
+              );
+            })}
+          </div>
         ) : (
-          <div className="p-12 text-center flex flex-col items-center justify-center gap-3 opacity-30">
-            <Search className="size-10 stroke-1" />
-            <p className="text-[11px] font-black uppercase tracking-widest">No catalogs found</p>
+          <div className="p-16 text-center flex flex-col items-center justify-center gap-4 opacity-30 grayscale invert dark:invert-0">
+            <Search className="size-12 stroke-[1.5px]" />
+            <p className="text-[11px] font-black uppercase tracking-[0.2em] max-w-[20ch]">No matching catalogs found</p>
           </div>
         )}
       </div>
@@ -181,25 +197,19 @@ export function CatalogCombobox({
 
   if (isMobile) {
     return (
-      <Dialog.Root open={isOpen} onOpenChange={setIsOpen}>
-        <Dialog.Trigger asChild>
+      <Drawer open={isOpen} onOpenChange={setIsOpen}>
+        <DrawerTrigger asChild>
           {renderTrigger()}
-        </Dialog.Trigger>
-        <Dialog.Portal>
-          <Dialog.Overlay className="fixed inset-0 z-[10000] bg-zinc-950/80 backdrop-blur-sm animate-in fade-in duration-300" />
-          <Dialog.Content 
-            className="fixed left-1/2 top-1/2 z-[10001] w-[90vw] max-w-[400px] -translate-x-1/2 -translate-y-1/2 outline-none"
-            onOpenAutoFocus={(e) => e.preventDefault()}
-          >
-            <Dialog.Title asChild>
-              <VisuallyHidden>Select Catalog</VisuallyHidden>
-            </Dialog.Title>
-            <AnimatePresence>
-              {isOpen && renderContent()}
-            </AnimatePresence>
-          </Dialog.Content>
-        </Dialog.Portal>
-      </Dialog.Root>
+        </DrawerTrigger>
+        <DrawerContent className="max-h-[95dvh] border-none bg-background/95 backdrop-blur-3xl dark:bg-zinc-950/95">
+          <VisuallyHidden>
+            <DrawerTitle>Select Catalog</DrawerTitle>
+          </VisuallyHidden>
+          <AnimatePresence>
+            {isOpen && renderContent()}
+          </AnimatePresence>
+        </DrawerContent>
+      </Drawer>
     );
   }
 
