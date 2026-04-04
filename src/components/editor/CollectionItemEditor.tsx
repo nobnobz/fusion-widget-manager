@@ -248,7 +248,7 @@ export const CollectionItemEditor = memo(function CollectionItemEditor({
   const catalogsSectionContent = (
     <div className="flex flex-col gap-2.5">
       <div className="flex items-center justify-between px-0.5">
-        <div className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/40 flex items-center h-8">
+        <div className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/42 flex items-center h-8">
           Catalogs
         </div>
         <CatalogCombobox
@@ -470,7 +470,7 @@ export const CollectionItemEditor = memo(function CollectionItemEditor({
                                 ) : (
                                   <div className="flex items-start gap-2.5 min-w-0">
                                     <div className="flex flex-col min-w-0">
-                                      <span className="text-[9px] font-black uppercase tracking-[0.18em] text-muted-foreground/45 mb-1.5">Title</span>
+                                      <span className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/42 mb-2.5">Title</span>
                                       <div className="flex items-center gap-2">
                                         <span className="truncate text-base sm:text-sm font-bold tracking-tight text-foreground/90 leading-tight">
                                           {itemDisplayName}
@@ -498,7 +498,7 @@ export const CollectionItemEditor = memo(function CollectionItemEditor({
                               </div>
 
                               <div className="flex flex-col shrink-0">
-                                <div className="text-[9px] font-black uppercase tracking-[0.18em] text-transparent mb-1.5 select-none pointer-events-none">
+                                <div className="text-[10px] font-black uppercase tracking-[0.2em] text-transparent mb-2.5 select-none pointer-events-none">
                                   Hide Label Spacer
                                 </div>
                                 <div className="flex items-center gap-3">
@@ -616,7 +616,7 @@ export const CollectionItemEditor = memo(function CollectionItemEditor({
                         </motion.div>
 
                         <div className="flex flex-col gap-2.5">
-                          <div className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/40 flex items-center px-0.5">
+                          <div className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/42 flex items-center px-0.5">
                             Image URL
                           </div>
                           <div className="flex items-center gap-1.5 w-full">
