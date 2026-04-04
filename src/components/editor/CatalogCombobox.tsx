@@ -99,7 +99,7 @@ export function CatalogCombobox({
       <div className="p-3 border-b border-border flex items-center gap-2.5 bg-muted/30">
         <Search className="size-4 text-muted-foreground/40" />
         <input
-          autoFocus
+          autoFocus={!isMobile}
           type="text"
           placeholder="Search catalogs..."
           className="flex-1 bg-transparent border-none outline-none text-base sm:text-xs h-8 placeholder:text-muted-foreground/30 focus:ring-0"

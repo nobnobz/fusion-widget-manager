@@ -96,7 +96,7 @@ export function NewWidgetDialog({ isOpen, onOpenChange, onCreated }: NewWidgetDi
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 className="h-11 bg-transparent border-none px-4 text-base font-semibold text-foreground/85 transition-all focus-visible:ring-0 sm:text-sm"
-                autoFocus
+                autoFocus={!isMobile}
                 onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
               />
             </div>
