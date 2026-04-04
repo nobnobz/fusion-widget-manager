@@ -451,8 +451,41 @@ export const CollectionItemEditor = memo(function CollectionItemEditor({
                   className="overflow-hidden"
                 >
                   <div className="px-4 pt-4 pb-6 max-sm:px-4 max-sm:pt-4 max-sm:pb-6 flex flex-col bg-zinc-50/80 dark:bg-white/[0.02] border-t border-zinc-200/80 dark:border-white/5">
-                    <div className="flex items-center justify-between gap-4 px-1 py-1 mb-4">
-                      <div className="flex-1 min-w-0">
+                    <div className="flex flex-col gap-2.5 mb-6 max-sm:mb-5">
+                      <div className="flex items-center justify-between px-1">
+                        <div className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/42 flex items-center h-8">
+                          Title
+                        </div>
+
+                        <div className="flex items-center gap-3 shrink-0 h-8">
+                          <div className="text-[10px] font-black uppercase tracking-[0.16em] text-muted-foreground/35 flex items-center select-none">
+                            Hide
+                          </div>
+
+                          <button
+                            type="button"
+                            role="switch"
+                            aria-label="Hide item title"
+                            aria-checked={item.hideTitle}
+                            onClick={() => onUpdate({ hideTitle: !item.hideTitle })}
+                            className={cn(
+                              "relative inline-flex h-4.5 w-8.5 shrink-0 items-center rounded-full border p-0.5 transition-all outline-none",
+                              item.hideTitle
+                                ? "border-primary/20 bg-primary text-white"
+                                : "border-zinc-200/85 bg-zinc-200/60 dark:border-white/10 dark:bg-white/10"
+                            )}
+                          >
+                            <span
+                              className={cn(
+                                "size-3 rounded-full bg-white shadow-sm transition-transform",
+                                item.hideTitle ? "translate-x-3.5" : "translate-x-0"
+                              )}
+                            />
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="flex-1 min-w-0 px-1">
                         {isEditing ? (
                           <Input
                             autoFocus={!isMobile}
@@ -483,33 +516,6 @@ export const CollectionItemEditor = memo(function CollectionItemEditor({
                             )}
                           </div>
                         )}
-                      </div>
-
-                      <div className="flex items-center gap-3 shrink-0">
-                        <div className="text-[10px] font-black uppercase tracking-[0.16em] text-muted-foreground/35 flex items-center select-none">
-                          Hide
-                        </div>
-
-                        <button
-                          type="button"
-                          role="switch"
-                          aria-label="Hide item title"
-                          aria-checked={item.hideTitle}
-                          onClick={() => onUpdate({ hideTitle: !item.hideTitle })}
-                          className={cn(
-                            "relative inline-flex h-4.5 w-8.5 shrink-0 items-center rounded-full border p-0.5 transition-all outline-none",
-                            item.hideTitle
-                              ? "border-primary/20 bg-primary text-white"
-                              : "border-zinc-200/85 bg-zinc-200/60 dark:border-white/10 dark:bg-white/10"
-                          )}
-                        >
-                          <span
-                            className={cn(
-                              "size-3 rounded-full bg-white shadow-sm transition-transform",
-                              item.hideTitle ? "translate-x-3.5" : "translate-x-0"
-                            )}
-                          />
-                        </button>
                       </div>
                     </div>
 
