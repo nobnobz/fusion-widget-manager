@@ -529,10 +529,10 @@ export const CollectionItemEditor = memo(function CollectionItemEditor({
                       {/* Right Column: Visuals */}
                       <motion.div
                         layout
-                        className="flex flex-col gap-5 max-sm:gap-3.5 max-lg:mt-4 max-lg:pt-4 max-sm:mt-3.5 max-sm:pt-3.5 max-lg:border-t max-lg:border-zinc-100 max-lg:dark:border-white/5 lg:min-w-[380px]"
+                        className="flex flex-col gap-4 max-sm:gap-3.5 max-lg:mt-4 max-lg:pt-4 max-sm:mt-3.5 max-sm:pt-3.5 max-lg:border-t max-lg:border-zinc-100 max-lg:dark:border-white/5 lg:min-w-[380px]"
                       >
                         <div className="flex flex-col gap-2.5">
-                          <div className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/42 flex items-center px-0.5">
+                          <div className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/42 flex items-center h-8 px-0.5">
                             Image URL
                           </div>
                           <div className="flex items-center gap-1.5 w-full">
