@@ -24,6 +24,7 @@ import {
   editorHeaderIconButtonClass,
   editorHeaderIconButtonDangerClass,
 } from './editorActionButtonStyles';
+import { useMobile } from '@/hooks/use-mobile';
 
 import { CollectionRowEditor } from './CollectionRowEditor';
 import { RowClassicEditor } from './RowClassicEditor';
@@ -45,6 +46,7 @@ export function SortableWidget({
   isOverlay = false,
   searchQuery = ""
 }: SortableWidgetProps) {
+  const isMobile = useMobile();
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: widget.id,
   });
@@ -190,7 +192,7 @@ export function SortableWidget({
             <div className="min-w-0 group/title flex items-center gap-2">
               {isEditing ? (
                 <Input 
-                  autoFocus
+                  autoFocus={!isMobile}
                   value={editTitle}
                   onChange={(e) => setEditTitle(e.target.value)}
                   onBlur={handleTitleSubmit}
@@ -307,7 +309,7 @@ export function SortableWidget({
               )}
               {isEditing ? (
                 <Input 
-                  autoFocus
+                  autoFocus={!isMobile}
                   value={editTitle}
                   onChange={(e) => setEditTitle(e.target.value)}
                   onBlur={handleTitleSubmit}

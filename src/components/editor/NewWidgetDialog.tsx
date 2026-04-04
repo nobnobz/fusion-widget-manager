@@ -14,7 +14,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Box, Layers, Check, Sparkles } from 'lucide-react';
+import { Box, Layers, Check, Sparkles, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useConfig } from '@/context/ConfigContext';
 import { MANIFEST_PLACEHOLDER } from '@/lib/config-utils';
@@ -73,9 +73,15 @@ export function NewWidgetDialog({ isOpen, onOpenChange, onCreated }: NewWidgetDi
   const Content = (
     <div className="flex flex-col min-h-0 max-h-[min(100dvh-2rem,46rem)]">
       <div className="min-h-0 flex-1 overflow-y-auto px-8 pb-6 pt-10 max-sm:px-5 max-sm:pb-5 max-sm:pt-6">
-        <header className="space-y-5 items-start text-left">
+        <header className="relative space-y-5 items-start text-left">
+          <button
+            onClick={() => onOpenChange(false)}
+            className="absolute right-0 top-0 rounded-full p-2 text-muted-foreground/40 hover:bg-muted hover:text-foreground transition-all active:scale-95 sm:hidden"
+          >
+            <X className="size-5" />
+          </button>
           <div className="size-14 rounded-xl border border-primary/12 bg-primary/[0.06] flex items-center justify-center text-primary max-sm:size-11">
-             <Sparkles className="size-7 max-sm:size-[1.375rem]" />
+            <Sparkles className="size-7 max-sm:size-[1.375rem]" />
           </div>
           <div className="space-y-1.5">
             <h2 className="text-2xl font-black tracking-tight max-sm:text-[1.35rem]">Add New Widget</h2>

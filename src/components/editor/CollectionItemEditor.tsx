@@ -41,6 +41,7 @@ import {
   editorHeaderIconButtonDangerClass,
 } from './editorActionButtonStyles';
 import { editorActionButtonClass, editorPanelClass } from './editorSurfaceStyles';
+import { useMobile } from '@/hooks/use-mobile';
 
 const SKIP_NATIVE_TRAKT_DELETE_WARNING_KEY = 'fusion-widget-manager.skip-native-trakt-delete-warning';
 
@@ -58,6 +59,7 @@ export function CollectionItemEditor({
   isExpanded: boolean,
   onToggleExpand: () => void
 }) {
+  const isMobile = useMobile();
   const { manifestCatalogs } = useConfig();
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState(item.name);
@@ -260,7 +262,7 @@ export function CollectionItemEditor({
                 >
                   {isEditing ? (
                     <Input 
-                      autoFocus
+                      autoFocus={!isMobile}
                       value={editName}
                       onChange={(e) => setEditName(e.target.value)}
                       onBlur={handleTitleSubmit}
@@ -424,7 +426,7 @@ export function CollectionItemEditor({
                                 </div>
                                 {isEditing ? (
                                   <Input
-                                    autoFocus
+                                    autoFocus={!isMobile}
                                     value={editName}
                                     onChange={(e) => setEditName(e.target.value)}
                                     onBlur={handleTitleSubmit}
@@ -586,7 +588,7 @@ export function CollectionItemEditor({
                                   <div className="group/url-input flex h-11 min-w-0 flex-1 items-center gap-3 rounded-2xl border border-zinc-200/80 bg-zinc-100/88 px-4 transition-all focus-within:border-primary/45 backdrop-blur-sm dark:border-white/8 dark:bg-white/[0.045] sm:h-10">
                                     <ImageIcon className="size-4 shrink-0 text-muted-foreground/52 transition-colors group-focus-within/url-input:text-foreground/76" strokeWidth={2.25} />
                                     <input 
-                                      autoFocus
+                                      autoFocus={!isMobile}
                                       ref={backgroundImageUrlInputRef}
                                       placeholder="Paste Image URL (https://...)" 
                                       className="h-full min-w-0 flex-1 bg-transparent border-none text-base font-bold text-foreground/82 placeholder:text-muted-foreground/36 focus:outline-none focus:ring-0 sm:text-[11px]"
