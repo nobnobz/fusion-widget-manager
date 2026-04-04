@@ -16,7 +16,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Plus, RectangleHorizontal, RectangleVertical, Square, Layers, Trash2, X } from 'lucide-react';
+import { Plus, RectangleHorizontal, RectangleVertical, Square, Layers, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { CollectionItem, AIOMetadataDataSource } from '@/lib/types/widget';
 import { DataSourceEditor } from './DataSourceEditor';

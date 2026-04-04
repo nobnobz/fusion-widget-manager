@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/drawer"
 import { 
   AlertCircle, CheckCircle2, ChevronDown, ChevronRight, 
-  CloudUpload, FileJson, FileUp, Image as ImageIcon, RefreshCw, Check, Tag, Trash2, UploadCloud, ArrowRight, Sparkles, ListTree, X
+  CloudUpload, FileJson, FileUp, Image as ImageIcon, RefreshCw, Check, Tag, Trash2, UploadCloud, ArrowRight, Sparkles, ListTree
 } from 'lucide-react';
 import { convertOmniToFusion } from '@/lib/omni-converter';
 import { 

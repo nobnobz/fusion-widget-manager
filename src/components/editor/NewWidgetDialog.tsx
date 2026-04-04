@@ -14,7 +14,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Box, Layers, Check, Sparkles, X } from 'lucide-react';
+import { Box, Layers, Check, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useConfig } from '@/context/ConfigContext';
 import { MANIFEST_PLACEHOLDER } from '@/lib/config-utils';

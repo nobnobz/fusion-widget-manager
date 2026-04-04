@@ -8,7 +8,6 @@ import {
   DrawerHeader,
   DrawerTitle,
   DrawerTrigger,
-  DrawerClose,
 } from "@/components/ui/drawer";
 import { cn } from '@/lib/utils';
 import { AIOMetadataCatalog } from '@/lib/types/widget';
