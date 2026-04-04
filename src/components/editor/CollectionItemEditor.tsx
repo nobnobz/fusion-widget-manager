@@ -451,7 +451,7 @@ export const CollectionItemEditor = memo(function CollectionItemEditor({
                   className="overflow-hidden"
                 >
                   <div className="px-4 pt-4 pb-6 max-sm:px-4 max-sm:pt-4 max-sm:pb-6 flex flex-col bg-zinc-50/80 dark:bg-white/[0.02] border-t border-zinc-200/80 dark:border-white/5">
-                    <div className="flex flex-col gap-2.5 mb-6 max-sm:mb-5">
+                    <div className="flex flex-col gap-2 mb-5 max-sm:mb-4">
                       <div className="flex items-center justify-between px-1">
                         <div className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/42 flex items-center h-8">
                           Title
@@ -519,15 +519,15 @@ export const CollectionItemEditor = memo(function CollectionItemEditor({
                       </div>
                     </div>
 
-                    <div className="h-px w-full bg-zinc-200/60 dark:bg-white/5 mb-6 max-sm:mb-5" />
+                    <div className="h-px w-full bg-zinc-200/60 dark:bg-white/5 mb-5 max-sm:mb-4" />
 
-                    <div className="lg:grid lg:grid-cols-[1fr_1.2fr] lg:gap-6">
+                    <div className="lg:grid lg:grid-cols-[1fr_1.2fr] lg:gap-5">
                       {/* Right Column: Visuals */}
                       <motion.div
                         layout
                         className="flex flex-col gap-4 min-w-0 lg:min-w-[380px]"
                       >
-                        <div className="flex flex-col gap-2.5">
+                        <div className="flex flex-col gap-2">
                           <div className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/42 flex items-center h-8 px-0.5">
                             Image URL
                           </div>
