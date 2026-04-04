@@ -2199,7 +2199,7 @@ function WidgetSelectionGridComponent({
   return (
     <div className="flex-1 flex flex-col bg-transparent">
       <main className="max-w-5xl mx-auto w-full px-6 max-sm:px-4 py-12 max-sm:py-6 max-sm:pb-[calc(env(safe-area-inset-bottom)+2rem)]">
-        <div className="flex flex-col gap-3 mb-10 max-sm:mb-6 text-center sm:text-left">
+        <div className="flex flex-col gap-3 mb-10 max-sm:hidden text-center sm:text-left">
           <div className="flex items-center justify-center sm:justify-start max-sm:justify-start">
             <h1 className="text-4xl max-sm:text-[1.9rem] font-black tracking-tight text-foreground leading-none">Fusion Widget Manager</h1>
           </div>
