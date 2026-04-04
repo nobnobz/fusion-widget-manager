@@ -451,86 +451,84 @@ export const CollectionItemEditor = memo(function CollectionItemEditor({
                   className="overflow-hidden"
                 >
                   <div className="p-4 max-sm:p-3 flex flex-col bg-white dark:bg-black/20 border-t border-border">
-                    <div className="lg:grid lg:grid-cols-[1.2fr_1fr] lg:gap-6 p-4 max-sm:p-3 bg-zinc-50/50 dark:bg-white/[0.02] rounded-2xl border border-zinc-200/80 dark:border-white/5 backdrop-blur-sm">
-                      {/* Left Column: Config */}
-                        <div className="flex flex-col gap-4 max-sm:gap-3">
-                        <div className="flex flex-col gap-2.5 max-sm:gap-2">
-                          <div className="flex flex-col gap-1.5 px-0.5">
-                            <div className="flex items-center justify-between min-h-11 gap-4">
-                              <div className="flex-1 min-w-0">
-                                {isEditing ? (
-                                  <Input
-                                    autoFocus={!isMobile}
-                                    value={editName}
-                                    onChange={(e) => setEditName(e.target.value)}
-                                    onBlur={handleTitleSubmit}
-                                    onKeyDown={handleTitleKeyDown}
-                                    className="h-10 w-full rounded-xl border-zinc-200/80 bg-white/70 px-3.5 text-base sm:text-sm font-bold tracking-tight text-foreground focus:border-primary/40 focus-visible:ring-0 dark:border-white/10 dark:bg-zinc-900/40"
-                                  />
-                                ) : (
-                                  <div className="flex items-start gap-2.5 min-w-0">
-                                    <div className="flex flex-col min-w-0">
-                                      <span className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/42 mb-2.5">Title</span>
-                                      <div className="flex items-center gap-2">
-                                        <span className="truncate text-base sm:text-sm font-bold tracking-tight text-foreground/90 leading-tight">
-                                          {itemDisplayName}
-                                        </span>
-                                        <Button
-                                          variant="ghost"
-                                          size="icon"
-                                          className="size-7 shrink-0 text-muted-foreground/35 hover:text-primary hover:bg-primary/5 transition-colors rounded-lg"
-                                          onClick={startEditing}
-                                          title="Rename item"
-                                        >
-                                          <Pencil className="size-3" />
-                                        </Button>
-                                      </div>
-                                      {item.hideTitle && (
-                                        <div className="flex items-center mt-1.5">
-                                          <span className="h-4.5 px-1.5 rounded-md bg-zinc-500/[0.07] text-[8px] font-black tracking-[0.14em] uppercase text-zinc-500/70 border border-zinc-500/[0.08] dark:bg-zinc-500/10 dark:text-zinc-500/80 dark:border-zinc-500/10 transition-colors shrink-0 flex items-center justify-center">
-                                            Hidden
-                                          </span>
-                                        </div>
-                                      )}
-                                    </div>
-                                  </div>
-                                )}
+                    <div className="flex items-center justify-between min-h-11 gap-4 px-1 mb-6 max-sm:mb-4">
+                      <div className="flex-1 min-w-0">
+                        {isEditing ? (
+                          <Input
+                            autoFocus={!isMobile}
+                            value={editName}
+                            onChange={(e) => setEditName(e.target.value)}
+                            onBlur={handleTitleSubmit}
+                            onKeyDown={handleTitleKeyDown}
+                            className="h-10 w-full rounded-xl border-zinc-200/80 bg-white/70 px-3.5 text-base sm:text-sm font-bold tracking-tight text-foreground focus:border-primary/40 focus-visible:ring-0 dark:border-white/10 dark:bg-zinc-900/40"
+                          />
+                        ) : (
+                          <div className="flex items-start gap-2.5 min-w-0">
+                            <div className="flex flex-col min-w-0">
+                              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/42 mb-2.5">Title</span>
+                              <div className="flex items-center gap-2">
+                                <span className="truncate text-base sm:text-sm font-bold tracking-tight text-foreground/90 leading-tight">
+                                  {itemDisplayName}
+                                </span>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="size-7 shrink-0 text-muted-foreground/35 hover:text-primary hover:bg-primary/5 transition-colors rounded-lg"
+                                  onClick={startEditing}
+                                  title="Rename item"
+                                >
+                                  <Pencil className="size-3" />
+                                </Button>
                               </div>
-
-                              <div className="flex flex-col shrink-0">
-                                <div className="text-[10px] font-black uppercase tracking-[0.2em] text-transparent mb-2.5 select-none pointer-events-none">
-                                  Hide Label Spacer
+                              {item.hideTitle && (
+                                <div className="flex items-center mt-1.5">
+                                  <span className="h-4.5 px-1.5 rounded-md bg-zinc-500/[0.07] text-[8px] font-black tracking-[0.14em] uppercase text-zinc-500/70 border border-zinc-500/[0.08] dark:bg-zinc-500/10 dark:text-zinc-500/80 dark:border-zinc-500/10 transition-colors shrink-0 flex items-center justify-center">
+                                    Hidden
+                                  </span>
                                 </div>
-                                <div className="flex items-center gap-3">
-                                  <div className="text-[10px] font-black uppercase tracking-[0.16em] text-muted-foreground/35 flex items-center">
-                                    Hide
-                                  </div>
-
-                                  <button
-                                    type="button"
-                                    role="switch"
-                                    aria-label="Hide item title"
-                                    aria-checked={item.hideTitle}
-                                    onClick={() => onUpdate({ hideTitle: !item.hideTitle })}
-                                    className={cn(
-                                      "relative inline-flex h-4.5 w-8.5 shrink-0 items-center rounded-full border p-0.5 transition-all outline-none",
-                                      item.hideTitle
-                                        ? "border-primary/20 bg-primary text-white"
-                                        : "border-zinc-200/85 bg-zinc-200/60 dark:border-white/10 dark:bg-white/10"
-                                    )}
-                                  >
-                                    <span
-                                      className={cn(
-                                        "size-3 rounded-full bg-white shadow-sm transition-transform",
-                                        item.hideTitle ? "translate-x-3.5" : "translate-x-0"
-                                      )}
-                                    />
-                                  </button>
-                                </div>
-                              </div>
+                              )}
                             </div>
                           </div>
+                        )}
+                      </div>
+
+                      <div className="flex flex-col shrink-0">
+                        <div className="text-[10px] font-black uppercase tracking-[0.2em] text-transparent mb-2.5 select-none pointer-events-none">
+                          Hide Label Spacer
                         </div>
+                        <div className="flex items-center gap-3">
+                          <div className="text-[10px] font-black uppercase tracking-[0.16em] text-muted-foreground/35 flex items-center">
+                            Hide
+                          </div>
+
+                          <button
+                            type="button"
+                            role="switch"
+                            aria-label="Hide item title"
+                            aria-checked={item.hideTitle}
+                            onClick={() => onUpdate({ hideTitle: !item.hideTitle })}
+                            className={cn(
+                              "relative inline-flex h-4.5 w-8.5 shrink-0 items-center rounded-full border p-0.5 transition-all outline-none",
+                              item.hideTitle
+                                ? "border-primary/20 bg-primary text-white"
+                                : "border-zinc-200/85 bg-zinc-200/60 dark:border-white/10 dark:bg-white/10"
+                            )}
+                          >
+                            <span
+                              className={cn(
+                                "size-3 rounded-full bg-white shadow-sm transition-transform",
+                                item.hideTitle ? "translate-x-3.5" : "translate-x-0"
+                              )}
+                            />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="lg:grid lg:grid-cols-[1.2fr_1fr] lg:gap-6 p-4 max-sm:p-3 bg-zinc-50/50 dark:bg-white/[0.02] rounded-2xl border border-zinc-200/80 dark:border-white/5 backdrop-blur-sm">
+                      {/* Left Column: Config */}
+                      <div className="flex flex-col gap-4 max-sm:gap-3">
+                        {/* Catalogs Section: Left Column on Desktop */}
 
                         {/* Catalogs Section: Left Column on Desktop */}
                         <div className="hidden lg:block">
