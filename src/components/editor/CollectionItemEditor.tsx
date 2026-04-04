@@ -12,7 +12,6 @@ import {
   GripVertical,
   Plus,
   Image as ImageIcon,
-  Layers,
   RectangleHorizontal,
   RectangleVertical,
   Square,
@@ -246,29 +245,30 @@ export const CollectionItemEditor = memo(function CollectionItemEditor({
   };
 
   const dataSourcesSectionContent = (
-    <div className="space-y-2.5">
-      <div className="flex items-center justify-between px-1">
-        <div className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/35 flex items-center gap-1.5">
-          <Layers className="size-3" /> Data Sources
+    <div className="overflow-hidden rounded-xl border border-zinc-200/60 bg-white/50 dark:border-white/5 dark:bg-zinc-950/25">
+      <div className="p-3.5 space-y-3.5">
+        <div className="flex items-center justify-between">
+          <div className="text-[9px] font-black uppercase tracking-[0.16em] text-muted-foreground/45 flex items-center h-8">
+            Data Sources
+          </div>
+          <CatalogCombobox
+            options={manifestCatalogs}
+            value=""
+            disabledValues={selectedCatalogIds}
+            onChange={handleAddDataSource}
+            trigger={
+              <Button
+                variant="ghost"
+                size="sm"
+                className="group h-8 px-3.5 rounded-full border border-primary/20 bg-primary/10 text-[10px] font-black uppercase tracking-[0.16em] text-primary transition-all duration-300 hover:bg-primary/[0.18] hover:text-primary hover:scale-[1.02] active:scale-[0.98] dark:border-primary/25 dark:bg-primary/12 dark:hover:bg-primary/[0.18]"
+                disabled={!canAddAnotherDataSource}
+              >
+                <Plus className="size-3 mr-1.5 transition-colors group-hover:text-primary" /> New
+              </Button>
+            }
+          />
         </div>
-        <CatalogCombobox
-          options={manifestCatalogs}
-          value=""
-          disabledValues={selectedCatalogIds}
-          onChange={handleAddDataSource}
-          trigger={
-            <Button
-              variant="ghost"
-              size="sm"
-              className="group h-8 px-4 rounded-full border border-primary/20 bg-primary/10 text-[10px] font-bold uppercase tracking-[0.16em] text-primary transition-all duration-300 hover:bg-primary/[0.18] hover:text-primary hover:scale-[1.02] active:scale-[0.98] dark:border-primary/25 dark:bg-primary/12 dark:hover:bg-primary/[0.18]"
-              disabled={!canAddAnotherDataSource}
-            >
-              <Plus className="size-3.5 mr-1.5 transition-colors group-hover:text-primary" /> New
-            </Button>
-          }
-        />
-      </div>
-      <div className="p-3 bg-white/50 dark:bg-zinc-950/25 rounded-xl border border-zinc-200/60 dark:border-white/5 space-y-1.5 min-h-[60px] flex flex-col justify-start overflow-hidden">
+        <div className="space-y-1.5">
         {item.dataSources.map((ds, dsIndex) => (
           isAIOMetadataDataSource(ds) ? (
             <DataSourceEditor
@@ -302,12 +302,13 @@ export const CollectionItemEditor = memo(function CollectionItemEditor({
           )
         ))}
         {item.dataSources.length === 0 && (
-          <div className="flex-1 flex items-center justify-center py-4 border border-dashed border-border/10 rounded-lg">
-            <p className="text-[9px] font-bold text-muted-foreground/25 uppercase tracking-widest">No catalogs</p>
+          <div className="flex items-center justify-center py-5 border border-dashed border-border/10 rounded-xl bg-zinc-950/5">
+            <p className="text-[9px] font-black text-muted-foreground/20 uppercase tracking-[0.2em]">No sources configured</p>
           </div>
         )}
       </div>
     </div>
+  </div>
   );
 
   return (
@@ -459,7 +460,7 @@ export const CollectionItemEditor = memo(function CollectionItemEditor({
                             {/* Title & Toggle Section */}
                             <div className="flex items-center justify-between mb-2.5">
                               <div className="min-w-0 flex-1">
-                                <div className="text-[9px] font-black uppercase tracking-[0.16em] text-muted-foreground/45 mb-1">
+                                <div className="text-[9px] font-black uppercase tracking-[0.16em] text-muted-foreground/45 mb-1 flex items-center">
                                   Title
                                 </div>
                                 {isEditing ? (
@@ -615,7 +616,9 @@ export const CollectionItemEditor = memo(function CollectionItemEditor({
                           <div className="p-3.5">
                             <div className="flex flex-col gap-2.5">
                               <div className="flex items-center justify-between">
-                                <div className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/45">Image URL</div>
+                                <div className="text-[9px] font-black uppercase tracking-[0.16em] text-muted-foreground/45 flex items-center">
+                                  Image URL
+                                </div>
                               </div>
                               <div className="flex items-center gap-1.5 w-full">
                                 {item.backgroundImageURL ? (
@@ -633,12 +636,6 @@ export const CollectionItemEditor = memo(function CollectionItemEditor({
                                 >
                                   <div className="flex w-full min-w-0 items-center justify-between gap-2">
                                     <div className="flex min-w-0 items-center gap-2">
-                                      <ImageIcon
-                                        className={cn(
-                                          "size-3.5 shrink-0 transition-colors",
-                                          isCopied ? "text-emerald-600 dark:text-emerald-400" : "text-primary/60"
-                                        )}
-                                      />
                                       <span className="truncate text-[11px] font-bold tracking-tight">
                                         {isCopied ? "Link Copied!" : item.backgroundImageURL}
                                       </span>
@@ -662,7 +659,6 @@ export const CollectionItemEditor = memo(function CollectionItemEditor({
                               </div>
                             ) : (
                               <div className="group/url-input flex h-9 min-w-0 flex-1 items-center gap-2.5 rounded-xl border border-zinc-200/60 bg-white/70 px-3 transition-all focus-within:border-primary/30 dark:border-white/10 dark:bg-zinc-900/40">
-                                <ImageIcon className="size-3.5 shrink-0 text-muted-foreground/35" />
                                 <input
                                   autoFocus={!isMobile}
                                   ref={backgroundImageUrlInputRef}
