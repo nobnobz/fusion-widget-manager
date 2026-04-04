@@ -8,11 +8,11 @@ import {
   DrawerHeader,
   DrawerTitle,
   DrawerTrigger,
+  DrawerClose,
 } from "@/components/ui/drawer";
 import { cn } from '@/lib/utils';
 import { AIOMetadataCatalog } from '@/lib/types/widget';
 import { findCatalog } from '@/lib/config-utils';
-import { VisuallyHidden } from '@/components/ui/visually-hidden';
 
 interface CatalogComboboxProps {
   options: AIOMetadataCatalog[];
@@ -88,55 +88,45 @@ export function CatalogCombobox({
     );
   };
 
-  const renderContent = () => (
-    <motion.div
-      initial={isMobile ? { opacity: 0, y: 10 } : { opacity: 0, scale: 0.98, y: -4 }}
-      animate={{ opacity: 1, scale: 1, y: 0 }}
-      exit={isMobile ? { opacity: 0, y: 10 } : { opacity: 0, scale: 0.98, y: -4 }}
-      transition={{ duration: 0.2, ease: "easeOut" }}
-      className={cn(
-        "bg-popover border border-border flex flex-col h-full overflow-hidden",
-        isMobile 
-          ? "rounded-t-[2.5rem] border-none bg-background/80 backdrop-blur-xl dark:bg-zinc-950/80" 
-          : "rounded-3xl w-full sm:max-h-[380px]"
-      )}
-      onClick={(e) => e.stopPropagation()}
-    >
+  const renderContentItems = () => (
+    <div className="flex flex-col h-full overflow-hidden">
       <div className={cn(
-        "p-4 border-b border-border flex items-center gap-3",
-        isMobile ? "px-6 py-5 bg-transparent" : "bg-muted/30"
+        "px-6 py-4 border-b border-border/5 flex items-center gap-3 bg-zinc-50/50 dark:bg-white/[0.02]",
+        isMobile ? "pt-2 pb-6" : "bg-muted/30"
       )}>
-        <Search className="size-4 text-muted-foreground/45" />
-        <input
-          autoFocus={!isMobile}
-          type="text"
-          placeholder="Search catalogs..."
-          className="flex-1 bg-transparent border-none outline-none text-base sm:text-xs h-8 placeholder:text-muted-foreground/35 focus:ring-0 font-medium"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Escape') setIsOpen(false);
-            e.stopPropagation();
-          }}
-        />
-        {search && (
-          <button 
-            type="button"
-            onClick={(e) => {
+        <div className="flex-1 flex items-center gap-2.5 px-3.5 h-10 rounded-xl bg-zinc-100/50 dark:bg-white/5 border border-zinc-200/50 dark:border-white/5 focus-within:border-primary/30 transition-all">
+          <Search className="size-3.5 text-muted-foreground/35" />
+          <input
+            autoFocus={!isMobile}
+            type="text"
+            placeholder="Search catalogs..."
+            className="flex-1 bg-transparent border-none outline-none text-base sm:text-[11px] h-full placeholder:text-muted-foreground/30 focus:ring-0 font-bold"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') setIsOpen(false);
               e.stopPropagation();
-              setSearch('');
-            }} 
-            className="p-1.5 hover:bg-muted rounded-xl transition-colors shrink-0"
-          >
-            <X className="size-4 text-muted-foreground/40" />
-          </button>
-        )}
+            }}
+          />
+          {search && (
+            <button 
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setSearch('');
+              }} 
+              className="p-1 hover:bg-zinc-200 dark:hover:bg-white/10 rounded-md transition-colors shrink-0"
+            >
+              <X className="size-3 text-muted-foreground/40" />
+            </button>
+          )}
+        </div>
       </div>
 
       <div 
         className={cn(
           "flex-1 min-h-0 overflow-y-auto custom-scrollbar scrollbar-thin",
-          isMobile ? "px-4 pt-2 pb-14 max-h-[70dvh]" : "p-2 max-h-[min(400px,calc(100vh-200px))]"
+          isMobile ? "px-4 pt-2 pb-14 max-h-[60dvh]" : "p-2 max-h-[min(400px,calc(100vh-200px))]"
         )}
         onWheel={(e) => e.stopPropagation()}
       >
@@ -192,7 +182,7 @@ export function CatalogCombobox({
           </div>
         )}
       </div>
-    </motion.div>
+    </div>
   );
 
   if (isMobile) {
@@ -201,17 +191,37 @@ export function CatalogCombobox({
         <DrawerTrigger asChild>
           {renderTrigger()}
         </DrawerTrigger>
-        <DrawerContent className="max-h-[95dvh] border-none bg-background/95 backdrop-blur-3xl dark:bg-zinc-950/95">
-          <VisuallyHidden>
-            <DrawerTitle>Select Catalog</DrawerTitle>
-          </VisuallyHidden>
-          <AnimatePresence>
-            {isOpen && renderContent()}
-          </AnimatePresence>
+        <DrawerContent className="max-h-[92dvh] border-none bg-background/80 backdrop-blur-3xl dark:bg-zinc-950/80">
+          <DrawerHeader className="relative border-b border-border/5 pb-5 pt-2">
+            <div className="flex items-center justify-between">
+              <DrawerTitle className="text-[17px] font-black tracking-tight mx-auto text-foreground/90">Select Catalog</DrawerTitle>
+              <DrawerClose asChild>
+                <button className="absolute right-4 p-2 rounded-xl bg-zinc-100 dark:bg-white/5 text-muted-foreground/60 hover:text-foreground active:scale-95 transition-all">
+                  <X className="size-4" />
+                </button>
+              </DrawerClose>
+            </div>
+          </DrawerHeader>
+          <div className="flex-1 overflow-hidden">
+            {renderContentItems()}
+          </div>
         </DrawerContent>
       </Drawer>
     );
   }
+
+  const renderContent = () => (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.98, y: -4 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.98, y: -4 }}
+      transition={{ duration: 0.2, ease: "easeOut" }}
+      className="bg-popover border border-border flex flex-col h-full overflow-hidden rounded-3xl w-full sm:max-h-[380px]"
+      onClick={(e) => e.stopPropagation()}
+    >
+      {renderContentItems()}
+    </motion.div>
+  );
 
   return (
     <Popover.Root

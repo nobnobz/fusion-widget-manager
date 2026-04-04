@@ -45,6 +45,7 @@ import {
   editorActionButtonClass,
   editorFooterPrimaryButtonClass,
   editorFooterSecondaryButtonClass,
+  editorFormSurfaceClass,
   editorPanelClass,
 } from './editorSurfaceStyles';
 import { buildAiometadataMdblistCatalogsOnlyExport, hasUsedMdblistCatalogs } from '@/lib/mdblist-catalog-export';
@@ -1247,7 +1248,7 @@ function WidgetSelectionGridComponent({
               )}
               aria-expanded={widgetExpanded}
             >
-              <ChevronRight className={cn('size-4 transition-all group-hover:text-primary', widgetExpanded && 'rotate-90 text-primary')} />
+              <ChevronRight className={cn('size-4 transition-transform', widgetExpanded && 'rotate-90')} />
             </button>
           </div>
         </div>
@@ -1265,77 +1266,77 @@ function WidgetSelectionGridComponent({
                 {topLevelOnlyCatalogKeys
                   .filter((catalogKey) => !showOnlyNew || aiometadataSelectableCatalogKeys.has(catalogKey))
                   .map((catalogKey) => {
-                  const catalog = aiometadataCatalogMap.get(catalogKey) as ExportableCatalogDefinition | undefined;
-                  if (!catalog) return null;
-                  const checked = selectedAiometadataCatalogKeySet.has(catalogKey);
-                  const disabled = isManifestSynced && catalog.isAlreadyInManifest;
+                    const catalog = aiometadataCatalogMap.get(catalogKey) as ExportableCatalogDefinition | undefined;
+                    if (!catalog) return null;
+                    const checked = selectedAiometadataCatalogKeySet.has(catalogKey);
+                    const disabled = isManifestSynced && catalog.isAlreadyInManifest;
 
-                  return (
-                    <label
-                      key={`${keyPrefix}${catalogKey}`}
-                      className={cn(
-                        'flex items-center gap-3 rounded-xl border border-zinc-200/60 dark:border-white/5 bg-white/80 dark:bg-white/[0.015] px-3 py-2.5 transition-all hover:bg-zinc-50 dark:hover:bg-white/[0.03]',
-                        disabled && 'opacity-55'
-                      )}
-                    >
-                      <div
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (!disabled) toggleAiometadataCatalogKey(catalogKey);
-                        }}
+                    return (
+                      <label
+                        key={`${keyPrefix}${catalogKey}`}
                         className={cn(
-                          "size-[1.125rem] rounded-[0.35rem] border-2 transition-all cursor-pointer flex items-center justify-center shrink-0",
-                          checked
-                            ? "bg-primary border-primary "
-                            : "bg-zinc-950/40 border-white/10 hover:border-primary/40",
-                          disabled && "opacity-30 cursor-not-allowed"
+                          'flex items-center gap-3 rounded-xl border border-zinc-200/60 dark:border-white/5 bg-white/80 dark:bg-white/[0.015] px-3 py-2.5 transition-all hover:bg-zinc-50 dark:hover:bg-white/[0.03]',
+                          disabled && 'opacity-55'
                         )}
                       >
-                        {checked && <Check className="size-3 text-primary-foreground stroke-[3.5px]" />}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-semibold text-foreground">{catalog.entry.name}</p>
-                        <div className="mt-1 flex flex-wrap items-center gap-1.5 sm:gap-2">
-                          <p className="truncate text-[10px] sm:text-[11px] font-medium text-muted-foreground/65">
-                            {catalog.entry.type} / {catalog.entry.id}
-                          </p>
-                          <span className={cn(
-                            'inline-flex shrink-0 items-center justify-center rounded-full px-2 py-0.5 sm:px-2.5 sm:py-1 text-[9px] sm:text-[10px] font-black uppercase tracking-[0.12em] sm:tracking-[0.14em]',
-                            catalog.source === 'trakt'
-                              ? 'bg-sky-500/10 text-sky-600 dark:text-sky-300'
-                              : catalog.source === 'mdblist'
-                                ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-300'
-                                : catalog.source === 'letterboxd'
-                                  ? 'bg-orange-500/10 text-orange-600 dark:text-orange-300'
-                                  : catalog.source === 'simkl'
-                                    ? 'bg-rose-500/10 text-rose-600 dark:text-rose-300'
-                                    : 'bg-amber-500/10 text-amber-600 dark:text-amber-300'
-                          )}>
-                            {catalog.source}
-                          </span>
-                        </div>
-                      </div>
-                      {catalogHasEditableAiometadataSettings(catalogKey) && (
-                        <button
-                          type="button"
-                          className="flex size-8 items-center justify-center rounded-xl border border-border/15 bg-background/70 text-muted-foreground/55 transition-all hover:border-primary/20 hover:bg-primary/5 hover:text-primary active:scale-90"
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            openAiometadataSettings({ kind: 'catalog', catalogKey });
+                        <div
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (!disabled) toggleAiometadataCatalogKey(catalogKey);
                           }}
-                          aria-label={`Open export settings for ${catalog.entry.name}`}
+                          className={cn(
+                            "size-[1.125rem] rounded-[0.35rem] border-2 transition-all cursor-pointer flex items-center justify-center shrink-0",
+                            checked
+                              ? "bg-primary border-primary "
+                              : "bg-zinc-950/40 border-white/10 hover:border-primary/40",
+                            disabled && "opacity-30 cursor-not-allowed"
+                          )}
                         >
-                          <SlidersHorizontal className="size-4" />
-                        </button>
-                      )}
-                      {disabled && (
-                        <span className="hidden sm:inline-flex rounded-full bg-muted px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-muted-foreground/70">
-                          Synced
-                        </span>
-                      )}
-                    </label>
-                  );
-                })}
+                          {checked && <Check className="size-3 text-primary-foreground stroke-[3.5px]" />}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-semibold text-foreground">{catalog.entry.name}</p>
+                          <div className="mt-1 flex flex-wrap items-center gap-1.5 sm:gap-2">
+                            <p className="truncate text-[10px] sm:text-[11px] font-medium text-muted-foreground/65">
+                              {catalog.entry.type} / {catalog.entry.id}
+                            </p>
+                            <span className={cn(
+                              'inline-flex shrink-0 items-center justify-center rounded-full px-2 py-0.5 sm:px-2.5 sm:py-1 text-[9px] sm:text-[10px] font-black uppercase tracking-[0.12em] sm:tracking-[0.14em]',
+                              catalog.source === 'trakt'
+                                ? 'bg-sky-500/10 text-sky-600 dark:text-sky-300'
+                                : catalog.source === 'mdblist'
+                                  ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-300'
+                                  : catalog.source === 'letterboxd'
+                                    ? 'bg-orange-500/10 text-orange-600 dark:text-orange-300'
+                                    : catalog.source === 'simkl'
+                                      ? 'bg-rose-500/10 text-rose-600 dark:text-rose-300'
+                                      : 'bg-amber-500/10 text-amber-600 dark:text-amber-300'
+                            )}>
+                              {catalog.source}
+                            </span>
+                          </div>
+                        </div>
+                        {catalogHasEditableAiometadataSettings(catalogKey) && (
+                          <button
+                            type="button"
+                            className="flex size-8 items-center justify-center rounded-xl border border-border/15 bg-background/70 text-muted-foreground/55 transition-all hover:border-primary/20 hover:bg-primary/5 hover:text-primary active:scale-90"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              openAiometadataSettings({ kind: 'catalog', catalogKey });
+                            }}
+                            aria-label={`Open export settings for ${catalog.entry.name}`}
+                          >
+                            <SlidersHorizontal className="size-4" />
+                          </button>
+                        )}
+                        {disabled && (
+                          <span className="hidden sm:inline-flex rounded-full bg-muted px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-muted-foreground/70">
+                            Synced
+                          </span>
+                        )}
+                      </label>
+                    );
+                  })}
 
                 {/* Collection Items */}
                 {widget.items.length > 0 && (
@@ -1346,177 +1347,177 @@ function WidgetSelectionGridComponent({
                     {widget.items
                       .filter((item) => !showOnlyNew || item.catalogKeys.some((key) => aiometadataSelectableCatalogKeys.has(key)))
                       .map((item) => {
-                      const itemSelectableCatalogKeys = item.catalogKeys.filter((key) => aiometadataSelectableCatalogKeys.has(key));
-                      const itemSelectedKeys = itemSelectableCatalogKeys.filter((key) => selectedAiometadataCatalogKeySet.has(key));
-                      const itemSelectedCount = itemSelectedKeys.length;
-                      const itemAllSelected = itemSelectableCatalogKeys.length > 0 && itemSelectedCount === itemSelectableCatalogKeys.length;
-                      const itemPartiallySelected = itemSelectedCount > 0 && itemSelectedCount < itemSelectableCatalogKeys.length;
-                      const itemExpanded = expandedAiometadataItemKeys.includes(item.key);
-                      const itemIsSyncedOnly = itemSelectableCatalogKeys.length === 0;
+                        const itemSelectableCatalogKeys = item.catalogKeys.filter((key) => aiometadataSelectableCatalogKeys.has(key));
+                        const itemSelectedKeys = itemSelectableCatalogKeys.filter((key) => selectedAiometadataCatalogKeySet.has(key));
+                        const itemSelectedCount = itemSelectedKeys.length;
+                        const itemAllSelected = itemSelectableCatalogKeys.length > 0 && itemSelectedCount === itemSelectableCatalogKeys.length;
+                        const itemPartiallySelected = itemSelectedCount > 0 && itemSelectedCount < itemSelectableCatalogKeys.length;
+                        const itemExpanded = expandedAiometadataItemKeys.includes(item.key);
+                        const itemIsSyncedOnly = itemSelectableCatalogKeys.length === 0;
 
-                      return (
-                        <div key={`${keyPrefix}${item.key}`} className="rounded-2xl border border-zinc-200/60 bg-white/50 p-3 dark:border-white/5 dark:bg-white/[0.02]">
-                          <div className="flex items-center justify-between gap-3">
-                            <div className="flex min-w-0 flex-1 items-center gap-3">
-                              <div
-                                onClick={() => {
-                                  if (!itemIsSyncedOnly) toggleAiometadataCatalogGroup(itemSelectableCatalogKeys, !itemAllSelected);
-                                }}
-                                className={cn(
-                                  "size-4 rounded-[0.3rem] border-2 transition-all cursor-pointer flex items-center justify-center shrink-0",
-                                  itemAllSelected || itemPartiallySelected
-                                    ? "bg-primary border-primary "
-                                    : "bg-zinc-950/40 border-white/10 hover:border-primary/40",
-                                  itemIsSyncedOnly && "opacity-30 cursor-not-allowed"
+                        return (
+                          <div key={`${keyPrefix}${item.key}`} className="rounded-2xl border border-zinc-200/60 bg-white/50 p-3 dark:border-white/5 dark:bg-white/[0.02]">
+                            <div className="flex items-center justify-between gap-3">
+                              <div className="flex min-w-0 flex-1 items-center gap-3">
+                                <div
+                                  onClick={() => {
+                                    if (!itemIsSyncedOnly) toggleAiometadataCatalogGroup(itemSelectableCatalogKeys, !itemAllSelected);
+                                  }}
+                                  className={cn(
+                                    "size-4 rounded-[0.3rem] border-2 transition-all cursor-pointer flex items-center justify-center shrink-0",
+                                    itemAllSelected || itemPartiallySelected
+                                      ? "bg-primary border-primary "
+                                      : "bg-zinc-950/40 border-white/10 hover:border-primary/40",
+                                    itemIsSyncedOnly && "opacity-30 cursor-not-allowed"
+                                  )}
+                                >
+                                  {itemPartiallySelected
+                                    ? <div className="w-2 h-0.5 bg-primary-foreground rounded-full" />
+                                    : itemAllSelected && <Check className="size-2.5 text-primary-foreground stroke-[4px]" />
+                                  }
+                                </div>
+                                <div
+                                  className="min-w-0 flex-1 cursor-pointer"
+                                  onClick={() => toggleAiometadataItemExpanded(item.key)}
+                                >
+                                  <p className="truncate text-xs font-bold text-foreground">{item.itemName}</p>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-1.5 shrink-0">
+                                <span className={cn(
+                                  "rounded-full bg-background/60 px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.12em] text-muted-foreground/60",
+                                  itemSelectableCatalogKeys.length === 0 && "max-sm:hidden"
+                                )}>
+                                  {itemSelectableCatalogKeys.length > 0
+                                    ? `${itemSelectedCount}/${itemSelectableCatalogKeys.length}`
+                                    : 'Synced'}
+                                </span>
+                                {itemHasEditableAiometadataSources(item) && (
+                                  <button
+                                    type="button"
+                                    className={cn(
+                                      'flex size-7 items-center justify-center rounded-lg border transition-all',
+                                      itemIsSyncedOnly
+                                        ? 'border-border/10 bg-background/45 text-muted-foreground/35'
+                                        : 'border-border/15 bg-background/70 text-muted-foreground/55 hover:border-primary/20 hover:bg-primary/5 hover:text-primary'
+                                    )}
+                                    onClick={(event) => {
+                                      event.stopPropagation();
+                                      openAiometadataSettings({ kind: 'item', itemKey: item.id });
+                                    }}
+                                    aria-label={`Open export settings for ${item.itemName}`}
+                                  >
+                                    <SlidersHorizontal className="size-3.5" />
+                                  </button>
                                 )}
-                              >
-                                {itemPartiallySelected
-                                  ? <div className="w-2 h-0.5 bg-primary-foreground rounded-full" />
-                                  : itemAllSelected && <Check className="size-2.5 text-primary-foreground stroke-[4px]" />
-                                }
-                              </div>
-                              <div
-                                className="min-w-0 flex-1 cursor-pointer"
-                                onClick={() => toggleAiometadataItemExpanded(item.key)}
-                              >
-                                <p className="truncate text-xs font-bold text-foreground">{item.itemName}</p>
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-1.5 shrink-0">
-                              <span className={cn(
-                                "rounded-full bg-background/60 px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.12em] text-muted-foreground/60",
-                                itemSelectableCatalogKeys.length === 0 && "max-sm:hidden"
-                              )}>
-                                {itemSelectableCatalogKeys.length > 0
-                                  ? `${itemSelectedCount}/${itemSelectableCatalogKeys.length}`
-                                  : 'Synced'}
-                              </span>
-                              {itemHasEditableAiometadataSources(item) && (
                                 <button
                                   type="button"
-                                  className={cn(
-                                    'flex size-7 items-center justify-center rounded-lg border transition-all',
-                                    itemIsSyncedOnly
-                                      ? 'border-border/10 bg-background/45 text-muted-foreground/35'
-                                      : 'border-border/15 bg-background/70 text-muted-foreground/55 hover:border-primary/20 hover:bg-primary/5 hover:text-primary'
-                                  )}
-                                  onClick={(event) => {
-                                    event.stopPropagation();
-                                    openAiometadataSettings({ kind: 'item', itemKey: item.id });
-                                  }}
-                                  aria-label={`Open export settings for ${item.itemName}`}
-                                >
-                                  <SlidersHorizontal className="size-3.5" />
-                                </button>
-                              )}
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setExpandedAiometadataItemKeys((prev) =>
-                                    prev.includes(item.key)
-                                      ? prev.filter((k) => k !== item.key)
-                                      : [...prev, item.key]
-                                  );
-                                }}
-                                className="group flex items-center justify-center size-7 rounded-full hover:bg-primary/10 transition-all hover:scale-110 active:scale-90"
-                                aria-expanded={itemExpanded}
-                              >
-                                <ChevronRight className={cn('size-3.5 transition-all group-hover:text-primary', itemExpanded && 'rotate-90 text-primary')} />
-                              </button>
-                            </div>
-                          </div>
-                          <AnimatePresence initial={false}>
-                            {itemExpanded && (
-                              <motion.div
-                                initial={{ height: 0, opacity: 0 }}
-                                animate={{ height: 'auto', opacity: 1 }}
-                                exit={{ height: 0, opacity: 0 }}
-                                transition={{ duration: 0.2, ease: 'easeInOut' }}
-                                className="overflow-hidden"
-                              >
-                                <div className="mt-2.5 space-y-1.5 pt-1">
-                                  {item.catalogKeys
-                                    .filter((itemCatalogKey) => !showOnlyNew || aiometadataSelectableCatalogKeys.has(itemCatalogKey))
-                                    .map((itemCatalogKey) => {
-                                    const catalog = aiometadataCatalogMap.get(itemCatalogKey) as ExportableCatalogDefinition | undefined;
-                                    if (!catalog) return null;
-                                    const checked = selectedAiometadataCatalogKeySet.has(itemCatalogKey);
-                                    const disabled = isManifestSynced && catalog.isAlreadyInManifest;
-
-                                    return (
-                                      <label
-                                        key={`${keyPrefix}${itemCatalogKey}`}
-                                        className={cn(
-                                          'flex items-center gap-2.5 rounded-lg border border-zinc-200/40 bg-zinc-50/50 px-2.5 py-2 transition-all hover:bg-zinc-100 dark:border-white/5 dark:bg-white/[0.015] dark:hover:bg-white/[0.03]',
-                                          disabled && 'opacity-55'
-                                        )}
-                                      >
-                                        <div
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            if (!disabled) toggleAiometadataCatalogKey(itemCatalogKey);
-                                          }}
-                                          className={cn(
-                                            "size-3.5 rounded-[0.25rem] border-2 transition-all cursor-pointer flex items-center justify-center shrink-0",
-                                            checked
-                                              ? "bg-primary border-primary "
-                                              : "bg-zinc-950/40 border-white/10 hover:border-primary/40",
-                                            disabled && "opacity-30 cursor-not-allowed"
-                                          )}
-                                        >
-                                          {checked && <Check className="size-2.5 text-primary-foreground stroke-[4px]" />}
-                                        </div>
-                                        <div className="min-w-0 flex-1">
-                                          <p className="truncate text-[11px] font-semibold text-foreground/80">{catalog.entry.name}</p>
-                                          <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
-                                            <p className="truncate text-[9px] font-medium text-muted-foreground/60">
-                                              {catalog.entry.type} / {catalog.entry.id}
-                                            </p>
-                                            <span className={cn(
-                                              'inline-flex shrink-0 items-center justify-center rounded-full px-1.5 py-0.5 text-[8px] font-black uppercase tracking-[0.1em]',
-                                              catalog.source === 'trakt'
-                                                ? 'bg-sky-500/10 text-sky-600 dark:text-sky-300'
-                                                : catalog.source === 'mdblist'
-                                                  ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-300'
-                                                  : catalog.source === 'letterboxd'
-                                                    ? 'bg-orange-500/10 text-orange-600 dark:text-orange-300'
-                                                    : catalog.source === 'simkl'
-                                                      ? 'bg-rose-500/10 text-rose-600 dark:text-rose-300'
-                                                      : 'bg-amber-500/10 text-amber-600 dark:text-amber-300'
-                                            )}>
-                                              {catalog.source}
-                                            </span>
-                                          </div>
-                                        </div>
-                                        {catalogHasEditableAiometadataSettings(itemCatalogKey) && (
-                                          <button
-                                            type="button"
-                                            className="flex size-7 items-center justify-center rounded-lg border border-border/10 bg-background/60 text-muted-foreground/50 transition-all hover:border-primary/20 hover:text-primary active:scale-95"
-                                            onClick={(event) => {
-                                              event.stopPropagation();
-                                              openAiometadataSettings({ kind: 'catalog', catalogKey: itemCatalogKey });
-                                            }}
-                                            aria-label={`Open export settings for ${catalog.entry.name}`}
-                                          >
-                                            <SlidersHorizontal className="size-3" />
-                                          </button>
-                                        )}
-                                        {disabled && (
-                                          <span className="hidden sm:inline-flex rounded-full bg-muted/50 px-2 py-0.5 text-[8px] font-black uppercase tracking-[0.1em] text-muted-foreground/50">
-                                            Synced
-                                          </span>
-                                        )}
-                                      </label>
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setExpandedAiometadataItemKeys((prev) =>
+                                      prev.includes(item.key)
+                                        ? prev.filter((k) => k !== item.key)
+                                        : [...prev, item.key]
                                     );
-                                  })}
-                                </div>
-                              </motion.div>
-                            )}
-                          </AnimatePresence>
-                        </div>
-                      );
-                    })}
+                                  }}
+                                  className="group flex items-center justify-center size-7 rounded-full hover:bg-primary/10 transition-all hover:scale-110 active:scale-90"
+                                  aria-expanded={itemExpanded}
+                                >
+                                  <ChevronRight className={cn('size-3.5 transition-all group-hover:text-primary', itemExpanded && 'rotate-90 text-primary')} />
+                                </button>
+                              </div>
+                            </div>
+                            <AnimatePresence initial={false}>
+                              {itemExpanded && (
+                                <motion.div
+                                  initial={{ height: 0, opacity: 0 }}
+                                  animate={{ height: 'auto', opacity: 1 }}
+                                  exit={{ height: 0, opacity: 0 }}
+                                  transition={{ duration: 0.2, ease: 'easeInOut' }}
+                                  className="overflow-hidden"
+                                >
+                                  <div className="mt-2.5 space-y-1.5 pt-1">
+                                    {item.catalogKeys
+                                      .filter((itemCatalogKey) => !showOnlyNew || aiometadataSelectableCatalogKeys.has(itemCatalogKey))
+                                      .map((itemCatalogKey) => {
+                                        const catalog = aiometadataCatalogMap.get(itemCatalogKey) as ExportableCatalogDefinition | undefined;
+                                        if (!catalog) return null;
+                                        const checked = selectedAiometadataCatalogKeySet.has(itemCatalogKey);
+                                        const disabled = isManifestSynced && catalog.isAlreadyInManifest;
+
+                                        return (
+                                          <label
+                                            key={`${keyPrefix}${itemCatalogKey}`}
+                                            className={cn(
+                                              'flex items-center gap-2.5 rounded-lg border border-zinc-200/40 bg-zinc-50/50 px-2.5 py-2 transition-all hover:bg-zinc-100 dark:border-white/5 dark:bg-white/[0.015] dark:hover:bg-white/[0.03]',
+                                              disabled && 'opacity-55'
+                                            )}
+                                          >
+                                            <div
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                if (!disabled) toggleAiometadataCatalogKey(itemCatalogKey);
+                                              }}
+                                              className={cn(
+                                                "size-3.5 rounded-[0.25rem] border-2 transition-all cursor-pointer flex items-center justify-center shrink-0",
+                                                checked
+                                                  ? "bg-primary border-primary "
+                                                  : "bg-zinc-950/40 border-white/10 hover:border-primary/40",
+                                                disabled && "opacity-30 cursor-not-allowed"
+                                              )}
+                                            >
+                                              {checked && <Check className="size-2.5 text-primary-foreground stroke-[4px]" />}
+                                            </div>
+                                            <div className="min-w-0 flex-1">
+                                              <p className="truncate text-[11px] font-semibold text-foreground/80">{catalog.entry.name}</p>
+                                              <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
+                                                <p className="truncate text-[9px] font-medium text-muted-foreground/60">
+                                                  {catalog.entry.type} / {catalog.entry.id}
+                                                </p>
+                                                <span className={cn(
+                                                  'inline-flex shrink-0 items-center justify-center rounded-full px-1.5 py-0.5 text-[8px] font-black uppercase tracking-[0.1em]',
+                                                  catalog.source === 'trakt'
+                                                    ? 'bg-sky-500/10 text-sky-600 dark:text-sky-300'
+                                                    : catalog.source === 'mdblist'
+                                                      ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-300'
+                                                      : catalog.source === 'letterboxd'
+                                                        ? 'bg-orange-500/10 text-orange-600 dark:text-orange-300'
+                                                        : catalog.source === 'simkl'
+                                                          ? 'bg-rose-500/10 text-rose-600 dark:text-rose-300'
+                                                          : 'bg-amber-500/10 text-amber-600 dark:text-amber-300'
+                                                )}>
+                                                  {catalog.source}
+                                                </span>
+                                              </div>
+                                            </div>
+                                            {catalogHasEditableAiometadataSettings(itemCatalogKey) && (
+                                              <button
+                                                type="button"
+                                                className="flex size-7 items-center justify-center rounded-lg border border-border/10 bg-background/60 text-muted-foreground/50 transition-all hover:border-primary/20 hover:text-primary active:scale-95"
+                                                onClick={(event) => {
+                                                  event.stopPropagation();
+                                                  openAiometadataSettings({ kind: 'catalog', catalogKey: itemCatalogKey });
+                                                }}
+                                                aria-label={`Open export settings for ${catalog.entry.name}`}
+                                              >
+                                                <SlidersHorizontal className="size-3" />
+                                              </button>
+                                            )}
+                                            {disabled && (
+                                              <span className="hidden sm:inline-flex rounded-full bg-muted/50 px-2 py-0.5 text-[8px] font-black uppercase tracking-[0.1em] text-muted-foreground/50">
+                                                Synced
+                                              </span>
+                                            )}
+                                          </label>
+                                        );
+                                      })}
+                                  </div>
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
+                          </div>
+                        );
+                      })}
                   </div>
                 )}
               </div>
@@ -1693,15 +1694,16 @@ function WidgetSelectionGridComponent({
             </div>
 
             {/* Preview Section */}
-            <div className="min-h-0 rounded-3xl border border-zinc-200/50 dark:border-white/5 bg-zinc-100/30 dark:bg-muted/20 p-5 mt-4">
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <p className="text-[10px] font-black uppercase tracking-[0.16em] text-foreground/40 dark:text-foreground/55">
-                    Export Preview
-                  </p>
-                  <p className="mt-1 text-xs font-medium text-muted-foreground/75">
-                    {aiometadataPreviewExport.catalogs.length} catalogs in the current selection
-                  </p>
+            <div className={cn("min-h-0 p-5 mt-4 w-full", editorFormSurfaceClass)}>
+              <div className="flex items-center justify-between mb-4 px-1">
+                <span className="text-[10px] font-black uppercase tracking-[0.16em] text-foreground/40 dark:text-foreground/55">Export Preview</span>
+                <div className="flex flex-col items-end gap-0.5">
+                  <span className="text-[10px] font-bold text-primary/60 dark:text-primary/60 tabular-nums">
+                    {aiometadataPreviewExport.catalogs.length} catalogs
+                  </span>
+                  <span className="text-[9px] font-medium text-muted-foreground/40 tabular-nums uppercase tracking-wider">
+                    {(previewContent.length / 1024).toFixed(1)} kB
+                  </span>
                 </div>
               </div>
               <div className="relative group overflow-hidden rounded-2xl border border-zinc-200/50 dark:border-white/5 bg-zinc-900 dark:bg-zinc-950 px-5 py-6 max-sm:p-4 shadow-xl shadow-black/10">
@@ -1770,10 +1772,10 @@ function WidgetSelectionGridComponent({
                   </div>
                 </div>
 
-                <div className="min-h-0 rounded-3xl border border-zinc-200/50 dark:border-white/5 bg-zinc-100/30 dark:bg-muted/20 p-5 mt-4 w-full">
+                <div className={cn("min-h-0 p-5 mt-4 w-full", editorFormSurfaceClass)}>
                   <div className="flex items-center justify-between mb-4 px-1">
                     <span className="text-[10px] font-black uppercase tracking-[0.16em] text-foreground/40 dark:text-foreground/55">JSON Preview</span>
-                    <span className="text-[10px] font-bold text-primary/60 dark:text-primary/60 tabular-nums">{previewContent.length} bytes</span>
+                    <span className="text-[10px] font-bold text-primary/60 dark:text-primary/60 tabular-nums">{(previewContent.length / 1024).toFixed(1)} kB</span>
                   </div>
                   <div className="relative group overflow-hidden rounded-2xl border border-zinc-200/50 dark:border-white/5 bg-zinc-900 dark:bg-zinc-950 px-5 py-6 max-sm:p-4 shadow-xl shadow-black/10">
                     <textarea

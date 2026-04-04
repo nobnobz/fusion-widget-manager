@@ -4,7 +4,7 @@ import { useConfig } from '@/context/ConfigContext';
 import { Button } from '@/components/ui/button';
 import { AlertTriangle, Trash2, ChevronDown } from 'lucide-react';
 import { resolveFusionCatalogType } from '@/lib/config-utils';
-import { AIOMetadataDataSource, AIOMetadataCatalog } from '@/lib/types/widget';
+import { AIOMetadataDataSource } from '@/lib/types/widget';
 import { CatalogCombobox } from './CatalogCombobox';
 import { cn } from '@/lib/utils';
 

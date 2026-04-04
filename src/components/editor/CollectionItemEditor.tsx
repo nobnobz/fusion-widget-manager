@@ -534,11 +534,20 @@ export const CollectionItemEditor = memo(function CollectionItemEditor({
                       </div>
 
                       {/* Right Column: Visuals */}
-                      <div className="flex flex-col gap-6 max-sm:gap-4 max-lg:mt-5 max-lg:pt-5 max-sm:mt-4 max-sm:pt-4 max-lg:border-t max-lg:border-zinc-100 max-lg:dark:border-white/5 lg:border-l lg:border-zinc-200/40 lg:dark:border-white/5 lg:pl-6 lg:min-w-[380px]">
+                      <motion.div 
+                        layout 
+                        className="flex flex-col gap-6 max-sm:gap-4 max-lg:mt-5 max-lg:pt-5 max-sm:mt-4 max-sm:pt-4 max-lg:border-t max-lg:border-zinc-100 max-lg:dark:border-white/5 lg:border-l lg:border-zinc-200/40 lg:dark:border-white/5 lg:pl-6 lg:min-w-[380px]"
+                      >
                         {/* Combined Visuals & Layout Selector Row */}
-                        <div className="flex flex-col sm:flex-row items-center justify-center gap-6 sm:gap-8 w-full">
+                        <motion.div 
+                          layout
+                          className="flex flex-col sm:flex-row items-center justify-center gap-6 sm:gap-8 w-full"
+                        >
                           {/* Left/Top: Preview Area */}
-                          <div className="flex-1 flex flex-col items-center justify-center min-h-[180px] sm:min-h-[220px] relative w-full">
+                          <motion.div 
+                            layout
+                            className="flex-1 flex flex-col items-center justify-center min-h-[180px] sm:min-h-[220px] relative w-full"
+                          >
                             <motion.div
                               layout
                               transition={{
@@ -546,7 +555,7 @@ export const CollectionItemEditor = memo(function CollectionItemEditor({
                                 opacity: { duration: 0.2 }
                               }}
                               className={cn(
-                                "rounded-xl border border-zinc-200/60 bg-white/40 dark:border-white/8 dark:bg-zinc-950/45 flex items-center justify-center relative overflow-hidden shadow-sm max-w-full transition-all duration-300",
+                                "rounded-xl border border-zinc-200/60 bg-white/40 dark:border-white/8 dark:bg-zinc-950/45 flex items-center justify-center relative overflow-hidden shadow-sm max-w-full",
                                 item.layout === 'Poster' ? "aspect-[2/3] h-52 max-sm:h-44" :
                                   item.layout === 'Wide' ? "aspect-video w-64 max-sm:w-[min(100%,240px)]" :
                                     "aspect-square w-44 max-sm:w-40"
@@ -563,10 +572,13 @@ export const CollectionItemEditor = memo(function CollectionItemEditor({
                                 <ImageIcon className="size-6 text-muted-foreground/10" />
                               )}
                             </motion.div>
-                          </div>
+                          </motion.div>
 
                           {/* Right/Bottom: Horizontal/Vertical Segmented Layout Selector */}
-                          <div className="flex flex-row sm:flex-col gap-1 p-1 rounded-2xl border border-zinc-200/50 bg-white/40 dark:border-white/5 dark:bg-zinc-950/45 shrink-0 self-center backdrop-blur-sm shadow-sm transition-all duration-300">
+                          <motion.div 
+                            layout
+                            className="flex flex-row sm:flex-col gap-1 p-1 rounded-2xl border border-zinc-200/50 bg-white/40 dark:border-white/5 dark:bg-zinc-950/45 shrink-0 self-center backdrop-blur-sm shadow-sm"
+                          >
                             {[
                               { id: 'Wide', label: 'Wide', icon: RectangleHorizontal },
                               { id: 'Poster', label: 'Poster', icon: RectangleVertical },
@@ -595,17 +607,19 @@ export const CollectionItemEditor = memo(function CollectionItemEditor({
                                 </span>
                               </button>
                             ))}
-                          </div>
-                        </div>
+                          </motion.div>
+                        </motion.div>
 
-                        {/* Image URL: Right Column (Under Select Type) */}
-                        <div className="w-full space-y-2">
-                          <div className="text-[8px] font-black uppercase tracking-[0.2em] text-muted-foreground/35 text-center">
-                            Image URL
-                          </div>
-                          <div className="flex items-center gap-1.5 w-full">
-                            {item.backgroundImageURL ? (
+                        {/* Image URL Section */}
+                        <div className="w-full overflow-hidden rounded-xl border border-zinc-200/60 bg-white/50 dark:border-white/5 dark:bg-zinc-950/25">
+                          <div className="p-3.5">
+                            <div className="flex flex-col gap-2.5">
+                              <div className="flex items-center justify-between">
+                                <div className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/45">Image URL</div>
+                              </div>
                               <div className="flex items-center gap-1.5 w-full">
+                                {item.backgroundImageURL ? (
+                                  <div className="flex items-center gap-1.5 w-full">
                                 <div
                                   role="button"
                                   tabIndex={0}
@@ -661,12 +675,14 @@ export const CollectionItemEditor = memo(function CollectionItemEditor({
                             )}
                           </div>
                         </div>
+                      </div>
+                    </div>
 
                         {/* Data Sources: Bottom on Mobile */}
                         <div className="lg:hidden">
                           {dataSourcesSectionContent}
                         </div>
-                      </div>
+                      </motion.div>
                     </div>
                   </div>
                 </motion.div>
