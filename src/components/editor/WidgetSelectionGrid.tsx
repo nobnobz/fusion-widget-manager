@@ -266,23 +266,20 @@ function WidgetSelectionGridComponent({
   }, []);
 
   const handleExpandedWidgetChange = useCallback((nextId: string | null) => {
-    if (
-      typeof window !== 'undefined' &&
-      window.matchMedia('(max-width: 639px)').matches &&
-      expandedWidgetId &&
-      nextId &&
-      expandedWidgetId !== nextId
-    ) {
+    if (typeof window !== 'undefined' && nextId) {
       const targetNode = widgetNodeMapRef.current.get(nextId);
-      pendingScrollAnchorRef.current = targetNode
-        ? { id: nextId, top: targetNode.getBoundingClientRect().top }
-        : null;
+      if (targetNode) {
+        pendingScrollAnchorRef.current = { 
+          id: nextId, 
+          top: targetNode.getBoundingClientRect().top 
+        };
+      }
     } else {
       pendingScrollAnchorRef.current = null;
     }
 
     onExpandedWidgetChange(nextId);
-  }, [expandedWidgetId, onExpandedWidgetChange]);
+  }, [onExpandedWidgetChange]);
 
   useEffect(() => {
     if (expandedWidgetId && !widgets.some((widget) => widget.id === expandedWidgetId)) {
@@ -300,23 +297,42 @@ function WidgetSelectionGridComponent({
       const targetNode = widgetNodeMapRef.current.get(pendingAnchor.id);
       if (!targetNode) return;
 
-      const offset = targetNode.getBoundingClientRect().top - pendingAnchor.top;
-      if (Math.abs(offset) > 1) {
+      const rect = targetNode.getBoundingClientRect();
+      const offset = rect.top - pendingAnchor.top;
+      
+      if (Math.abs(offset) > 0.5) {
         window.scrollTo({ top: window.scrollY + offset, behavior: 'auto' });
       }
     };
 
-    const frameA = window.requestAnimationFrame(() => {
+    let frameId: number;
+    const runAdjust = () => {
       adjustScroll();
-      window.requestAnimationFrame(adjustScroll);
-    });
+      frameId = window.requestAnimationFrame(runAdjust);
+    };
+    
+    frameId = window.requestAnimationFrame(runAdjust);
+
     const timeout = window.setTimeout(() => {
-      adjustScroll();
+      window.cancelAnimationFrame(frameId);
+      
+      const targetNode = widgetNodeMapRef.current.get(pendingAnchor.id);
+      if (targetNode) {
+        const rect = targetNode.getBoundingClientRect();
+        // If the box header is not in a comfortable position, focus it
+        if (rect.top < 10 || rect.top > window.innerHeight * 0.4) {
+          window.scrollTo({
+            top: window.scrollY + rect.top - 20,
+            behavior: 'smooth'
+          });
+        }
+      }
+      
       pendingScrollAnchorRef.current = null;
-    }, 320);
+    }, 400);
 
     return () => {
-      window.cancelAnimationFrame(frameA);
+      window.cancelAnimationFrame(frameId);
       window.clearTimeout(timeout);
     };
   }, [expandedWidgetId]);

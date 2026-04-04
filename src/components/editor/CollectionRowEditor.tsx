@@ -133,9 +133,9 @@ export const CollectionRowEditor = memo(function CollectionRowEditor({
         <div className="mb-2 border-b border-border/40 pb-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center justify-between gap-3 sm:justify-start">
-              <div className="hidden min-w-0 items-center gap-2 rounded-xl border border-zinc-200/70 bg-zinc-50/80 px-3 py-2 dark:border-white/8 dark:bg-white/[0.04] sm:inline-flex">
+              <div className="hidden min-w-0 items-center gap-2 rounded-full border border-zinc-200/70 bg-zinc-50/80 px-3.5 h-9 dark:border-white/8 dark:bg-white/[0.04] sm:inline-flex">
                 <ListTree className="size-3.5 text-muted-foreground/50" />
-                <span className="whitespace-nowrap text-[10px] font-black uppercase tracking-[0.18em] text-muted-foreground/58">Items</span>
+                <span className="whitespace-nowrap text-[10px] font-black uppercase tracking-[0.16em] text-muted-foreground/58">Items</span>
               </div>
 
               {searchQuery && (
@@ -152,7 +152,7 @@ export const CollectionRowEditor = memo(function CollectionRowEditor({
                   <Button 
                     variant="ghost" 
                     size="sm" 
-                    className="group h-10 flex-1 rounded-full border border-primary/20 bg-primary/10 px-4 text-[10px] font-bold uppercase tracking-[0.16em] text-primary transition-all duration-300 hover:bg-primary/[0.18] hover:text-primary hover:scale-[1.02] active:scale-[0.98] dark:border-primary/25 dark:bg-primary/12 dark:hover:bg-primary/[0.18] sm:h-9 sm:flex-none"
+                    className="group h-9 flex-1 rounded-full border border-primary/20 bg-primary/10 px-4 text-[10px] font-black uppercase tracking-[0.16em] text-primary transition-all duration-300 hover:bg-primary/[0.18] hover:text-primary hover:scale-[1.02] active:scale-[0.98] dark:border-primary/25 dark:bg-primary/12 dark:hover:bg-primary/[0.18] sm:flex-none"
                   >
                     <Plus className="size-3.5 mr-2 transition-colors group-hover:text-primary" /> 
                     Add Item
@@ -160,12 +160,12 @@ export const CollectionRowEditor = memo(function CollectionRowEditor({
                 }
               />
 
-              <div className="inline-flex items-center gap-1.5 rounded-full border border-zinc-200/70 bg-zinc-50/80 p-1.5 dark:border-white/8 dark:bg-white/[0.04]">
+              <div className="inline-flex items-center gap-1 h-9 rounded-full border border-zinc-200/70 bg-zinc-50/80 p-1 dark:border-white/8 dark:bg-white/[0.04]">
                 <Button 
                   variant="ghost" 
                   size="sm" 
                   className={cn(
-                    "h-9 w-9 rounded-full border p-0 transition-all shrink-0 hover:scale-110 active:scale-90",
+                    "h-full aspect-square rounded-full border p-0 transition-all shrink-0 hover:scale-110 active:scale-90",
                     sortMode !== 'none' 
                       ? "border-primary/20 bg-primary/[0.08] text-primary hover:bg-primary/12 hover:border-primary/30" 
                       : "border-transparent text-muted-foreground/62 hover:border-primary/10 hover:bg-primary/5 hover:text-primary"
@@ -180,7 +180,7 @@ export const CollectionRowEditor = memo(function CollectionRowEditor({
                   <Button 
                     variant="ghost" 
                     size="sm" 
-                    className="h-9 w-9 rounded-full border border-transparent p-0 text-muted-foreground/62 transition-all shrink-0 hover:scale-110 active:scale-90 hover:border-primary/10 hover:bg-primary/5 hover:text-primary"
+                    className="h-full aspect-square rounded-full border border-transparent p-0 text-muted-foreground/62 transition-all shrink-0 hover:scale-110 active:scale-90 hover:border-primary/10 hover:bg-primary/5 hover:text-primary"
                     onClick={onRename}
                     title="Rename Widget"
                   >
@@ -192,7 +192,7 @@ export const CollectionRowEditor = memo(function CollectionRowEditor({
                   <Button 
                     variant="ghost" 
                     size="sm" 
-                    className="h-9 w-9 rounded-full border border-transparent p-0 text-red-500/60 transition-all shrink-0 hover:scale-110 active:scale-90 hover:border-red-500/20 hover:bg-red-500/5 hover:text-red-500 sm:hidden"
+                    className="h-full aspect-square rounded-full border border-transparent p-0 text-red-500/60 transition-all shrink-0 hover:scale-110 active:scale-90 hover:border-red-500/20 hover:bg-red-500/5 hover:text-red-500 sm:hidden"
                     onClick={onDelete}
                     title="Delete Widget"
                   >
