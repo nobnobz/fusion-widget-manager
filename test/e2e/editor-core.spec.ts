@@ -326,27 +326,27 @@ test('shows moved items in review and applies cross-widget moves without duplica
   await expect(page.getByTestId('success-import-message')).toBeVisible();
   await expect(page.getByTestId('success-items-updated')).toHaveText('1');
 
-  const result = await page.evaluate(() => {
-    const raw = window.localStorage.getItem('fusion-widgets-config');
-    if (!raw) {
-      return null;
-    }
+  await expect.poll(async () => {
+    return page.evaluate(() => {
+      const raw = window.localStorage.getItem('fusion-widgets-config');
+      if (!raw) {
+        return null;
+      }
 
-    const parsed = JSON.parse(raw) as {
-      widgets?: Array<{
-        id: string;
-        dataSource?: { payload?: { items?: Array<{ id: string }> } };
-      }>;
-    };
+      const parsed = JSON.parse(raw) as {
+        widgets?: Array<{
+          id: string;
+          dataSource?: { payload?: { items?: Array<{ id: string }> } };
+        }>;
+      };
 
-    const widgets = parsed.widgets || [];
-    return {
-      sourceItems: widgets.find((widget) => widget.id === 'collection-source')?.dataSource?.payload?.items?.map((item) => item.id) || [],
-      targetItems: widgets.find((widget) => widget.id === 'collection-target')?.dataSource?.payload?.items?.map((item) => item.id) || [],
-    };
-  });
-
-  expect(result).toEqual({
+      const widgets = parsed.widgets || [];
+      return {
+        sourceItems: widgets.find((widget) => widget.id === 'collection-source')?.dataSource?.payload?.items?.map((item) => item.id) || [],
+        targetItems: widgets.find((widget) => widget.id === 'collection-target')?.dataSource?.payload?.items?.map((item) => item.id) || [],
+      };
+    });
+  }).toEqual({
     sourceItems: [],
     targetItems: ['move-item-1'],
   });

@@ -603,9 +603,9 @@ export function ImportMergeDialog({ open, onOpenChange, initialJson, initialFile
         alt={alt}
         className={cn(
           "rounded-xl object-cover border border-border/40  bg-zinc-50 transition-all dark:bg-muted/10 dark:border-border/20",
-          isPoster ? "h-28 w-20 max-sm:h-24 max-sm:w-16"   // portrait
-          : isWide  ? "h-16 w-32 max-sm:h-12 max-sm:w-24"  // landscape
-          :            "size-20 max-sm:size-16",   // square
+          isPoster ? "h-28 w-20 max-sm:h-36 max-sm:w-24"   // portrait
+          : isWide  ? "h-16 w-32 max-sm:h-20 max-sm:w-40"  // landscape
+          :            "size-20 max-sm:size-24",   // square
           className
         )}
         onLoad={(e) => {
@@ -1115,12 +1115,12 @@ export function ImportMergeDialog({ open, onOpenChange, initialJson, initialFile
 
                           {/* Image Thumbnail */}
                           {hasImage ? (
-                            <div className="shrink-0">
+                            <div className="shrink-0 max-sm:mx-auto mt-2 max-sm:mt-4">
                               <ImageThumb src={item.backgroundImageURL} alt={item.name} layout={item.layout} className="rounded-xl" />
                             </div>
                           ) : (
-                            <div className="shrink-0 size-20 max-sm:size-16 rounded-xl border border-border/40 bg-zinc-50 flex items-center justify-center dark:bg-muted/20 dark:border-border/20 transition-colors">
-                              <ImageIcon className="size-5 text-muted-foreground/30" />
+                            <div className="shrink-0 size-20 max-sm:size-24 max-sm:mx-auto mt-2 max-sm:mt-4 rounded-xl border border-border/40 bg-zinc-50 flex items-center justify-center dark:bg-muted/20 dark:border-border/20 transition-colors">
+                              <ImageIcon className="size-5 max-sm:size-6 text-muted-foreground/30" />
                             </div>
                           )}
                         </div>
@@ -1144,7 +1144,7 @@ export function ImportMergeDialog({ open, onOpenChange, initialJson, initialFile
   // ─── Render ──────────────────────────────────────────────────────────────────
 
   const Content = (
-    <div className="overflow-y-auto w-full p-8 pt-10 max-sm:p-5 max-sm:pt-6">
+    <div className="overflow-y-auto w-full p-8 pt-10 max-sm:p-4 max-sm:pt-6">
 
           <DialogHeader className="space-y-6 items-start text-left shrink-0">
             <div className="size-14 rounded-xl bg-primary/5 border border-primary/10 flex items-center justify-center text-primary  max-sm:size-12">
@@ -1555,25 +1555,27 @@ export function ImportMergeDialog({ open, onOpenChange, initialJson, initialFile
             
             {/* Contextual Footer Settings */}
             {step === 'review' && selectedCount > 0 && (
-              <div className="mb-4 w-full px-1 fade-in">
+              <div className="mb-4 max-sm:mb-2 w-full px-1 fade-in">
                 <div className="grid gap-3">
                   <button 
                     onClick={() => setKeepExistingCatalogs(v => !v)}
                     data-testid="import-keep-catalogs-toggle"
                     className={cn(
-                      "w-full flex items-center justify-between p-4 max-sm:p-3.5 rounded-3xl border transition-all duration-300 text-left cursor-pointer group",
+                      "w-full flex items-center justify-between p-4 max-sm:p-2.5 rounded-3xl border transition-all duration-300 text-left cursor-pointer group",
                       (keepExistingCatalogs && catalogState !== 'none')
                         ? "border-primary/30 bg-white dark:bg-white/[0.05] ring-1 ring-primary/10 shadow-sm shadow-primary/5"
                         : "bg-white/95 backdrop-blur-sm dark:bg-white/[0.02] border-border/10 hover:bg-white dark:hover:bg-white/[0.05] hover:border-border/40 hover:shadow-md"
                     )}
                   >
-                    <div className="flex flex-col gap-1 pr-6">
+                    <div className="flex flex-col gap-1 pr-6 max-sm:pr-2">
                       <span className="text-[17px] max-sm:text-[15px] font-black tracking-tight text-foreground transition-colors">
-                        Do not overwrite catalogs
+                        Do not overwrite existing catalogs
                       </span>
-                      <span className="text-[13.5px] max-sm:text-[12px] font-medium text-muted-foreground/70 leading-relaxed">
-                        Prevent imported widgets from overwriting your configured catalogs.
-                      </span>
+                      {!isMobile && (
+                        <span className="text-[13.5px] max-sm:text-[12px] font-medium text-muted-foreground/70 leading-relaxed">
+                          Prevent imported widgets from overwriting your configured catalogs.
+                        </span>
+                      )}
                     </div>
                     
                     <div className={cn(
