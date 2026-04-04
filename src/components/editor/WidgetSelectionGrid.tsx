@@ -1799,7 +1799,7 @@ function WidgetSelectionGridComponent({
                 </div>
               </div>
             ) : (
-              <div className="flex flex-col items-center justify-center pt-8 pb-10 px-8 text-center space-y-8 max-sm:pt-3 max-sm:pb-5 max-sm:px-4 max-sm:space-y-3.5 flex-1 min-h-0 overflow-hidden">
+              <div className="flex flex-col items-center justify-center pt-8 pb-10 px-8 text-center space-y-8 max-sm:pt-3 max-sm:pb-5 max-sm:px-5 max-sm:space-y-3.5 flex-1 min-h-0 overflow-hidden">
                 <div className="flex flex-col items-center space-y-5 max-sm:space-y-3">
                   <div className="size-16 rounded-[2rem] bg-primary/8 border border-primary/20 flex items-center justify-center text-primary shadow-2xl shadow-primary/10 max-sm:size-12 max-sm:rounded-2xl">
                     <FileCode className="size-8 max-sm:size-6" />
@@ -1921,17 +1921,6 @@ function WidgetSelectionGridComponent({
           }}
         >
           <DrawerContent className="max-h-[94dvh] bg-white dark:bg-zinc-950 border-zinc-200/80 dark:border-white/10 rounded-t-[2.5rem]">
-            <div className="absolute right-4 top-4 z-50">
-              <DrawerClose asChild>
-                <button
-                  type="button"
-                  className="p-2 rounded-xl bg-zinc-100 dark:bg-zinc-800/50 text-muted-foreground/60 hover:text-foreground active:scale-95 transition-all"
-                >
-                  <X className="size-4" />
-                  <span className="sr-only">Close</span>
-                </button>
-              </DrawerClose>
-            </div>
             <DrawerHeader className="sr-only">
               <DrawerTitle>Export JSON</DrawerTitle>
               <DrawerDescription>Export your widgets or catalogs to JSON format.</DrawerDescription>
@@ -2064,17 +2053,6 @@ function WidgetSelectionGridComponent({
       return (
         <Drawer open={isUmeSortingDialogOpen} onOpenChange={setIsUmeSortingDialogOpen}>
           <DrawerContent className="max-h-[94dvh] bg-white dark:bg-zinc-950 border-zinc-200/80 dark:border-white/10 rounded-t-[2.5rem]">
-            <div className="absolute right-4 top-4 z-50">
-              <DrawerClose asChild>
-                <button
-                  type="button"
-                  className="p-2 rounded-xl bg-zinc-100 dark:bg-zinc-800/50 text-muted-foreground/60 hover:text-foreground active:scale-95 transition-all"
-                >
-                  <X className="size-4" />
-                  <span className="sr-only">Close</span>
-                </button>
-              </DrawerClose>
-            </div>
             <DrawerHeader className="sr-only">
               <DrawerTitle>UME Sorting</DrawerTitle>
               <DrawerDescription>Automatic sorting for your AIOMetadata catalogs.</DrawerDescription>
@@ -2182,17 +2160,6 @@ function WidgetSelectionGridComponent({
       return (
         <Drawer open={showTrash} onOpenChange={setShowTrash}>
           <DrawerContent className="bg-background border-border/40 max-h-[94dvh] rounded-t-[2.5rem]">
-            <div className="absolute right-4 top-4 z-50">
-              <DrawerClose asChild>
-                <button
-                  type="button"
-                  className="flex h-10 w-10 items-center justify-center rounded-full bg-muted/30 hover:bg-muted/50 backdrop-blur-md transition-all active:scale-95"
-                >
-                  <Plus className="size-6 rotate-45 text-muted-foreground" />
-                  <span className="sr-only">Close</span>
-                </button>
-              </DrawerClose>
-            </div>
             <DrawerHeader className="text-left px-6 pt-10 pb-4">
               <div className="size-14 rounded-xl border border-destructive/10 bg-destructive/10 text-destructive flex items-center justify-center mb-6">
                 <Trash2 className="size-7" />

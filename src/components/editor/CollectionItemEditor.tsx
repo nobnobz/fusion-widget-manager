@@ -488,7 +488,7 @@ export const CollectionItemEditor = memo(function CollectionItemEditor({
                       <div className="flex-1 min-w-0 px-1">
                         {isEditing ? (
                           <Input
-                            autoFocus={!isMobile}
+                            autoFocus
                             value={editName}
                             onChange={(e) => setEditName(e.target.value)}
                             onBlur={handleTitleSubmit}
@@ -572,7 +572,7 @@ export const CollectionItemEditor = memo(function CollectionItemEditor({
                               <div className="group/url-input flex h-11 min-w-0 flex-1 items-center gap-3 rounded-xl border border-zinc-200/80 bg-white/70 px-4 transition-all focus-within:border-primary/40 focus-within:bg-white dark:border-white/10 dark:bg-zinc-900/40 dark:focus-within:bg-zinc-900/60 shadow-sm">
                                 <ImageIcon className="size-4 text-muted-foreground/30 group-focus-within/url-input:text-primary transition-colors" />
                                   <input
-                                    autoFocus={!isMobile}
+                                    autoFocus
                                     ref={backgroundImageUrlInputRef}
                                     placeholder="Paste Image URL..."
                                     className="h-full min-w-0 flex-1 bg-transparent border-none text-base sm:text-[12px] font-bold tracking-tight text-foreground/80 placeholder:text-muted-foreground/30 focus:outline-none focus:ring-0"

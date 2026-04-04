@@ -103,7 +103,7 @@ export const EditorMobileHeader = memo(function EditorMobileHeader({
                       </span>
                       <div className="flex flex-col">
                         <span className={mobileHeaderMenuTitleClass}>Support My Work</span>
-                        <span className="text-[11px] font-medium text-muted-foreground/60">Support development</span>
+                        <span className="text-[11px] font-medium text-muted-foreground/60">Help me improve Fusion Widget Manager</span>
                       </div>
                     </button>
                   </div>
@@ -174,7 +174,7 @@ export const EditorMobileHeader = memo(function EditorMobileHeader({
                       </span>
                       <div className="flex flex-col">
                         <span className={mobileHeaderMenuTitleClass}>Support My Work</span>
-                        <span className="text-[11px] font-medium text-muted-foreground/60">Help me improve Fusion</span>
+                        <span className="text-[11px] font-medium text-muted-foreground/60">Help me improve Fusion Widget Manager</span>
                       </div>
                     </button>
                   </div>

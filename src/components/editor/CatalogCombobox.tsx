@@ -92,8 +92,8 @@ export function CatalogCombobox({
   const renderContentItems = () => (
     <div className="flex flex-col min-h-0 bg-transparent overflow-hidden">
       <div className={cn(
-        "px-6 py-4 border-b border-border/5 flex items-center gap-3 bg-zinc-50/50 dark:bg-white/[0.02] shrink-0",
-        isMobile ? "pt-2 pb-6" : "bg-muted/30"
+        "px-6 py-4 border-b border-border/5 flex items-center gap-3 bg-transparent shrink-0",
+        isMobile ? "pt-2 pb-6" : ""
       )}>
         <div className="flex-1 flex items-center gap-2.5 px-3.5 h-10 rounded-2xl bg-zinc-200/20 dark:bg-white/5 border border-zinc-200/50 dark:border-white/5 focus-within:border-primary/30 transition-all">
           <Search className="size-4 text-muted-foreground/35" />
