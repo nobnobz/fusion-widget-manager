@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/drawer"
 import { 
   AlertCircle, CheckCircle2, ChevronDown, ChevronRight, 
-  CloudUpload, FileJson, FileUp, Image as ImageIcon, RefreshCw, Check, Tag, Trash2, UploadCloud, ArrowRight, Sparkles, ListTree
+  CloudUpload, FileJson, FileUp, Image as ImageIcon, RefreshCw, Check, Tag, Trash2, UploadCloud, ArrowRight, Sparkles, ListTree, X
 } from 'lucide-react';
 import { convertOmniToFusion } from '@/lib/omni-converter';
 import { 
@@ -962,14 +962,103 @@ export function ImportMergeDialog({ open, onOpenChange, initialJson, initialFile
                         <ChevronRight className={cn("size-3.5 transition-transform duration-300", isItemExpanded && "rotate-90")} />
                       </div>
 
-                      <p className={cn(
-                        "text-[16px] font-bold truncate flex-1 leading-tight tracking-tight duration-200 transition-colors",
-                        isItemSelected ? "text-foreground" : "text-foreground/75 group-hover/row:text-foreground"
-                      )}>
-                        {item.name}
-                      </p>
+                      <div className="min-w-0 flex-1 pr-1">
+                        <p className={cn(
+                          "text-[16px] font-bold truncate leading-tight tracking-tight duration-200 transition-colors",
+                          isItemSelected ? "text-foreground" : "text-foreground/75 group-hover/row:text-foreground"
+                        )}>
+                          {item.name}
+                        </p>
+                        
+                        {/* Mobile Badges Row */}
+                        <div className="flex sm:hidden items-center gap-1.5 mt-1.5 overflow-x-auto custom-scrollbar-hidden py-0.5" onClick={e => e.stopPropagation()}>
+                          {itemDiff.status === 'new' && (
+                            <ChangeBadge type="new" disabled={!isItemSelected} />
+                          )}
+                          {itemDiff.status === 'ambiguous' && (
+                            <ChangeBadge type="ambiguous" disabled={!isItemSelected} />
+                          )}
+                          {itemDiff.status === 'moved' && (
+                            <ChangeBadge type="moved" disabled={!isItemSelected} />
+                          )}
+                          {itemDiff.status !== 'new' && itemDiff.status !== 'ambiguous' && (
+                            <>
+                              {itemDiff.changes.has('name') && (
+                                <ChangeBadge 
+                                  type="name" 
+                                  active={isItemSelected && itemFieldUpdates[itemKey]?.name} 
+                                  onClick={() => {
+                                    setItemFieldUpdates(p => {
+                                      const current = p[itemKey] || { name: false, catalogs: false, image: false };
+                                      const nextVal = !isItemSelected ? true : !current.name;
+                                      const nextFields = !isItemSelected
+                                        ? { name: true, catalogs: false, image: false }
+                                        : { ...current, name: nextVal };
+                                      const next = { ...p, [itemKey]: nextFields };
+                                      if (nextVal) {
+                                        setItemSelected(s => ({ ...s, [itemKey]: true }));
+                                        setWidgetSelected(s => ({ ...s, [w.id]: true }));
+                                      } else if (!nextFields.name && !nextFields.catalogs && !nextFields.image) {
+                                        setItemSelected(s => ({ ...s, [itemKey]: false }));
+                                      }
+                                      return next;
+                                    });
+                                  }}
+                                />
+                              )}
+                              {itemDiff.changes.has('catalogs') && (
+                                <ChangeBadge 
+                                  type="catalogs" 
+                                  active={isItemSelected && itemFieldUpdates[itemKey]?.catalogs} 
+                                  onClick={() => {
+                                    setItemFieldUpdates(p => {
+                                      const current = p[itemKey] || { name: false, catalogs: false, image: false };
+                                      const nextVal = !isItemSelected ? true : !current.catalogs;
+                                      const nextFields = !isItemSelected
+                                        ? { name: false, catalogs: true, image: false }
+                                        : { ...current, catalogs: nextVal };
+                                      const next = { ...p, [itemKey]: nextFields };
+                                      if (nextVal) {
+                                        setItemSelected(s => ({ ...s, [itemKey]: true }));
+                                        setWidgetSelected(s => ({ ...s, [w.id]: true }));
+                                      } else if (!nextFields.name && !nextFields.catalogs && !nextFields.image) {
+                                        setItemSelected(s => ({ ...s, [itemKey]: false }));
+                                      }
+                                      return next;
+                                    });
+                                  }}
+                                />
+                              )}
+                              {itemDiff.changes.has('image') && (
+                                <ChangeBadge 
+                                  type="image" 
+                                  active={isItemSelected && itemFieldUpdates[itemKey]?.image} 
+                                  onClick={() => {
+                                    setItemFieldUpdates(p => {
+                                      const current = p[itemKey] || { name: false, catalogs: false, image: false };
+                                      const nextVal = !isItemSelected ? true : !current.image;
+                                      const nextFields = !isItemSelected
+                                        ? { name: false, catalogs: false, image: true }
+                                        : { ...current, image: nextVal };
+                                      const next = { ...p, [itemKey]: nextFields };
+                                      if (nextVal) {
+                                        setItemSelected(s => ({ ...s, [itemKey]: true }));
+                                        setWidgetSelected(s => ({ ...s, [w.id]: true }));
+                                      } else if (!nextFields.name && !nextFields.catalogs && !nextFields.image) {
+                                        setItemSelected(s => ({ ...s, [itemKey]: false }));
+                                      }
+                                      return next;
+                                    });
+                                  }}
+                                />
+                              )}
+                            </>
+                          )}
+                        </div>
+                      </div>
 
-                      <div className="flex items-center gap-1.5 shrink-0" onClick={e => e.stopPropagation()}>
+                      {/* Desktop Badges Row */}
+                      <div className="hidden sm:flex items-center gap-1.5 shrink-0" onClick={e => e.stopPropagation()}>
                         {itemDiff.status === 'new' && (
                           <ChangeBadge type="new" disabled={!isItemSelected} />
                         )}
@@ -989,7 +1078,6 @@ export function ImportMergeDialog({ open, onOpenChange, initialJson, initialFile
                                   setItemFieldUpdates(p => {
                                     const current = p[itemKey] || { name: false, catalogs: false, image: false };
                                     const nextVal = !isItemSelected ? true : !current.name;
-                                    // If activating on unselected item: reset all other fields so only this one is ON
                                     const nextFields = !isItemSelected
                                       ? { name: true, catalogs: false, image: false }
                                       : { ...current, name: nextVal };
@@ -1013,7 +1101,6 @@ export function ImportMergeDialog({ open, onOpenChange, initialJson, initialFile
                                   setItemFieldUpdates(p => {
                                     const current = p[itemKey] || { name: false, catalogs: false, image: false };
                                     const nextVal = !isItemSelected ? true : !current.catalogs;
-                                    // If activating on unselected item: reset all other fields so only this one is ON
                                     const nextFields = !isItemSelected
                                       ? { name: false, catalogs: true, image: false }
                                       : { ...current, catalogs: nextVal };
@@ -1037,7 +1124,6 @@ export function ImportMergeDialog({ open, onOpenChange, initialJson, initialFile
                                   setItemFieldUpdates(p => {
                                     const current = p[itemKey] || { name: false, catalogs: false, image: false };
                                     const nextVal = !isItemSelected ? true : !current.image;
-                                    // If activating on unselected item: reset all other fields so only this one is ON
                                     const nextFields = !isItemSelected
                                       ? { name: false, catalogs: false, image: true }
                                       : { ...current, image: nextVal };
@@ -1150,7 +1236,14 @@ export function ImportMergeDialog({ open, onOpenChange, initialJson, initialFile
         data-vaul-no-drag
       >
         {/* Header moved into scrollable area for better mobile utility */}
-        <div className="mb-8 max-sm:mb-4 max-sm:mt-4 p-0 bg-transparent shrink-0">
+        <div className="relative mb-8 max-sm:mb-4 max-sm:mt-4 p-0 bg-transparent shrink-0">
+          <button
+            onClick={() => onOpenChange(false)}
+            className="absolute right-0 top-0.5 p-2 rounded-xl bg-zinc-100 dark:bg-zinc-800/50 text-muted-foreground/60 hover:text-foreground active:scale-95 transition-all z-50"
+            aria-label="Close dialog"
+          >
+            <X className="size-4" />
+          </button>
           <DialogHeader className="space-y-6 max-sm:space-y-4 items-start text-left shrink-0">
             <div className="size-14 rounded-xl bg-primary/5 border border-primary/10 flex items-center justify-center text-primary max-sm:size-11">
               <CloudUpload className="size-7 max-sm:size-[1.375rem]" />

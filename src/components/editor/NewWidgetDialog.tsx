@@ -76,9 +76,10 @@ export function NewWidgetDialog({ isOpen, onOpenChange, onCreated }: NewWidgetDi
         <header className="relative space-y-5 items-start text-left">
           <button
             onClick={() => onOpenChange(false)}
-            className="absolute right-0 top-0.5 rounded-full p-2 text-muted-foreground/40 hover:bg-muted hover:text-foreground transition-all active:scale-95 sm:hidden"
+            className="absolute right-0 top-0.5 p-2 rounded-xl bg-zinc-100 dark:bg-zinc-800/50 text-muted-foreground/60 hover:text-foreground active:scale-95 transition-all"
+            aria-label="Close dialog"
           >
-            <X className="size-5" />
+            <X className="size-4" />
           </button>
           <div className="size-14 rounded-xl border border-primary/12 bg-primary/[0.06] flex items-center justify-center text-primary max-sm:size-11">
             <Sparkles className="size-7 max-sm:size-[1.375rem]" />

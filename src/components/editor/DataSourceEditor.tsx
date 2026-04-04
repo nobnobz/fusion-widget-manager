@@ -60,9 +60,7 @@ export function DataSourceEditor({
                       className="flex-1 min-w-0 flex items-center justify-between gap-3 px-3.5 h-11 rounded-xl border border-zinc-200/60 bg-white/70 dark:border-white/10 dark:bg-zinc-900/40 hover:border-primary/30 hover:bg-primary/[0.03] dark:hover:bg-primary/[0.05] transition-all text-left outline-none group/source shadow-[0_1px_2px_rgba(0,0,0,0.02)]"
                     >
                       <div className="flex items-center gap-3 min-w-0 flex-1">
-                        {isSynced ? (
-                          <div className="size-1.5 rounded-full bg-primary shrink-0 transition-all group-hover/source:scale-125" />
-                        ) : (
+                        {isSynced ? null : (
                           <AlertTriangle className="size-3 text-amber-500 shrink-0" />
                         )}
                         <div className="flex flex-col min-w-0 leading-tight justify-center">

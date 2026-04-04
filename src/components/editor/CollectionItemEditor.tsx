@@ -244,31 +244,30 @@ export const CollectionItemEditor = memo(function CollectionItemEditor({
     }
   };
 
-  const dataSourcesSectionContent = (
-    <div className="overflow-hidden rounded-xl border border-zinc-200/60 bg-white/50 dark:border-white/5 dark:bg-zinc-950/25">
-      <div className="p-3.5 space-y-3.5">
-        <div className="flex items-center justify-between">
-          <div className="text-[9px] font-black uppercase tracking-[0.16em] text-muted-foreground/45 flex items-center h-8">
-            Data Sources
-          </div>
-          <CatalogCombobox
-            options={manifestCatalogs}
-            value=""
-            disabledValues={selectedCatalogIds}
-            onChange={handleAddDataSource}
-            trigger={
-              <Button
-                variant="ghost"
-                size="sm"
-                className="group h-8 px-3.5 rounded-full border border-primary/20 bg-primary/10 text-[10px] font-black uppercase tracking-[0.16em] text-primary transition-all duration-300 hover:bg-primary/[0.18] hover:text-primary hover:scale-[1.02] active:scale-[0.98] dark:border-primary/25 dark:bg-primary/12 dark:hover:bg-primary/[0.18]"
-                disabled={!canAddAnotherDataSource}
-              >
-                <Plus className="size-3 mr-1.5 transition-colors group-hover:text-primary" /> New
-              </Button>
-            }
-          />
+  const catalogsSectionContent = (
+    <div className="flex flex-col gap-3.5">
+      <div className="flex items-center justify-between">
+        <div className="text-[10px] font-black uppercase tracking-[0.16em] text-muted-foreground/50 flex items-center h-8">
+          Catalogs
         </div>
-        <div className="space-y-1.5">
+        <CatalogCombobox
+          options={manifestCatalogs}
+          value=""
+          disabledValues={selectedCatalogIds}
+          onChange={handleAddDataSource}
+          trigger={
+            <Button
+              variant="ghost"
+              size="sm"
+              className="group h-8 px-4 rounded-full border border-primary/20 bg-primary/10 text-[10px] font-black uppercase tracking-[0.16em] text-primary transition-all duration-300 hover:bg-primary/[0.18] hover:text-primary hover:scale-[1.02] active:scale-[0.98] dark:border-primary/25 dark:bg-primary/12 dark:hover:bg-primary/[0.18]"
+              disabled={!canAddAnotherDataSource}
+            >
+              <Plus className="size-3.5 mr-1.5 transition-colors group-hover:text-primary" /> Add Catalog
+            </Button>
+          }
+        />
+      </div>
+      <div className="space-y-1.5">
         {item.dataSources.map((ds, dsIndex) => (
           isAIOMetadataDataSource(ds) ? (
             <DataSourceEditor
@@ -302,13 +301,12 @@ export const CollectionItemEditor = memo(function CollectionItemEditor({
           )
         ))}
         {item.dataSources.length === 0 && (
-          <div className="flex items-center justify-center py-5 border border-dashed border-border/10 rounded-xl bg-zinc-950/5">
-            <p className="text-[9px] font-black text-muted-foreground/20 uppercase tracking-[0.2em]">No sources configured</p>
+          <div className="flex items-center justify-center py-6 border border-dashed border-zinc-200/60 dark:border-white/10 rounded-2xl bg-zinc-100/30 dark:bg-zinc-950/20">
+            <p className="text-[10px] font-black text-muted-foreground/25 uppercase tracking-[0.2em]">No catalogs configured</p>
           </div>
         )}
       </div>
     </div>
-  </div>
   );
 
   return (
@@ -454,83 +452,78 @@ export const CollectionItemEditor = memo(function CollectionItemEditor({
                   <div className="p-4 max-sm:p-3 flex flex-col bg-white dark:bg-black/20 border-t border-border">
                     <div className="lg:grid lg:grid-cols-[1.2fr_1fr] lg:gap-6 p-4 max-sm:p-3 bg-zinc-50/50 dark:bg-white/[0.02] rounded-2xl border border-zinc-200/80 dark:border-white/5 backdrop-blur-sm">
                       {/* Left Column: Config */}
-                      <div className="flex flex-col gap-4">
-                        <div className="overflow-hidden rounded-xl border border-zinc-200/60 bg-white/50 dark:border-white/5 dark:bg-zinc-950/25">
-                          <div className="p-3.5">
-                            {/* Title & Toggle Section */}
-                            <div className="flex items-center justify-between mb-2.5">
-                              <div className="min-w-0 flex-1">
-                                <div className="text-[9px] font-black uppercase tracking-[0.16em] text-muted-foreground/45 mb-1 flex items-center">
-                                  Title
-                                </div>
-                                {isEditing ? (
-                                  <Input
-                                    autoFocus={!isMobile}
-                                    value={editName}
-                                    onChange={(e) => setEditName(e.target.value)}
-                                    onBlur={handleTitleSubmit}
-                                    onKeyDown={handleTitleKeyDown}
-                                    className="h-8 w-full rounded-lg border-zinc-200/60 bg-white px-2.5 text-sm font-bold tracking-tight text-foreground/88 focus:border-primary/40 focus-visible:ring-0 dark:border-white/10 dark:bg-zinc-900/60"
-                                  />
-                                ) : (
-                                  <div className="flex items-center gap-2 min-w-0">
-                                    <span className="truncate text-sm font-bold tracking-tight text-foreground/85 leading-tight">
-                                      {itemDisplayName}
-                                    </span>
-                                      {item.hideTitle && (
-                                        <span className="h-5 px-1.5 rounded-md bg-zinc-500/[0.07] text-[9px] font-black tracking-[0.14em] uppercase text-zinc-500/70 border border-zinc-500/[0.08] dark:bg-zinc-500/10 dark:text-zinc-500/80 dark:border-zinc-500/10 transition-colors shrink-0 flex items-center justify-center">
-                                          Hidden
-                                        </span>
-                                      )}
-                                  </div>
-                                )}
+                      <div className="flex flex-col gap-6">
+                        <div className="flex flex-col gap-3.5">
+                          {/* Title & Toggle Section */}
+                          <div className="flex items-center justify-between min-h-8">
+                            <div className="min-w-0 flex-1">
+                              <div className="text-[10px] font-black uppercase tracking-[0.16em] text-muted-foreground/50 mb-1.5 flex items-center">
+                                Title
                               </div>
-
-                              {!isEditing ? (
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="size-7 shrink-0 text-muted-foreground/40 hover:text-primary hover:bg-primary/5"
-                                  onClick={startEditing}
-                                  title="Rename item"
-                                >
-                                  <Pencil className="size-3" />
-                                </Button>
-                              ) : null}
-                            </div>
-
-                            <div className="flex items-center justify-between gap-3 pt-2.5 border-t border-zinc-100/60 dark:border-white/5">
-                              <div className="text-[10px] font-black uppercase tracking-[0.12em] text-foreground/70">
-                                Show item title
-                              </div>
-
-                              <button
-                                type="button"
-                                role="switch"
-                                aria-label="Hide item title"
-                                aria-checked={item.hideTitle}
-                                onClick={() => onUpdate({ hideTitle: !item.hideTitle })}
-                                className={cn(
-                                  "relative inline-flex h-5 w-9 shrink-0 items-center rounded-full border p-0.5 transition-all outline-none",
-                                  !item.hideTitle
-                                    ? "border-primary/20 bg-primary text-white"
-                                    : "border-zinc-200/85 bg-zinc-200/60 dark:border-white/10 dark:bg-white/10"
-                                )}
-                              >
-                                <span
-                                  className={cn(
-                                    "size-3.5 rounded-full bg-white shadow-sm transition-transform",
-                                    !item.hideTitle ? "translate-x-4" : "translate-x-0"
-                                  )}
+                              {isEditing ? (
+                                <Input
+                                  autoFocus={!isMobile}
+                                  value={editName}
+                                  onChange={(e) => setEditName(e.target.value)}
+                                  onBlur={handleTitleSubmit}
+                                  onKeyDown={handleTitleKeyDown}
+                                  className="h-10 w-full rounded-xl border-zinc-200/80 bg-white/70 px-3.5 text-[15px] sm:text-sm font-bold tracking-tight text-foreground focus:border-primary/40 focus-visible:ring-0 dark:border-white/10 dark:bg-zinc-900/40"
                                 />
-                              </button>
+                              ) : (
+                                <div className="flex items-center gap-2.5 min-w-0">
+                                  <span className="truncate text-[15px] sm:text-sm font-bold tracking-tight text-foreground/90 leading-tight">
+                                    {itemDisplayName}
+                                  </span>
+                                  {item.hideTitle && (
+                                    <span className="h-5 px-1.5 rounded-md bg-zinc-500/[0.07] text-[9px] font-black tracking-[0.14em] uppercase text-zinc-500/70 border border-zinc-500/[0.08] dark:bg-zinc-500/10 dark:text-zinc-500/80 dark:border-zinc-500/10 transition-colors shrink-0 flex items-center justify-center">
+                                      Hidden
+                                    </span>
+                                  )}
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="size-7 shrink-0 text-muted-foreground/35 hover:text-primary hover:bg-primary/5 transition-colors"
+                                    onClick={startEditing}
+                                    title="Rename item"
+                                  >
+                                    <Pencil className="size-3" />
+                                  </Button>
+                                </div>
+                              )}
                             </div>
+                          </div>
+
+                          <div className="flex items-center justify-between gap-3 p-3.5 rounded-2xl border border-zinc-200/60 bg-white/50 dark:border-white/5 dark:bg-zinc-950/25 shadow-sm">
+                            <div className="text-[10px] font-black uppercase tracking-[0.16em] text-foreground/60">
+                              Show Title in UI
+                            </div>
+
+                            <button
+                              type="button"
+                              role="switch"
+                              aria-label="Hide item title"
+                              aria-checked={item.hideTitle}
+                              onClick={() => onUpdate({ hideTitle: !item.hideTitle })}
+                              className={cn(
+                                "relative inline-flex h-5 w-9 shrink-0 items-center rounded-full border p-0.5 transition-all outline-none",
+                                !item.hideTitle
+                                  ? "border-primary/20 bg-primary text-white"
+                                  : "border-zinc-200/85 bg-zinc-200/60 dark:border-white/10 dark:bg-white/10"
+                              )}
+                            >
+                              <span
+                                className={cn(
+                                  "size-3.5 rounded-full bg-white shadow-sm transition-transform",
+                                  !item.hideTitle ? "translate-x-4" : "translate-x-0"
+                                )}
+                              />
+                            </button>
                           </div>
                         </div>
 
-                        {/* Data Sources: Left Column on Desktop */}
-                        <div className="hidden lg:block mt-2">
-                          {dataSourcesSectionContent}
+                        {/* Catalogs Section: Left Column on Desktop */}
+                        <div className="hidden lg:block">
+                          {catalogsSectionContent}
                         </div>
                       </div>
 
@@ -612,58 +605,55 @@ export const CollectionItemEditor = memo(function CollectionItemEditor({
                         </motion.div>
 
                         {/* Image URL Section */}
-                        <div className="w-full overflow-hidden rounded-xl border border-zinc-200/60 bg-white/50 dark:border-white/5 dark:bg-zinc-950/25">
-                          <div className="p-3.5">
-                            <div className="flex flex-col gap-2.5">
-                              <div className="flex items-center justify-between">
-                                <div className="text-[9px] font-black uppercase tracking-[0.16em] text-muted-foreground/45 flex items-center">
-                                  Image URL
-                                </div>
-                              </div>
+                        <div className="flex flex-col gap-3.5">
+                          <div className="text-[10px] font-black uppercase tracking-[0.16em] text-muted-foreground/50 flex items-center">
+                            Image URL
+                          </div>
+                          <div className="flex items-center gap-1.5 w-full">
+                            {item.backgroundImageURL ? (
                               <div className="flex items-center gap-1.5 w-full">
-                                {item.backgroundImageURL ? (
-                                  <div className="flex items-center gap-1.5 w-full">
                                 <div
                                   role="button"
                                   tabIndex={0}
                                   onMouseDown={(event) => { void handleCopy(event); }}
                                   className={cn(
-                                    "flex min-w-0 flex-1 items-center rounded-xl border px-3 h-9 transition-all active:scale-[0.98] cursor-pointer select-none",
+                                    "flex min-w-0 flex-1 items-center rounded-xl border px-3.5 h-11 transition-all active:scale-[0.98] cursor-pointer select-none shadow-sm",
                                     isCopied
                                       ? "border-emerald-500/20 bg-emerald-500/5 text-emerald-600 dark:text-emerald-400"
-                                      : "border-zinc-200/60 bg-white/70 text-foreground/70 hover:border-primary/30 hover:bg-primary/[0.04] dark:border-white/10 dark:bg-zinc-900/40"
+                                      : "border-zinc-200/80 bg-white/70 text-foreground/80 hover:border-primary/30 hover:bg-white dark:border-white/10 dark:bg-zinc-900/40 dark:hover:bg-zinc-900/60"
                                   )}
                                 >
-                                  <div className="flex w-full min-w-0 items-center justify-between gap-2">
-                                    <div className="flex min-w-0 items-center gap-2">
-                                      <span className="truncate text-[11px] font-bold tracking-tight">
+                                  <div className="flex w-full min-w-0 items-center justify-between gap-3">
+                                    <div className="flex min-w-0 items-center gap-3">
+                                      <span className="truncate text-base sm:text-sm font-bold tracking-tight">
                                         {isCopied ? "Link Copied!" : item.backgroundImageURL}
                                       </span>
                                     </div>
-                                    {isCopied ? <Check className="size-3 shrink-0" /> : <Copy className="size-3 shrink-0 opacity-40" />}
+                                    {isCopied ? <Check className="size-4 shrink-0" /> : <Copy className="size-3.5 shrink-0 opacity-30" />}
                                   </div>
                                 </div>
 
                                 <Button
                                   variant="ghost"
                                   size="icon"
-                                  className="size-9 rounded-xl border border-zinc-200/60 bg-white/70 text-destructive/40 hover:bg-destructive/10 hover:text-destructive active:scale-95 dark:border-white/10 dark:bg-zinc-900/40"
+                                  className="size-11 rounded-xl border border-zinc-200/80 bg-white/70 text-destructive/40 hover:bg-destructive/10 hover:text-destructive active:scale-95 dark:border-white/10 dark:bg-zinc-900/40 hover:border-destructive/20 transition-all shadow-sm"
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     handleClearBackgroundImageUrl();
                                   }}
                                   title="Clear URL"
                                 >
-                                  <Trash2 className="size-3.5" />
+                                  <Trash2 className="size-4" />
                                 </Button>
                               </div>
                             ) : (
-                              <div className="group/url-input flex h-9 min-w-0 flex-1 items-center gap-2.5 rounded-xl border border-zinc-200/60 bg-white/70 px-3 transition-all focus-within:border-primary/30 dark:border-white/10 dark:bg-zinc-900/40">
+                              <div className="group/url-input flex h-11 min-w-0 flex-1 items-center gap-3 rounded-xl border border-zinc-200/80 bg-white/70 px-4 transition-all focus-within:border-primary/40 focus-within:bg-white dark:border-white/10 dark:bg-zinc-900/40 dark:focus-within:bg-zinc-900/60 shadow-sm">
+                                <ImageIcon className="size-4 text-muted-foreground/30 group-focus-within/url-input:text-primary transition-colors" />
                                 <input
                                   autoFocus={!isMobile}
                                   ref={backgroundImageUrlInputRef}
                                   placeholder="Paste Image URL..."
-                                  className="h-full min-w-0 flex-1 bg-transparent border-none text-[11px] font-bold text-foreground/80 placeholder:text-muted-foreground/30 focus:outline-none focus:ring-0"
+                                  className="h-full min-w-0 flex-1 bg-transparent border-none text-base sm:text-sm font-bold text-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:ring-0"
                                   value={item.backgroundImageURL || ''}
                                   onChange={(e) => onUpdate({ backgroundImageURL: e.target.value })}
                                 />
@@ -671,12 +661,12 @@ export const CollectionItemEditor = memo(function CollectionItemEditor({
                             )}
                           </div>
                         </div>
-                      </div>
-                    </div>
 
-                        {/* Data Sources: Bottom on Mobile */}
+                        {/* Catalogs Section: Bottom on Mobile */}
                         <div className="lg:hidden">
-                          {dataSourcesSectionContent}
+                          <div className="mt-4 pt-4 border-t border-zinc-100 dark:border-white/5">
+                            {catalogsSectionContent}
+                          </div>
                         </div>
                       </motion.div>
                     </div>

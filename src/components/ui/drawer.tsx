@@ -48,8 +48,8 @@ const DrawerContent = React.forwardRef<
       )}
       {...props}
     >
-      <div className="flex-none pt-4 pb-3 border-b border-border/5">
-        <div className="mx-auto h-1.5 w-12 rounded-full bg-muted/40" />
+      <div className="flex-none pt-3 pb-4 border-b border-border/5">
+        <div className="mx-auto h-1.5 w-14 rounded-full bg-zinc-300 dark:bg-zinc-700/60 shadow-sm" />
       </div>
       {children}
     </DrawerPrimitive.Content>

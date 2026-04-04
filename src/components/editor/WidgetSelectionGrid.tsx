@@ -4,7 +4,7 @@ import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useStat
 import { useConfig } from '@/context/ConfigContext';
 import { SortableWidget } from './SortableWidget';
 import { Button } from '@/components/ui/button';
-import { Plus, Download, Check, Copy, Search, FileJson2, FileCode, Trash2, RotateCcw, Globe, AlertTriangle, Pencil, Info, ChevronRight, SlidersHorizontal, WandSparkles, XCircle } from 'lucide-react';
+import { Plus, Download, Check, Copy, Search, FileJson2, FileCode, Trash2, RotateCcw, Globe, AlertTriangle, Pencil, Info, ChevronRight, SlidersHorizontal, WandSparkles, XCircle, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   Dialog,
@@ -1546,7 +1546,7 @@ function WidgetSelectionGridComponent({
 
 
   const ExportContent = (
-    <div className="flex h-[87dvh] sm:h-[700px] flex-col w-full overflow-hidden bg-background">
+    <div className="flex h-[87dvh] sm:h-[700px] flex-col w-full overflow-hidden bg-transparent">
       <div className="flex-1 overflow-y-auto w-full custom-scrollbar p-8 pt-10 max-sm:px-5 max-sm:pt-6">
         <DialogHeader className="space-y-6 items-start text-left w-full overflow-x-hidden">
           <div className="size-14 shrink-0 rounded-xl bg-primary/5 border border-primary/10 flex items-center justify-center text-primary max-sm:size-12">
@@ -1902,14 +1902,14 @@ function WidgetSelectionGridComponent({
             setCopiedAction(null);
           }}
         >
-          <DrawerContent className="bg-background border-border/40 max-h-[94dvh] rounded-t-[2.5rem]">
+          <DrawerContent className="max-h-[94dvh] bg-white dark:bg-zinc-950 border-zinc-200/80 dark:border-white/10 rounded-t-[2.5rem]">
             <div className="absolute right-4 top-4 z-50">
               <DrawerClose asChild>
                 <button
                   type="button"
-                  className="flex h-10 w-10 items-center justify-center rounded-full bg-muted/30 hover:bg-muted/50 backdrop-blur-md transition-all active:scale-95"
+                  className="p-2 rounded-xl bg-zinc-100 dark:bg-zinc-800/50 text-muted-foreground/60 hover:text-foreground active:scale-95 transition-all"
                 >
-                  <Plus className="size-6 rotate-45 text-muted-foreground" />
+                  <X className="size-4" />
                   <span className="sr-only">Close</span>
                 </button>
               </DrawerClose>
@@ -1932,7 +1932,7 @@ function WidgetSelectionGridComponent({
           setCopiedAction(null);
         }}
       >
-        <DialogContent className="flex sm:max-h-[92vh] max-w-2xl flex-col overflow-hidden rounded-3xl border border-border/40 bg-background/95 p-0  backdrop-blur-2xl">
+        <DialogContent className="flex sm:max-h-[92vh] max-w-2xl flex-col overflow-hidden rounded-3xl border border-zinc-200/80 bg-white/95 p-0 backdrop-blur-2xl dark:border-white/12 dark:bg-zinc-950/93 shadow-2xl">
           <DialogTitle className="sr-only">Export JSON</DialogTitle>
           {ExportContent}
         </DialogContent>
@@ -2007,14 +2007,14 @@ function WidgetSelectionGridComponent({
     if (isMobile) {
       return (
         <Drawer open={isUmeSortingDialogOpen} onOpenChange={setIsUmeSortingDialogOpen}>
-          <DrawerContent className="bg-background border-border/40 max-h-[94dvh] rounded-t-[2.5rem]">
+          <DrawerContent className="max-h-[94dvh] bg-white dark:bg-zinc-950 border-zinc-200/80 dark:border-white/10 rounded-t-[2.5rem]">
             <div className="absolute right-4 top-4 z-50">
               <DrawerClose asChild>
                 <button
                   type="button"
-                  className="flex h-10 w-10 items-center justify-center rounded-full bg-muted/30 hover:bg-muted/50 backdrop-blur-md transition-all active:scale-95"
+                  className="p-2 rounded-xl bg-zinc-100 dark:bg-zinc-800/50 text-muted-foreground/60 hover:text-foreground active:scale-95 transition-all"
                 >
-                  <Plus className="size-6 rotate-45 text-muted-foreground" />
+                  <X className="size-4" />
                   <span className="sr-only">Close</span>
                 </button>
               </DrawerClose>
@@ -2032,7 +2032,7 @@ function WidgetSelectionGridComponent({
     }
     return (
       <Dialog open={isUmeSortingDialogOpen} onOpenChange={setIsUmeSortingDialogOpen}>
-        <DialogContent className="max-h-[85vh] max-w-4xl overflow-hidden rounded-3xl border border-border/40 bg-background/95 p-0 backdrop-blur-2xl">
+        <DialogContent className="max-h-[85vh] max-w-4xl overflow-hidden rounded-3xl border border-zinc-200/80 bg-white/95 p-0 backdrop-blur-2xl dark:border-white/12 dark:bg-zinc-950/93 shadow-2xl">
           <div className="max-h-[85vh] overflow-y-auto px-8 pb-8 pt-10 custom-scrollbar">
             {UmeSortingContent}
           </div>

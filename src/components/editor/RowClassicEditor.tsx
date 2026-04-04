@@ -41,7 +41,7 @@ export function RowClassicEditor({ widget }: { widget: RowClassicWidget }) {
         <div className="space-y-4">
           <div className="flex items-center justify-between border-b border-border/40 pb-3 mb-2">
             <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-zinc-400 flex items-center gap-2">
-              <Layers className="size-3.5" /> {isNativeTrakt ? 'Native Trakt Source' : 'Data Sources'}
+              <Layers className="size-3.5" /> {isNativeTrakt ? 'Native Trakt Source' : 'Catalogs'}
             </h4>
           </div>
           

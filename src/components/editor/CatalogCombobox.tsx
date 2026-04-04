@@ -191,7 +191,7 @@ export function CatalogCombobox({
         <DrawerTrigger asChild>
           {renderTrigger()}
         </DrawerTrigger>
-        <DrawerContent className="max-h-[92dvh] border-none bg-background/80 backdrop-blur-3xl dark:bg-zinc-950/80">
+        <DrawerContent className="max-h-[94dvh] bg-white dark:bg-zinc-950 border-zinc-200/80 dark:border-white/10 rounded-t-[2.5rem]">
           <DrawerHeader className="relative border-b border-border/5 pb-5 pt-2">
             <div className="flex items-center justify-between">
               <DrawerTitle className="text-[17px] font-black tracking-tight mx-auto text-foreground/90">Select Catalog</DrawerTitle>
@@ -216,7 +216,7 @@ export function CatalogCombobox({
       animate={{ opacity: 1, scale: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.98, y: -4 }}
       transition={{ duration: 0.2, ease: "easeOut" }}
-      className="bg-popover border border-border flex flex-col h-full overflow-hidden rounded-3xl w-full sm:max-h-[380px]"
+      className="bg-white/95 dark:bg-zinc-950/95 backdrop-blur-xl border border-zinc-200/80 dark:border-white/10 flex flex-col h-full overflow-hidden rounded-3xl w-full sm:max-h-[380px] shadow-2xl"
       onClick={(e) => e.stopPropagation()}
     >
       {renderContentItems()}
