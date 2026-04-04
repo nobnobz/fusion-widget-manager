@@ -73,7 +73,7 @@ export function TraktSourceCard({
         <Button
           variant="ghost"
           size="icon"
-          className="absolute right-3 top-3 size-8 max-sm:size-9 rounded-lg max-sm:rounded-xl border border-border/40 bg-background/55 text-destructive/55  transition-all hover:border-destructive/20 hover:bg-destructive/10 hover:text-destructive dark:border-white/10 dark:bg-zinc-950/70 dark:text-destructive/75 dark:hover:border-destructive/20 dark:hover:bg-destructive/12"
+          className="absolute right-3 top-3 size-8 max-sm:size-7 rounded-lg max-sm:rounded-xl border border-border/40 bg-background/55 text-destructive/55  transition-all hover:border-destructive/20 hover:bg-destructive/10 hover:text-destructive dark:border-white/10 dark:bg-zinc-950/70 dark:text-destructive/75 dark:hover:border-destructive/20 dark:hover:bg-destructive/12"
           onClick={onDelete}
           title={deleteTitle}
         >

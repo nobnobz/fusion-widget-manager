@@ -565,7 +565,8 @@ export function MainEditor() {
     setShowNewWidgetDialog(true);
   };
 
-  const onWidgetCreated = useCallback(() => {
+  const onWidgetCreated = useCallback((id: string) => {
+    setExpandedWidgetId(id);
     setShowManifestModal(true);
   }, []);
 
@@ -993,7 +994,7 @@ export function MainEditor() {
         initialJson={initialImportJson}
         initialFileName={initialImportFileName}
       />
-      <NewWidgetDialog isOpen={showNewWidgetDialog} onOpenChange={setShowNewWidgetDialog} onCreated={() => onWidgetCreated()} />
+      <NewWidgetDialog isOpen={showNewWidgetDialog} onOpenChange={setShowNewWidgetDialog} onCreated={(id) => onWidgetCreated(id)} />
       <ConfirmationDialog
         isOpen={showRestartConfirm} onOpenChange={setShowRestartConfirm} title="Clear & Restart?" variant="danger" description="Are you sure you want to start over? All current widgets will be permanently cleared from temporary storage." confirmText="START OVER"
         onConfirm={() => { clearConfig(); setView('welcome'); }}

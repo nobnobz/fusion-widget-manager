@@ -640,7 +640,7 @@ export function CollectionItemEditor({
                           }
                         />
                       </div>
-                      <div className="p-4 max-sm:p-3 bg-white dark:bg-muted/10 rounded-2xl max-sm:rounded-[1.15rem] border border-zinc-200 dark:border-border/40  backdrop-blur-sm space-y-2">
+                      <div className="p-4 max-sm:p-2.5 bg-white dark:bg-muted/10 rounded-2xl max-sm:rounded-[1.15rem] border border-zinc-200 dark:border-border/40  backdrop-blur-sm space-y-2 max-sm:space-y-1.5">
                         {item.dataSources.map((ds, dsIndex) => (
                           isAIOMetadataDataSource(ds) ? (
                             <DataSourceEditor 

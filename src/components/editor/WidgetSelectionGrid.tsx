@@ -14,7 +14,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { NewWidgetDialog } from './NewWidgetDialog';
+
 import { ImportMergeDialog } from './ImportMergeDialog';
 import { ConfirmationDialog } from '@/components/ui/ConfirmationDialog';
 import { useMobile } from '@/hooks/use-mobile';
@@ -194,7 +194,6 @@ function WidgetSelectionGridComponent({
 
 
   const [showPreview, setShowPreview] = useState(false);
-  const [showNewWidgetDialog, setShowNewWidgetDialog] = useState(false);
   const [showImportMergeDialog, setShowImportMergeDialog] = useState(false);
   const [showTrash, setShowTrash] = useState(false);
   const [copiedAction, setCopiedAction] = useState<'preview' | 'missing-catalogs' | 'full-aiometadata' | null>(null);
@@ -971,11 +970,7 @@ function WidgetSelectionGridComponent({
   }, [itemTrash, restoreCollectionItem, restoreWidget, trash, widgets]);
 
   const handleCreateWidget = () => {
-    if (onNewWidget) {
-      onNewWidget();
-      return;
-    }
-    setShowNewWidgetDialog(true);
+    onNewWidget?.();
   };
 
   const setCopyFeedback = (action: 'preview' | 'missing-catalogs' | 'full-aiometadata') => {
@@ -1212,7 +1207,10 @@ function WidgetSelectionGridComponent({
             </div>
           </div>
           <div className="flex items-center gap-2 shrink-0">
-            <span className="rounded-full bg-background/80 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-muted-foreground/70">
+            <span className={cn(
+              "rounded-full bg-background/80 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-muted-foreground/70",
+              widgetSelectableCatalogKeys.length === 0 && "max-sm:hidden"
+            )}>
               {widgetSelectableCatalogKeys.length > 0
                 ? `${widgetSelectedCount}/${widgetSelectableCatalogKeys.length}`
                 : 'Synced'}
@@ -1326,7 +1324,7 @@ function WidgetSelectionGridComponent({
                         </button>
                       )}
                       {disabled && (
-                        <span className="rounded-full bg-muted px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-muted-foreground/70">
+                        <span className="hidden sm:inline-flex rounded-full bg-muted px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-muted-foreground/70">
                           Synced
                         </span>
                       )}
@@ -1378,7 +1376,10 @@ function WidgetSelectionGridComponent({
                               </div>
                             </div>
                             <div className="flex items-center gap-1.5 shrink-0">
-                              <span className="rounded-full bg-background/60 px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.12em] text-muted-foreground/60">
+                              <span className={cn(
+                                "rounded-full bg-background/60 px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.12em] text-muted-foreground/60",
+                                itemSelectableCatalogKeys.length === 0 && "max-sm:hidden"
+                              )}>
                                 {itemSelectableCatalogKeys.length > 0
                                   ? `${itemSelectedCount}/${itemSelectableCatalogKeys.length}`
                                   : 'Synced'}
@@ -1485,7 +1486,7 @@ function WidgetSelectionGridComponent({
                                           </button>
                                         )}
                                         {disabled && (
-                                          <span className="rounded-full bg-muted/50 px-2 py-0.5 text-[8px] font-black uppercase tracking-[0.1em] text-muted-foreground/50">
+                                          <span className="hidden sm:inline-flex rounded-full bg-muted/50 px-2 py-0.5 text-[8px] font-black uppercase tracking-[0.1em] text-muted-foreground/50">
                                             Synced
                                           </span>
                                         )}
@@ -2258,7 +2259,7 @@ function WidgetSelectionGridComponent({
                 <Input
                   data-testid="widget-search"
                   placeholder="Search for widgets..."
-                  className="w-full h-11 max-sm:h-10 pl-11 max-sm:pl-9 pr-10 rounded-xl border-none bg-transparent shadow-none focus-visible:ring-0 text-sm sm:text-[13px] font-medium tracking-tight placeholder:text-muted-foreground/40"
+                  className="w-full h-11 max-sm:h-10 pl-11 max-sm:pl-9 pr-10 rounded-xl border-none bg-transparent shadow-none focus-visible:ring-0 text-base sm:text-[13px] font-medium tracking-tight placeholder:text-muted-foreground/40"
                   value={searchQuery}
                   onChange={(event) => setSearchQuery(event.target.value)}
                 />
@@ -2277,7 +2278,7 @@ function WidgetSelectionGridComponent({
                 <Button
                   data-testid="new-widget-button"
                   onClick={handleCreateWidget}
-                  className={cn(editorActionButtonClass, "h-11 max-sm:h-11 px-6 max-sm:px-4 text-[10px] bg-primary hover:bg-primary/95 text-primary-foreground flex-1 md:flex-none order-1")}
+                  className={cn(editorActionButtonClass, "h-11 max-sm:h-11 px-6 max-sm:px-4 text-[10px] bg-primary hover:bg-primary/95 text-primary-foreground flex-1 md:flex-none order-1 transition-all active:scale-95 shadow-lg shadow-primary/20")}
                 >
                   <Plus className="size-4 mr-2" />
                   <span className="sm:hidden">New</span>
@@ -2378,11 +2379,7 @@ function WidgetSelectionGridComponent({
         )}
       </main>
 
-      <NewWidgetDialog
-        isOpen={showNewWidgetDialog}
-        onOpenChange={setShowNewWidgetDialog}
-        onCreated={(id) => handleExpandedWidgetChange(id)}
-      />
+
 
       {renderExportDialog()}
       {renderUmeSortingDialog()}
