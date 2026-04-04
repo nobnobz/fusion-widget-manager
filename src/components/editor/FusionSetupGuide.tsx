@@ -147,7 +147,7 @@ export function FusionSetupGuide({
 
             <FusionGuidePanel title="First-time setup" icon={CheckCircle2}>
               <p className="text-[14px] leading-6 text-foreground/76">
-                Import the full UME AIOMetadata template for a fresh setup. Use catalogs-only updates later.
+                Import the full UME AIOMetadata template for a fresh setup. Make sure your API keys (including MDBList) are configured correctly.
               </p>
               <div className="mt-3">
                 {aiometadataTemplate ? (
