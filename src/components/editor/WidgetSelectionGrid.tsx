@@ -1937,6 +1937,25 @@ function WidgetSelectionGridComponent({
               <DrawerDescription>Export your widgets or catalogs to JSON format.</DrawerDescription>
             </DrawerHeader>
             {ExportContent}
+            {renderUmeSortingDialog()}
+            <AIOMetadataExportSettingsDialog
+              key={
+                aiometadataSettingsTarget
+                  ? `${isAiometadataSettingsDialogOpen ? 'open' : 'closed'}:${aiometadataSettingsTarget.kind}:${aiometadataSettingsTarget.kind === 'widget'
+                    ? aiometadataSettingsTarget.widgetId
+                    : aiometadataSettingsTarget.kind === 'item'
+                      ? aiometadataSettingsTarget.itemKey
+                      : aiometadataSettingsTarget.catalogKey}`
+                  : 'aiometadata-settings-dialog'
+              }
+              open={isAiometadataSettingsDialogOpen}
+              onOpenChange={setIsAiometadataSettingsDialogOpen}
+              target={aiometadataSettingsTarget}
+              inventory={aiometadataInventory}
+              overrides={sanitizedAiometadataExportOverrides}
+              resolvedValues={aiometadataDialogResolvedValues}
+              onSave={setAiometadataExportOverrides}
+            />
           </DrawerContent>
         </Drawer>
       );
@@ -1953,6 +1972,25 @@ function WidgetSelectionGridComponent({
         <DialogContent className="flex sm:max-h-[92vh] max-w-2xl flex-col overflow-hidden rounded-3xl border border-zinc-200/80 bg-white/95 p-0 backdrop-blur-2xl dark:border-white/12 dark:bg-zinc-950/93 shadow-2xl">
           <DialogTitle className="sr-only">Export JSON</DialogTitle>
           {ExportContent}
+          {renderUmeSortingDialog()}
+          <AIOMetadataExportSettingsDialog
+            key={
+              aiometadataSettingsTarget
+                ? `${isAiometadataSettingsDialogOpen ? 'open' : 'closed'}:${aiometadataSettingsTarget.kind}:${aiometadataSettingsTarget.kind === 'widget'
+                  ? aiometadataSettingsTarget.widgetId
+                  : aiometadataSettingsTarget.kind === 'item'
+                    ? aiometadataSettingsTarget.itemKey
+                    : aiometadataSettingsTarget.catalogKey}`
+                : 'aiometadata-settings-dialog'
+            }
+            open={isAiometadataSettingsDialogOpen}
+            onOpenChange={setIsAiometadataSettingsDialogOpen}
+            target={aiometadataSettingsTarget}
+            inventory={aiometadataInventory}
+            overrides={sanitizedAiometadataExportOverrides}
+            resolvedValues={aiometadataDialogResolvedValues}
+            onSave={setAiometadataExportOverrides}
+          />
         </DialogContent>
       </Dialog>
     );
@@ -2434,26 +2472,6 @@ function WidgetSelectionGridComponent({
 
 
       {renderExportDialog()}
-      {renderUmeSortingDialog()}
-
-      <AIOMetadataExportSettingsDialog
-        key={
-          aiometadataSettingsTarget
-            ? `${isAiometadataSettingsDialogOpen ? 'open' : 'closed'}:${aiometadataSettingsTarget.kind}:${aiometadataSettingsTarget.kind === 'widget'
-              ? aiometadataSettingsTarget.widgetId
-              : aiometadataSettingsTarget.kind === 'item'
-                ? aiometadataSettingsTarget.itemKey
-                : aiometadataSettingsTarget.catalogKey}`
-            : 'aiometadata-settings-dialog'
-        }
-        open={isAiometadataSettingsDialogOpen}
-        onOpenChange={setIsAiometadataSettingsDialogOpen}
-        target={aiometadataSettingsTarget}
-        inventory={aiometadataInventory}
-        overrides={sanitizedAiometadataExportOverrides}
-        resolvedValues={aiometadataDialogResolvedValues}
-        onSave={setAiometadataExportOverrides}
-      />
       <ImportMergeDialog
         open={showImportMergeDialog}
         onOpenChange={setShowImportMergeDialog}

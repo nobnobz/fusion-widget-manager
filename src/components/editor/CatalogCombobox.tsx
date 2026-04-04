@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Search, ChevronDown, Check, X, AlertTriangle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import * as Popover from '@radix-ui/react-popover';
@@ -12,6 +12,7 @@ import {
 import { cn } from '@/lib/utils';
 import { AIOMetadataCatalog } from '@/lib/types/widget';
 import { findCatalog } from '@/lib/config-utils';
+import { useMobile } from '@/hooks/use-mobile';
 
 interface CatalogComboboxProps {
   options: AIOMetadataCatalog[];
@@ -34,16 +35,9 @@ export function CatalogCombobox({
 }: CatalogComboboxProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState('');
-  const [isMobile, setIsMobile] = useState(false);
+  const isMobile = useMobile();
   
   const disabledValueSet = useMemo(() => new Set(disabledValues), [disabledValues]);
-
-  useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 640);
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
 
   const selectedOption = useMemo(() => {
     return findCatalog(options, value);
@@ -88,12 +82,12 @@ export function CatalogCombobox({
   };
 
   const renderContentItems = () => (
-    <div className="flex flex-col h-full overflow-hidden">
+    <div className="flex flex-col h-full bg-white dark:bg-zinc-950 overflow-hidden shadow-2xl">
       <div className={cn(
         "px-6 py-4 border-b border-border/5 flex items-center gap-3 bg-zinc-50/50 dark:bg-white/[0.02]",
         isMobile ? "pt-2 pb-6" : "bg-muted/30"
       )}>
-        <div className="flex-1 flex items-center gap-2.5 px-3.5 h-10 rounded-2xl bg-zinc-100/50 dark:bg-white/5 border border-zinc-200/50 dark:border-white/5 focus-within:border-primary/30 transition-all">
+        <div className="flex-1 flex items-center gap-2.5 px-3.5 h-10 rounded-2xl bg-zinc-200/20 dark:bg-white/5 border border-zinc-200/50 dark:border-white/5 focus-within:border-primary/30 transition-all">
           <Search className="size-4 text-muted-foreground/35" />
           <input
             autoFocus={!isMobile}
@@ -124,8 +118,8 @@ export function CatalogCombobox({
 
       <div 
         className={cn(
-          "flex-1 min-h-0 overflow-y-auto custom-scrollbar scrollbar-thin",
-          isMobile ? "px-4 pt-2 pb-14 max-h-[60dvh]" : "p-2 max-h-[min(400px,calc(100vh-200px))]"
+          "flex-1 min-h-0 overflow-y-auto custom-scrollbar scrollbar-thin bg-white dark:bg-zinc-950",
+          isMobile ? "px-4 pt-2 pb-14 max-h-[60dvh]" : "p-2 max-h-[min(400px,calc(100vh-250px))]"
         )}
         onWheel={(e) => e.stopPropagation()}
       >
@@ -208,7 +202,7 @@ export function CatalogCombobox({
       animate={{ opacity: 1, scale: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.98, y: -4 }}
       transition={{ duration: 0.2, ease: "easeOut" }}
-      className="bg-white/95 dark:bg-zinc-950/95 backdrop-blur-xl border border-zinc-200/80 dark:border-white/10 flex flex-col h-full overflow-hidden rounded-3xl w-full sm:max-h-[380px] shadow-2xl"
+      className="bg-white dark:bg-zinc-950 border border-zinc-200/80 dark:border-white/10 flex flex-col h-full overflow-hidden rounded-3xl w-full max-h-[400px] shadow-2xl"
       onClick={(e) => e.stopPropagation()}
     >
       {renderContentItems()}
