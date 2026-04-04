@@ -1144,7 +1144,9 @@ export function ImportMergeDialog({ open, onOpenChange, initialJson, initialFile
   // ─── Render ──────────────────────────────────────────────────────────────────
 
   const Content = (
-    <div className="overflow-y-auto w-full p-8 pt-10 max-sm:p-4 max-sm:pt-6">
+    <div className="flex flex-col h-full w-full overflow-hidden">
+      <div className="p-8 pt-10 max-sm:p-5 max-sm:pt-8 bg-zinc-50/10 dark:bg-zinc-900/10 border-b border-border/5 shrink-0">
+
 
           <DialogHeader className="space-y-6 items-start text-left shrink-0">
             <div className="size-14 rounded-xl bg-primary/5 border border-primary/10 flex items-center justify-center text-primary  max-sm:size-12">
@@ -1160,9 +1162,10 @@ export function ImportMergeDialog({ open, onOpenChange, initialJson, initialFile
                   : 'Bring widgets from different Fusion or Omni setups into your current configuration.'}
               </DialogDescription>
             </div>
-          </DialogHeader>
+      </div>
 
-          <div className="space-y-4 py-6 max-sm:py-5 w-full min-w-0">
+      <div className="flex-1 overflow-y-auto px-8 max-sm:px-5 py-6 max-sm:py-5 w-full min-w-0 min-h-0 overscroll-contain">
+        <div className="space-y-4 w-full">
 
             {/* ── Input Step ── */}
             {step === 'input' && (
@@ -1549,94 +1552,95 @@ export function ImportMergeDialog({ open, onOpenChange, initialJson, initialFile
                 )}
               </div>
             )}
-          </div>
+        </div>
+      </div>
 
-          <div className="mt-auto pt-4 shrink-0 transition-all border-t border-border/20 w-full flex flex-col gap-4">
-            
-            {/* Contextual Footer Settings */}
-            {step === 'review' && selectedCount > 0 && (
-              <div className="mb-4 max-sm:mb-2 w-full px-1 fade-in">
-                <div className="grid gap-3">
-                  <button 
-                    onClick={() => setKeepExistingCatalogs(v => !v)}
-                    data-testid="import-keep-catalogs-toggle"
-                    className={cn(
-                      "w-full flex items-center justify-between p-4 max-sm:p-2.5 rounded-3xl border transition-all duration-300 text-left cursor-pointer group",
-                      (keepExistingCatalogs && catalogState !== 'none')
-                        ? "border-primary/30 bg-white dark:bg-white/[0.05] ring-1 ring-primary/10 shadow-sm shadow-primary/5"
-                        : "bg-white/95 backdrop-blur-sm dark:bg-white/[0.02] border-border/10 hover:bg-white dark:hover:bg-white/[0.05] hover:border-border/40 hover:shadow-md"
-                    )}
-                  >
-                    <div className="flex flex-col gap-1 pr-6 max-sm:pr-2">
-                      <span className="text-[17px] max-sm:text-[15px] font-black tracking-tight text-foreground transition-colors">
-                        Do not overwrite existing catalogs
-                      </span>
-                      {!isMobile && (
-                        <span className="text-[13.5px] max-sm:text-[12px] font-medium text-muted-foreground/70 leading-relaxed">
-                          Prevent imported widgets from overwriting your configured catalogs.
-                        </span>
-                      )}
-                    </div>
-                    
-                    <div className={cn(
-                      "w-11 h-6 rounded-full relative transition-colors duration-400 shrink-0 ",
-                      (keepExistingCatalogs && catalogState !== 'none') 
-                        ? "bg-primary" 
-                        : "bg-accent-foreground/15 group-hover:bg-accent-foreground/20"
-                    )}>
-                      <div className={cn(
-                        "absolute top-[2px] left-[2px] size-5 bg-background rounded-full  transition-transform duration-400 ease-[cubic-bezier(0.34,1.56,0.64,1)]",
-                        (keepExistingCatalogs && catalogState !== 'none') ? "translate-x-5" : "translate-x-0"
-                      )} />
-                    </div>
-                  </button>
+      <div className="mt-auto px-8 py-6 max-sm:px-5 max-sm:py-5 shrink-0 transition-all border-t border-border/20 w-full flex flex-col gap-4 bg-background">
+        {/* Contextual Footer Settings */}
+        {step === 'review' && selectedCount > 0 && (
+          <div className="mb-1 w-full fade-in">
+            <div className="grid gap-3">
+              <button 
+                onClick={() => setKeepExistingCatalogs(v => !v)}
+                data-testid="import-keep-catalogs-toggle"
+                className={cn(
+                  "w-full flex items-center justify-between p-4 max-sm:p-2.5 rounded-3xl border transition-all duration-300 text-left cursor-pointer group",
+                  (keepExistingCatalogs && catalogState !== 'none')
+                    ? "border-primary/30 bg-white dark:bg-white/[0.05] ring-1 ring-primary/10 shadow-sm shadow-primary/5"
+                    : "bg-white/95 backdrop-blur-sm dark:bg-white/[0.02] border-border/10 hover:bg-white dark:hover:bg-white/[0.05] hover:border-border/40 hover:shadow-md"
+                )}
+              >
+                <div className="flex flex-col gap-1 pr-6 max-sm:pr-2">
+                  <span className="text-[17px] max-sm:text-[15px] font-black tracking-tight text-foreground transition-colors">
+                    Do not overwrite existing catalogs
+                  </span>
+                  {!isMobile && (
+                    <span className="text-[13.5px] max-sm:text-[12px] font-medium text-muted-foreground/70 leading-relaxed">
+                      Prevent imported widgets from overwriting your configured catalogs.
+                    </span>
+                  )}
                 </div>
-              </div>
-            )}
-
-            <DialogFooter className="flex-col sm:flex-row gap-3 sm:gap-4 w-full">
-              <DialogClose asChild>
-                <Button 
-                  variant="ghost" 
-                  data-testid="import-dialog-close"
-                  className={cn(editorActionButtonClass, editorFooterSecondaryButtonClass, "w-full sm:flex-1 tracking-[0.12em] text-[12px]")}
-                >
-                  {step === 'success' ? 'Close' : 'Cancel'}
-                </Button>
-              </DialogClose>
-              
-              {step === 'input' && jsonInput.trim() && (
-                <Button
-                  onClick={() => parseAndReview(jsonInput, fileName || 'Import Payload')}
-                  className={cn(editorActionButtonClass, editorFooterPrimaryButtonClass, "w-full sm:flex-1 tracking-[0.12em] text-[12px] px-8")}
-                >
-                  <span className="flex items-center justify-center gap-2">
-                    Review Configuration
-                    <ArrowRight className="size-3.5" />
-                  </span>
-                </Button>
-              )}
-
-              {step === 'review' && (
-                <Button
-                  onClick={executeImport}
-                  disabled={selectedCount === 0}
-                  data-testid="merge-widgets-submit"
-                  className={cn(editorActionButtonClass, editorFooterPrimaryButtonClass, "w-full sm:flex-1 tracking-[0.12em] text-[12px] px-8 disabled:opacity-50 disabled:cursor-not-allowed")}
-                >
-                  <span className="flex items-center justify-center gap-2">
-                    Import
-                    {selectedCount > 0 && (
-                      <span className="bg-background/25 rounded-md px-1.5 py-0.5 text-[10px] font-black">
-                        {selectedCount}
-                      </span>
-                    )}
-                  </span>
-                </Button>
-              )}
-            </DialogFooter>
+                
+                <div className={cn(
+                  "w-11 h-6 rounded-full relative transition-colors duration-400 shrink-0 ",
+                  (keepExistingCatalogs && catalogState !== 'none') 
+                    ? "bg-primary" 
+                    : "bg-accent-foreground/15 group-hover:bg-accent-foreground/20"
+                )}>
+                  <div className={cn(
+                    "absolute top-[2px] left-[2px] size-5 bg-background rounded-full  transition-transform duration-400 ease-[cubic-bezier(0.34,1.56,0.64,1)]",
+                    (keepExistingCatalogs && catalogState !== 'none') ? "translate-x-5" : "translate-x-0"
+                  )} />
+                </div>
+              </button>
+            </div>
           </div>
+        )}
+
+        <DialogFooter className="flex-col sm:flex-row gap-3 sm:gap-4 w-full">
+          <DialogClose asChild>
+            <Button 
+              variant="ghost" 
+              data-testid="import-dialog-close"
+              className={cn(editorActionButtonClass, editorFooterSecondaryButtonClass, "w-full sm:flex-1 tracking-[0.12em] text-[12px]")}
+            >
+              {step === 'success' ? 'Close' : 'Cancel'}
+            </Button>
+          </DialogClose>
+          
+          {step === 'input' && jsonInput.trim() && (
+            <Button
+              onClick={() => parseAndReview(jsonInput, fileName || 'Import Payload')}
+              className={cn(editorActionButtonClass, editorFooterPrimaryButtonClass, "w-full sm:flex-1 tracking-[0.12em] text-[12px] px-8")}
+            >
+              <span className="flex items-center justify-center gap-2">
+                Review Configuration
+                <ArrowRight className="size-3.5" />
+              </span>
+            </Button>
+          )}
+
+          {step === 'review' && (
+            <Button
+              onClick={executeImport}
+              disabled={selectedCount === 0}
+              data-testid="merge-widgets-submit"
+              className={cn(editorActionButtonClass, editorFooterPrimaryButtonClass, "w-full sm:flex-1 tracking-[0.12em] text-[12px] px-8 disabled:opacity-50 disabled:cursor-not-allowed")}
+            >
+              <span className="flex items-center justify-center gap-2">
+                Import
+                {selectedCount > 0 && (
+                  <span className="bg-background/25 rounded-md px-1.5 py-0.5 text-[10px] font-black">
+                    {selectedCount}
+                  </span>
+                )}
+              </span>
+            </Button>
+          )}
+        </DialogFooter>
+      </div>
     </div>
+  );
   );
 
   if (isMobile) {
@@ -1645,9 +1649,11 @@ export function ImportMergeDialog({ open, onOpenChange, initialJson, initialFile
         onOpenChange(val);
         if (!val) resetState();
       }}>
-        <DrawerContent className="bg-background border-border/40">
+        <DrawerContent className="bg-background border-border/40 max-h-[94dvh] flex flex-col overflow-hidden rounded-t-[2.5rem]">
           <DrawerTitle className="sr-only">{step === 'review' ? 'Review Import' : 'Import from Template'}</DrawerTitle>
-          {Content}
+          <div className="flex-1 overflow-hidden">
+            {Content}
+          </div>
         </DrawerContent>
       </Drawer>
     )

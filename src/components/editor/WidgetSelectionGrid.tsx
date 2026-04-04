@@ -1758,19 +1758,18 @@ function WidgetSelectionGridComponent({
                   </div>
                 </div>
 
-                <div className="w-full max-w-md rounded-[2.5rem] border border-zinc-200/60 dark:border-white/[0.08] bg-zinc-100/50 dark:bg-white/[0.02] p-6 shadow-2xl shadow-black/10 dark:shadow-black/40 flex flex-col min-h-0">
+                <div className="min-h-0 rounded-3xl border border-zinc-200/50 dark:border-white/5 bg-zinc-100/30 dark:bg-muted/20 p-5 mt-4 w-full">
                   <div className="flex items-center justify-between mb-4 px-1">
-                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/40 dark:text-muted-foreground/40">JSON Preview</span>
+                    <span className="text-[10px] font-black uppercase tracking-[0.16em] text-foreground/40 dark:text-foreground/55">JSON Preview</span>
                     <span className="text-[10px] font-bold text-primary/60 dark:text-primary/60 tabular-nums">{previewContent.length} bytes</span>
                   </div>
-                  <div className="h-80 max-sm:h-52 w-full overflow-hidden relative rounded-2xl bg-zinc-900 dark:bg-zinc-950 border border-white/[0.03] shadow-inner">
+                  <div className="relative group overflow-hidden rounded-2xl border border-zinc-200/50 dark:border-white/5 bg-zinc-900 dark:bg-zinc-950 px-5 py-6 max-sm:p-4 shadow-xl shadow-black/10">
                     <textarea
                       readOnly
                       data-testid="export-preview-textarea"
                       value={previewContent}
-                      className="w-full h-full bg-transparent p-4 border-none text-[10px] font-mono leading-relaxed text-zinc-400/90 resize-none overflow-y-auto custom-scrollbar"
+                      className="h-80 max-sm:h-52 w-full resize-none overflow-y-auto border-none bg-transparent font-mono text-base max-sm:text-[10px] sm:text-xs leading-relaxed text-zinc-400 focus-visible:ring-0 custom-scrollbar"
                     />
-                    <div className="absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-zinc-900 dark:from-zinc-950 via-zinc-900/40 dark:via-zinc-950/40 to-transparent pointer-events-none" />
                   </div>
                 </div>
               </div>

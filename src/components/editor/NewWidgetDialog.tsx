@@ -193,7 +193,7 @@ export function NewWidgetDialog({ isOpen, onOpenChange, onCreated }: NewWidgetDi
   if (isMobile) {
     return (
       <Drawer open={isOpen} onOpenChange={onOpenChange}>
-        <DrawerContent className="border-zinc-200/80 bg-zinc-50/96 dark:border-white/12 dark:bg-zinc-950/93">
+        <DrawerContent className="max-h-[94dvh] border-border/40 bg-background rounded-t-[2.5rem]">
           <DrawerTitle className="sr-only">Add New Widget</DrawerTitle>
           {Content}
         </DrawerContent>
