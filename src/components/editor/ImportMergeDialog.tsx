@@ -1224,28 +1224,28 @@ export function ImportMergeDialog({ open, onOpenChange, initialJson, initialFile
                     onChange={handleTextareaChange}
                     placeholder={isDragging ? "Drop your JSON file here!" : "Paste your Fusion widget export, a JSON URL, or drag & drop a file here..."}
                     className={cn(
-                      "min-h-[240px] max-sm:min-h-[140px] pb-10 max-sm:pb-6 transition-all leading-relaxed placeholder:text-muted-foreground/40 placeholder:font-bold placeholder:font-sans resize-none overflow-hidden",
-                      "font-mono text-base sm:text-sm bg-zinc-50/50 dark:bg-muted/10 border-2 border-dashed border-zinc-200 dark:border-border/60 rounded-3xl max-sm:rounded-2xl px-10 max-sm:px-6",
-                    "hover:bg-zinc-50/50 dark:hover:bg-muted/15 hover:border-primary/30",
-                    "focus:border-primary/40 focus:bg-white dark:focus:bg-muted/20 focus-visible:ring-primary/10 focus-visible:ring-offset-0 text-left",
-                    !jsonInput.trim() ? "pt-40 max-sm:pt-24" : "pt-10 max-sm:pt-6",
-                    isDragging && "border-primary bg-primary/5 ring-8 ring-primary/5  scale-[1.01]"
-                  )}
+                      "min-h-[220px] max-sm:min-h-[120px] pb-10 max-sm:pb-6 transition-all leading-relaxed placeholder:text-muted-foreground/60 placeholder:font-sans resize-none overflow-hidden backdrop-blur-sm",
+                      "font-mono text-base sm:text-xs bg-white/40 dark:bg-white/[0.03] border-2 border-dashed border-zinc-200/80 dark:border-white/10 rounded-3xl max-sm:rounded-2xl px-10 max-sm:px-6 text-center focus:text-left focus-visible:ring-primary/20",
+                      "hover:bg-white/60 dark:hover:bg-white/[0.05] hover:border-primary/40",
+                      "focus:border-primary/40 focus:bg-white dark:focus:bg-white/[0.06] focus-visible:ring-primary/10 focus-visible:ring-offset-0 text-left placeholder:text-center focus:placeholder:text-left",
+                      !jsonInput.trim() ? "pt-32 max-sm:pt-28" : "pt-10 max-sm:pt-6",
+                      isDragging && "border-primary bg-primary/5 ring-8 ring-primary/5 scale-[1.01]"
+                    )}
                 />
                 
                 {/* Initial Instruction Layer (Icon) */}
                 <div className={cn(
-                  "absolute top-12 max-sm:top-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2.5 transition-all duration-500 pointer-events-none w-full",
+                  "absolute top-8 max-sm:top-5 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2.5 transition-all duration-500 pointer-events-none w-full",
                   jsonInput.trim() || isDragging ? "opacity-0 scale-90 -translate-y-4" : "opacity-100 scale-100"
                 )}>
 
                   {/* Main Upload Icon */}
                   <button
                     onClick={() => fileInputRef.current?.click()}
-                    className="size-14 rounded-full bg-background border border-border/40  flex items-center justify-center text-muted-foreground hover:scale-110 hover:text-primary hover:border-primary/40 hover:bg-primary/5 transition-all duration-300 pointer-events-auto group/icon"
+                    className="size-14 rounded-full bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 flex items-center justify-center text-muted-foreground shadow-sm hover:scale-110 hover:text-primary hover:border-primary/40 group/icon pointer-events-auto transition-all duration-500 ease-out"
                   >
-                    <UploadCloud className="size-5.5 relative z-10" />
-                    <div className="absolute inset-0 rounded-full bg-primary/5 scale-0 group-hover/icon:scale-125 transition-transform duration-300" />
+                    <UploadCloud className="size-6 relative z-10" />
+                    <div className="absolute inset-0 rounded-full bg-primary/5 scale-0 group-hover/icon:scale-125 transition-transform duration-500" />
                   </button>
                 </div>
 
