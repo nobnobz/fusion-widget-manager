@@ -160,57 +160,7 @@ export function ImportMergeDialog({ open, onOpenChange, initialJson, initialFile
     setParsedImportIssues([]);
   };
 
-  const processFile = (file: File) => {
-    if (!file.name.endsWith('.json')) {
-      setError('Please provide a valid .json file.');
-      return;
-    }
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const text = e.target?.result as string;
-      setJsonInput(text);
-      setFileName(file.name);
-      setError(null);
-      parseAndReview(text, file.name);
-    };
-    reader.onerror = () => setError('Failed to read file.');
-    reader.readAsText(file);
-  };
-
-  const handleDragOver = (e: DragEvent<HTMLElement>) => { e.preventDefault(); setIsDragging(true); };
-  const handleDragLeave = (e: DragEvent<HTMLElement>) => { e.preventDefault(); setIsDragging(false); };
-  const handleDrop = (e: DragEvent<HTMLElement>) => {
-    e.preventDefault(); setIsDragging(false);
-    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) processFile(e.dataTransfer.files[0]);
-  };
-  const handleFileInput = (e: ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) processFile(e.target.files[0]);
-  };
-  const handleTextareaChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
-    const text = e.target.value;
-    setJsonInput(text);
-    setFileName('Pasted JSON');
-    if (error) setError(null);
-
-    // Auto-Review if it looks like a valid Fusion JSON
-    const trimmed = text.trim();
-    if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
-      try {
-        const parsed = JSON.parse(trimmed);
-        const isOmni = parsed?.includedKeys && Array.isArray(parsed?.values);
-        const isFusion = parsed?.exportType === 'fusionWidgets' && Array.isArray(parsed?.widgets);
-        const isAiometadata = isAiometadataImportPayload(parsed);
-        
-        if (isOmni || isFusion || isAiometadata) {
-          parseAndReview(text, 'Auto-detected Payload');
-        }
-      } catch {
-        // Not a complete JSON yet, ignore
-      }
-    }
-  };
-
-  const parseAndReview = (input: string, sourceName?: string) => {
+  const parseAndReview = useCallback((input: string, sourceName?: string) => {
     try {
       let config = JSON.parse(input);
       if (config?.includedKeys && config?.values) config = convertOmniToFusion(config);
@@ -258,7 +208,65 @@ export function ImportMergeDialog({ open, onOpenChange, initialJson, initialFile
       setSuccess(null);
       setStep('input');
     }
+  }, [manifestCatalogs, manifestUrl, replacePlaceholder, widgets]);
+
+  const processFile = (file: File) => {
+    if (!file.name.endsWith('.json')) {
+      setError('Please provide a valid .json file.');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const text = e.target?.result as string;
+      setJsonInput(text);
+      setFileName(file.name);
+      setError(null);
+      parseAndReview(text, file.name);
+    };
+    reader.onerror = () => setError('Failed to read file.');
+    reader.readAsText(file);
   };
+
+  const handleDragOver = (e: DragEvent<HTMLElement>) => { e.preventDefault(); setIsDragging(true); };
+  const handleDragLeave = (e: DragEvent<HTMLElement>) => { e.preventDefault(); setIsDragging(false); };
+  const handleDrop = (e: DragEvent<HTMLElement>) => {
+    e.preventDefault(); setIsDragging(false);
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) processFile(e.dataTransfer.files[0]);
+  };
+  const handleFileInput = (e: ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) processFile(e.target.files[0]);
+  };
+  const handleTextareaChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
+    const text = e.target.value;
+    setJsonInput(text);
+    setFileName('Pasted JSON');
+    if (error) setError(null);
+  };
+
+  // Debounced Auto-Review logic
+  useEffect(() => {
+    if (step !== 'input' || !jsonInput.trim()) return;
+
+    const text = jsonInput.trim();
+    if (!(text.startsWith('{') && text.endsWith('}'))) return;
+
+    const timer = setTimeout(() => {
+      try {
+        const parsed = JSON.parse(text);
+        const isOmni = parsed?.includedKeys && Array.isArray(parsed?.values);
+        const isFusion = parsed?.exportType === 'fusionWidgets' && Array.isArray(parsed?.widgets);
+        const isAiometadata = isAiometadataImportPayload(parsed);
+
+        if (isOmni || isFusion || isAiometadata) {
+          parseAndReview(jsonInput, 'Auto-detected Payload');
+        }
+      } catch {
+        // Not a complete JSON yet, ignore
+      }
+    }, 800); // 800ms debounce
+
+    return () => clearTimeout(timer);
+  }, [jsonInput, step, parseAndReview]);
 
   const toggleWidgetSelection = (widgetId: string, checked: boolean) => {
     setWidgetSelected(prev => ({ ...prev, [widgetId]: checked }));
@@ -1189,7 +1197,7 @@ export function ImportMergeDialog({ open, onOpenChange, initialJson, initialFile
                                           )}
                                         </div>
                                       </>
-                                    ) : (
+                                    ) : ds.sourceType === 'trakt-native' ? (
                                       <>
                                         <p className="text-[12px] font-bold text-foreground truncate leading-tight">
                                           {ds.payload.listName || ds.payload.listSlug}
@@ -1200,6 +1208,20 @@ export function ImportMergeDialog({ open, onOpenChange, initialJson, initialFile
                                           </span>
                                           <span className="text-[10px] text-muted-foreground/50 truncate max-w-[140px] font-medium">
                                             {ds.payload.listSlug}
+                                          </span>
+                                        </div>
+                                      </>
+                                    ) : (
+                                      <>
+                                        <p className="text-[12px] font-bold text-foreground truncate leading-tight">
+                                          AniList {ds.payload.catalogType}
+                                        </p>
+                                        <div className="flex items-center gap-1.5 mt-1.5">
+                                          <span className="px-1.5 py-0.5 rounded-md bg-sky-500/[0.07] text-[9px] font-black tracking-widest uppercase text-sky-600/70 border border-sky-500/[0.08] dark:bg-sky-500/10 dark:text-sky-500/80 dark:border-sky-500/10 transition-colors">
+                                            anilist
+                                          </span>
+                                          <span className="text-[10px] text-muted-foreground/50 truncate max-w-[140px] font-medium">
+                                            limit {ds.payload.limit}
                                           </span>
                                         </div>
                                       </>
@@ -1316,7 +1338,7 @@ export function ImportMergeDialog({ open, onOpenChange, initialJson, initialFile
                     onChange={handleTextareaChange}
                     placeholder={isDragging ? "Drop your JSON file here!" : "Paste your Fusion widget export, a JSON URL, or drag & drop a file here..."}
                     className={cn(
-                      "min-h-[220px] max-sm:min-h-[120px] pb-10 max-sm:pb-6 transition-all leading-relaxed placeholder:text-muted-foreground/60 placeholder:font-sans resize-none overflow-hidden backdrop-blur-sm",
+                      "min-h-[220px] max-sm:min-h-[120px] pb-10 max-sm:pb-6 transition-all leading-relaxed placeholder:text-muted-foreground/60 placeholder:font-sans resize-y overflow-y-auto backdrop-blur-sm",
                       "font-mono text-base sm:text-xs bg-white/40 dark:bg-white/[0.03] border-2 border-dashed border-zinc-200/80 dark:border-white/10 rounded-3xl max-sm:rounded-2xl px-10 max-sm:px-6 text-center focus:text-left focus-visible:ring-primary/20",
                       "hover:bg-white/60 dark:hover:bg-white/[0.05] hover:border-primary/40",
                       "focus:border-primary/40 focus:bg-white dark:focus:bg-white/[0.06] focus-visible:ring-primary/10 focus-visible:ring-offset-0 text-left placeholder:text-center focus:placeholder:text-left",

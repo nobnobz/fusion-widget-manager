@@ -431,3 +431,41 @@ test('getDefaultAiometadataExportOverrides applies letterboxd-group rules from U
 
   assert.equal(resolved.letterboxd?.cacheTTL, 43200);
 });
+
+test('getDefaultAiometadataExportOverrides applies studio-group rules from UME template', () => {
+  const inventory = collectAiometadataExportInventory(
+    buildConfig([
+      buildCollectionWidget({
+        title: 'Studios',
+        dataSource: {
+          kind: 'collection',
+          payload: {
+            items: [
+              {
+                id: 'studio-item',
+                name: 'Warner Bros.',
+                hideTitle: false,
+                layout: 'Poster',
+                backgroundImageURL: '',
+                dataSources: [buildAioDataSource({ catalogId: 'movie::mdblist.wb', catalogType: 'movie' })],
+              },
+            ],
+          },
+        },
+      }),
+    ])
+  );
+
+  const overrides = getDefaultAiometadataExportOverrides({
+    inventory,
+    currentOverrides: EMPTY_AIOMETADATA_EXPORT_OVERRIDE_STATE,
+  });
+
+  const widget = inventory.widgets[0];
+  assert.ok(widget);
+  assert.deepEqual(overrides.widgets[widget.id]?.mdblist, {
+    sort: 'imdbpopular',
+    order: 'asc',
+    cacheTTL: 43200,
+  });
+});

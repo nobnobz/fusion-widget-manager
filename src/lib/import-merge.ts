@@ -86,7 +86,7 @@ export function getCatalogFingerprint(dataSources: WidgetDataSource[]): string {
       .map((ds) =>
         ds.sourceType === 'aiometadata'
           ? `${ds.payload.addonId}::${ds.payload.catalogId}::${ds.payload.catalogType}`
-          : `trakt::${ds.payload.listSlug}`
+          : `${ds.sourceType}::${JSON.stringify(ds.payload)}`
       )
       .sort()
   );

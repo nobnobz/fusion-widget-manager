@@ -104,6 +104,7 @@ test('records search, editing, and drag timings on the stress fixture', async ({
   const searchDuration = Date.now() - searchStart;
 
   await page.getByTestId('widget-card-' + firstWidget.id).click();
+  await page.getByRole('button', { name: 'Rename' }).click();
   const titleInput = page.getByLabel('Widget Title').first();
   const typingStart = Date.now();
   await titleInput.fill(`${firstWidget.title} Tuned`);

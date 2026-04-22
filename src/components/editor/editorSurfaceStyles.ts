@@ -12,3 +12,6 @@ export const editorFooterSecondaryButtonClass =
 
 export const editorFooterPrimaryButtonClass =
   "h-11 bg-primary/[0.96] text-[11px] shadow-[0_12px_28px_-18px_rgba(37,99,235,0.58)] hover:bg-primary/90 hover:shadow-[0_14px_30px_-18px_rgba(37,99,235,0.62)] disabled:shadow-none disabled:active:scale-100";
+
+export const editorDisconnectIconButtonClass =
+  "size-8 shrink-0 rounded-xl text-muted-foreground/45 transition-colors hover:bg-destructive/10 hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-destructive/20 dark:text-muted-foreground/42";

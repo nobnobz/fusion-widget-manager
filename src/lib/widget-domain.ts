@@ -4,6 +4,7 @@ import type {
   CollectionItem,
   FusionWidgetsConfig,
   NativeTraktDataSource,
+  NativeAnilistDataSource,
   TrashCollectionItemEntry,
   TrashWidgetEntry,
   Widget,
@@ -183,6 +184,12 @@ export function isNativeTraktDataSource(
   return dataSource?.kind === 'traktList';
 }
 
+export function isNativeAnilistDataSource(
+  dataSource: Pick<WidgetDataSource, 'kind'> | undefined | null
+): dataSource is NativeAnilistDataSource {
+  return dataSource?.kind === 'anilistCatalog';
+}
+
 export function getPrimaryDataSource(item: Pick<CollectionItem, 'dataSources'>): WidgetDataSource | undefined {
   return item.dataSources[0];
 }
@@ -266,6 +273,20 @@ function normalizeDataSource(
     };
   }
 
+  if (source.kind === 'anilistCatalog') {
+    const payload = asRecord(source.payload ?? {}, `${path}.payload`);
+    return {
+      sourceType: 'anilist-native',
+      kind: 'anilistCatalog',
+      payload: {
+        catalogType: asOptionalString(payload.catalogType) || 'CURRENT',
+        limit: typeof payload.limit === 'number' && Number.isFinite(payload.limit)
+          ? Math.max(1, Math.floor(payload.limit))
+          : 20,
+      },
+    };
+  }
+
   if (source.kind !== 'addonCatalog') {
     if (options.allowPartialImport) {
       issues.push({
@@ -276,7 +297,7 @@ function normalizeDataSource(
       });
       return null;
     }
-    throw new Error(`${path}.kind must be "addonCatalog" or "traktList".`);
+    throw new Error(`${path}.kind must be "addonCatalog", "traktList", or "anilistCatalog".`);
   }
 
   const payload = asRecord(source.payload ?? {}, `${path}.payload`);

@@ -2,13 +2,19 @@ import { spawn } from 'node:child_process';
 
 export function runCommand(command, args, options = {}) {
   return new Promise((resolve, reject) => {
+    const env = {
+      ...process.env,
+      ...options.env,
+    };
+
+    if ('FORCE_COLOR' in env && 'NO_COLOR' in env) {
+      delete env.NO_COLOR;
+    }
+
     const child = spawn(command, args, {
       cwd: process.cwd(),
       stdio: 'inherit',
-      env: {
-        ...process.env,
-        ...options.env,
-      },
+      env,
       shell: false,
     });
 

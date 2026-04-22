@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { useConfig } from '@/context/ConfigContext';
 import { WidgetSelectionGrid } from './WidgetSelectionGrid';
 import { ManifestModal } from './ManifestModal';
@@ -15,13 +15,14 @@ import {
   Github,
   Heart,
   ChevronDown,
+  ChevronRight,
   Book,
   ClipboardPaste,
   UploadCloud,
+  Sparkles,
 } from 'lucide-react';
 import Image from 'next/image';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
-import { useTheme } from 'next-themes';
 import { ManagerSwitcher } from '@/components/ui/ManagerSwitcher';
 import { EditorMobileHeader } from './EditorMobileHeader';
 import {
@@ -33,6 +34,8 @@ import LogoImage from '@/../public/branding/clown_logo.png';
 import { convertAiometadataImportToFusion, isAiometadataImportPayload } from '@/lib/aiometadata-import';
 import { convertOmniToFusion } from '@/lib/omni-converter';
 import { shouldPromptForAiometadataManifestSetup } from '@/lib/aiometadata-manifest-detection';
+import { fetchAnimatedCoverPacks, type AnimatedCoverPack } from '@/lib/animated-covers';
+import { fetchRegexPatternPacks, type RegexPatternPack, type RegexPatternVisualFilter } from '@/lib/regex-patterns';
 
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
@@ -59,6 +62,10 @@ import { copyTextToClipboard, downloadTextFile } from '@/lib/browser-transfer';
 import { getErrorMessage } from '@/lib/error-utils';
 
 type JsonRecord = Record<string, unknown>;
+type IncludedPackFocusTarget = {
+  section: 'animated' | 'regex';
+  packSlug: string;
+};
 
 function isHttpUrlInput(value: string): boolean {
   if (!value || /\s/.test(value)) {
@@ -88,6 +95,81 @@ function isFusionWidgetsPayload(value: unknown): value is JsonRecord & { widgets
 function parseJsonText(input: string): unknown {
   return JSON.parse(input) as unknown;
 }
+
+function normalizeFusionPreviewColor(value: string | undefined, fallback: string): string {
+  if (!value || !value.trim()) {
+    return fallback;
+  }
+
+  const trimmed = value.trim();
+  if (/^#[\da-fA-F]{3}$/.test(trimmed) || /^#[\da-fA-F]{6}$/.test(trimmed)) {
+    return trimmed;
+  }
+
+  if (/^#[\da-fA-F]{8}$/.test(trimmed)) {
+    const hex = trimmed.slice(1);
+    return `#${hex.slice(2)}${hex.slice(0, 2)}`;
+  }
+
+  return fallback;
+}
+
+function buildIncludedRegexChipStyle(filter: NonNullable<RegexPatternPack['filters']>[number]): CSSProperties {
+  const tagStyle = String(filter.tagStyle || '').toLowerCase();
+  const isFilled = tagStyle.includes('filled');
+  const hasBorder = tagStyle.includes('border');
+  const isBorderOnly = hasBorder && !isFilled;
+
+  return {
+    backgroundColor: isBorderOnly ? 'transparent' : normalizeFusionPreviewColor(filter.tagColor, isFilled ? '#1F2937' : 'transparent'),
+    borderColor: hasBorder
+      ? normalizeFusionPreviewColor(filter.borderColor || filter.textColor || filter.tagColor, '#D4D4D8')
+      : 'transparent',
+    borderStyle: 'solid',
+    borderWidth: hasBorder ? (tagStyle.includes('filled and bordered') ? 1.5 : 1.25) : 0,
+    color: normalizeFusionPreviewColor(filter.textColor, isFilled ? '#FFFFFF' : '#D4D4D8'),
+  };
+}
+
+function buildRegexPreviewFilters(pack: RegexPatternPack | null | undefined): RegexPatternVisualFilter[] {
+  const filters = pack?.filters ?? [];
+  if (filters.length === 0) {
+    return [];
+  }
+
+  const used = new Set<string>();
+  const pickByName = (pattern: RegExp) => {
+    const matches = filters.filter((filter) => pattern.test(filter.name));
+    matches.forEach((filter) => used.add(filter.id));
+    return matches;
+  };
+
+  const preferredGroups = [
+    ...pickByName(/remux/i).slice(0, 4),
+    ...pickByName(/blu-?ray/i).slice(0, 4),
+    ...pickByName(/\bweb\b/i).slice(0, 4),
+  ];
+
+  const mixedSelection = preferredGroups.length > 0
+    ? preferredGroups
+    : filters;
+
+  const remaining = filters.filter((filter) => !used.has(filter.id));
+  return [...mixedSelection, ...remaining].slice(0, 12);
+}
+
+const INCLUDED_PACK_CARDS = [
+  {
+    section: 'Animated Covers',
+    title: 'Apple TV Preview Pack',
+    focusTarget: { section: 'animated', packSlug: 'decades' } satisfies IncludedPackFocusTarget,
+  },
+  {
+    section: 'Regex Patterns',
+    title: 'Fusion Filter Tags',
+    focusTarget: { section: 'regex', packSlug: 'classic' } satisfies IncludedPackFocusTarget,
+  },
+] as const;
 
 export function MainEditor() {
   const [showManifestModal, setShowManifestModal] = useState(false);
@@ -128,6 +210,9 @@ export function MainEditor() {
   const [initialImportJson, setInitialImportJson] = useState<string | undefined>(undefined);
   const [initialImportFileName, setInitialImportFileName] = useState<string | undefined>(undefined);
   const [isImportFocused, setIsImportFocused] = useState(false);
+  const [includedPackFocus, setIncludedPackFocus] = useState<{ section: 'animated' | 'regex'; packSlug: string; nonce: number } | null>(null);
+  const [includedAnimatedPack, setIncludedAnimatedPack] = useState<AnimatedCoverPack | null>(null);
+  const [includedRegexPack, setIncludedRegexPack] = useState<RegexPatternPack | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const omniFileInputRef = useRef<HTMLInputElement>(null);
@@ -290,7 +375,7 @@ export function MainEditor() {
 
   // Fetch UME templates on mount
   useEffect(() => {
-    const fetchTemplates = async () => {
+  const fetchTemplates = async () => {
       setIsLoadingTemplates(true);
       try {
         const repository = await fetchTemplateRepository();
@@ -307,6 +392,37 @@ export function MainEditor() {
     };
 
     fetchTemplates();
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadIncludedPacks = async () => {
+      try {
+        const [animatedPacks, regexPacks] = await Promise.all([
+          fetchAnimatedCoverPacks(),
+          fetchRegexPatternPacks(),
+        ]);
+
+        if (cancelled) {
+          return;
+        }
+
+        setIncludedAnimatedPack(animatedPacks.find((pack) => pack.slug === 'decades') ?? animatedPacks[0] ?? null);
+        setIncludedRegexPack(regexPacks.find((pack) => pack.slug === 'classic') ?? regexPacks[0] ?? null);
+      } catch {
+        if (!cancelled) {
+          setIncludedAnimatedPack(null);
+          setIncludedRegexPack(null);
+        }
+      }
+    };
+
+    void loadIncludedPacks();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const handleLoadTemplate = async () => {
@@ -539,6 +655,14 @@ export function MainEditor() {
   };
 
   const selectedTemplate = githubTemplates.find((template) => template.rawUrl === selectedTemplateUrl);
+  const handleOpenIncludedPack = useCallback((target: IncludedPackFocusTarget) => {
+    setIncludedPackFocus((previous) => ({
+      section: target.section,
+      packSlug: target.packSlug,
+      nonce: (previous?.nonce ?? 0) + 1,
+    }));
+    setView('selection');
+  }, [setView]);
 
   const openManifestModal = useCallback(() => {
     setShowManifestModal(true);
@@ -670,7 +794,7 @@ export function MainEditor() {
                 placeholder={isImportFocused ? "Paste JSON payload here..." : (isDraggingFile ? "Drop your JSON file here!" : "Paste your Fusion widget export, a JSON URL, or drag & drop a file here...")}
                 className={cn(
                   "min-h-[200px] max-sm:min-h-[100px] pt-32 max-sm:pt-28 pb-10 max-sm:pb-5 font-mono text-base sm:text-xs",
-                  "bg-white/40 dark:bg-white/[0.03] border-2 border-dashed border-zinc-200/80 dark:border-white/10 rounded-3xl max-sm:rounded-2xl px-10 max-sm:px-5 text-center focus:text-left focus-visible:ring-primary/20 transition-all leading-relaxed placeholder:text-center focus:placeholder:text-left placeholder:text-muted-foreground/60 placeholder:font-sans resize-none overflow-hidden backdrop-blur-sm",
+                  "bg-white/40 dark:bg-white/[0.03] border-2 border-dashed border-zinc-200/80 dark:border-white/10 rounded-3xl max-sm:rounded-2xl px-10 max-sm:px-5 text-center focus:text-left focus-visible:ring-primary/20 transition-all leading-relaxed placeholder:text-center focus:placeholder:text-left placeholder:text-muted-foreground/60 placeholder:font-sans resize-y overflow-y-auto backdrop-blur-sm",
                   "hover:bg-white/60 dark:hover:bg-white/[0.05] hover:border-primary/40",
                   isDraggingFile && "border-primary bg-primary/5 ring-8 ring-primary/5 scale-[1.01]"
                 )}
@@ -776,10 +900,117 @@ export function MainEditor() {
                 <Button variant="ghost" className="h-12 w-full max-w-sm rounded-2xl border border-dashed border-border/60 bg-muted/10" disabled={isLoadingTemplates}>
                   <Github className={cn("size-4 text-primary/80", isLoadingTemplates && "animate-pulse")} />
                   <span className="text-[10px] font-bold uppercase tracking-widest text-primary/80 ml-2">
-                    {isLoadingTemplates ? 'Fetching Templates...' : 'UME Templates - No templates available'}
+                      {isLoadingTemplates ? 'Fetching Templates...' : 'UME Templates - No templates available'}
                   </span>
                 </Button>
               )}
+            </div>
+
+            <div className="flex justify-center pt-2 w-full">
+              <div className="w-full max-w-[38.5rem] rounded-3xl border border-zinc-200/80 dark:border-white/10 bg-white/40 dark:bg-zinc-950/20 px-3 py-3 sm:px-4 sm:py-4 backdrop-blur-sm space-y-2 sm:space-y-3">
+                <div className="flex items-center justify-between px-1">
+                  <div className="flex items-center gap-2 opacity-75">
+                    <Sparkles className="size-3.5 text-primary" />
+                    <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
+                      Included Packs
+                    </span>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 sm:gap-2">
+                  {INCLUDED_PACK_CARDS.map((pack) => {
+                    const animatedPreviewUrl = includedAnimatedPack?.previewImageUrl
+                      ?? 'https://i.postimg.cc/L5jnk6gT/20s.png';
+                    const regexPreviewFilters = buildRegexPreviewFilters(includedRegexPack);
+                    return (
+                      <article
+                        key={`${pack.section}-${pack.title}`}
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => handleOpenIncludedPack(pack.focusTarget)}
+                        onKeyDown={(event) => {
+                          if (event.key === 'Enter' || event.key === ' ') {
+                            event.preventDefault();
+                            handleOpenIncludedPack(pack.focusTarget);
+                          }
+                        }}
+                        className="group flex h-full cursor-pointer flex-col rounded-2xl border border-zinc-200/70 bg-white/70 p-3.5 text-left shadow-sm shadow-black/[0.02] transition-all hover:border-primary/20 hover:bg-white/85 hover:shadow-md hover:shadow-black/[0.03] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 max-sm:p-3 dark:border-white/10 dark:bg-zinc-950/20 dark:hover:bg-zinc-950/30"
+                      >
+                        <div className="flex-1 space-y-2 max-sm:space-y-1.5">
+                          <p className="text-[10px] font-black uppercase tracking-[0.16em] text-primary/75">
+                            {pack.section}
+                          </p>
+                          <h3 className="text-sm font-bold tracking-tight text-foreground sm:text-[15px]">
+                            {pack.title}
+                          </h3>
+                          {pack.section === 'Animated Covers' ? (
+                            <div className="mt-2 mx-0.5 overflow-hidden rounded-2xl border border-border/50 bg-black/90 sm:mx-1 max-sm:mt-1.5 max-sm:mx-0">
+                              <div
+                                className="relative aspect-[16/10.35] bg-no-repeat bg-center max-sm:aspect-[16/10.7]"
+                                style={{
+                                  backgroundImage: `url('${animatedPreviewUrl}')`,
+                                  backgroundColor: '#c86a17',
+                                  backgroundSize: '108% auto',
+                                  backgroundPosition: 'center 56%',
+                                }}
+                              >
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/15 to-black/25" />
+                                <div className="absolute inset-x-0 bottom-0 p-2.5 sm:p-3">
+                                  <p className="text-[10px] font-black uppercase tracking-[0.16em] text-white/92">
+                                    {includedAnimatedPack?.title?.replace(/animated/i, '').trim() || 'Decades'}
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="mt-2 overflow-hidden rounded-2xl border border-border/50 bg-background/80 p-2 sm:p-2.5">
+                              <div className="px-1">
+                                <p className="text-[10px] font-black uppercase tracking-[0.16em] text-primary/75">
+                                  {includedRegexPack?.title || 'Classic'}
+                                </p>
+                              </div>
+                              <div className="mt-1.5 grid grid-cols-4 gap-[0.375rem] sm:gap-1.25">
+                                {Array.from({ length: 12 }, (_, index) => regexPreviewFilters[index] ?? null).map((previewFilter, index) => {
+                                  const hasFilter = Boolean(previewFilter);
+                                  const label = hasFilter ? previewFilter.name : ['#1', '#2', '#3', '★', '@1', '@2', '@3', '@4', '@5', '@6', '@7', '@8'][index] ?? '';
+                                  return (
+                                    <div
+                                      key={hasFilter ? previewFilter.id : `fallback-${index}`}
+                                      className="inline-flex h-7 w-full items-center justify-center rounded-[0.6rem] border px-1 py-0.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] sm:h-9 sm:px-2"
+                                      style={previewFilter ? buildIncludedRegexChipStyle(previewFilter) : {
+                                        backgroundColor: index < 3 ? 'rgba(34,197,94,0.10)' : 'rgba(59,130,246,0.10)',
+                                        borderColor: index < 3 ? 'rgba(34,197,94,0.30)' : 'rgba(59,130,246,0.30)',
+                                        color: index < 3 ? '#16A34A' : '#2563EB',
+                                      }}
+                                    >
+                                      {previewFilter && previewFilter.imageURL ? (
+                                          <Image
+                                            src={previewFilter.imageURL}
+                                            alt={`${previewFilter.name} icon`}
+                                            width={18}
+                                            height={18}
+                                          className="max-h-[0.68rem] w-auto shrink-0 object-contain sm:max-h-[0.82rem]"
+                                        />
+                                      ) : (
+                                        <span className="text-[7px] font-black uppercase tracking-[0.11em] sm:text-[8px]">
+                                          {label}
+                                        </span>
+                                      )}
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                        <div className="mt-auto pt-3 flex items-center justify-between gap-2 whitespace-nowrap text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground/60">
+                          <span>Open in manager</span>
+                          <ChevronRight className="size-3.5 transition-transform group-hover:translate-x-0.5 group-hover:text-primary" />
+                        </div>
+                      </article>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -793,6 +1024,8 @@ export function MainEditor() {
           onExpandedWidgetChange={setExpandedWidgetId}
           onNewWidget={openNewWidgetDialog}
           onSyncManifest={openManifestModal}
+          onInitialSectionFocusHandled={() => setIncludedPackFocus(null)}
+          initialSectionFocus={includedPackFocus}
         />
       );
     }
@@ -875,7 +1108,7 @@ export function MainEditor() {
           </a>
           <div className="flex flex-col items-center gap-1 opacity-45">
             <div className="flex items-center gap-2 text-[9.5px] font-mono tracking-[0.2em] font-medium uppercase text-muted-foreground/80">
-              <span>V0.5.2</span><span className="size-1 rounded-full bg-foreground/20" /><span>BY BOT-BID-RAISER</span>
+              <span>V0.6.0</span><span className="size-1 rounded-full bg-foreground/20" /><span>BY BOT-BID-RAISER</span>
             </div>
             <div className="text-[8.5px] font-mono tracking-[0.3em] uppercase opacity-75 text-foreground/80">BUILT WITH ANTIGRAVITY</div>
           </div>

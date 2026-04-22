@@ -28,10 +28,26 @@ import { DataSourceEditor } from './DataSourceEditor';
 import { CatalogCombobox } from './CatalogCombobox';
 import { MANIFEST_PLACEHOLDER, resolveFusionCatalogType } from '@/lib/config-utils';
 import { countInvalidCatalogsInItem } from '@/lib/catalog-validation';
-import { isAIOMetadataDataSource } from '@/lib/widget-domain';
+import { isAIOMetadataDataSource, isNativeAnilistDataSource, isNativeTraktDataSource } from '@/lib/widget-domain';
 import { TraktSourceCard } from './TraktSourceCard';
+import { AnilistSourceCard } from './AnilistSourceCard';
 import { ConfirmationDialog } from '@/components/ui/ConfirmationDialog';
 import { copyTextToClipboard } from '@/lib/browser-transfer';
+import {
+  DndContext,
+  closestCenter,
+  DragEndEvent,
+  KeyboardSensor,
+  PointerSensor,
+  TouchSensor,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core';
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
 import {
   editorHeaderIconButtonActiveClass,
   editorHeaderChevronButtonClass,
@@ -40,9 +56,71 @@ import {
   editorDeleteButtonClass,
 } from './editorActionButtonStyles';
 import { editorPanelClass } from './editorSurfaceStyles';
-import { useMobile } from '@/hooks/use-mobile';
 
 const SKIP_NATIVE_TRAKT_DELETE_WARNING_KEY = 'fusion-widget-manager.skip-native-trakt-delete-warning';
+const DATA_SOURCE_SORTABLE_ID_PREFIX = 'data-source-';
+
+function getDataSourceSortableId(index: number) {
+  return `${DATA_SOURCE_SORTABLE_ID_PREFIX}${index}`;
+}
+
+function getDataSourceIndexFromSortableId(id: string | number): number {
+  const value = String(id);
+  if (!value.startsWith(DATA_SOURCE_SORTABLE_ID_PREFIX)) {
+    return -1;
+  }
+
+  const index = Number.parseInt(value.slice(DATA_SOURCE_SORTABLE_ID_PREFIX.length), 10);
+  return Number.isFinite(index) ? index : -1;
+}
+
+function SortableDataSourceRow({
+  sortableId,
+  children,
+}: {
+  sortableId: string;
+  children: React.ReactNode;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: sortableId });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 25 : undefined,
+    opacity: isDragging ? 0.6 : 1,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="flex w-full items-start gap-1.5"
+      onClick={(event) => event.stopPropagation()}
+    >
+      <button
+        type="button"
+        aria-label="Reorder catalog"
+        title="Drag to reorder catalog"
+        className="mt-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-zinc-200/75 bg-zinc-100/80 text-muted-foreground/40 transition-all cursor-grab active:cursor-grabbing active:scale-[0.96] hover:border-primary/25 hover:bg-primary/[0.08] hover:text-primary dark:border-white/10 dark:bg-white/[0.03] dark:hover:bg-primary/[0.16] touch-none select-none"
+        onClick={(event) => event.stopPropagation()}
+        {...attributes}
+        {...listeners}
+      >
+        <GripVertical className="size-3.5" />
+      </button>
+      <div className="min-w-0 flex-1">
+        {children}
+      </div>
+    </div>
+  );
+}
 
 export const CollectionItemEditor = memo(function CollectionItemEditor({
   item,
@@ -58,7 +136,6 @@ export const CollectionItemEditor = memo(function CollectionItemEditor({
   isExpanded: boolean,
   onToggleExpand: () => void
 }) {
-  const isMobile = useMobile();
   const { manifestCatalogs } = useConfig();
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState(item.name);
@@ -175,6 +252,25 @@ export const CollectionItemEditor = memo(function CollectionItemEditor({
   const canAddAnotherDataSource =
     manifestCatalogs.length === 0 || selectedCatalogIds.length < manifestCatalogs.length;
   const itemDisplayName = item.name || "Untitled Item";
+  const dataSourceSortableIds = useMemo(
+    () => item.dataSources.map((_, index) => getDataSourceSortableId(index)),
+    [item.dataSources]
+  );
+  const dataSourceSensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 5,
+      },
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: {
+        distance: 5,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   const handleClearBackgroundImageUrl = () => {
     onUpdate({ backgroundImageURL: '' });
@@ -236,6 +332,33 @@ export const CollectionItemEditor = memo(function CollectionItemEditor({
     setShowNativeTraktDeleteConfirm(true);
   };
 
+  const handleDataSourceDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) {
+      return;
+    }
+
+    const oldIndex = getDataSourceIndexFromSortableId(active.id);
+    const newIndex = getDataSourceIndexFromSortableId(over.id);
+    if (
+      oldIndex < 0 ||
+      newIndex < 0 ||
+      oldIndex >= item.dataSources.length ||
+      newIndex >= item.dataSources.length ||
+      oldIndex === newIndex
+    ) {
+      return;
+    }
+
+    const nextDataSources = [...item.dataSources];
+    const [moved] = nextDataSources.splice(oldIndex, 1);
+    if (!moved) {
+      return;
+    }
+    nextDataSources.splice(newIndex, 0, moved);
+    onUpdate({ dataSources: nextDataSources });
+  };
+
   const handleNativeTraktDeleteDialogChange = (isOpen: boolean) => {
     setShowNativeTraktDeleteConfirm(isOpen);
 
@@ -269,38 +392,75 @@ export const CollectionItemEditor = memo(function CollectionItemEditor({
         />
       </div>
       <div className="space-y-1.5">
-        {item.dataSources.map((ds, dsIndex) => (
-          isAIOMetadataDataSource(ds) ? (
-            <DataSourceEditor
-              key={dsIndex}
-              dataSource={ds}
-              disabledCatalogIds={item.dataSources
-                .filter((_, index) => index !== dsIndex)
-                .filter(isAIOMetadataDataSource)
-                .map((source) => source.payload.catalogId)
-                .filter(Boolean)}
-              onUpdate={(updates) => handleUpdateDataSource(dsIndex, updates)}
-              onDelete={() => handleDeleteDataSource(dsIndex)}
-            />
-          ) : (
-            <CatalogCombobox
-              key={dsIndex}
-              options={manifestCatalogs}
-              value=""
-              disabledValues={selectedCatalogIds}
-              onChange={(combinedId) => handleChangeDataSource(dsIndex, combinedId)}
-              trigger={
-                <div className="group/trakt cursor-pointer outline-none">
-                  <TraktSourceCard
-                    dataSource={ds}
-                    compact
-                    onDelete={() => handleDeleteNativeTraktDataSource(dsIndex)}
-                  />
-                </div>
-              }
-            />
-          )
-        ))}
+        <DndContext
+          sensors={dataSourceSensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDataSourceDragEnd}
+        >
+          <SortableContext
+            items={dataSourceSortableIds}
+            strategy={verticalListSortingStrategy}
+          >
+            <div className="space-y-1.5">
+              {item.dataSources.map((ds, dsIndex) => {
+                const sortableId = getDataSourceSortableId(dsIndex);
+
+                if (isAIOMetadataDataSource(ds)) {
+                  return (
+                    <SortableDataSourceRow key={sortableId} sortableId={sortableId}>
+                      <DataSourceEditor
+                        dataSource={ds}
+                        disabledCatalogIds={item.dataSources
+                          .filter((_, index) => index !== dsIndex)
+                          .filter(isAIOMetadataDataSource)
+                          .map((source) => source.payload.catalogId)
+                          .filter(Boolean)}
+                        onUpdate={(updates) => handleUpdateDataSource(dsIndex, updates)}
+                        onDelete={() => handleDeleteDataSource(dsIndex)}
+                      />
+                    </SortableDataSourceRow>
+                  );
+                }
+
+                if (isNativeTraktDataSource(ds)) {
+                  return (
+                    <SortableDataSourceRow key={sortableId} sortableId={sortableId}>
+                      <CatalogCombobox
+                        options={manifestCatalogs}
+                        value=""
+                        disabledValues={selectedCatalogIds}
+                        onChange={(combinedId) => handleChangeDataSource(dsIndex, combinedId)}
+                        trigger={
+                          <div className="group/trakt cursor-pointer outline-none">
+                            <TraktSourceCard
+                              dataSource={ds}
+                              compact
+                              onDelete={() => handleDeleteNativeTraktDataSource(dsIndex)}
+                            />
+                          </div>
+                        }
+                      />
+                    </SortableDataSourceRow>
+                  );
+                }
+
+                if (isNativeAnilistDataSource(ds)) {
+                  return (
+                    <SortableDataSourceRow key={sortableId} sortableId={sortableId}>
+                      <AnilistSourceCard
+                        dataSource={ds}
+                        compact
+                        onDelete={() => handleDeleteDataSource(dsIndex)}
+                      />
+                    </SortableDataSourceRow>
+                  );
+                }
+
+                return null;
+              })}
+            </div>
+          </SortableContext>
+        </DndContext>
         {item.dataSources.length === 0 && (
           <div className="flex items-center justify-center py-6 border border-dashed border-zinc-200/60 dark:border-white/10 rounded-2xl bg-zinc-100/30 dark:bg-zinc-950/20">
             <p className="text-[10px] font-black text-muted-foreground/25 uppercase tracking-[0.2em]">No catalogs configured</p>

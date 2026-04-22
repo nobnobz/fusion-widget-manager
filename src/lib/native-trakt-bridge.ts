@@ -110,6 +110,15 @@ function cloneDataSource(dataSource: WidgetDataSource, manifestUrl: string | nul
     return toAiometadataDataSource(dataSource, manifestUrl);
   }
 
+  if (dataSource.sourceType === 'aiometadata') {
+    return {
+      ...dataSource,
+      payload: {
+        ...dataSource.payload,
+      },
+    };
+  }
+
   return {
     ...dataSource,
     payload: {
