@@ -133,17 +133,10 @@ export function normalizeOmniSnapshot(snapshot: any): NormalizedOmniModel {
 
   });
 
-  // Collect all catalog IDs used in groups to distinguish visible vs structural
-  const visibleInHierarchy = new Set<string>();
-  Object.values(values.catalog_groups || {}).forEach((subgroup: any) => {
-    const ids = Array.isArray(subgroup) ? subgroup : (subgroup as any)?.catalogs || [];
-    ids.forEach((id: string) => visibleInHierarchy.add(id));
-  });
-
-  // Collect structural catalogs that should be hidden from main list
+  // Only catalogs that Omni explicitly disables should be suppressed on import.
+  // Top-row catalog lists are display metadata and should still become Fusion rows
+  // when the catalog is otherwise enabled.
   const hiddenCatalogIds = [
-    ...(values.top_row_catalogs || []),
-    ...(values.small_toprow_catalogs || []),
     ...(values.disabled_shelves || [])
   ];
 
@@ -163,7 +156,7 @@ export function normalizeOmniSnapshot(snapshot: any): NormalizedOmniModel {
     imageUrls: values.catalog_group_image_urls || {},
     smallCatalogs: values.small_catalogs || [],
     landscapeCatalogs: values.landscape_catalogs || [],
-    hiddenCatalogIds: hiddenCatalogIds.filter(id => !visibleInHierarchy.has(id))
+    hiddenCatalogIds
   };
 }
 

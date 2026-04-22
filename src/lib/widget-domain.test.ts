@@ -1338,6 +1338,53 @@ test('convertOmniToFusion keeps valid standalone rows', () => {
   assert.equal(converted.widgets[0]?.title, 'Catalog One');
 });
 
+test('convertOmniToFusion keeps visible top row catalogs as standalone rows', () => {
+  const converted = convertOmniToFusion({
+    values: {
+      main_group_order: [],
+      main_catalog_groups: {},
+      catalog_groups: {},
+      selected_catalogs: ['movie:top-row-catalog'],
+      catalog_ordering: ['movie:top-row-catalog'],
+      custom_catalog_names: {
+        'movie:top-row-catalog': 'Top Row Catalog',
+      },
+      catalog_group_image_urls: {},
+      landscape_catalogs: [],
+      small_catalogs: [],
+      top_row_catalogs: ['movie:top-row-catalog'],
+      small_toprow_catalogs: [],
+    },
+  });
+
+  assert.equal(converted.widgets.length, 1);
+  assert.equal(converted.widgets[0]?.type, 'row.classic');
+  assert.equal(converted.widgets[0]?.title, 'Top Row Catalog');
+});
+
+test('convertOmniToFusion ignores disabled standalone catalogs', () => {
+  const converted = convertOmniToFusion({
+    values: {
+      main_group_order: [],
+      main_catalog_groups: {},
+      catalog_groups: {},
+      selected_catalogs: ['movie:hidden-catalog'],
+      catalog_ordering: ['movie:hidden-catalog'],
+      custom_catalog_names: {
+        'movie:hidden-catalog': 'Hidden Catalog',
+      },
+      catalog_group_image_urls: {},
+      landscape_catalogs: [],
+      small_catalogs: [],
+      top_row_catalogs: ['movie:hidden-catalog'],
+      small_toprow_catalogs: [],
+      disabled_shelves: ['movie:hidden-catalog'],
+    },
+  });
+
+  assert.equal(converted.widgets.length, 0);
+});
+
 test('convertOmniToFusion excludes internal omni helper catalogs from standalone rows', () => {
   const converted = convertOmniToFusion({
     values: {
@@ -1380,7 +1427,7 @@ test('convertOmniToFusion excludes internal omni helper catalogs from standalone
 
   assert.deepEqual(
     converted.widgets.map((widget) => widget.title),
-    ['Movies']
+    ['Movies', 'top-10-tv-shows-this-week-series', 'top-movies-of-the-week-movie', 'top-10-movie']
   );
 });
 
