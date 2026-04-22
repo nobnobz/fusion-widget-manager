@@ -101,8 +101,13 @@ test('disconnects a synced AIOMetadata manifest from the setup modal', async ({ 
   await page.getByTestId('welcome-load-template').click();
   if (!(await page.getByText('AIOMetadata synced').isVisible())) {
     await page.getByRole('button', { name: /Sync Manifest|Edit/i }).click();
-    await page.getByTestId('manifest-url-input').fill(fixture.manifestUrl);
-    await page.getByTestId('manifest-sync-submit').click();
+    const manifestUrlField = page.getByTestId('manifest-url-input');
+    const manifestUrlFieldTag = await manifestUrlField.evaluate((element) => element.tagName);
+
+    if (manifestUrlFieldTag === 'INPUT' || manifestUrlFieldTag === 'TEXTAREA') {
+      await manifestUrlField.fill(fixture.manifestUrl);
+      await page.getByTestId('manifest-sync-submit').click();
+    }
   }
 
   await expect(page.getByText('AIOMetadata synced')).toBeVisible();

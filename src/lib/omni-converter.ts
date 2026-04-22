@@ -28,6 +28,8 @@ export interface NormalizedOmniModel {
   subgroups: Record<string, NormalizedOmniSubgroup>;
   selectedCatalogs: string[];
   catalogOrdering: string[];
+  topRowCatalogs: string[];
+  smallTopRowCatalogs: string[];
   globalGroupOrder: string[];
   subgroupOrderMap: Record<string, string[]>;
   customNames: Record<string, string>;
@@ -133,17 +135,10 @@ export function normalizeOmniSnapshot(snapshot: any): NormalizedOmniModel {
 
   });
 
-  // Collect all catalog IDs used in groups to distinguish visible vs structural
-  const visibleInHierarchy = new Set<string>();
-  Object.values(values.catalog_groups || {}).forEach((subgroup: any) => {
-    const ids = Array.isArray(subgroup) ? subgroup : (subgroup as any)?.catalogs || [];
-    ids.forEach((id: string) => visibleInHierarchy.add(id));
-  });
-
-  // Collect structural catalogs that should be hidden from main list
+  // Only catalogs that Omni explicitly disables should be suppressed on import.
+  // Top-row catalog lists are display metadata and should still become Fusion rows
+  // when the catalog is otherwise enabled.
   const hiddenCatalogIds = [
-    ...(values.top_row_catalogs || []),
-    ...(values.small_toprow_catalogs || []),
     ...(values.disabled_shelves || [])
   ];
 
@@ -152,6 +147,8 @@ export function normalizeOmniSnapshot(snapshot: any): NormalizedOmniModel {
     subgroups: values.catalog_groups || {},
     selectedCatalogs: values.selected_catalogs || [],
     catalogOrdering: values.catalog_ordering || [],
+    topRowCatalogs: values.top_row_catalogs || [],
+    smallTopRowCatalogs: values.small_toprow_catalogs || [],
     globalGroupOrder: [
       ...(Array.isArray(values.catalog_group_order) ? values.catalog_group_order : []),
       ...(Array.isArray(values.catalog_groups_order) ? values.catalog_groups_order : []),
@@ -163,7 +160,7 @@ export function normalizeOmniSnapshot(snapshot: any): NormalizedOmniModel {
     imageUrls: values.catalog_group_image_urls || {},
     smallCatalogs: values.small_catalogs || [],
     landscapeCatalogs: values.landscape_catalogs || [],
-    hiddenCatalogIds: hiddenCatalogIds.filter(id => !visibleInHierarchy.has(id))
+    hiddenCatalogIds
   };
 }
 
@@ -321,7 +318,12 @@ export function convertOmniToFusion(snapshot: any): FusionWidgetsConfig {
   });
 
   // 2. Build Standalone Widgets (row.classic)
-  const standaloneCatalogs = model.catalogOrdering.length > 0 ? model.catalogOrdering : model.selectedCatalogs;
+  const standaloneCatalogs = Array.from(new Set([
+    ...model.catalogOrdering,
+    ...model.selectedCatalogs,
+    ...model.topRowCatalogs,
+    ...model.smallTopRowCatalogs,
+  ]));
   
   standaloneCatalogs.forEach(omniId => {
     // 1. Filter out structural catalogs (top row items not in groups)
