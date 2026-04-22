@@ -171,6 +171,70 @@ test('collectAiometadataExportInventory includes streaming catalogs', () => {
   );
 });
 
+test('collectAiometadataExportInventory includes AniList catalogs for AIOMetadata export', () => {
+  const inventory = collectAiometadataExportInventory(
+    buildConfig([
+      buildRowWidget({
+        id: 'row-anilist',
+        title: 'AniList Row',
+        dataSource: buildAioDataSource({ catalogId: 'anime::anilist.trending', catalogType: 'anime' }),
+      }),
+      buildCollectionWidget({
+        id: 'collection-anilist',
+        title: 'Anime Collection',
+        dataSource: {
+          kind: 'collection',
+          payload: {
+            items: [
+              {
+                id: 'item-anilist',
+                name: 'Planning',
+                hideTitle: false,
+                layout: 'Poster',
+                backgroundImageURL: '',
+                dataSources: [buildAioDataSource({ catalogId: 'anime::anilist.animaechan.Planning', catalogType: 'anime' })],
+              },
+            ],
+          },
+        },
+      }),
+    ])
+  );
+
+  assert.deepEqual(
+    inventory.catalogs.map((catalog) => ({
+      id: catalog.entry.id,
+      type: catalog.entry.type,
+      source: catalog.entry.source,
+      displayType: catalog.entry.displayType,
+    })),
+    [
+      { id: 'anilist.trending', type: 'anime', source: 'anilist', displayType: 'anime' },
+      { id: 'anilist.animaechan.Planning', type: 'anime', source: 'anilist', displayType: 'anime' },
+    ]
+  );
+
+  const exported = buildAiometadataCatalogExport({ inventory, includeAll: true, exportedAt: '2026-04-10T21:47:25.719Z' });
+  assert.deepEqual(exported.catalogs, [
+    {
+      id: 'anilist.trending',
+      type: 'anime',
+      name: '[Classic Row] AniList Row (Anime)  ',
+      enabled: true,
+      source: 'anilist',
+      displayType: 'anime',
+    },
+    {
+      id: 'anilist.animaechan.Planning',
+      type: 'anime',
+      name: '[Anime Collection] Planning (Anime)  ',
+      enabled: true,
+      source: 'anilist',
+      displayType: 'anime',
+    },
+  ]);
+});
+
 test('collectAiometadataExportInventory includes letterboxd catalogs and keeps them movie-only', () => {
   const inventory = collectAiometadataExportInventory(
     buildConfig([

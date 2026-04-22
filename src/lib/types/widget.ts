@@ -1,5 +1,5 @@
 export type WidgetType = 'collection.row' | 'row.classic';
-export type SourceType = 'aiometadata' | 'trakt-native';
+export type SourceType = 'aiometadata' | 'trakt-native' | 'anilist-native';
 
 export interface AddonCatalogPayload {
   addonId: string;
@@ -14,6 +14,11 @@ export interface TraktListPayload {
   username: string;
 }
 
+export interface AnilistCatalogPayload {
+  catalogType: string;
+  limit: number;
+}
+
 export interface AIOMetadataCatalog {
   id: string;
   name: string;
@@ -26,7 +31,7 @@ export interface AiometadataCatalogsOnlyEntry {
   type: string;
   name: string;
   enabled: true;
-  source: 'trakt' | 'mdblist' | 'streaming' | 'simkl' | 'letterboxd';
+  source: 'trakt' | 'mdblist' | 'streaming' | 'simkl' | 'letterboxd' | 'anilist';
   displayType?: string;
   sort?: string;
   order?: 'asc' | 'desc';
@@ -52,8 +57,14 @@ export interface NativeTraktDataSource {
   payload: TraktListPayload;
 }
 
+export interface NativeAnilistDataSource {
+  sourceType: 'anilist-native';
+  kind: 'anilistCatalog';
+  payload: AnilistCatalogPayload;
+}
+
 export type AddonCatalogDataSource = AIOMetadataDataSource;
-export type WidgetDataSource = AIOMetadataDataSource | NativeTraktDataSource;
+export type WidgetDataSource = AIOMetadataDataSource | NativeTraktDataSource | NativeAnilistDataSource;
 
 export interface CollectionItem {
   id: string;

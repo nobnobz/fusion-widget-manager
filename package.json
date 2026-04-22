@@ -1,6 +1,6 @@
 {
   "name": "fusion-widget-manager",
-  "version": "0.5.2",
+  "version": "0.6.0",
   "private": true,
   "scripts": {
     "dev": "next dev --webpack --port 3001",
@@ -10,9 +10,9 @@
     "typecheck": "node ./test/scripts/typecheck.mjs",
     "test": "npm run test:unit",
     "test:unit": "node --no-warnings --experimental-strip-types --loader ./test/node-ts-loader.mjs --test src/lib/**/*.test.ts test/**/*.test.ts",
-    "test:e2e": "playwright test -c playwright.e2e.config.ts",
-    "test:perf": "playwright test -c playwright.perf.config.ts",
-    "test:smoke:live": "node ./test/scripts/run-live-smoke.mjs",
+    "test:e2e": "env -u NO_COLOR playwright test -c playwright.e2e.config.ts",
+    "test:perf": "env -u NO_COLOR playwright test -c playwright.perf.config.ts",
+    "test:smoke:live": "env -u NO_COLOR node ./test/scripts/run-live-smoke.mjs",
     "test:ci": "node ./test/scripts/run-ci.mjs"
   },
   "dependencies": {

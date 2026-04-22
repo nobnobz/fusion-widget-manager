@@ -92,6 +92,31 @@ test('loads the mocked template, syncs the manifest, and creates a widget', asyn
   ).toBeVisible();
 });
 
+test('disconnects a synced AIOMetadata manifest from the setup modal', async ({ page }) => {
+  const fixture = getAuditFixture('medium');
+
+  await mockManifest(page, fixture);
+  await gotoWelcomePage(page);
+
+  await page.getByTestId('welcome-load-template').click();
+  if (!(await page.getByText('AIOMetadata synced').isVisible())) {
+    await page.getByRole('button', { name: /Sync Manifest|Edit/i }).click();
+    await page.getByTestId('manifest-url-input').fill(fixture.manifestUrl);
+    await page.getByTestId('manifest-sync-submit').click();
+  }
+
+  await expect(page.getByText('AIOMetadata synced')).toBeVisible();
+
+  await page.getByRole('button', { name: /Sync Manifest|Edit/i }).click();
+  await expect(page.getByText('Synced', { exact: true })).toBeVisible();
+
+  await page.getByRole('button', { name: 'Disconnect AIOMetadata manifest' }).click();
+
+  await expect(page.getByText('Synced', { exact: true })).toHaveCount(0);
+  await expect(page.getByTestId('manifest-url-input')).toHaveCount(1);
+  await expect(page.getByTestId('manifest-url-input')).toHaveValue('');
+});
+
 test('merges a partial import and keeps the result after reload', async ({ page }) => {
   const fixture = getAuditFixture('medium');
   const mergeFixture = createMergeImportFixture(fixture);

@@ -1,14 +1,21 @@
 # Changelog
 
-## [0.5.2] - 2026-04-04
-### Fixed
-- Fixed visibility toggle state management and badge styling.
-- Resolved E2E test failures related to item visibility indicators.
+## [0.6.0] - 2026-04-22
+### Added
+- **AniList Support**: Added AniList catalog handling across the editor, import/export flow, and validation so AniList sources round-trip cleanly with the rest of the widget data.
+- **Animated Covers**: Added the included animated cover preview pack to the selection experience, with a dedicated manager entry and preview artwork.
+- **Filter Tags**: Added regex filter tag packs with preview tiles and image-backed tags for a more polished selection workflow.
 
 ### Changed
-- Standardized welcome screen actions with the "Primary Blue Soft" design language.
-- Improved layout consistency and spacing across editor panels.
-- Optimized mobile drawer interactions and scrolling behavior.
+- **Versioning**: Updated the app and UI release badge to `v0.6.0`.
+- **Selection UX**: Expanded the selection screen with included pack previews and a clearer entry point for the bundled cover and filter assets.
+- **Export Coverage**: Broadened catalog export support and inventory handling for the supported AIOMetadata and native source types.
+- **Release Tooling**: Tightened the CI and browser test flows so release checks run cleanly without environment warning spam.
+
+### Fixed
+- **Widget Editing**: Stabilized the widget title editing flow in the editor and perf tests.
+- **Image Rendering**: Replaced remaining raw image tags with optimized `next/image` usage where needed.
+- **Native Source Handling**: Improved native Trakt and related source normalization so mixed imports and exports stay consistent.
 
 ## [0.5.1] - 2026-04-04
 ### Improved

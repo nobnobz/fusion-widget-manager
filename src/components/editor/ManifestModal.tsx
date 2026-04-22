@@ -27,6 +27,7 @@ import {
   editorActionButtonClass,
   editorFooterPrimaryButtonClass,
   editorFooterSecondaryButtonClass,
+  editorDisconnectIconButtonClass,
   editorFormSurfaceClass,
   editorPanelClass,
 } from './editorSurfaceStyles';
@@ -46,7 +47,6 @@ export function ManifestModal({ isOpen, onOpenChange }: ManifestModalProps) {
   const [isManual, setIsManual] = useState(false);
   const [manualJson, setManualJson] = useState('');
   const [error, setError] = useState<{ title: string; message: string; isCors?: boolean } | null>(null);
-  const [showDisconnectConfirm, setShowDisconnectConfirm] = useState(false);
   const [copiedManifestUrl, setCopiedManifestUrl] = useState(false);
   const urlInputRef = useRef<HTMLInputElement | null>(null);
   const isSyncedUrlLocked = Boolean(manifestUrl && !manifestUrl.startsWith('manual://'));
@@ -58,7 +58,6 @@ export function ManifestModal({ isOpen, onOpenChange }: ManifestModalProps) {
       setIsManual(false);
       setManualJson('');
       setError(null);
-      setShowDisconnectConfirm(false);
       setCopiedManifestUrl(false);
     }
   }, [isOpen, manifestUrl]);
@@ -117,7 +116,6 @@ export function ManifestModal({ isOpen, onOpenChange }: ManifestModalProps) {
     disconnectManifest();
     setUrl('');
     setError(null);
-    setShowDisconnectConfirm(false);
     setCopiedManifestUrl(false);
 
     requestAnimationFrame(() => {
@@ -182,12 +180,15 @@ export function ManifestModal({ isOpen, onOpenChange }: ManifestModalProps) {
               </div>
 
               <Button
+                type="button"
                 variant="ghost"
-                size="sm"
-                className={cn(editorActionButtonClass, "h-9 shrink-0 px-3 text-[10px] text-destructive hover:bg-destructive/10 hover:text-destructive")}
-                onClick={() => setShowDisconnectConfirm(true)}
+                size="icon"
+                className={cn(editorActionButtonClass, editorDisconnectIconButtonClass)}
+                onClick={handleClearSyncedUrl}
+                aria-label="Disconnect AIOMetadata manifest"
+                title="Disconnect AIOMetadata manifest"
               >
-                Disconnect
+                <Trash2 className="size-4" />
               </Button>
             </div>
           )}
@@ -227,9 +228,9 @@ export function ManifestModal({ isOpen, onOpenChange }: ManifestModalProps) {
                   <button
                     type="button"
                     onClick={handleClearSyncedUrl}
-                    className="inline-flex size-8 shrink-0 items-center justify-center rounded-xl text-muted-foreground/45 transition-colors hover:bg-destructive/10 hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-destructive/20"
-                    aria-label="Clear synced AIOMetadata URL"
-                    title="Disconnect manifest URL"
+                    className={cn(editorDisconnectIconButtonClass, "inline-flex items-center justify-center")}
+                    aria-label="Disconnect synced AIOMetadata URL"
+                    title="Disconnect AIOMetadata manifest"
                   >
                     <Trash2 className="size-4" />
                   </button>
@@ -272,7 +273,7 @@ export function ManifestModal({ isOpen, onOpenChange }: ManifestModalProps) {
             <textarea
               data-testid="manifest-manual-textarea"
               placeholder='{ "catalogs": [...] }'
-              className="w-full min-h-[150px] max-sm:min-h-[180px] bg-transparent border-none focus:outline-none transition-all font-mono text-base sm:text-[10px] leading-tight resize-none p-2"
+              className="w-full min-h-[150px] max-sm:min-h-[180px] bg-transparent border-none focus:outline-none transition-all font-mono text-base sm:text-[10px] leading-tight resize-y overflow-y-auto p-2"
               value={manualJson}
               onChange={(e) => setManualJson(e.target.value)}
             />
@@ -289,6 +290,7 @@ export function ManifestModal({ isOpen, onOpenChange }: ManifestModalProps) {
 
     <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 pb-4 max-sm:pb-[env(safe-area-inset-bottom,1.5rem)]">
       <Button
+        type="button"
         variant="ghost"
         className={cn(editorActionButtonClass, editorFooterSecondaryButtonClass, "w-full sm:flex-1")}
         onClick={() => {
@@ -299,6 +301,7 @@ export function ManifestModal({ isOpen, onOpenChange }: ManifestModalProps) {
         Skip for now
       </Button>
       <Button
+        type="button"
         data-testid="manifest-sync-submit"
         className={cn(editorActionButtonClass, editorFooterPrimaryButtonClass, "w-full sm:flex-1")}
         onClick={isManual ? handleManualSync : handleLoad}
@@ -346,21 +349,6 @@ export function ManifestModal({ isOpen, onOpenChange }: ManifestModalProps) {
         variant="danger"
         confirmText="Retry"
         onConfirm={() => setError(null)}
-      />
-
-      <ConfirmationDialog
-        isOpen={showDisconnectConfirm}
-        onOpenChange={setShowDisconnectConfirm}
-        title="Disconnect Sync?"
-        description="The synced AIOMetadata URL will be removed. Existing widgets stay as they are, but catalog validation and placeholder replacement will stop until you sync again."
-        variant="danger"
-        confirmText="Disconnect"
-        onConfirm={() => {
-          disconnectManifest();
-          setUrl('');
-          setIsManual(false);
-          setManualJson('');
-        }}
       />
     </Dialog>
   );

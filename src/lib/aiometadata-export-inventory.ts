@@ -10,6 +10,7 @@ import {
   getItemDisplayName,
   getWidgetDisplayName,
 } from './aiometadata-catalog-labels';
+import { collectUsedAnilistCatalogs } from './anilist-catalog-export';
 import { collectUsedLetterboxdCatalogs } from './letterboxd-catalog-export';
 import { collectUsedMdblistCatalogs } from './mdblist-catalog-export';
 import { collectNativeTraktSources } from './native-trakt-bridge';
@@ -18,7 +19,7 @@ import { collectUsedStreamingCatalogs } from './streaming-catalog-export';
 import { collectUsedAiometadataTraktCatalogs } from './trakt-catalog-export';
 import { findCatalog } from './widget-domain';
 
-export type ExportableCatalogSource = 'trakt' | 'mdblist' | 'streaming' | 'simkl' | 'letterboxd';
+export type ExportableCatalogSource = 'trakt' | 'mdblist' | 'streaming' | 'simkl' | 'letterboxd' | 'anilist';
 
 export interface ExportableCatalogDefinition {
   key: string;
@@ -492,6 +493,27 @@ export function collectAiometadataExportInventory(
       itemName: reference.itemName,
       itemIndex: reference.itemIndex,
       suffix: `letterboxd-${occurrenceIndex}`,
+      manifestCatalogs,
+    });
+  });
+
+  collectUsedAnilistCatalogs(config, manifestCatalogs).forEach((reference, occurrenceIndex) => {
+    registerOccurrence({
+      catalogMap,
+      occurrences,
+      widgetMap,
+      manifestKeys,
+      source: 'anilist',
+      id: reference.id,
+      type: reference.type,
+      displayType: reference.displayType,
+      widgetId: reference.widgetId,
+      widgetTitle: reference.widgetTitle,
+      widgetIndex: reference.widgetIndex,
+      itemId: reference.itemId,
+      itemName: reference.itemName,
+      itemIndex: reference.itemIndex,
+      suffix: `anilist-${occurrenceIndex}`,
       manifestCatalogs,
     });
   });

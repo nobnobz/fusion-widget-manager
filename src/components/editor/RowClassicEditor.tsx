@@ -1,25 +1,30 @@
 import { DataSourceEditor } from './DataSourceEditor';
 import { useConfig } from '@/context/ConfigContext';
-import { AIOMetadataDataSource, NativeTraktDataSource, RowClassicWidget } from '@/lib/types/widget';
+import { AIOMetadataDataSource, NativeAnilistDataSource, NativeTraktDataSource, RowClassicWidget } from '@/lib/types/widget';
 import { Layers } from 'lucide-react';
 
-import { isNativeTraktDataSource } from '@/lib/widget-domain';
+import { isNativeAnilistDataSource, isNativeTraktDataSource } from '@/lib/widget-domain';
 import { TraktSourceCard } from './TraktSourceCard';
+import { AnilistSourceCard } from './AnilistSourceCard';
 import { cn } from '@/lib/utils';
 import { editorPanelClass } from './editorSurfaceStyles';
 
 export function RowClassicEditor({ widget }: { widget: RowClassicWidget }) {
   const { updateWidgetMeta } = useConfig();
   const isNativeTrakt = isNativeTraktDataSource(widget.dataSource);
+  const isNativeAnilist = isNativeAnilistDataSource(widget.dataSource);
   const nativeTraktDataSource: NativeTraktDataSource | null = isNativeTrakt
     ? (widget.dataSource as NativeTraktDataSource)
     : null;
-  const aiometadataDataSource: AIOMetadataDataSource | null = !isNativeTrakt
+  const nativeAnilistDataSource: NativeAnilistDataSource | null = isNativeAnilist
+    ? (widget.dataSource as NativeAnilistDataSource)
+    : null;
+  const aiometadataDataSource: AIOMetadataDataSource | null = !isNativeTrakt && !isNativeAnilist
     ? (widget.dataSource as AIOMetadataDataSource)
     : null;
 
-  const handleDataSourceUpdate = (updates: Partial<RowClassicWidget['dataSource']['payload']>) => {
-    if (isNativeTraktDataSource(widget.dataSource)) {
+  const handleDataSourceUpdate = (updates: Partial<AIOMetadataDataSource['payload']>) => {
+    if (isNativeTraktDataSource(widget.dataSource) || isNativeAnilistDataSource(widget.dataSource)) {
       return;
     }
 
@@ -41,7 +46,7 @@ export function RowClassicEditor({ widget }: { widget: RowClassicWidget }) {
         <div className="space-y-4">
           <div className="flex items-center justify-between border-b border-border/40 pb-3 mb-2">
             <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-zinc-400 flex items-center gap-2">
-              <Layers className="size-3.5" /> {isNativeTrakt ? 'Native Trakt Source' : 'Catalogs'}
+              <Layers className="size-3.5" /> {isNativeTrakt ? 'Native Trakt Source' : isNativeAnilist ? 'Native AniList Source' : 'Catalogs'}
             </h4>
           </div>
           
@@ -50,6 +55,11 @@ export function RowClassicEditor({ widget }: { widget: RowClassicWidget }) {
               <TraktSourceCard
                 dataSource={nativeTraktDataSource!}
                 helperText="Imported native Trakt source. It can be reordered, renamed, and deleted, but not newly added from the manager."
+              />
+            ) : isNativeAnilist ? (
+              <AnilistSourceCard
+                dataSource={nativeAnilistDataSource!}
+                helperText="Imported native AniList source. It can be reordered, renamed, and deleted, but not newly added from the manager."
               />
             ) : (
               <DataSourceEditor 

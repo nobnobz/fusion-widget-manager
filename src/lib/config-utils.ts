@@ -3,6 +3,7 @@ import type {
   AIOMetadataCatalog,
   CollectionItem,
   FusionWidgetsConfig,
+  NativeAnilistDataSource,
   NativeTraktDataSource,
   Widget,
   WidgetDataSource,
@@ -11,6 +12,7 @@ import {
   MANIFEST_PLACEHOLDER,
   findCatalog,
   isAIOMetadataDataSource,
+  isNativeAnilistDataSource,
   isNativeTraktDataSource,
   normalizeFusionConfigDetailed,
   resolveFusionCatalogType,
@@ -131,6 +133,13 @@ function normalizeTraktFusionDataSourcePayload(dataSource: NativeTraktDataSource
     listSlug: dataSource.payload.listSlug,
     traktId: dataSource.payload.traktId,
     username: dataSource.payload.username,
+  };
+}
+
+function normalizeAnilistFusionDataSourcePayload(dataSource: NativeAnilistDataSource) {
+  return {
+    catalogType: dataSource.payload.catalogType,
+    limit: dataSource.payload.limit,
   };
 }
 
@@ -311,6 +320,13 @@ export function convertEditorDataSourceToFusionDataSource(
     };
   }
 
+  if (isNativeAnilistDataSource(dataSource)) {
+    return {
+      kind: 'anilistCatalog' as const,
+      payload: normalizeAnilistFusionDataSourcePayload(dataSource),
+    };
+  }
+
   return {
     kind: 'addonCatalog' as const,
     payload: normalizeFusionDataSourcePayload(dataSource, manifestUrl),
@@ -356,7 +372,8 @@ export function convertEditorItemToFusionCollectionItem(
 export function convertEditorWidgetToFusionWidget(widget: Widget, manifestUrl: string | null = null) {
   const prefix = widget.type === 'row.classic' ? 'catalog.' : 'collection.';
   const id =
-    widget.type === 'row.classic' && isNativeTraktDataSource(widget.dataSource)
+    widget.type === 'row.classic'
+      && (isNativeTraktDataSource(widget.dataSource) || isNativeAnilistDataSource(widget.dataSource))
       ? widget.id
       : widget.id.startsWith(prefix)
         ? widget.id

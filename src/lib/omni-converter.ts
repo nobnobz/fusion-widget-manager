@@ -9,7 +9,7 @@ import type {
 } from './types/widget';
 import { MANIFEST_PLACEHOLDER, resolveFusionCatalogType } from './config-utils';
 import { bridgeNativeTraktSourcesForOmni } from './native-trakt-bridge';
-import { isNativeTraktDataSource } from './widget-domain';
+import { isNativeAnilistDataSource, isNativeTraktDataSource } from './widget-domain';
 
 export interface NormalizedOmniMainGroup {
   id: string;
@@ -615,20 +615,28 @@ function createUniqueSubgroupName(baseName: string, groupName: string, usedNames
 }
 
 function assertOmniCompatibleConfig(config: FusionWidgetsConfig): void {
+  const getNativeSourceLabel = (dataSource: any): string | null => {
+    if (isNativeTraktDataSource(dataSource)) return 'native Trakt';
+    if (isNativeAnilistDataSource(dataSource)) return 'native AniList';
+    return null;
+  };
+
   config.widgets.forEach((widget, widgetIndex) => {
     if (widget.type === 'row.classic') {
-      if (isNativeTraktDataSource(widget.dataSource)) {
+      const nativeSourceLabel = getNativeSourceLabel(widget.dataSource);
+      if (nativeSourceLabel) {
         throw new Error(
-          `Omni export does not support native Trakt Fusion sources. Remove or convert widget "${widget.title || `#${widgetIndex + 1}`}" before exporting to Omni.`
+          `Omni export does not support ${nativeSourceLabel} Fusion sources. Remove or convert widget "${widget.title || `#${widgetIndex + 1}`}" before exporting to Omni.`
         );
       }
       return;
     }
 
     widget.dataSource.payload.items.forEach((item, itemIndex) => {
-      if (item.dataSources.some(isNativeTraktDataSource)) {
+      const nativeSourceLabel = item.dataSources.map(getNativeSourceLabel).find(Boolean);
+      if (nativeSourceLabel) {
         throw new Error(
-          `Omni export does not support native Trakt Fusion sources. Remove or convert collection item "${item.name || `#${itemIndex + 1}`}" before exporting to Omni.`
+          `Omni export does not support ${nativeSourceLabel} Fusion sources. Remove or convert collection item "${item.name || `#${itemIndex + 1}`}" before exporting to Omni.`
         );
       }
     });
@@ -670,7 +678,7 @@ function normalizeFusionForOmniExport(
     if (widget.type !== 'row.classic') return;
     rowCount += 1;
     if (widget.dataSource.kind !== 'addonCatalog') {
-      throw new Error(`Omni export does not support native Trakt Fusion sources. Remove or convert widget "${widget.title || `#${widgetIndex + 1}`}" before exporting to Omni.`);
+      throw new Error(`Omni export does not support native Fusion sources. Remove or convert widget "${widget.title || `#${widgetIndex + 1}`}" before exporting to Omni.`);
     }
 
     const catalogId = widget.dataSource?.payload?.catalogId;

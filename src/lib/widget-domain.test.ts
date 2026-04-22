@@ -22,6 +22,7 @@ import type {
   AIOMetadataDataSource,
   CollectionRowWidget,
   FusionWidgetsConfig,
+  NativeAnilistDataSource,
   NativeTraktDataSource,
   RowClassicWidget,
   Widget,
@@ -49,6 +50,18 @@ function buildTraktDataSource(overrides: Partial<NativeTraktDataSource['payload'
       listSlug: 'marvel-cinematic-universe',
       traktId: 1248149,
       username: 'Donxy',
+      ...overrides,
+    },
+  };
+}
+
+function buildAnilistDataSource(overrides: Partial<NativeAnilistDataSource['payload']> = {}): NativeAnilistDataSource {
+  return {
+    sourceType: 'anilist-native',
+    kind: 'anilistCatalog',
+    payload: {
+      catalogType: 'CURRENT',
+      limit: 20,
       ...overrides,
     },
   };
@@ -464,6 +477,87 @@ test('parseFusionConfig imports native trakt row widgets', () => {
   assert.equal(widget.hideTitle, true);
   assert.equal(widget.limit, 12);
   assert.equal(widget.presentation.backgroundImageURL, 'https://img.test/marvel.jpg');
+});
+
+test('parseFusionConfig imports native AniList row widgets', () => {
+  const parsed = parseFusionConfig({
+    exportType: 'fusionWidgets',
+    exportVersion: 1,
+    widgets: [
+      {
+        id: 'anilist.421499C9-CDAD-466C-81C2-79C6C7269067',
+        title: 'Currently Watching',
+        type: 'row.classic',
+        cacheTTL: 1800,
+        limit: 20,
+        presentation: {
+          aspectRatio: 'poster',
+          cardStyle: 'medium',
+          badges: { providers: false, ratings: true },
+        },
+        dataSource: {
+          kind: 'anilistCatalog',
+          payload: {
+            catalogType: 'CURRENT',
+            limit: 20,
+          },
+        },
+      },
+    ],
+  });
+
+  const widget = parsed.widgets[0];
+  assert.equal(widget?.type, 'row.classic');
+  if (!widget || widget.type !== 'row.classic') {
+    throw new Error('Expected classic row widget.');
+  }
+
+  assert.equal(widget.dataSource.sourceType, 'anilist-native');
+  assert.equal(widget.dataSource.kind, 'anilistCatalog');
+  assert.equal(widget.dataSource.payload.catalogType, 'CURRENT');
+  assert.equal(widget.dataSource.payload.limit, 20);
+  assert.equal(widget.id, 'anilist.421499C9-CDAD-466C-81C2-79C6C7269067');
+});
+
+test('exportConfigToFusion preserves native AniList widget format', () => {
+  const exported = exportConfigToFusion(buildConfig([
+    buildRowWidget({
+      id: 'anilist.37DC81DE-A16C-4517-99BC-8A575DE4FC2F',
+      title: 'Plan to Watch',
+      cacheTTL: 1800,
+      dataSource: buildAnilistDataSource({
+        catalogType: 'PLANNING',
+        limit: 20,
+      }),
+    }),
+  ]));
+
+  assert.deepEqual(exported, {
+    exportType: 'fusionWidgets',
+    exportVersion: 1,
+    requiredAddons: [],
+    widgets: [
+      {
+        id: 'anilist.37DC81DE-A16C-4517-99BC-8A575DE4FC2F',
+        title: 'Plan to Watch',
+        type: 'row.classic',
+        cacheTTL: 1800,
+        limit: 20,
+        presentation: {
+          aspectRatio: 'poster',
+          badges: { providers: true, ratings: true },
+          cardStyle: 'medium',
+        },
+        dataSource: {
+          kind: 'anilistCatalog',
+          payload: {
+            catalogType: 'PLANNING',
+            limit: 20,
+          },
+        },
+      },
+    ],
+  });
 });
 
 test('parseFusionConfig imports collection items with native trakt data sources', () => {
@@ -1180,6 +1274,36 @@ test('validateOmniExport rejects native trakt sources', () => {
   assert.throws(
     () => validateOmniExport(buildConfig([buildRowWidget({ dataSource: buildTraktDataSource() })])),
     /does not support native Trakt/
+  );
+});
+
+test('validateOmniExport rejects native AniList sources', () => {
+  assert.throws(
+    () => validateOmniExport(buildConfig([buildRowWidget({ dataSource: buildAnilistDataSource() })])),
+    /does not support native AniList/
+  );
+
+  assert.throws(
+    () => validateOmniExport(buildConfig([
+      buildCollectionWidget({
+        dataSource: {
+          kind: 'collection',
+          payload: {
+            items: [
+              {
+                id: 'item-native-anilist',
+                name: 'AniList Native',
+                hideTitle: false,
+                layout: 'Poster',
+                backgroundImageURL: '',
+                dataSources: [buildAnilistDataSource()],
+              },
+            ],
+          },
+        },
+      }),
+    ])),
+    /does not support native AniList/
   );
 });
 

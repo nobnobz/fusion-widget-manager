@@ -6,16 +6,20 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { GripVertical, Copy, Trash2, ChevronRight, ChevronUp, Check, Pencil, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Widget } from '@/lib/types/widget';
+import { Widget, WidgetDataSource } from '@/lib/types/widget';
 import { useConfig } from '@/context/ConfigContext';
 import { 
+  MANIFEST_PLACEHOLDER,
+  convertEditorDataSourceToFusionDataSource,
   processWidgetWithManifest, 
+  resolveFusionCatalogType,
   convertEditorWidgetToFusionWidget,
+  mapLayoutToImageAspect,
 } from '@/lib/config-utils';
 import { countInvalidCatalogsInWidget, countTraktWarningsInWidget } from '@/lib/catalog-validation';
 import { useState, memo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { isNativeTraktDataSource } from '@/lib/widget-domain';
+import { isAIOMetadataDataSource, isNativeAnilistDataSource, isNativeTraktDataSource } from '@/lib/widget-domain';
 import { copyTextToClipboard } from '@/lib/browser-transfer';
 import { getErrorMessage } from '@/lib/error-utils';
 import {
@@ -24,7 +28,6 @@ import {
   editorHeaderIconButtonClass,
   editorHeaderIconButtonDangerClass,
 } from './editorActionButtonStyles';
-import { useMobile } from '@/hooks/use-mobile';
 
 import { CollectionRowEditor } from './CollectionRowEditor';
 import { RowClassicEditor } from './RowClassicEditor';
@@ -38,6 +41,130 @@ interface SortableWidgetProps {
   searchQuery?: string;
 }
 
+const EMPTY_WIDGET_COPY_INFO_MESSAGE =
+  'Widget copied without AIOMetadata catalogs. Add the catalogs manually in Fusion before using this widget.';
+
+function isAiometadataSourceMissingCatalogSetup(dataSource: WidgetDataSource) {
+  return isAIOMetadataDataSource(dataSource)
+    && (
+      dataSource.payload.addonId === MANIFEST_PLACEHOLDER
+      || !dataSource.payload.catalogId.trim()
+    );
+}
+
+function buildFusionWidgetWithManualCatalogFallback(
+  widget: Widget
+): { fusionWidget: ReturnType<typeof convertEditorWidgetToFusionWidget>; removedAiometadataSources: number } {
+  if (widget.type === 'row.classic') {
+    if (!isAIOMetadataDataSource(widget.dataSource)) {
+      return {
+        fusionWidget: convertEditorWidgetToFusionWidget(widget, null),
+        removedAiometadataSources: 0,
+      };
+    }
+
+    const shouldStripAiometadata = isAiometadataSourceMissingCatalogSetup(widget.dataSource);
+    if (!shouldStripAiometadata) {
+      return {
+        fusionWidget: convertEditorWidgetToFusionWidget(widget, null),
+        removedAiometadataSources: 0,
+      };
+    }
+
+    const id = widget.id.startsWith('catalog.') ? widget.id : `catalog.${widget.id}`;
+    const fallbackType = resolveFusionCatalogType(
+      widget.dataSource.payload.catalogId,
+      widget.dataSource.payload.catalogType
+    ).toLowerCase();
+
+    return {
+      fusionWidget: {
+        id,
+        title: widget.title,
+        ...(widget.hideTitle ? { hideTitle: true } : {}),
+        type: widget.type,
+        cacheTTL: widget.cacheTTL || 1800,
+        limit: widget.limit || 20,
+        presentation: {
+          aspectRatio: widget.presentation.aspectRatio || 'poster',
+          badges: widget.presentation.badges || { providers: false, ratings: true },
+          cardStyle: widget.presentation.cardStyle || 'medium',
+          ...(widget.presentation.backgroundImageURL
+            ? { backgroundImageURL: widget.presentation.backgroundImageURL }
+            : {}),
+        },
+        dataSource: {
+          kind: 'addonCatalog',
+          payload: {
+            addonId: '',
+            catalogId: '',
+            type: fallbackType,
+          },
+        },
+      },
+      removedAiometadataSources: 1,
+    };
+  }
+
+  let removedAiometadataSources = 0;
+  const id = widget.id.startsWith('collection.') ? widget.id : `collection.${widget.id}`;
+  const items = widget.dataSource.payload.items.map((item) => {
+    const dataSources = item.dataSources
+      .filter((dataSource) => {
+        const shouldStrip = isAiometadataSourceMissingCatalogSetup(dataSource);
+        if (shouldStrip) {
+          removedAiometadataSources += 1;
+        }
+        return !shouldStrip;
+      })
+      .map((dataSource) => convertEditorDataSourceToFusionDataSource(dataSource, null));
+
+    const isAllCatalog = dataSources.some(
+      (dataSource) => dataSource.kind === 'addonCatalog' && dataSource.payload.catalogId.startsWith('all::')
+    );
+
+    const fusionItem: {
+      id: string;
+      title: string;
+      hideTitle: boolean;
+      imageAspect: 'wide' | 'poster' | 'square';
+      dataSources: ReturnType<typeof convertEditorDataSourceToFusionDataSource>[];
+      imageURL?: string;
+    } = {
+      id: item.id,
+      title: item.name,
+      hideTitle: item.hideTitle,
+      imageAspect: mapLayoutToImageAspect(item.layout),
+      dataSources,
+    };
+
+    if (item.backgroundImageURL) {
+      fusionItem.imageURL = item.backgroundImageURL;
+    }
+    if (isAllCatalog && !fusionItem.imageURL) {
+      delete fusionItem.imageURL;
+    }
+
+    return fusionItem;
+  });
+
+  return {
+    fusionWidget: {
+      id,
+      title: widget.title,
+      hideTitle: widget.hideTitle ?? false,
+      type: widget.type,
+      dataSource: {
+        kind: 'collection',
+        payload: {
+          items,
+        },
+      },
+    },
+    removedAiometadataSources,
+  };
+}
+
 export const SortableWidget = memo(function SortableWidget({ 
   widget, 
   isSelected, 
@@ -46,7 +173,6 @@ export const SortableWidget = memo(function SortableWidget({
   isOverlay = false,
   searchQuery = ""
 }: SortableWidgetProps) {
-  const isMobile = useMobile();
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: widget.id,
   });
@@ -60,6 +186,7 @@ export const SortableWidget = memo(function SortableWidget({
   const hasInvalidCatalog = invalidCatalogCount > 0;
   const traktWarningCount = countTraktWarningsInWidget(widget);
   const hasNativeTrakt = widget.type === 'row.classic' && isNativeTraktDataSource(widget.dataSource);
+  const hasNativeAnilist = widget.type === 'row.classic' && isNativeAnilistDataSource(widget.dataSource);
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -84,18 +211,30 @@ export const SortableWidget = memo(function SortableWidget({
         true // Sanitize on export
       );
 
-      // 2. Strict Fusion transformation
-      const fusionWidget = convertEditorWidgetToFusionWidget(normalized, manifestUrl);
+      // 2. Fusion transformation (fallback to empty AIOMetadata catalogs if no manifest URL is synced)
+      let usedManualCatalogFallback = false;
+      let fusionWidget: ReturnType<typeof convertEditorWidgetToFusionWidget>;
+      if (!manifestUrl) {
+        const fallback = buildFusionWidgetWithManualCatalogFallback(normalized);
+        if (fallback.removedAiometadataSources > 0) {
+          fusionWidget = fallback.fusionWidget;
+          usedManualCatalogFallback = true;
+        } else {
+          fusionWidget = convertEditorWidgetToFusionWidget(normalized, manifestUrl);
+        }
+      } else {
+        fusionWidget = convertEditorWidgetToFusionWidget(normalized, manifestUrl);
+      }
 
       // 3. Collect required addons for this single widget
-    const addonsSet = new Set<string>();
-    if (
-      fusionWidget.type === 'row.classic' &&
-      fusionWidget.dataSource.kind === 'addonCatalog' &&
-      fusionWidget.dataSource.payload.addonId.startsWith('http')
-    ) {
-      addonsSet.add(fusionWidget.dataSource.payload.addonId);
-    } else if (fusionWidget.type === 'collection.row' && Array.isArray(fusionWidget.dataSource?.payload?.items)) {
+      const addonsSet = new Set<string>();
+      if (
+        fusionWidget.type === 'row.classic' &&
+        fusionWidget.dataSource.kind === 'addonCatalog' &&
+        fusionWidget.dataSource.payload.addonId.startsWith('http')
+      ) {
+        addonsSet.add(fusionWidget.dataSource.payload.addonId);
+      } else if (fusionWidget.type === 'collection.row' && Array.isArray(fusionWidget.dataSource?.payload?.items)) {
         fusionWidget.dataSource.payload.items.forEach((item) => {
           item.dataSources.forEach((dataSource) => {
             if (dataSource.kind === 'addonCatalog' && dataSource.payload.addonId.startsWith('http')) {
@@ -116,8 +255,11 @@ export const SortableWidget = memo(function SortableWidget({
       await copyTextToClipboard(widgetJson);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
+      if (usedManualCatalogFallback) {
+        alert(EMPTY_WIDGET_COPY_INFO_MESSAGE);
+      }
     } catch (error) {
-      alert(getErrorMessage(error, "Failed to copy widget. Please ensure a catalog is selected."));
+      alert(getErrorMessage(error, 'Failed to copy widget.'));
     }
   };
 
@@ -193,6 +335,7 @@ export const SortableWidget = memo(function SortableWidget({
               {isEditing ? (
                 <Input 
                   autoFocus
+                  aria-label="Widget Title"
                   value={editTitle}
                   onChange={(e) => setEditTitle(e.target.value)}
                   onBlur={handleTitleSubmit}
@@ -225,6 +368,11 @@ export const SortableWidget = memo(function SortableWidget({
               {hasNativeTrakt && (
                 <div className="h-5 px-2 rounded-md bg-emerald-600/10 text-emerald-700 dark:text-emerald-300 border border-emerald-600/20 text-[9px] font-black uppercase tracking-[0.1em] flex items-center justify-center shrink-0 leading-none">
                   Native Trakt
+                </div>
+              )}
+              {hasNativeAnilist && (
+                <div className="h-5 px-2 rounded-md bg-sky-600/10 text-sky-700 dark:text-sky-300 border border-sky-600/20 text-[9px] font-black uppercase tracking-[0.1em] flex items-center justify-center shrink-0 leading-none">
+                  Native AniList
                 </div>
               )}
               {widget.dataSource.kind === 'collection' && widget.dataSource.payload?.items && (
@@ -312,6 +460,7 @@ export const SortableWidget = memo(function SortableWidget({
               {isEditing ? (
                 <Input 
                   autoFocus
+                  aria-label="Widget Title"
                   value={editTitle}
                   onChange={(e) => setEditTitle(e.target.value)}
                   onBlur={handleTitleSubmit}
@@ -340,6 +489,11 @@ export const SortableWidget = memo(function SortableWidget({
               {hasNativeTrakt && (
                 <div className="h-5 px-2 rounded-md bg-emerald-600/10 text-emerald-700 dark:text-emerald-300 border border-emerald-600/20 text-[9px] font-black uppercase tracking-[0.1em] flex items-center justify-center shrink-0 leading-none">
                   Trakt
+                </div>
+              )}
+              {hasNativeAnilist && (
+                <div className="h-5 px-2 rounded-md bg-sky-600/10 text-sky-700 dark:text-sky-300 border border-sky-600/20 text-[9px] font-black uppercase tracking-[0.1em] flex items-center justify-center shrink-0 leading-none">
+                  AniList
                 </div>
               )}
               {widget.dataSource.kind === 'collection' && widget.dataSource.payload?.items && (

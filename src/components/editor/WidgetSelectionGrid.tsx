@@ -1,10 +1,33 @@
 "use client";
 
-import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent } from 'react';
+import Image from 'next/image';
 import { useConfig } from '@/context/ConfigContext';
 import { SortableWidget } from './SortableWidget';
 import { Button } from '@/components/ui/button';
-import { Plus, Download, Check, Copy, Search, FileJson2, FileCode, Trash2, RotateCcw, Globe, AlertTriangle, Pencil, Info, ChevronRight, SlidersHorizontal, WandSparkles, XCircle, X } from 'lucide-react';
+import {
+  Plus,
+  Download,
+  Check,
+  Copy,
+  Search,
+  FileJson2,
+  FileCode,
+  Trash2,
+  RotateCcw,
+  Globe,
+  AlertTriangle,
+  Pencil,
+  Info,
+  Play,
+  ChevronLeft,
+  ChevronRight,
+  SlidersHorizontal,
+  WandSparkles,
+  XCircle,
+  ExternalLink,
+  Loader2,
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   Dialog,
@@ -20,7 +43,6 @@ import { ConfirmationDialog } from '@/components/ui/ConfirmationDialog';
 import { useMobile } from '@/hooks/use-mobile';
 import {
   Drawer,
-  DrawerClose,
   DrawerContent,
   DrawerDescription,
   DrawerHeader,
@@ -56,14 +78,28 @@ import {
 } from '@/lib/native-trakt-bridge';
 import {
   type FusionInvalidCatalogExportMode,
+  findCatalog,
   MANIFEST_PLACEHOLDER,
+  convertEditorDataSourceToFusionDataSource,
+  mapLayoutToImageAspect,
   processConfigWithManifest,
   sanitizeFusionConfigForExport,
 } from '@/lib/config-utils';
-import type { FusionWidgetsConfig } from '@/lib/types/widget';
+import type { FusionWidgetsConfig, CollectionItem, CollectionRowWidget, WidgetDataSource } from '@/lib/types/widget';
 import { isAIOMetadataDataSource } from '@/lib/widget-domain';
 import { copyTextToClipboard, downloadTextFile } from '@/lib/browser-transfer';
 import { getErrorMessage } from '@/lib/error-utils';
+import {
+  fetchAnimatedCoverPacks,
+  fetchAnimatedCoverWidgetBlueprints,
+  type AnimatedCoverPack,
+  type AnimatedCoverWidgetBlueprint,
+} from '@/lib/animated-covers';
+import {
+  fetchRegexPatternPacks,
+  type RegexPatternPack,
+  type RegexPatternVisualFilter,
+} from '@/lib/regex-patterns';
 import {
   DndContext,
   closestCenter,
@@ -84,17 +120,36 @@ interface WidgetSelectionGridProps {
   onNewWidget?: () => void;
   onDownload?: () => void;
   onSyncManifest?: () => void;
+  onInitialSectionFocusHandled?: () => void;
   expandedWidgetId: string | null;
   onExpandedWidgetChange: (id: string | null) => void;
+  initialSectionFocus?: {
+    section: 'animated' | 'regex';
+    packSlug: string;
+    nonce: number;
+  } | null;
+}
+
+interface PreparedAnimatedWidgetInstall {
+  catalogPayload: FusionWidgetsConfig;
+  jsonText: string;
+  keptAiometadataSources: number;
+  removedBecauseMissingCatalog: number;
+  removedBecauseNoManifest: number;
+  totalAiometadataSources: number;
+  widgetCount: number;
+  widgetTitles: string[];
 }
 
 
 const FUSION_SYNC_REQUIRED_MESSAGE =
   'Sync your AIOMetadata manifest before Fusion export so the AIOMetadata URL can be embedded in your Fusion setup.';
 
+const REGEX_PREVIEW_PAGE_SIZE = 9;
+
 const UME_SORTING_EXPLANATION_SECTIONS = [
   {
-    groups: ['Streaming Services', 'Decades', 'Genres', 'Directors', 'Actors', 'IMDb Top Shows', 'Oscars 2026', 'Trending'],
+    groups: ['Streaming Services', 'Studios', 'Decades', 'Genres', 'Directors', 'Actors', 'IMDb Top Shows', 'Oscars 2026', 'Trending'],
     summary: 'Popularity',
     refresh: 'Refreshes every 12 hours',
   },
@@ -124,10 +179,10 @@ const UME_SORTING_EXPLANATION_SECTIONS = [
 ];
 
 const aiometadataSectionTitleClass =
-  'text-[11px] font-black uppercase tracking-[0.18em] text-foreground/60';
+  'text-[10px] font-black uppercase tracking-[0.18em] text-foreground/55';
 
 const aiometadataSectionDescriptionClass =
-  'mt-1.5 max-w-3xl text-sm font-medium leading-6 text-muted-foreground/78 sm:text-[15px]';
+  'mt-1.5 max-w-2xl text-[12px] font-medium leading-5 text-muted-foreground/70 sm:text-[13px]';
 
 function formatCountLabel(count: number, singular: string, plural: string) {
   return `${count} ${count === 1 ? singular : plural}`;
@@ -165,12 +220,53 @@ function sortCatalogKeys(
   });
 }
 
+function normalizeFusionColor(value: string | undefined, fallback: string): string {
+  if (!value || !value.trim()) {
+    return fallback;
+  }
+
+  const trimmed = value.trim();
+  if (/^#[\da-fA-F]{3}$/.test(trimmed) || /^#[\da-fA-F]{6}$/.test(trimmed)) {
+    return trimmed;
+  }
+
+  if (/^#[\da-fA-F]{8}$/.test(trimmed)) {
+    // Fusion exports ARGB hex values; CSS expects RRGGBBAA for 8-digit hex.
+    const hex = trimmed.slice(1);
+    return `#${hex.slice(2)}${hex.slice(0, 2)}`;
+  }
+
+  return fallback;
+}
+
+function buildRegexTagVisualStyle(filter: RegexPatternVisualFilter): CSSProperties {
+  const tagStyle = filter.tagStyle.toLowerCase();
+  const isFilled = tagStyle.includes('filled');
+  const hasBorder = tagStyle.includes('border');
+  const isBorderOnly = hasBorder && !isFilled;
+  const fallbackTextColor = isFilled ? '#FFFFFF' : '#D4D4D8';
+  const fallbackSurfaceColor = isFilled ? '#1F2937' : 'transparent';
+
+  return {
+    backgroundColor: isBorderOnly ? 'transparent' : normalizeFusionColor(filter.tagColor, fallbackSurfaceColor),
+    borderColor: hasBorder
+      ? normalizeFusionColor(filter.borderColor || filter.textColor || filter.tagColor, '#D4D4D8')
+      : 'transparent',
+    borderStyle: 'solid',
+    borderWidth: hasBorder ? (tagStyle.includes('filled and bordered') ? 1.5 : 1.35) : 0,
+    color: normalizeFusionColor(filter.textColor, fallbackTextColor),
+    opacity: filter.isEnabled ? 1 : 0.55,
+  };
+}
+
 function WidgetSelectionGridComponent({
   onNewWidget,
   onDownload,
   onSyncManifest,
+  onInitialSectionFocusHandled,
   expandedWidgetId,
   onExpandedWidgetChange,
+  initialSectionFocus,
 }: WidgetSelectionGridProps) {
   const isMobile = useMobile();
   const {
@@ -192,6 +288,27 @@ function WidgetSelectionGridComponent({
   } = useConfig();
   const [exportMode, setExportMode] = useState<'fusion' | 'omni' | 'aiometadata'>('fusion');
   const [searchQuery, setSearchQuery] = useState('');
+  const [animatedCoverPacks, setAnimatedCoverPacks] = useState<AnimatedCoverPack[]>([]);
+  const [selectedAnimatedCoverPackSlug, setSelectedAnimatedCoverPackSlug] = useState<string>('');
+  const [isLoadingAnimatedCovers, setIsLoadingAnimatedCovers] = useState(false);
+  const [animatedCoversError, setAnimatedCoversError] = useState<string | null>(null);
+  const [copiedAnimatedCoverSlug, setCopiedAnimatedCoverSlug] = useState<string | null>(null);
+  const [copiedAnimatedCoverWidgetSlug, setCopiedAnimatedCoverWidgetSlug] = useState<string | null>(null);
+  const [copiedAnimatedCoverCatalogsSlug, setCopiedAnimatedCoverCatalogsSlug] = useState<string | null>(null);
+  const [animatedCoverWidgetBlueprints, setAnimatedCoverWidgetBlueprints] = useState<Record<string, AnimatedCoverWidgetBlueprint>>({});
+  const [animatedPreviewIndex, setAnimatedPreviewIndex] = useState(0);
+  const [isAnimatedPreviewPlaying, setIsAnimatedPreviewPlaying] = useState(false);
+  const [activeAnimatedCoverPackSlug, setActiveAnimatedCoverPackSlug] = useState<string | null>(null);
+  const [isAnimatedInstallDialogOpen, setIsAnimatedInstallDialogOpen] = useState(false);
+  const [animatedInstallStep, setAnimatedInstallStep] = useState<'cover' | 'widget-prompt' | 'widget'>('cover');
+  const [widgetCatalogInstallStep, setWidgetCatalogInstallStep] = useState<'copy' | 'connect'>('copy');
+  const [regexPatternPacks, setRegexPatternPacks] = useState<RegexPatternPack[]>([]);
+  const [selectedRegexPatternPackSlug, setSelectedRegexPatternPackSlug] = useState<string>('');
+  const [isLoadingRegexPatterns, setIsLoadingRegexPatterns] = useState(false);
+  const [regexPatternsError, setRegexPatternsError] = useState<string | null>(null);
+  const [copiedRegexPatternSlug, setCopiedRegexPatternSlug] = useState<string | null>(null);
+  const [regexPreviewPageIndex, setRegexPreviewPageIndex] = useState(0);
+  const [animatedCoverDetectedLayouts, setAnimatedCoverDetectedLayouts] = useState<Record<string, CollectionItem['layout']>>({});
 
 
   const [showPreview, setShowPreview] = useState(false);
@@ -220,6 +337,16 @@ function WidgetSelectionGridComponent({
   const [aiometadataSettingsTarget, setAiometadataSettingsTarget] = useState<AIOMetadataSettingsDialogTarget | null>(null);
   const [isAiometadataSettingsDialogOpen, setIsAiometadataSettingsDialogOpen] = useState(false);
   const copyResetTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const animatedCoverCopyResetTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const animatedCoverWidgetCopyResetTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const animatedCoverCatalogCopyResetTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const regexPatternCopyResetTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const animatedPreviewVideoRef = useRef<HTMLVideoElement | null>(null);
+  const animatedPreviewAutoplayRef = useRef(false);
+  const animatedCoverDetectedLayoutsRef = useRef<Map<string, CollectionItem['layout']>>(new Map());
+  const animatedCoversSectionRef = useRef<HTMLElement | null>(null);
+  const regexPatternsSectionRef = useRef<HTMLElement | null>(null);
+  const lastInitialSectionFocusNonceRef = useRef<number | null>(null);
   const widgetNodeMapRef = useRef<Map<string, HTMLDivElement>>(new Map());
   const pendingScrollAnchorRef = useRef<{ id: string; top: number } | null>(null);
   const trashCount = trash.length + itemTrash.length;
@@ -255,6 +382,344 @@ function WidgetSelectionGridComponent({
       return false;
     });
   }, [widgets, searchQuery]);
+
+  const selectedAnimatedCoverPack = useMemo(
+    () => animatedCoverPacks.find((pack) => pack.slug === selectedAnimatedCoverPackSlug) ?? animatedCoverPacks[0] ?? null,
+    [animatedCoverPacks, selectedAnimatedCoverPackSlug]
+  );
+
+  const selectedAnimatedCoverWidgetBlueprint = useMemo(
+    () => (selectedAnimatedCoverPack ? animatedCoverWidgetBlueprints[selectedAnimatedCoverPack.slug] ?? null : null),
+    [animatedCoverWidgetBlueprints, selectedAnimatedCoverPack]
+  );
+
+  const detectAnimatedCoverLayout = useCallback(async (imageUrl: string): Promise<CollectionItem['layout']> => {
+    if (typeof window === 'undefined') {
+      return 'Poster';
+    }
+
+    return new Promise((resolve) => {
+      const image = new window.Image();
+      image.decoding = 'async';
+      image.onload = () => {
+        const width = image.naturalWidth || 0;
+        const height = image.naturalHeight || 0;
+        if (!width || !height) {
+          resolve('Poster');
+          return;
+        }
+
+        const ratio = width / height;
+        if (ratio > 1.4) {
+          resolve('Wide');
+          return;
+        }
+
+        if (ratio < 0.75) {
+          resolve('Poster');
+          return;
+        }
+
+        resolve('Square');
+      };
+      image.onerror = () => resolve('Poster');
+      image.src = imageUrl;
+    });
+  }, []);
+
+  const selectedAnimatedPreviewCover = useMemo(() => {
+    if (!selectedAnimatedCoverPack || selectedAnimatedCoverPack.covers.length === 0) {
+      return null;
+    }
+
+    const boundedIndex = Math.max(0, Math.min(animatedPreviewIndex, selectedAnimatedCoverPack.covers.length - 1));
+    return selectedAnimatedCoverPack.covers[boundedIndex] ?? null;
+  }, [animatedPreviewIndex, selectedAnimatedCoverPack]);
+
+  const selectedAnimatedPreviewCoverLayout = useMemo(() => {
+    const backgroundUrl = selectedAnimatedPreviewCover?.backgroundURL;
+    if (!backgroundUrl) {
+      return undefined;
+    }
+
+    return animatedCoverDetectedLayouts[backgroundUrl];
+  }, [animatedCoverDetectedLayouts, selectedAnimatedPreviewCover?.backgroundURL]);
+
+  const activeAnimatedCoverPack = useMemo(
+    () => animatedCoverPacks.find((pack) => pack.slug === activeAnimatedCoverPackSlug) ?? selectedAnimatedCoverPack,
+    [activeAnimatedCoverPackSlug, animatedCoverPacks, selectedAnimatedCoverPack]
+  );
+
+  const activeAnimatedCoverWidgetBlueprint = useMemo(
+    () => (activeAnimatedCoverPack ? animatedCoverWidgetBlueprints[activeAnimatedCoverPack.slug] ?? null : null),
+    [activeAnimatedCoverPack, animatedCoverWidgetBlueprints]
+  );
+
+  const selectedRegexPatternPack = useMemo(
+    () => regexPatternPacks.find((pack) => pack.slug === selectedRegexPatternPackSlug) ?? regexPatternPacks[0] ?? null,
+    [regexPatternPacks, selectedRegexPatternPackSlug]
+  );
+
+  const regexPreviewPageCount = useMemo(() => {
+    if (!selectedRegexPatternPack) {
+      return 1;
+    }
+
+    return Math.max(1, Math.ceil(selectedRegexPatternPack.filters.length / REGEX_PREVIEW_PAGE_SIZE));
+  }, [selectedRegexPatternPack]);
+
+  const selectedRegexPreviewPageFilters = useMemo(() => {
+    if (!selectedRegexPatternPack) {
+      return [];
+    }
+
+    const startIndex = regexPreviewPageIndex * REGEX_PREVIEW_PAGE_SIZE;
+    return selectedRegexPatternPack.filters.slice(startIndex, startIndex + REGEX_PREVIEW_PAGE_SIZE);
+  }, [regexPreviewPageIndex, selectedRegexPatternPack]);
+
+  const loadAnimatedCoverPacks = useCallback(async () => {
+    setIsLoadingAnimatedCovers(true);
+    setAnimatedCoversError(null);
+    try {
+      const packs = await fetchAnimatedCoverPacks();
+      const widgetBlueprintBundle = await fetchAnimatedCoverWidgetBlueprints(packs);
+      setAnimatedCoverPacks(packs);
+      setAnimatedCoverWidgetBlueprints(widgetBlueprintBundle.blueprints);
+      setSelectedAnimatedCoverPackSlug((previous) =>
+        previous && packs.some((pack) => pack.slug === previous) ? previous : (packs[0]?.slug ?? '')
+      );
+    } catch (error) {
+      setAnimatedCoverPacks([]);
+      setAnimatedCoverWidgetBlueprints({});
+      setSelectedAnimatedCoverPackSlug('');
+      setAnimatedCoversError(getErrorMessage(error, 'Animated covers could not be loaded right now.'));
+    } finally {
+      setIsLoadingAnimatedCovers(false);
+    }
+  }, []);
+
+  const prepareAnimatedWidgetInstall = useCallback((blueprint: AnimatedCoverWidgetBlueprint): PreparedAnimatedWidgetInstall => {
+    const matchedCoverBackgroundUrls = blueprint.matchedCoverBackgroundUrls ?? [];
+    const catalogGroupedItems = new Map<string, CollectionItem[]>();
+    const fusionGroupedItems = new Map<string, CollectionItem[]>();
+    const widgetTitleOrder: string[] = [];
+
+    const registerWidgetTitle = (title: string) => {
+      const normalizedTitle = title.trim();
+      const effectiveTitle = normalizedTitle || blueprint.widget.title;
+      if (!catalogGroupedItems.has(effectiveTitle)) {
+        catalogGroupedItems.set(effectiveTitle, []);
+        fusionGroupedItems.set(effectiveTitle, []);
+        widgetTitleOrder.push(effectiveTitle);
+      }
+      return effectiveTitle;
+    };
+
+    let totalAiometadataSources = 0;
+    let removedBecauseNoManifest = 0;
+    let removedBecauseMissingCatalog = 0;
+    let keptAiometadataSources = 0;
+
+    blueprint.matchedItems.forEach(({ item, sourceWidgetTitle }, index) => {
+      const backgroundImageURL = matchedCoverBackgroundUrls[index] ?? item.backgroundImageURL;
+      const detectedLayout = backgroundImageURL ? animatedCoverDetectedLayouts[backgroundImageURL] : undefined;
+      const widgetTitle = registerWidgetTitle(sourceWidgetTitle);
+      const baseItem: CollectionItem = {
+        ...item,
+        backgroundImageURL,
+        layout: detectedLayout ?? item.layout,
+        dataSources: item.dataSources.map((dataSource) => ({
+          ...dataSource,
+          payload: { ...dataSource.payload },
+        })) as WidgetDataSource[],
+      };
+
+      const catalogItems = catalogGroupedItems.get(widgetTitle);
+      if (catalogItems) {
+        catalogItems.push(baseItem);
+      }
+
+      const nextDataSources = baseItem.dataSources.filter((dataSource) => {
+        if (!isAIOMetadataDataSource(dataSource)) {
+          return true;
+        }
+
+        totalAiometadataSources += 1;
+
+        if (!manifestUrl) {
+          removedBecauseNoManifest += 1;
+          return false;
+        }
+
+        const hasCatalogValidationSet = manifestCatalogs.length > 0;
+        if (hasCatalogValidationSet && !findCatalog(manifestCatalogs, dataSource.payload.catalogId)) {
+          removedBecauseMissingCatalog += 1;
+          return false;
+        }
+
+        keptAiometadataSources += 1;
+        return true;
+      });
+
+      const fusionItem: CollectionItem = {
+        ...baseItem,
+        dataSources: nextDataSources as WidgetDataSource[],
+      };
+
+      const fusionItems = fusionGroupedItems.get(widgetTitle);
+      if (fusionItems) {
+        fusionItems.push(fusionItem);
+      }
+
+    });
+
+    const orderedWidgetTitles = widgetTitleOrder.length > 0
+      ? widgetTitleOrder
+      : [blueprint.widget.title];
+
+    const catalogWidgets: CollectionRowWidget[] = orderedWidgetTitles.map((title) => ({
+      id: `collection.${crypto.randomUUID()}`,
+      title,
+      type: 'collection.row',
+      dataSource: {
+        kind: 'collection',
+        payload: {
+          items: catalogGroupedItems.get(title) ?? [],
+        },
+      },
+    }));
+
+    const fusionWidgets: CollectionRowWidget[] = orderedWidgetTitles.map((title) => ({
+      id: `collection.${crypto.randomUUID()}`,
+      title,
+      type: 'collection.row',
+      dataSource: {
+        kind: 'collection',
+        payload: {
+          items: fusionGroupedItems.get(title) ?? [],
+        },
+      },
+    }));
+
+    const catalogPayload: FusionWidgetsConfig = {
+      exportType: 'fusionWidgets',
+      exportVersion: 1,
+      widgets: catalogWidgets,
+    };
+
+    const fusionPayload = {
+      exportType: 'fusionWidgets' as const,
+      exportVersion: 1,
+      widgets: fusionWidgets.map((widget) => ({
+        id: widget.id,
+        title: widget.title,
+        type: 'collection.row' as const,
+        dataSource: {
+          kind: 'collection' as const,
+          payload: {
+            items: widget.dataSource.payload.items.map((item) => {
+              const fusionItem = {
+                id: item.id,
+                title: item.name,
+                hideTitle: item.hideTitle,
+                imageAspect: mapLayoutToImageAspect(item.layout),
+                dataSources: item.dataSources.map((dataSource) =>
+                  convertEditorDataSourceToFusionDataSource(dataSource, manifestUrl)
+                ),
+              } as {
+                id: string;
+                title: string;
+                hideTitle: boolean;
+                imageAspect: 'wide' | 'poster' | 'square';
+                dataSources: ReturnType<typeof convertEditorDataSourceToFusionDataSource>[];
+                imageURL?: string;
+              };
+
+              if (item.backgroundImageURL) {
+                fusionItem.imageURL = item.backgroundImageURL;
+              }
+
+              return fusionItem;
+            }),
+          },
+        },
+      })),
+    };
+
+    return {
+      catalogPayload,
+      jsonText: JSON.stringify(fusionPayload, null, 2),
+      keptAiometadataSources,
+      removedBecauseMissingCatalog,
+      removedBecauseNoManifest,
+      totalAiometadataSources,
+      widgetCount: fusionWidgets.length,
+      widgetTitles: fusionWidgets.map((widget) => widget.title),
+    };
+  }, [animatedCoverDetectedLayouts, manifestCatalogs, manifestUrl]);
+
+  const loadRegexPatternPacks = useCallback(async () => {
+    setIsLoadingRegexPatterns(true);
+    setRegexPatternsError(null);
+    try {
+      const packs = await fetchRegexPatternPacks();
+      setRegexPatternPacks(packs);
+      setSelectedRegexPatternPackSlug((previous) =>
+        previous && packs.some((pack) => pack.slug === previous) ? previous : (packs[0]?.slug ?? '')
+      );
+    } catch (error) {
+      setRegexPatternPacks([]);
+      setSelectedRegexPatternPackSlug('');
+      setRegexPatternsError(getErrorMessage(error, 'Regex pattern packs could not be loaded right now.'));
+    } finally {
+      setIsLoadingRegexPatterns(false);
+    }
+  }, []);
+
+  const preparedSelectedAnimatedWidgetInstall = useMemo(() => {
+    if (!selectedAnimatedCoverWidgetBlueprint) {
+      return null;
+    }
+
+    return prepareAnimatedWidgetInstall(selectedAnimatedCoverWidgetBlueprint);
+  }, [prepareAnimatedWidgetInstall, selectedAnimatedCoverWidgetBlueprint]);
+
+  const preparedActiveAnimatedWidgetInstall = useMemo(() => {
+    if (!activeAnimatedCoverPack || activeAnimatedCoverPack.slug === selectedAnimatedCoverPack?.slug) {
+      return preparedSelectedAnimatedWidgetInstall;
+    }
+
+    const blueprint = activeAnimatedCoverWidgetBlueprint;
+    if (!blueprint) {
+      return null;
+    }
+    return prepareAnimatedWidgetInstall(blueprint);
+  }, [
+    activeAnimatedCoverPack,
+    activeAnimatedCoverWidgetBlueprint,
+    preparedSelectedAnimatedWidgetInstall,
+    prepareAnimatedWidgetInstall,
+    selectedAnimatedCoverPack?.slug,
+  ]);
+
+  const activeAnimatedWidgetCatalogExport = useMemo(() => {
+    if (!preparedActiveAnimatedWidgetInstall) {
+      return null;
+    }
+
+    const widgetInventory = collectAiometadataExportInventory(
+      preparedActiveAnimatedWidgetInstall.catalogPayload,
+      {
+        manifestCatalogs,
+        onlyNewAgainstManifest: isManifestSynced,
+      }
+    );
+
+    return buildAiometadataCatalogExport({
+      inventory: widgetInventory,
+      includeAll: true,
+    });
+  }, [isManifestSynced, manifestCatalogs, preparedActiveAnimatedWidgetInstall]);
 
   const registerWidgetNode = useCallback((id: string, node: HTMLDivElement | null) => {
     if (node) {
@@ -893,7 +1358,153 @@ function WidgetSelectionGridComponent({
     if (copyResetTimeoutRef.current) {
       clearTimeout(copyResetTimeoutRef.current);
     }
+    if (animatedCoverCopyResetTimeoutRef.current) {
+      clearTimeout(animatedCoverCopyResetTimeoutRef.current);
+    }
+    if (animatedCoverWidgetCopyResetTimeoutRef.current) {
+      clearTimeout(animatedCoverWidgetCopyResetTimeoutRef.current);
+    }
+    if (regexPatternCopyResetTimeoutRef.current) {
+      clearTimeout(regexPatternCopyResetTimeoutRef.current);
+    }
   }, []);
+
+  useEffect(() => {
+    void loadAnimatedCoverPacks();
+  }, [loadAnimatedCoverPacks]);
+
+  useEffect(() => {
+    void loadRegexPatternPacks();
+  }, [loadRegexPatternPacks]);
+
+  useEffect(() => {
+    if (!initialSectionFocus) {
+      return;
+    }
+
+    if (lastInitialSectionFocusNonceRef.current === initialSectionFocus.nonce) {
+      return;
+    }
+
+    lastInitialSectionFocusNonceRef.current = initialSectionFocus.nonce;
+
+    const focusTarget = initialSectionFocus.section === 'animated'
+      ? animatedCoversSectionRef.current
+      : regexPatternsSectionRef.current;
+
+    if (!focusTarget) {
+      return;
+    }
+
+    const nextAnimatedSlug = initialSectionFocus.section === 'animated'
+      ? (animatedCoverPacks.find((pack) => pack.slug === initialSectionFocus.packSlug)?.slug ?? animatedCoverPacks[0]?.slug ?? '')
+      : animatedCoverPacks[0]?.slug ?? '';
+    const nextRegexSlug = initialSectionFocus.section === 'regex'
+      ? (regexPatternPacks.find((pack) => pack.slug === initialSectionFocus.packSlug)?.slug ?? regexPatternPacks[0]?.slug ?? '')
+      : regexPatternPacks[0]?.slug ?? '';
+
+    if (initialSectionFocus.section === 'animated' && nextAnimatedSlug) {
+      setSelectedAnimatedCoverPackSlug(nextAnimatedSlug);
+      setActiveAnimatedCoverPackSlug(nextAnimatedSlug);
+    }
+
+    if (initialSectionFocus.section === 'regex' && nextRegexSlug) {
+      setSelectedRegexPatternPackSlug(nextRegexSlug);
+    }
+
+    const frame = window.requestAnimationFrame(() => {
+      focusTarget.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      onInitialSectionFocusHandled?.();
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [animatedCoverPacks, initialSectionFocus, onInitialSectionFocusHandled, regexPatternPacks]);
+
+  useEffect(() => {
+    if (!selectedAnimatedCoverPack) {
+      setAnimatedPreviewIndex(0);
+      setIsAnimatedPreviewPlaying(false);
+      animatedPreviewAutoplayRef.current = false;
+      return;
+    }
+
+    const nextIndex = Math.max(0, Math.min(selectedAnimatedCoverPack.defaultPreviewIndex, selectedAnimatedCoverPack.covers.length - 1));
+    setAnimatedPreviewIndex(nextIndex);
+    setIsAnimatedPreviewPlaying(animatedPreviewAutoplayRef.current);
+    animatedPreviewAutoplayRef.current = false;
+  }, [selectedAnimatedCoverPack]);
+
+  useEffect(() => {
+    const matchedCoverBackgroundUrls = selectedAnimatedCoverWidgetBlueprint?.matchedCoverBackgroundUrls ?? [];
+    if (matchedCoverBackgroundUrls.length === 0) {
+      setAnimatedCoverDetectedLayouts({});
+      return;
+    }
+
+    let cancelled = false;
+    const unresolvedUrls = matchedCoverBackgroundUrls.filter((url) => !animatedCoverDetectedLayoutsRef.current.has(url));
+
+    const syncLayouts = () => {
+      const nextLayouts: Record<string, CollectionItem['layout']> = {};
+      matchedCoverBackgroundUrls.forEach((url) => {
+        const layout = animatedCoverDetectedLayoutsRef.current.get(url);
+        if (layout) {
+          nextLayouts[url] = layout;
+        }
+      });
+      setAnimatedCoverDetectedLayouts(nextLayouts);
+    };
+
+    if (unresolvedUrls.length === 0) {
+      syncLayouts();
+      return undefined;
+    }
+
+    void Promise.all(unresolvedUrls.map(async (url) => [url, await detectAnimatedCoverLayout(url)] as const))
+      .then((results) => {
+        if (cancelled) {
+          return;
+        }
+
+        results.forEach(([url, layout]) => {
+          animatedCoverDetectedLayoutsRef.current.set(url, layout);
+        });
+        syncLayouts();
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [detectAnimatedCoverLayout, selectedAnimatedCoverWidgetBlueprint?.matchedCoverBackgroundUrls]);
+
+  useEffect(() => {
+    setRegexPreviewPageIndex(0);
+  }, [selectedRegexPatternPack?.slug]);
+
+  useEffect(() => {
+    if (!isAnimatedPreviewPlaying && animatedPreviewVideoRef.current) {
+      animatedPreviewVideoRef.current.pause();
+    }
+  }, [animatedPreviewIndex, isAnimatedPreviewPlaying, selectedAnimatedCoverPack]);
+
+  useEffect(() => {
+    if (!isAnimatedPreviewPlaying || !animatedPreviewVideoRef.current) {
+      return;
+    }
+
+    const playPromise = animatedPreviewVideoRef.current.play();
+    if (playPromise && typeof playPromise.catch === 'function') {
+      playPromise.catch(() => {
+        setIsAnimatedPreviewPlaying(false);
+      });
+    }
+  }, [isAnimatedPreviewPlaying, selectedAnimatedPreviewCover?.videoURL]);
+
+  useEffect(() => {
+    if (animatedPreviewVideoRef.current) {
+      animatedPreviewVideoRef.current.currentTime = 0;
+    }
+  }, [selectedAnimatedPreviewCover?.videoURL]);
 
   useEffect(() => {
     if (exportMode === 'aiometadata' && aiometadataInventory.catalogs.length === 0) {
@@ -1001,6 +1612,202 @@ function WidgetSelectionGridComponent({
     }, 2000);
   };
 
+  const selectAnimatedCoverPack = (pack: AnimatedCoverPack) => {
+    setSelectedAnimatedCoverPackSlug(pack.slug);
+    setActiveAnimatedCoverPackSlug(pack.slug);
+  };
+
+  const handlePreviewCardActivate = (pack: AnimatedCoverPack) => {
+    if (selectedAnimatedCoverPack?.slug === pack.slug) {
+      setIsAnimatedPreviewPlaying(true);
+      return;
+    }
+
+    animatedPreviewAutoplayRef.current = true;
+    selectAnimatedCoverPack(pack);
+  };
+
+  const handlePreviewAreaToggle = async () => {
+    if (isAnimatedPreviewPlaying) {
+      const video = animatedPreviewVideoRef.current;
+      video?.pause();
+      setIsAnimatedPreviewPlaying(false);
+      return;
+    }
+
+    await handlePreviewPlayToggle();
+  };
+
+  const handleOpenAnimatedPreviewPackGuide = (pack: AnimatedCoverPack) => {
+    selectAnimatedCoverPack(pack);
+    setAnimatedInstallStep('cover');
+    setWidgetCatalogInstallStep('copy');
+    setIsAnimatedInstallDialogOpen(true);
+  };
+
+  const handleCopyAnimatedCoverUrl = async (pack: AnimatedCoverPack) => {
+    try {
+      await copyTextToClipboard(pack.rawUrl);
+      setCopiedAnimatedCoverSlug(pack.slug);
+      if (animatedCoverCopyResetTimeoutRef.current) {
+        clearTimeout(animatedCoverCopyResetTimeoutRef.current);
+      }
+      animatedCoverCopyResetTimeoutRef.current = setTimeout(() => {
+        setCopiedAnimatedCoverSlug(null);
+        animatedCoverCopyResetTimeoutRef.current = null;
+      }, 2200);
+      setAnimatedInstallStep('widget-prompt');
+    } catch (error) {
+      setExportActionError(getErrorMessage(error, 'The animated cover URL could not be copied.'));
+    }
+  };
+
+  const handleCopyAnimatedWidgetCatalogs = async () => {
+    if (!activeAnimatedCoverPack || !activeAnimatedWidgetCatalogExport) {
+      return;
+    }
+
+    try {
+      await copyTextToClipboard(JSON.stringify(activeAnimatedWidgetCatalogExport, null, 2));
+      setCopiedAnimatedCoverCatalogsSlug(activeAnimatedCoverPack.slug);
+      setWidgetCatalogInstallStep('connect');
+      if (animatedCoverCatalogCopyResetTimeoutRef.current) {
+        clearTimeout(animatedCoverCatalogCopyResetTimeoutRef.current);
+      }
+      animatedCoverCatalogCopyResetTimeoutRef.current = setTimeout(() => {
+        setCopiedAnimatedCoverCatalogsSlug(null);
+        animatedCoverCatalogCopyResetTimeoutRef.current = null;
+      }, 2200);
+    } catch (error) {
+      setExportActionError(getErrorMessage(error, 'The widget catalogs could not be copied.'));
+    }
+  };
+
+  const handleCopyAnimatedWidgetJson = async () => {
+    if (!activeAnimatedCoverPack || !preparedActiveAnimatedWidgetInstall) {
+      return;
+    }
+
+    try {
+      await copyTextToClipboard(preparedActiveAnimatedWidgetInstall.jsonText);
+      setCopiedAnimatedCoverWidgetSlug(activeAnimatedCoverPack.slug);
+      if (animatedCoverWidgetCopyResetTimeoutRef.current) {
+        clearTimeout(animatedCoverWidgetCopyResetTimeoutRef.current);
+      }
+      animatedCoverWidgetCopyResetTimeoutRef.current = setTimeout(() => {
+        setCopiedAnimatedCoverWidgetSlug(null);
+        animatedCoverWidgetCopyResetTimeoutRef.current = null;
+      }, 2200);
+    } catch (error) {
+      setExportActionError(getErrorMessage(error, 'The widget JSON could not be copied.'));
+    }
+  };
+
+  const handlePreviewCoverSelection = (index: number) => {
+    if (!selectedAnimatedCoverPack) {
+      return;
+    }
+
+    const boundedIndex = Math.max(0, Math.min(index, selectedAnimatedCoverPack.covers.length - 1));
+    setAnimatedPreviewIndex(boundedIndex);
+    setIsAnimatedPreviewPlaying(true);
+  };
+
+  const handlePreviewNext = () => {
+    if (!selectedAnimatedCoverPack || selectedAnimatedCoverPack.covers.length === 0) {
+      return;
+    }
+
+    setAnimatedPreviewIndex((previous) => (previous + 1) % selectedAnimatedCoverPack.covers.length);
+    setIsAnimatedPreviewPlaying(true);
+  };
+
+  const handlePreviewPrevious = () => {
+    if (!selectedAnimatedCoverPack || selectedAnimatedCoverPack.covers.length === 0) {
+      return;
+    }
+
+    setAnimatedPreviewIndex((previous) =>
+      (previous - 1 + selectedAnimatedCoverPack.covers.length) % selectedAnimatedCoverPack.covers.length
+    );
+    setIsAnimatedPreviewPlaying(true);
+  };
+
+  const handlePreviewPlayToggle = async () => {
+    const video = animatedPreviewVideoRef.current;
+    if (!video) {
+      return;
+    }
+
+    if (isAnimatedPreviewPlaying) {
+      video.pause();
+      setIsAnimatedPreviewPlaying(false);
+      return;
+    }
+
+    try {
+      if (video.ended || video.currentTime >= (video.duration || Number.POSITIVE_INFINITY) - 0.05) {
+        video.currentTime = 0;
+      }
+      await video.play();
+      setIsAnimatedPreviewPlaying(true);
+    } catch {
+      setIsAnimatedPreviewPlaying(false);
+    }
+  };
+
+  const handleCopyRegexPatternUrl = async (pack: RegexPatternPack) => {
+    setSelectedRegexPatternPackSlug(pack.slug);
+    try {
+      await copyTextToClipboard(pack.rawUrl);
+      setCopiedRegexPatternSlug(pack.slug);
+      if (regexPatternCopyResetTimeoutRef.current) {
+        clearTimeout(regexPatternCopyResetTimeoutRef.current);
+      }
+      regexPatternCopyResetTimeoutRef.current = setTimeout(() => {
+        setCopiedRegexPatternSlug(null);
+        regexPatternCopyResetTimeoutRef.current = null;
+      }, 2200);
+    } catch (error) {
+      setExportActionError(getErrorMessage(error, 'The regex pattern URL could not be copied.'));
+    }
+  };
+
+  const handleRegexPreviewNext = () => {
+    if (!selectedRegexPatternPack || selectedRegexPatternPack.filters.length === 0) {
+      return;
+    }
+    const nextPageIndex = (regexPreviewPageIndex + 1) % regexPreviewPageCount;
+    setRegexPreviewPageIndex(nextPageIndex);
+  };
+
+  const handleRegexPreviewPrevious = () => {
+    if (!selectedRegexPatternPack || selectedRegexPatternPack.filters.length === 0) {
+      return;
+    }
+    const previousPageIndex = (regexPreviewPageIndex - 1 + regexPreviewPageCount) % regexPreviewPageCount;
+    setRegexPreviewPageIndex(previousPageIndex);
+  };
+
+  const handleRegexPreviewPageForPack = (pack: RegexPatternPack, direction: 'previous' | 'next') => {
+    if (pack.filters.length === 0) {
+      return;
+    }
+
+    const pageCount = Math.max(1, Math.ceil(pack.filters.length / REGEX_PREVIEW_PAGE_SIZE));
+    if (selectedRegexPatternPack?.slug === pack.slug) {
+      if (direction === 'previous') {
+        handleRegexPreviewPrevious();
+      } else {
+        handleRegexPreviewNext();
+      }
+      return;
+    }
+
+    setSelectedRegexPatternPackSlug(pack.slug);
+    setRegexPreviewPageIndex(direction === 'previous' && pageCount > 1 ? pageCount - 1 : Math.min(1, pageCount - 1));
+  };
+
   const ExportPreview = ({
     title,
     count,
@@ -1012,17 +1819,21 @@ function WidgetSelectionGridComponent({
     countLabel: string;
     content: string;
   }) => (
-    <div className={cn("min-h-0 p-5 mt-3.5 w-full max-sm:px-0 max-sm:py-3 max-sm:mt-1.5 rounded-[2rem]", editorFormSurfaceClass)}>
-      <div className="flex items-center justify-between mb-4 px-1.5 max-sm:mb-3">
-        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/45 dark:text-foreground/55">
-          {title}
-        </span>
-        <div className="flex flex-col items-end gap-0.5">
-          <span className="text-[10px] font-bold text-primary/65 dark:text-primary/60 tabular-nums">
+    <div className={cn("min-h-0 p-5 mt-3.5 w-full max-sm:px-4 max-sm:py-3 max-sm:mt-1.5 rounded-[2rem]", editorFormSurfaceClass)}>
+      <div className="flex items-center justify-between mb-4 px-2 max-sm:px-1 max-sm:mb-3.5">
+        <div className="flex items-center gap-2">
+          <div className="size-1.5 rounded-full bg-primary/40 animate-pulse" />
+          <span className="text-[11px] font-black uppercase tracking-[0.2em] text-foreground/50 dark:text-foreground/60">
+            {title}
+          </span>
+        </div>
+        <div className="flex items-center gap-2 bg-zinc-100/50 dark:bg-white/5 px-2.5 py-1 rounded-lg border border-zinc-200/40 dark:border-white/5">
+          <span className="text-[10px] font-bold text-primary/70 tabular-nums">
             {count} {countLabel}
           </span>
-          <span className="text-[9px] font-medium text-muted-foreground/45 dark:text-muted-foreground/35 tabular-nums uppercase tracking-widest">
-            {(content.length / 1024).toFixed(1)} kB
+          <span className="text-[10px] font-medium text-muted-foreground/30">•</span>
+          <span className="text-[10px] font-bold text-muted-foreground/50 tabular-nums uppercase">
+            {(content.length / 1024).toFixed(1)} KB
           </span>
         </div>
       </div>
@@ -1643,6 +2454,17 @@ function WidgetSelectionGridComponent({
 
         {exportMode === 'aiometadata' ? (
           <div className="mt-5 flex min-h-0 flex-1 flex-col gap-6">
+            <div className="rounded-2xl border border-primary/15 bg-primary/5 p-4">
+              <p className="text-[10px] font-black uppercase tracking-[0.16em] text-primary/80">
+                Install Note
+              </p>
+              <p className="mt-2 text-[12px] leading-relaxed text-foreground/85">
+                1. Copy catalogs.
+                {' '}
+                2. AIOMetadata: Catalogs &gt; Import Setup &gt; paste &gt; Import &gt; Save.
+              </p>
+            </div>
+
             {/* Section 1: UME Sorting */}
             <div className="space-y-3">
               <div className="flex items-center gap-2 px-1">
@@ -1668,7 +2490,7 @@ function WidgetSelectionGridComponent({
                         </button>
                       </div>
                       <p className={aiometadataSectionDescriptionClass}>
-                        Enable automatic cloud-based sorting for all catalogs.
+                        Automatically sort AIOMetadata catalogs by rules like release date, popularity, and IMDb.
                       </p>
                     </div>
                   </div>
@@ -1774,7 +2596,21 @@ function WidgetSelectionGridComponent({
                   <div className="space-y-2.5 max-w-2xl text-left">
                     {previewContent.split('\n\n').slice(1).map((line, idx) => (
                       <p key={idx} className="text-sm leading-relaxed text-amber-900/80 dark:text-zinc-400 font-medium">
-                        {line}
+                        {line.includes('AIOMetadata section') ? (
+                          <>
+                            {line.split('AIOMetadata section')[0]}
+                            <button
+                              type="button"
+                              onClick={() => handleExportModeChange('aiometadata')}
+                              className="font-black text-primary hover:underline underline-offset-4 transition-all decoration-primary/30 hover:decoration-primary"
+                            >
+                              AIOMetadata section
+                            </button>
+                            {line.split('AIOMetadata section')[1]}
+                          </>
+                        ) : (
+                          line
+                        )}
                       </p>
                     ))}
                   </div>
@@ -1813,6 +2649,19 @@ function WidgetSelectionGridComponent({
                     </p>
                   </div>
                 </div>
+
+                {exportMode === 'fusion' ? (
+                  <div className="w-full max-w-3xl rounded-2xl border border-primary/15 bg-primary/5 p-4 text-left">
+                    <p className="text-[10px] font-black uppercase tracking-[0.16em] text-primary/80">
+                      Install Note
+                    </p>
+                    <p className="mt-2 text-[12px] leading-relaxed text-foreground/85">
+                      1. Copy JSON.
+                      {' '}
+                      2. Fusion &gt; Widgets &gt; Import Widgets &gt; Paste &gt; Import.
+                    </p>
+                  </div>
+                ) : null}
 
                 <ExportPreview
                   title={exportMode === 'omni' && requiresTraktBridgeImport && !isBridgeConfirmed ? "Omni Actions Required" : "JSON Preview"}
@@ -2196,6 +3045,717 @@ function WidgetSelectionGridComponent({
     );
   };
 
+  const renderAnimatedCoversSection = () => {
+    return (
+      <section ref={animatedCoversSectionRef} className={cn(editorPanelClass, "mt-10 rounded-3xl border-zinc-200/70 bg-zinc-50/55 p-5 dark:border-border/20 dark:bg-zinc-900/50 max-sm:mt-7 max-sm:rounded-[1.5rem] max-sm:p-3.5")}>
+        <div className="flex flex-wrap items-start justify-between gap-3 max-sm:gap-2">
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-[0.16em] text-primary/75 max-sm:text-[9px]">Animated Covers</p>
+            <h2 className="mt-1 text-xl font-black tracking-tight text-foreground max-sm:text-[1.45rem]">Apple TV Preview Pack</h2>
+          </div>
+          <a
+            href="https://github.com/nobnobz/Omni-Template-Bot-Bid-Raiser/tree/main/Other"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex h-8 items-center gap-1.5 rounded-xl border border-border/50 bg-background/70 px-3 text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground/80 transition-colors hover:border-primary/35 hover:text-primary max-sm:px-2.5 max-sm:text-[9px]"
+          >
+            Source
+            <ExternalLink className="size-3.5" />
+          </a>
+        </div>
+
+        <div className="mt-3 rounded-2xl border border-primary/15 bg-primary/5 p-4 max-sm:p-3.5">
+          <p className="text-[10px] font-black uppercase tracking-[0.16em] text-primary/80 max-sm:text-[9px]">Install Note</p>
+          <p className="mt-2 text-[12px] leading-relaxed text-foreground/85 max-sm:text-[11.5px]">
+            1. Install the widget.
+            {' '}
+            2. Paste the cover URL in
+            {' '}
+            <code>Fusion {'>'} Settings {'>'} Home {'>'} Preview Packs</code>
+            {' '}
+            and tap
+            {' '}
+            <code>Add</code>
+            .
+          </p>
+          <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground/75 max-sm:text-[10.5px]">
+            You need both the cover URL and the widget installed for the preview pack to work.
+          </p>
+        </div>
+
+        {isLoadingAnimatedCovers ? (
+          <div className="mt-4 flex items-center gap-2 rounded-2xl border border-border/50 bg-background/70 px-4 py-3 text-sm text-muted-foreground/75">
+            <Loader2 className="size-4 animate-spin text-primary/80" />
+            Loading animated covers...
+          </div>
+        ) : null}
+
+        {!isLoadingAnimatedCovers && animatedCoversError ? (
+          <div className="mt-4 rounded-2xl border border-destructive/20 bg-destructive/10 p-4">
+            <p className="text-sm text-destructive/85">{animatedCoversError}</p>
+            <Button
+              variant="outline"
+              onClick={() => void loadAnimatedCoverPacks()}
+              className={cn(editorActionButtonClass, "mt-3 h-9 rounded-xl border-destructive/25 bg-background/70 px-4 text-[10px] text-destructive hover:bg-destructive/10")}
+            >
+              Retry
+            </Button>
+          </div>
+        ) : null}
+
+        {!isLoadingAnimatedCovers && !animatedCoversError && animatedCoverPacks.length > 0 ? (
+          <div className="mt-4 grid grid-cols-1 gap-3 max-sm:gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
+            {animatedCoverPacks.map((pack) => {
+              const isSelected = selectedAnimatedCoverPack?.slug === pack.slug;
+              const previewCover = isSelected ? selectedAnimatedPreviewCover : null;
+              return (
+                <article
+                  key={pack.path}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => handlePreviewCardActivate(pack)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault();
+                      handlePreviewCardActivate(pack);
+                    }
+                  }}
+                  className={cn(
+                    "rounded-2xl border bg-background/85 p-2.5 transition-all outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+                    isSelected
+                      ? "border-primary/40 shadow-[0_10px_26px_-18px_rgba(37,99,235,0.75)]"
+                      : "border-border/55 hover:border-primary/25"
+                  )}
+                >
+                  <div
+                    className={cn(
+                      "group relative aspect-video overflow-hidden rounded-xl border border-border/45 bg-black/85"
+                    )}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      void handlePreviewAreaToggle();
+                    }}
+                  >
+                    {isSelected && previewCover ? (
+                      <>
+                        <video
+                          ref={animatedPreviewVideoRef}
+                          key={previewCover.videoURL}
+                          src={previewCover.videoURL}
+                          poster={previewCover.backgroundURL}
+                          muted
+                          playsInline
+                          className={cn(
+                            "h-full w-full",
+                            isSelected && selectedAnimatedPreviewCoverLayout && selectedAnimatedPreviewCoverLayout !== 'Wide'
+                              ? "object-contain object-center p-3 max-sm:p-2"
+                              : "object-cover"
+                          )}
+                          onPlay={() => setIsAnimatedPreviewPlaying(true)}
+                          onPause={() => setIsAnimatedPreviewPlaying(false)}
+                          onEnded={() => setIsAnimatedPreviewPlaying(false)}
+                        />
+                        <button
+                          type="button"
+                          aria-label="Previous cover"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            handlePreviewPrevious();
+                          }}
+                          className="absolute inset-y-0 left-0 z-20 flex w-10 items-center justify-start bg-gradient-to-r from-black/22 to-transparent pl-2 text-white/60 transition-colors hover:text-white/90"
+                        >
+                          <ChevronLeft className="size-5" />
+                        </button>
+                        <button
+                          type="button"
+                          aria-label="Next cover"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            handlePreviewNext();
+                          }}
+                          className="absolute inset-y-0 right-0 z-20 flex w-10 items-center justify-end bg-gradient-to-l from-black/22 to-transparent pr-2 text-white/60 transition-colors hover:text-white/90"
+                        >
+                          <ChevronRight className="size-5" />
+                        </button>
+                        <div className="pointer-events-none absolute inset-x-0 top-0 z-10 bg-gradient-to-b from-black/65 to-transparent px-2.5 py-2">
+                          <p className="truncate text-[10px] font-black uppercase tracking-[0.14em] text-white/92">
+                            {previewCover.title}
+                          </p>
+                          <p className="text-[10px] font-semibold text-white/72">
+                            Cover {animatedPreviewIndex + 1} of {pack.covers.length}
+                          </p>
+                        </div>
+                        <div className={cn(
+                          "pointer-events-none absolute inset-0 z-10 flex items-center justify-center bg-black/10 opacity-0 transition-opacity duration-200",
+                          !isAnimatedPreviewPlaying ? "group-hover:opacity-100 group-focus-within:opacity-100" : "group-hover:opacity-0"
+                        )}>
+                          <span className="inline-flex items-center gap-2 rounded-full border border-white/35 bg-black/45 px-4 py-2 text-xs font-bold uppercase tracking-[0.14em] text-white">
+                            <Play className="size-3.5" />
+                            Play
+                          </span>
+                        </div>
+                      </>
+                    ) : (
+                      <div
+                        className="group relative block h-full w-full text-left"
+                      >
+                        {pack.previewImageUrl ? (
+                          <Image
+                            src={pack.previewImageUrl}
+                            alt={`${pack.title} preview`}
+                            fill
+                            sizes="(max-width: 640px) 100vw, 33vw"
+                            className={cn(
+                              "h-full w-full transition-transform duration-300 group-hover:scale-[1.02]",
+                              isSelected && selectedAnimatedPreviewCoverLayout && selectedAnimatedPreviewCoverLayout !== 'Wide'
+                                ? "object-contain object-center p-3 max-sm:p-2"
+                                : "object-cover"
+                            )}
+                          />
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground/60">
+                            No preview image
+                          </div>
+                        )}
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/12 opacity-0 transition-opacity group-hover:opacity-100">
+                          <span className="inline-flex items-center gap-2 rounded-full border border-white/35 bg-black/45 px-4 py-2 text-xs font-bold uppercase tracking-[0.14em] text-white">
+                            <Play className="size-3.5" />
+                            Preview
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                    <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/65 to-transparent px-2.5 py-2">
+                      <p className="truncate text-[10px] font-black uppercase tracking-[0.14em] text-white/90">
+                        {pack.coverCount} Covers
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="px-1 pb-1 pt-2.5 max-sm:pt-2">
+                    <p className="truncate text-sm font-bold text-foreground max-sm:text-[14px]">{pack.title}</p>
+                    <p className={cn(
+                      "mt-1 text-[10px] font-semibold uppercase tracking-[0.12em]",
+                      isSelected ? "text-primary/85" : "text-muted-foreground/60"
+                    )}>
+                      {isSelected ? 'Live Preview Active' : 'Tap Preview To Start'}
+                    </p>
+                  </div>
+
+                  {isSelected ? (
+                    <>
+                      <div className="mt-2 overflow-x-auto rounded-xl border border-border/35 bg-background/65 p-2 custom-scrollbar" onClick={(event) => event.stopPropagation()}>
+                        <div className="flex min-w-max items-center gap-1.5">
+                          {pack.covers.map((cover, index) => (
+                            <button
+                              key={`${pack.slug}-${cover.id}`}
+                              type="button"
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                handlePreviewCoverSelection(index);
+                              }}
+                              className={cn(
+                                "inline-flex h-9 w-fit max-w-[11rem] shrink-0 items-center rounded-lg border px-3 text-left text-[10px] font-semibold transition-colors",
+                                index === animatedPreviewIndex
+                                  ? "border-primary/45 bg-primary/10 text-primary"
+                                  : "border-border/45 bg-background/80 text-foreground/80 hover:border-primary/25 hover:text-primary"
+                              )}
+                            >
+                              <span className="block truncate">{cover.title}</span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="mt-2">
+                        <Button
+                          type="button"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            handleOpenAnimatedPreviewPackGuide(pack);
+                          }}
+                          className={cn(editorActionButtonClass, "h-10 w-full rounded-xl px-4 text-[10px] bg-primary/95 text-primary-foreground hover:bg-primary/85")}
+                        >
+                          <Copy className="mr-1.5 size-3.5" />
+                          Install Preview Pack
+                        </Button>
+                      </div>
+                    </>
+                  ) : null}
+                </article>
+              );
+            })}
+          </div>
+        ) : null}
+
+      </section>
+    );
+  };
+
+  const renderAnimatedInstallDialog = () => {
+    if (!activeAnimatedCoverPack) {
+      return null;
+    }
+
+    const widgetInstall = preparedActiveAnimatedWidgetInstall;
+    const matchedCoverBackgroundUrls = activeAnimatedCoverWidgetBlueprint?.matchedCoverBackgroundUrls ?? [];
+    const isAnimatedLayoutDetectionReady = matchedCoverBackgroundUrls.length === 0
+      || matchedCoverBackgroundUrls.every((url) => Boolean(animatedCoverDetectedLayouts[url]));
+    const canShowWidget = Boolean(activeAnimatedCoverWidgetBlueprint && preparedActiveAnimatedWidgetInstall && isAnimatedLayoutDetectionReady);
+    const isCopiedCover = copiedAnimatedCoverSlug === activeAnimatedCoverPack.slug;
+    const isCopiedWidget = copiedAnimatedCoverWidgetSlug === activeAnimatedCoverPack.slug;
+    const removedBecauseNoManifest = widgetInstall?.removedBecauseNoManifest ?? 0;
+    const removedBecauseMissingCatalog = widgetInstall?.removedBecauseMissingCatalog ?? 0;
+    const hasCatalogWarning = removedBecauseNoManifest > 0 || removedBecauseMissingCatalog > 0;
+    const widgetInstallTitles = widgetInstall?.widgetTitles ?? [];
+    const widgetInstallName = widgetInstall?.widgetCount === 1
+      ? (widgetInstallTitles[0] ?? activeAnimatedCoverPack.title)
+      : `${widgetInstall?.widgetCount ?? 0} widgets`;
+    const connectAiometadataLabel = isManifestSynced ? 'Refresh AIOMetadata' : 'Connect AIOMetadata';
+    const isCopiedWidgetCatalogs = copiedAnimatedCoverCatalogsSlug === activeAnimatedCoverPack.slug;
+    const shouldHighlightCatalogNextStep = hasCatalogWarning && widgetCatalogInstallStep === 'connect';
+    const widgetCatalogsCopyClass = cn(
+      editorActionButtonClass,
+      editorFooterPrimaryButtonClass,
+      "w-full sm:flex-1 h-11 text-[13px] font-bold uppercase tracking-wider",
+      shouldHighlightCatalogNextStep
+        ? "border border-zinc-200/70 bg-white/72 text-foreground/80 hover:bg-white/88 hover:border-zinc-300/75 dark:border-white/10 dark:bg-white/[0.045] dark:text-foreground/88 dark:hover:bg-white/[0.07]"
+        : "bg-primary/[0.96] text-primary-foreground hover:bg-primary/90"
+    );
+    const widgetCatalogsNextStepClass = cn(
+      editorActionButtonClass,
+      "w-full sm:flex-1 h-11 text-[13px] font-bold uppercase tracking-wider",
+      shouldHighlightCatalogNextStep
+        ? "bg-primary/[0.96] text-primary-foreground hover:bg-primary/90"
+        : "border border-zinc-200/70 bg-white/72 text-foreground/80 hover:bg-white/88 hover:border-zinc-300/75 dark:border-white/10 dark:bg-white/[0.045] dark:text-foreground/88 dark:hover:bg-white/[0.07]"
+    );
+
+    const coverContent = (
+      <div className="mx-auto w-full max-w-[36rem]">
+        <div className="space-y-3 text-left">
+          <p className="text-[10px] font-black uppercase tracking-[0.16em] text-primary/75">Install Flow</p>
+          <h2 className="text-2xl font-black tracking-tight">Install Animated Cover</h2>
+          <p className="text-sm leading-relaxed text-muted-foreground/75">
+            Copy the preview pack URL for
+            {' '}
+            <strong>{activeAnimatedCoverPack.title}</strong>
+            {' '}
+            and paste it into Fusion.
+          </p>
+        </div>
+
+        <div className="mt-4 rounded-[1.5rem] border border-border/60 bg-white/75 p-4 shadow-sm shadow-black/[0.03] dark:border-white/10 dark:bg-white/[0.04] dark:shadow-none">
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-[0.14em] text-muted-foreground/65">Preview Pack URL</p>
+            <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground/70">
+              Fusion
+              {' '}
+              <code>{'>'}</code>
+              {' '}
+              Settings
+              {' '}
+              <code>{'>'}</code>
+              {' '}
+              Home
+              {' '}
+              <code>{'>'}</code>
+              {' '}
+              Preview Packs
+              {' '}
+              <code>{'>'}</code>
+              {' '}
+              Add
+            </p>
+          </div>
+          <code className="mt-3 block break-all rounded-2xl border border-border/45 bg-background/85 p-3 text-[11px] leading-relaxed text-foreground/80 dark:border-white/10 dark:bg-zinc-950/70">
+            {activeAnimatedCoverPack.rawUrl}
+          </code>
+          <Button
+            type="button"
+            onClick={() => void handleCopyAnimatedCoverUrl(activeAnimatedCoverPack)}
+            className={cn(editorActionButtonClass, "mt-3 h-10 w-full rounded-xl px-4 text-[10px] bg-primary/95 text-primary-foreground hover:bg-primary/85")}
+          >
+            {isCopiedCover ? <Check className="mr-1.5 size-3.5" /> : <Copy className="mr-1.5 size-3.5" />}
+            {isCopiedCover ? 'Copied URL' : 'Copy Preview Pack URL'}
+          </Button>
+        </div>
+
+        {animatedInstallStep === 'widget-prompt' ? (
+          <div className="mt-4 rounded-[1.5rem] border border-primary/20 bg-primary/5 p-4">
+            <p className="text-[10px] font-black uppercase tracking-[0.16em] text-primary/80">Next Step</p>
+            <p className="mt-2 text-[12px] leading-relaxed text-foreground/85">
+              Preview pack copied. Do you want the widget too?
+            </p>
+            <div className="mt-3 flex items-center gap-2 max-sm:flex-col max-sm:items-stretch">
+              <Button
+                type="button"
+                onClick={() => setAnimatedInstallStep('widget')}
+                className={cn(editorActionButtonClass, "h-10 rounded-xl px-4 text-[10px] bg-primary/95 text-primary-foreground hover:bg-primary/85 max-sm:w-full")}
+                disabled={!canShowWidget}
+              >
+                <FileCode className="mr-1.5 size-3.5" />
+                Install Widget
+              </Button>
+            </div>
+          </div>
+        ) : null}
+
+      </div>
+    );
+
+    const widgetContent = (
+      <div className="mx-auto flex h-full w-full max-w-[48rem] flex-col">
+        <div className="min-h-0 flex-1 overflow-y-auto pr-1 custom-scrollbar max-sm:pr-0">
+          <div className="space-y-3 text-left">
+            <p className="text-[10px] font-black uppercase tracking-[0.16em] text-primary/75">Install Flow</p>
+            <h2 className="text-2xl font-black tracking-tight">
+              Install
+              {' '}
+              {widgetInstall?.widgetCount === 1 ? 'Widget' : 'Widgets'}
+            </h2>
+            <p className="text-sm leading-relaxed text-muted-foreground/75">
+              Install
+              {' '}
+              <strong>{widgetInstallName}</strong>
+              {' '}
+              from the current UME snapshot.
+            </p>
+            <p className="text-[11px] leading-relaxed text-muted-foreground/65">
+              Fusion
+              {' '}
+              <code>{'>'}</code>
+              {' '}
+              Widgets
+              {' '}
+              <code>{'>'}</code>
+              {' '}
+              Import Widgets
+              {' '}
+              <code>{'>'}</code>
+              {' '}
+              Paste
+              {' '}
+              <code>{'>'}</code>
+              {' '}
+              Import
+            </p>
+          </div>
+
+          <div className="mt-4 rounded-[1.5rem] border border-border/60 bg-white/75 p-4 shadow-sm shadow-black/[0.03] dark:border-white/10 dark:bg-white/[0.04] dark:shadow-none">
+            <div className={cn(
+              "rounded-2xl border p-3",
+              hasCatalogWarning
+                ? "border-amber-400/35 bg-amber-500/10 text-amber-900 dark:text-amber-200"
+                : "border-emerald-400/30 bg-emerald-500/10 text-emerald-900 dark:text-emerald-200"
+            )}>
+              <p className="text-[10px] font-black uppercase tracking-[0.14em]">
+                {hasCatalogWarning ? 'Catalogs will be empty' : 'Catalogs ready'}
+              </p>
+              <p className="mt-1 text-[12px] leading-relaxed">
+                {removedBecauseNoManifest > 0
+                  ? 'No AIOMetadata manifest is synced yet, so catalogs will be empty.'
+                  : removedBecauseMissingCatalog > 0
+                    ? `${removedBecauseMissingCatalog} catalog sources are missing from your synced manifest.`
+                    : 'Catalog sources are synced and will be included automatically.'}
+              </p>
+              {hasCatalogWarning ? (
+                <div className="mt-3 space-y-1.5 text-[11px] leading-relaxed text-foreground/75 dark:text-foreground/80">
+                  <p>1. Copy AIOM Catalogs.</p>
+                  <p>2. AIOMetadata: Catalogs &gt; Import Setup &gt; paste &gt; Import &gt; Save.</p>
+                  <p>3. {isManifestSynced ? 'Refresh AIOMetadata here.' : 'Connect AIOMetadata here.'}</p>
+                </div>
+              ) : null}
+            </div>
+            {hasCatalogWarning ? (
+              <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+                <Button
+                  type="button"
+                  variant={shouldHighlightCatalogNextStep ? "outline" : "default"}
+                  onClick={() => void handleCopyAnimatedWidgetCatalogs()}
+                  className={widgetCatalogsCopyClass}
+                >
+                  {isCopiedWidgetCatalogs ? '1. Copied AIOM Catalogs' : '1. Copy AIOM Catalogs'}
+                </Button>
+                <Button
+                  type="button"
+                  variant={shouldHighlightCatalogNextStep ? "default" : "outline"}
+                  onClick={() => {
+                    if (isManifestSynced) {
+                      void handleRefreshManifest();
+                      return;
+                    }
+                    onSyncManifest?.();
+                  }}
+                  className={widgetCatalogsNextStepClass}
+                >
+                  {`2. ${connectAiometadataLabel}`}
+                </Button>
+              </div>
+            ) : null}
+          </div>
+
+          <div className="mt-4 rounded-[1.5rem] border border-border/60 bg-white/75 p-4 shadow-sm shadow-black/[0.03] dark:border-white/10 dark:bg-white/[0.04] dark:shadow-none">
+            <p className="text-[10px] font-black uppercase tracking-[0.14em] text-muted-foreground/65">Widget JSON</p>
+            <div className="mt-3 rounded-2xl border border-border/45 bg-zinc-900 p-2">
+              <textarea
+                readOnly
+                value={widgetInstall?.jsonText || ''}
+                className="h-[20rem] w-full resize-none border-none bg-transparent font-mono text-[11px] leading-relaxed text-zinc-200 focus-visible:ring-0 max-sm:h-[38dvh]"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="shrink-0 border-t border-zinc-200/40 bg-zinc-50/30 px-8 pt-4 pb-8 max-sm:px-6 max-sm:pb-8 dark:border-white/5 dark:bg-zinc-950/10">
+          <div className="flex justify-end">
+            <Button
+              type="button"
+              onClick={() => void handleCopyAnimatedWidgetJson()}
+              className={cn(editorActionButtonClass, editorFooterPrimaryButtonClass, "w-full sm:w-auto sm:min-w-[14rem] h-11 text-[13px] font-bold uppercase tracking-wider")}
+            >
+              {isCopiedWidget ? <Check className="mr-2 size-4" /> : <Copy className="mr-2 size-4" />}
+              {isCopiedWidget ? 'Copied Widget JSON' : 'Copy Widget JSON'}
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+
+    const content = animatedInstallStep === 'widget' ? widgetContent : coverContent;
+
+    if (isMobile) {
+      return (
+        <Drawer
+          open={isAnimatedInstallDialogOpen}
+          onOpenChange={(open) => {
+            setIsAnimatedInstallDialogOpen(open);
+            if (!open) {
+              setAnimatedInstallStep('cover');
+              setWidgetCatalogInstallStep('copy');
+            }
+          }}
+        >
+          <DrawerContent className="max-h-[94dvh] overflow-hidden bg-white dark:bg-zinc-950 border-zinc-200/80 dark:border-white/10 rounded-t-[2.5rem]">
+            <DrawerHeader className="sr-only">
+              <DrawerTitle>{animatedInstallStep === 'widget' ? 'Install Widget' : 'Install Animated Cover'}</DrawerTitle>
+              <DrawerDescription>Install the preview pack cover URL and widget.</DrawerDescription>
+            </DrawerHeader>
+            <div className="flex h-[87dvh] min-h-0 flex-col px-6 pt-8 pb-0 max-sm:px-5">
+              {content}
+            </div>
+          </DrawerContent>
+        </Drawer>
+      );
+    }
+
+    return (
+      <Dialog
+        open={isAnimatedInstallDialogOpen}
+        onOpenChange={(open) => {
+          setIsAnimatedInstallDialogOpen(open);
+          if (!open) {
+            setAnimatedInstallStep('cover');
+            setWidgetCatalogInstallStep('copy');
+          }
+        }}
+      >
+        <DialogContent className="max-h-[85vh] flex flex-col overflow-hidden rounded-3xl border border-zinc-200/80 bg-white/95 p-0 backdrop-blur-2xl dark:border-white/12 dark:bg-zinc-950/93 sm:max-w-[48rem]">
+          <DialogTitle className="sr-only">{animatedInstallStep === 'widget' ? 'Install Widget' : 'Install Animated Cover'}</DialogTitle>
+          <div className="flex min-h-0 flex-1 flex-col p-6 sm:p-8">
+            {content}
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  };
+
+  const renderRegexPatternsSection = () => {
+    return (
+      <section ref={regexPatternsSectionRef} className={cn(editorPanelClass, "mt-6 rounded-3xl border-zinc-200/70 bg-zinc-50/55 p-5 dark:border-border/20 dark:bg-zinc-900/50 max-sm:mt-5 max-sm:rounded-[1.5rem] max-sm:p-3.5")}>
+        <div className="flex flex-wrap items-start justify-between gap-3 max-sm:gap-2">
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-[0.16em] text-primary/75 max-sm:text-[9px]">Regex Patterns</p>
+            <h2 className="mt-1 text-xl font-black tracking-tight text-foreground max-sm:text-[1.45rem]">Fusion Filter Tags</h2>
+          </div>
+          <a
+            href="https://github.com/nobnobz/Omni-Template-Bot-Bid-Raiser/tree/main/Other"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex h-8 items-center gap-1.5 rounded-xl border border-border/50 bg-background/70 px-3 text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground/80 transition-colors hover:border-primary/35 hover:text-primary max-sm:px-2.5 max-sm:text-[9px]"
+          >
+            Source
+            <ExternalLink className="size-3.5" />
+          </a>
+        </div>
+
+        <div className="mt-3 rounded-2xl border border-primary/15 bg-primary/5 p-4 max-sm:p-3.5">
+          <p className="text-[10px] font-black uppercase tracking-[0.16em] text-primary/80 max-sm:text-[9px]">Install Note</p>
+          <p className="mt-2 text-[12px] leading-relaxed text-foreground/85 max-sm:text-[11.5px]">
+            1. Pick one variant and copy its URL.
+            {' '}
+            2. Paste it in
+            {' '}
+            <code>Fusion {'>'} Settings {'>'} Filters {'>'} Import Filters</code>.
+          </p>
+        </div>
+
+        {isLoadingRegexPatterns ? (
+          <div className="mt-4 flex items-center gap-2 rounded-2xl border border-border/50 bg-background/70 px-4 py-3 text-sm text-muted-foreground/75">
+            <Loader2 className="size-4 animate-spin text-primary/80" />
+            Loading regex pattern packs...
+          </div>
+        ) : null}
+
+        {!isLoadingRegexPatterns && regexPatternsError ? (
+          <div className="mt-4 rounded-2xl border border-destructive/20 bg-destructive/10 p-4">
+            <p className="text-sm text-destructive/85">{regexPatternsError}</p>
+            <Button
+              variant="outline"
+              onClick={() => void loadRegexPatternPacks()}
+              className={cn(editorActionButtonClass, "mt-3 h-9 rounded-xl border-destructive/25 bg-background/70 px-4 text-[10px] text-destructive hover:bg-destructive/10")}
+            >
+              Retry
+            </Button>
+          </div>
+        ) : null}
+
+        {!isLoadingRegexPatterns && !regexPatternsError && regexPatternPacks.length > 0 ? (
+          <div className="mt-4 grid grid-cols-1 gap-3 max-sm:gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
+            {regexPatternPacks.map((pack) => {
+              const isSelected = selectedRegexPatternPack?.slug === pack.slug;
+              const isCopied = copiedRegexPatternSlug === pack.slug;
+              const previewPageCount = Math.max(1, Math.ceil(pack.filters.length / REGEX_PREVIEW_PAGE_SIZE));
+              const previewPageIndex = isSelected ? regexPreviewPageIndex : 0;
+              const previewPageFilters = isSelected
+                ? selectedRegexPreviewPageFilters
+                : pack.filters.slice(0, REGEX_PREVIEW_PAGE_SIZE);
+              const canPage = pack.filters.length > REGEX_PREVIEW_PAGE_SIZE;
+              const selectPack = () => setSelectedRegexPatternPackSlug(pack.slug);
+              const handlePackKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                  event.preventDefault();
+                  selectPack();
+                }
+              };
+            return (
+              <article
+                key={pack.path}
+                className={cn(
+                    "overflow-hidden rounded-2xl border bg-background/85 p-2.5 transition-all",
+                    isSelected
+                      ? "border-primary/40 shadow-[0_10px_26px_-18px_rgba(37,99,235,0.75)]"
+                      : "border-border/55 hover:border-primary/25"
+                  )}
+                >
+                  <div
+                    role="button"
+                    tabIndex={0}
+                    onClick={selectPack}
+                    onKeyDown={handlePackKeyDown}
+                    className="w-full text-left outline-none"
+                  >
+                    <div className="group rounded-xl border border-border/45 bg-muted/30 p-1.5">
+                      <div className="flex flex-wrap items-center justify-between gap-2 px-1 pb-2">
+                        <div className="flex items-center gap-2">
+                          <p className="text-[10px] font-black uppercase tracking-[0.16em] text-primary/80 max-sm:text-[9px]">
+                            Preview
+                          </p>
+                          <div className="rounded-full border border-border/55 bg-background/80 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground/70">
+                            Page {previewPageIndex + 1} / {previewPageCount}
+                          </div>
+                        </div>
+                      </div>
+
+                      {previewPageFilters.length > 0 ? (
+                        <div className="relative">
+                          {canPage ? (
+                            <>
+                              <button
+                                type="button"
+                                aria-label="Previous preview page"
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  handleRegexPreviewPageForPack(pack, 'previous');
+                                }}
+                                className={cn(
+                                  "absolute left-1 top-1/2 z-10 inline-flex size-9 -translate-y-1/2 items-center justify-center rounded-full text-muted-foreground/55 transition-colors hover:text-primary md:size-7",
+                                  isSelected ? "opacity-100" : "opacity-70"
+                                )}
+                              >
+                                <ChevronLeft className="size-4 drop-shadow-sm md:size-3.5" />
+                              </button>
+                              <button
+                                type="button"
+                                aria-label="Next preview page"
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  handleRegexPreviewPageForPack(pack, 'next');
+                                }}
+                                className={cn(
+                                  "absolute right-1 top-1/2 z-10 inline-flex size-9 -translate-y-1/2 items-center justify-center rounded-full text-muted-foreground/55 transition-colors hover:text-primary md:size-7",
+                                  isSelected ? "opacity-100" : "opacity-70"
+                                )}
+                              >
+                                <ChevronRight className="size-4 drop-shadow-sm md:size-3.5" />
+                              </button>
+                            </>
+                          ) : null}
+                          <div className="grid grid-cols-3 gap-1.25 px-10 sm:px-11">
+                            {previewPageFilters.map((filter) => (
+                              <div
+                                key={`${pack.slug}-${previewPageIndex}-${filter.id}`}
+                                className="inline-flex h-7 w-full items-center justify-center rounded-[0.65rem] px-2 py-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] sm:h-8 sm:px-2.5"
+                                style={buildRegexTagVisualStyle(filter)}
+                              >
+                                {filter.imageURL ? (
+                                  <Image
+                                    src={filter.imageURL}
+                                    alt={`${filter.name} icon`}
+                                    width={18}
+                                    height={18}
+                                    className="max-h-[0.95rem] w-auto shrink-0 object-contain sm:max-h-[1.05rem]"
+                                  />
+                                ) : null}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex min-h-[3.8rem] items-center justify-center rounded-lg border border-border/45 bg-background/75 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground/60">
+                          No preview tags
+                        </div>
+                      )}
+                    </div>
+                    <div className="px-1 pb-1 pt-2.5 max-sm:pt-2">
+                      <p className="truncate text-sm font-bold text-foreground max-sm:text-[14px]">{pack.title}</p>
+                    </div>
+                  </div>
+                  <div className="mt-2 flex items-center gap-2 px-1 pb-1 max-sm:mt-1.5 max-sm:flex-col max-sm:items-stretch">
+                    <Button
+                      type="button"
+                      variant={isSelected ? "default" : "outline"}
+                      onClick={() => void handleCopyRegexPatternUrl(pack)}
+                      className={cn(
+                        editorActionButtonClass,
+                        "mt-1 h-10 w-full rounded-xl px-4 text-[10px] max-sm:h-9 max-sm:text-[10.5px]",
+                        isSelected
+                          ? "bg-primary/95 text-primary-foreground hover:bg-primary/85"
+                          : "border-border/60 bg-background/75 text-foreground/80 hover:border-primary/30 hover:text-primary dark:bg-white/[0.04]"
+                      )}
+                    >
+                      {isCopied ? <Check className="mr-1.5 size-3.5" /> : <Copy className="mr-1.5 size-3.5" />}
+                      {isCopied ? 'Copied URL' : 'Copy URL'}
+                    </Button>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        ) : null}
+      </section>
+    );
+  };
+
   return (
     <div className="flex-1 flex flex-col bg-transparent">
       <main className="max-w-5xl mx-auto w-full px-6 max-sm:px-4 py-12 max-sm:py-6 max-sm:pb-[calc(env(safe-area-inset-bottom)+2rem)]">
@@ -2213,85 +3773,72 @@ function WidgetSelectionGridComponent({
             className={cn(
               "mb-4 rounded-3xl px-5 max-sm:mb-3 max-sm:px-4",
               isManifestSynced
-                ? "border border-emerald-200/75 bg-emerald-50/65 py-4 dark:border-emerald-500/22 dark:bg-emerald-500/[0.08]"
+                ? "border border-emerald-200/55 bg-white/80 py-3.5 shadow-sm shadow-emerald-950/[0.03] dark:border-emerald-500/14 dark:bg-zinc-950/35 dark:shadow-none"
                 : "border border-amber-200/65 bg-amber-50/50 py-4 dark:border-amber-500/18 dark:bg-amber-500/[0.06]"
             )}
           >
-            <div className="flex items-center justify-between gap-4 max-sm:flex-col max-sm:items-stretch">
-              <div className="flex items-start gap-3">
-                {isManifestSynced ? (
-                  <div className="flex size-10 items-center justify-center rounded-xl border border-emerald-200/65 bg-emerald-100/62 dark:border-emerald-500/16 dark:bg-emerald-500/12">
-                    <span className="size-2 rounded-full bg-emerald-600/85 dark:bg-emerald-300/88" />
+            {isManifestSynced ? (
+              <div className="flex items-center justify-between gap-3 max-sm:flex-col max-sm:items-stretch">
+                <div className="flex min-w-0 items-center gap-3">
+                  <div className="flex size-9 shrink-0 items-center justify-center rounded-xl border border-emerald-200/55 bg-emerald-100/55 dark:border-emerald-500/14 dark:bg-emerald-500/[0.10]">
+                    <span className="size-2 rounded-full bg-emerald-600/80 dark:bg-emerald-300/85" />
                   </div>
-                ) : (
+                  <p className="truncate text-[11px] font-black uppercase tracking-[0.16em] text-emerald-800/85 dark:text-emerald-200/90 max-sm:text-[10px]">
+                    AIOMetadata synced
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2 max-sm:grid max-sm:grid-cols-2 max-sm:w-full">
+                  <Button
+                    onClick={handleRefreshManifest}
+                    variant="secondary"
+                    disabled={isRefreshingManifest}
+                    className={cn(editorActionButtonClass, "group h-9 shrink-0 border border-emerald-300/35 bg-white/70 px-3.5 text-[10px] text-stone-900/68 transition-all duration-300 hover:bg-emerald-50/75 hover:border-emerald-400/45 hover:text-emerald-700 hover:scale-[1.01] active:scale-[0.98] max-sm:w-full dark:border-emerald-500/18 dark:bg-zinc-950/35 dark:text-emerald-300/80 dark:hover:bg-emerald-500/10 dark:hover:text-emerald-400")}
+                  >
+                    <RotateCcw className={cn("size-3.5 mr-2 text-emerald-700/60 transition-colors group-hover:text-emerald-700 dark:text-emerald-400/60 dark:group-hover:text-emerald-400", isRefreshingManifest && "animate-spin")} />
+                    Refresh
+                  </Button>
+                  <Button
+                    onClick={onSyncManifest}
+                    variant="secondary"
+                    className={cn(editorActionButtonClass, "group h-9 shrink-0 border border-emerald-200/30 bg-white/70 px-3.5 text-[10px] text-stone-900/68 transition-all duration-300 hover:bg-emerald-50/75 hover:border-emerald-300/45 hover:text-emerald-700 hover:scale-[1.01] active:scale-[0.98] max-sm:w-full dark:border-white/5 dark:bg-zinc-950/35 dark:text-zinc-300/80 dark:hover:bg-zinc-900/80 dark:hover:text-primary")}
+                  >
+                    <Pencil className="size-3.5 mr-2 text-emerald-700/60 transition-colors group-hover:text-emerald-700 dark:text-zinc-400/60 dark:group-hover:text-primary" />
+                    Edit
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center justify-between gap-4 max-sm:flex-col max-sm:items-stretch">
+                <div className="flex items-start gap-3">
                   <div className="rounded-xl border border-amber-200/60 bg-amber-100/62 p-2 text-amber-700/80 dark:border-amber-500/16 dark:bg-amber-500/12 dark:text-amber-300/85">
                     <AlertTriangle className="size-4" />
                   </div>
-                )}
 
-                <div className="min-w-0 max-w-[36rem]">
-                  <p
-                    className={cn(
-                      "text-[11px] font-black uppercase tracking-[0.16em]",
-                      isManifestSynced
-                        ? "text-emerald-800/85 dark:text-emerald-200/92"
-                        : "text-stone-900/72 dark:text-amber-100/82"
-                    )}
-                  >
-                    {isManifestSynced ? 'AIOMetadata synced' : manifestAutoSyncIssue ? 'AIOMetadata sync alert' : 'AIOMetadata not synced'}
-                  </p>
-                  <p
-                    className={cn(
-                      "mt-1 text-[13px] font-normal leading-[1.55] max-sm:text-[12px]",
-                      isManifestSynced
-                        ? "text-stone-900/72 dark:text-zinc-300/80"
-                        : "text-stone-900/64 dark:text-zinc-300/74"
-                    )}
-                  >
-                    {isManifestSynced
-                      ? 'Catalog validation and placeholder replacement are active.'
-                      : manifestAutoSyncIssue
+                  <div className="min-w-0 max-w-[36rem]">
+                    <p className="text-[11px] font-black uppercase tracking-[0.16em] text-stone-900/72 dark:text-amber-100/82">
+                      {manifestAutoSyncIssue ? 'AIOMetadata sync alert' : 'AIOMetadata not synced'}
+                    </p>
+                    <p className="mt-1 text-[13px] font-normal leading-[1.55] text-stone-900/64 dark:text-zinc-300/74 max-sm:text-[12px]">
+                      {manifestAutoSyncIssue
                         ? manifestAutoSyncIssue
                         : hasUnsyncedAiometadataSources
                           ? 'Sync your AIOMetadata manifest to replace placeholders and add new catalogs.'
                           : 'Add your AIOMetadata manifest URL for catalog validation and automatic placeholder replacement.'}
-                  </p>
+                    </p>
+                  </div>
                 </div>
-              </div>
 
-              <div className="flex items-center gap-2 max-sm:grid max-sm:grid-cols-2 max-sm:w-full">
-                {isManifestSynced ? (
-                  <>
-                    <Button
-                      onClick={handleRefreshManifest}
-                      variant="secondary"
-                      disabled={isRefreshingManifest}
-                      className={cn(editorActionButtonClass, "group h-10 shrink-0 border border-emerald-300/50 bg-white/60 px-4 text-[10px] text-stone-900/70 transition-all duration-300 hover:bg-emerald-50/80 hover:border-emerald-400/50 hover:text-emerald-700 hover:scale-[1.02] active:scale-[0.98] max-sm:w-full dark:border-emerald-500/20 dark:bg-zinc-950/40 dark:text-emerald-300/80 dark:hover:bg-emerald-500/10 dark:hover:text-emerald-400")}
-                    >
-                      <RotateCcw className={cn("size-4 mr-2 text-emerald-700/60 transition-colors group-hover:text-emerald-700 dark:text-emerald-400/60 dark:group-hover:text-emerald-400", isRefreshingManifest && "animate-spin")} />
-                      Refresh
-                    </Button>
-                    <Button
-                      onClick={onSyncManifest}
-                      variant="secondary"
-                      className={cn(editorActionButtonClass, "group h-10 shrink-0 border border-emerald-200/40 bg-white/60 px-4 text-[10px] text-stone-900/70 transition-all duration-300 hover:bg-emerald-50/80 hover:border-emerald-300/50 hover:text-emerald-700 hover:scale-[1.02] active:scale-[0.98] max-sm:w-full dark:border-white/5 dark:bg-zinc-950/40 dark:text-zinc-300/80 dark:hover:bg-zinc-900/80 dark:hover:text-primary")}
-                    >
-                      <Pencil className="size-4 mr-2 text-emerald-700/60 transition-colors group-hover:text-emerald-700 dark:text-zinc-400/60 dark:group-hover:text-primary" />
-                      Edit
-                    </Button>
-                  </>
-                ) : (
-                  <Button
-                    onClick={onSyncManifest}
-                    variant="secondary"
-                    className={cn(editorActionButtonClass, "group h-11 shrink-0 border border-amber-300/50 bg-white/60 px-4 text-[10px] text-stone-900/70 transition-all duration-300 hover:bg-amber-50/80 hover:border-amber-400/50 hover:text-amber-700 hover:scale-[1.02] active:scale-[0.98] max-sm:w-full max-sm:col-span-2 dark:border-amber-500/20 dark:bg-zinc-950/40 dark:text-amber-300/80 dark:hover:bg-amber-500/10 dark:hover:text-amber-400")}
-                  >
-                    <Globe className="size-4 mr-2 text-amber-700/60 transition-colors group-hover:text-amber-700 dark:text-amber-400/60 dark:group-hover:text-amber-400" />
-                    Sync Manifest
-                  </Button>
-                )}
+                <Button
+                  onClick={onSyncManifest}
+                  variant="secondary"
+                  className={cn(editorActionButtonClass, "group h-11 shrink-0 border border-amber-300/50 bg-white/60 px-4 text-[10px] text-stone-900/70 transition-all duration-300 hover:bg-amber-50/80 hover:border-amber-400/50 hover:text-amber-700 hover:scale-[1.02] active:scale-[0.98] max-sm:w-full dark:border-amber-500/20 dark:bg-zinc-950/40 dark:text-amber-300/80 dark:hover:bg-amber-500/10 dark:hover:text-amber-400")}
+                >
+                  <Globe className="size-4 mr-2 text-amber-700/60 transition-colors group-hover:text-amber-700 dark:text-amber-400/60 dark:group-hover:text-amber-400" />
+                  Sync Manifest
+                </Button>
               </div>
-            </div>
+            )}
           </div>
 
           {hasTrash && (
@@ -2413,21 +3960,8 @@ function WidgetSelectionGridComponent({
           </SortableContext>
         </DndContext>
 
-        {widgets.length === 0 && !searchQuery && (
-          <div className="py-20 max-sm:py-12 text-center space-y-4 max-sm:space-y-3">
-            <p className="text-muted-foreground font-medium">
-              No active widgets. Create a new one or restore one from trash.
-            </p>
-            <div className="flex items-center justify-center gap-3 max-sm:flex-col">
-              <Button onClick={handleCreateWidget} className="rounded-2xl max-sm:w-full max-sm:h-11">
-                <Plus className="size-4 mr-2" /> Add Widget
-              </Button>
-              <Button onClick={() => setShowTrash(true)} variant="outline" className="rounded-2xl max-sm:w-full max-sm:h-11">
-                <Trash2 className="size-4 mr-2" /> Trash
-              </Button>
-            </div>
-          </div>
-        )}
+        {renderAnimatedCoversSection()}
+        {renderRegexPatternsSection()}
 
         {filteredWidgets.length === 0 && searchQuery && (
           <div className="py-20 text-center">
@@ -2438,6 +3972,7 @@ function WidgetSelectionGridComponent({
 
 
 
+      {renderAnimatedInstallDialog()}
       {renderExportDialog()}
       <ImportMergeDialog
         open={showImportMergeDialog}
