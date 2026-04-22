@@ -28,6 +28,8 @@ export interface NormalizedOmniModel {
   subgroups: Record<string, NormalizedOmniSubgroup>;
   selectedCatalogs: string[];
   catalogOrdering: string[];
+  topRowCatalogs: string[];
+  smallTopRowCatalogs: string[];
   globalGroupOrder: string[];
   subgroupOrderMap: Record<string, string[]>;
   customNames: Record<string, string>;
@@ -145,6 +147,8 @@ export function normalizeOmniSnapshot(snapshot: any): NormalizedOmniModel {
     subgroups: values.catalog_groups || {},
     selectedCatalogs: values.selected_catalogs || [],
     catalogOrdering: values.catalog_ordering || [],
+    topRowCatalogs: values.top_row_catalogs || [],
+    smallTopRowCatalogs: values.small_toprow_catalogs || [],
     globalGroupOrder: [
       ...(Array.isArray(values.catalog_group_order) ? values.catalog_group_order : []),
       ...(Array.isArray(values.catalog_groups_order) ? values.catalog_groups_order : []),
@@ -314,7 +318,12 @@ export function convertOmniToFusion(snapshot: any): FusionWidgetsConfig {
   });
 
   // 2. Build Standalone Widgets (row.classic)
-  const standaloneCatalogs = model.catalogOrdering.length > 0 ? model.catalogOrdering : model.selectedCatalogs;
+  const standaloneCatalogs = Array.from(new Set([
+    ...model.catalogOrdering,
+    ...model.selectedCatalogs,
+    ...model.topRowCatalogs,
+    ...model.smallTopRowCatalogs,
+  ]));
   
   standaloneCatalogs.forEach(omniId => {
     // 1. Filter out structural catalogs (top row items not in groups)

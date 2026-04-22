@@ -1344,8 +1344,8 @@ test('convertOmniToFusion keeps visible top row catalogs as standalone rows', ()
       main_group_order: [],
       main_catalog_groups: {},
       catalog_groups: {},
-      selected_catalogs: ['movie:top-row-catalog'],
-      catalog_ordering: ['movie:top-row-catalog'],
+      selected_catalogs: [],
+      catalog_ordering: [],
       custom_catalog_names: {
         'movie:top-row-catalog': 'Top Row Catalog',
       },
