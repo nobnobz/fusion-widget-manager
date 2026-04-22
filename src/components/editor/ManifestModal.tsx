@@ -241,6 +241,12 @@ export function ManifestModal({ isOpen, onOpenChange }: ManifestModalProps) {
                   <Input
                     data-testid="manifest-url-input"
                     ref={urlInputRef}
+                    type="url"
+                    inputMode="url"
+                    autoComplete="url"
+                    autoCapitalize="none"
+                    autoCorrect="off"
+                    spellCheck={false}
                     placeholder="https://aiometadata.fortheweak.cloud/manifest.json"
                     className="pl-11 pr-4 h-12 max-sm:h-11 bg-transparent border-none text-foreground/88 placeholder:text-muted-foreground/40 focus-visible:ring-0 transition-all font-medium text-base sm:text-sm dark:text-foreground/84 dark:placeholder:text-muted-foreground/34"
                     value={url}
@@ -319,13 +325,20 @@ export function ManifestModal({ isOpen, onOpenChange }: ManifestModalProps) {
 
   if (isMobile) {
     return (
-      <Drawer open={isOpen} onOpenChange={onOpenChange}>
-        <DrawerContent className="bg-background border-border/40">
+      <Drawer
+        open={isOpen}
+        onOpenChange={onOpenChange}
+        fixed
+        handleOnly
+      >
+        <DrawerContent className="max-h-[94dvh] overflow-hidden rounded-t-[2.5rem] bg-background border-border/40">
           <DrawerHeader className="sr-only">
             <DrawerTitle>{isManual ? 'Manual Manifest Sync' : 'AIOMetadata Setup'}</DrawerTitle>
             <DrawerDescription>AIOMetadata setup and sync configuration.</DrawerDescription>
           </DrawerHeader>
-          {Content}
+          <div className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain">
+            {Content}
+          </div>
         </DrawerContent>
       </Drawer>
     );
