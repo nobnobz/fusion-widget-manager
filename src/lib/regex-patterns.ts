@@ -49,11 +49,11 @@ const FALLBACK_REGEX_PATTERN_FILES: GithubContentsEntry[] = [
       'https://raw.githubusercontent.com/nobnobz/Omni-Template-Bot-Bid-Raiser/main/Other/fusion-tags-ume-colored-copy.json',
   },
   {
-    name: 'fustion-tags-ume-minimalistic.json',
-    path: 'Other/fustion-tags-ume-minimalistic.json',
+    name: 'fusion-tags-ume-minimalistic.json',
+    path: 'Other/fusion-tags-ume-minimalistic.json',
     type: 'file',
     download_url:
-      'https://raw.githubusercontent.com/nobnobz/Omni-Template-Bot-Bid-Raiser/main/Other/fustion-tags-ume-minimalistic.json',
+      'https://raw.githubusercontent.com/nobnobz/Omni-Template-Bot-Bid-Raiser/main/Other/fusion-tags-ume-minimalistic.json',
   },
 ];
 
