@@ -1,4 +1,5 @@
 import { convertOmniToFusion } from './omni-converter';
+import { compareVersions } from './template-repository';
 import type { CollectionItem, CollectionRowWidget } from './types/widget';
 
 const ANIMATED_COVERS_DIRECTORY_API_URL =
@@ -90,6 +91,7 @@ interface TemplateManifestEntry {
   isDefault?: boolean;
   name?: string;
   url?: string;
+  version?: string;
 }
 
 interface TemplateManifestPayload {
@@ -186,14 +188,22 @@ export async function fetchAnimatedCoverWidgetTemplateUrl(fetchImpl: FetchLike =
       return joined.includes('ume-omni-template') || joined.includes('omni snapshot');
     });
 
-    const defaultTemplate = candidates.find((entry) => entry.isDefault && typeof entry.url === 'string');
-    if (defaultTemplate?.url) {
-      return defaultTemplate.url;
-    }
+    const sortedCandidates = [...candidates].sort((left, right) => {
+      const versionComparison = compareVersions(right.version || '', left.version || '');
+      if (versionComparison !== 0) {
+        return versionComparison;
+      }
 
-    const firstCandidate = candidates.find((entry) => typeof entry.url === 'string');
-    if (firstCandidate?.url) {
-      return firstCandidate.url;
+      if (left.isDefault !== right.isDefault) {
+        return left.isDefault ? -1 : 1;
+      }
+
+      return (left.name || '').localeCompare(right.name || '');
+    });
+
+    const newestCandidate = sortedCandidates.find((entry) => typeof entry.url === 'string' && entry.url.trim());
+    if (newestCandidate?.url) {
+      return newestCandidate.url;
     }
 
     return FALLBACK_ANIMATED_COVER_WIDGET_TEMPLATE_URL;
