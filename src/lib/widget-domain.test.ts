@@ -136,6 +136,7 @@ test('resolveFusionCatalogType forces AIOMetadata trakt lists to series', () => 
   assert.equal(resolveFusionCatalogType('all::trakt.list.29034789', 'all'), 'series');
   assert.equal(resolveFusionCatalogType('all::trakt.list.29034789', 'movie'), 'series');
   assert.equal(resolveFusionCatalogType('all::trakt.list.29034789'), 'series');
+  assert.equal(resolveFusionCatalogType('all::mdblist.nobnobz.netflix.unified', 'all'), 'series');
   assert.equal(resolveFusionCatalogType('all::mdblist.29034789', 'movie'), 'movie');
 });
 
@@ -1069,6 +1070,48 @@ test('exportConfigToFusion can keep collection items without catalogs as empty i
   }
   assert.equal(widget.dataSource.payload.items[0]?.dataSources.length, 0);
   assert.equal(widget.dataSource.payload.items[0]?.title, 'Empty Item');
+});
+
+test('exportConfigToFusion preserves unified mdblist lists as series catalogs', () => {
+  const config = buildConfig([
+    buildCollectionWidget({
+      title: 'Unified Lists',
+      dataSource: {
+        kind: 'collection',
+        payload: {
+          items: [
+            {
+              id: 'item-1',
+              name: 'Netflix',
+              hideTitle: false,
+              layout: 'Wide',
+              backgroundImageURL: '',
+              dataSources: [
+                buildAioDataSource({
+                  catalogId: 'all::mdblist.nobnobz.netflix.unified',
+                  catalogType: 'all',
+                }),
+              ],
+            },
+          ],
+        },
+      },
+    }),
+  ]);
+
+  const exported = exportConfigToFusion(config, 'https://example.com/manifest.json');
+  const widget = exported.widgets[0];
+  if (!widget || widget.type !== 'collection.row') {
+    throw new Error('Expected collection widget.');
+  }
+
+  const dataSource = widget.dataSource.payload.items[0]?.dataSources[0];
+  if (!dataSource || dataSource.kind !== 'addonCatalog') {
+    throw new Error('Expected addon catalog data source.');
+  }
+
+  assert.equal(dataSource.payload.catalogId, 'all::mdblist.nobnobz.netflix.unified');
+  assert.equal(dataSource.payload.type, 'series');
 });
 
 test('partial import skips unsupported item sources instead of rejecting the full file', () => {

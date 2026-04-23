@@ -165,6 +165,9 @@ export function resolveFusionCatalogType(catalogId: string, currentType?: string
   if (lowId.startsWith('all::trakt.list.')) {
     return 'series';
   }
+  if (lowId.startsWith('all::mdblist.') && lowId.includes('.unified')) {
+    return 'series';
+  }
   if (lowId.startsWith('all::')) {
     if (normalizedCurrentType && normalizedCurrentType !== 'all') {
       return normalizedCurrentType;
