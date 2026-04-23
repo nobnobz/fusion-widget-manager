@@ -257,13 +257,14 @@ export async function fetchAnimatedCoverWidgetBlueprints(
 
       usedItemIds.add(candidate.item.id);
       sourceWidgetTitles.add(candidate.sourceWidgetTitle);
-      const matchedItem = cloneCollectionItem(candidate.item, cover.backgroundURL);
+      const resolvedBackgroundUrl = candidate.item.backgroundImageURL || cover.backgroundURL;
+      const matchedItem = cloneCollectionItem(candidate.item, resolvedBackgroundUrl);
       matchedItems.push(matchedItem);
       matchedWidgetItems.push({
         item: matchedItem,
         sourceWidgetTitle: candidate.sourceWidgetTitle,
       });
-      matchedCoverBackgroundUrls.push(cover.backgroundURL);
+      matchedCoverBackgroundUrls.push(resolvedBackgroundUrl);
     });
 
     const sourceWidgetTitlesList = Array.from(sourceWidgetTitles);
