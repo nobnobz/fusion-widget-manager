@@ -49,6 +49,8 @@ export function ManifestModal({ isOpen, onOpenChange }: ManifestModalProps) {
   const [error, setError] = useState<{ title: string; message: string; isCors?: boolean } | null>(null);
   const [copiedManifestUrl, setCopiedManifestUrl] = useState(false);
   const urlInputRef = useRef<HTMLInputElement | null>(null);
+  const manualTextareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const mobileScrollContainerRef = useRef<HTMLDivElement | null>(null);
   const isSyncedUrlLocked = Boolean(manifestUrl && !manifestUrl.startsWith('manual://') && !isMobile);
 
   // Update local URL state when context changes or modal opens
@@ -61,6 +63,54 @@ export function ManifestModal({ isOpen, onOpenChange }: ManifestModalProps) {
       setCopiedManifestUrl(false);
     }
   }, [isOpen, manifestUrl]);
+
+  useEffect(() => {
+    if (!isOpen || !isMobile) {
+      return;
+    }
+
+    const visualViewport = window.visualViewport;
+    if (!visualViewport) {
+      return;
+    }
+
+    const scrollActiveFieldIntoView = () => {
+      const activeElement = document.activeElement;
+      if (!(activeElement instanceof HTMLElement)) {
+        return;
+      }
+
+      if (!mobileScrollContainerRef.current?.contains(activeElement)) {
+        return;
+      }
+
+      activeElement.scrollIntoView({
+        block: 'center',
+        inline: 'nearest',
+      });
+    };
+
+    visualViewport.addEventListener('resize', scrollActiveFieldIntoView);
+    visualViewport.addEventListener('scroll', scrollActiveFieldIntoView);
+
+    return () => {
+      visualViewport.removeEventListener('resize', scrollActiveFieldIntoView);
+      visualViewport.removeEventListener('scroll', scrollActiveFieldIntoView);
+    };
+  }, [isOpen, isMobile]);
+
+  const scrollFieldIntoView = (element: HTMLElement | null) => {
+    if (!element) {
+      return;
+    }
+
+    requestAnimationFrame(() => {
+      element.scrollIntoView({
+        block: 'center',
+        inline: 'nearest',
+      });
+    });
+  };
 
 
   const handleLoad = async () => {
@@ -120,6 +170,7 @@ export function ManifestModal({ isOpen, onOpenChange }: ManifestModalProps) {
 
     requestAnimationFrame(() => {
       urlInputRef.current?.focus();
+      scrollFieldIntoView(urlInputRef.current);
     });
   };
 
@@ -150,7 +201,7 @@ export function ManifestModal({ isOpen, onOpenChange }: ManifestModalProps) {
   };
 
   const Content = (
-    <div className="min-w-0 p-8 pt-10 max-sm:p-5 max-sm:pt-6">
+    <div className="min-w-0 p-8 pt-10 max-sm:p-5 max-sm:pt-6 max-sm:pb-[calc(7rem+env(safe-area-inset-bottom,0px))]">
       <div className="space-y-6 items-start text-left flex flex-col">
         <div className="size-14 rounded-xl bg-primary/5 border border-primary/10 flex items-center justify-center text-primary  max-sm:size-12">
           <Sparkles className="size-7 max-sm:size-6" />
@@ -251,6 +302,11 @@ export function ManifestModal({ isOpen, onOpenChange }: ManifestModalProps) {
                     className="pl-11 pr-4 h-12 max-sm:h-11 bg-transparent border-none text-foreground/88 placeholder:text-muted-foreground/40 focus-visible:ring-0 transition-all font-medium text-base sm:text-sm dark:text-foreground/84 dark:placeholder:text-muted-foreground/34"
                     value={url}
                     onChange={(e) => setUrl(e.target.value)}
+                    onFocus={() => {
+                      if (isMobile) {
+                        scrollFieldIntoView(urlInputRef.current);
+                      }
+                    }}
                     onKeyDown={(e) => e.key === 'Enter' && handleLoad()}
                   />
                 </div>
@@ -278,10 +334,16 @@ export function ManifestModal({ isOpen, onOpenChange }: ManifestModalProps) {
           <div className={cn(editorPanelClass, "relative group bg-muted/20 border-border/10 focus-within:border-primary/30 transition-all p-2")}>
             <textarea
               data-testid="manifest-manual-textarea"
+              ref={manualTextareaRef}
               placeholder='{ "catalogs": [...] }'
               className="w-full min-h-[150px] max-sm:min-h-[180px] bg-transparent border-none focus:outline-none transition-all font-mono text-base sm:text-[10px] leading-tight resize-y overflow-y-auto p-2"
               value={manualJson}
               onChange={(e) => setManualJson(e.target.value)}
+              onFocus={() => {
+                if (isMobile) {
+                  scrollFieldIntoView(manualTextareaRef.current);
+                }
+              }}
             />
           </div>
           <button 
@@ -331,12 +393,16 @@ export function ManifestModal({ isOpen, onOpenChange }: ManifestModalProps) {
         fixed
         handleOnly
       >
-        <DrawerContent className="max-h-[94dvh] overflow-hidden rounded-t-[2.5rem] bg-background border-border/40">
+        <DrawerContent className="h-[100dvh] max-h-[100dvh] overflow-hidden rounded-t-[2.5rem] bg-background border-border/40">
           <DrawerHeader className="sr-only">
             <DrawerTitle>{isManual ? 'Manual Manifest Sync' : 'AIOMetadata Setup'}</DrawerTitle>
             <DrawerDescription>AIOMetadata setup and sync configuration.</DrawerDescription>
           </DrawerHeader>
-          <div className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain">
+          <div
+            ref={mobileScrollContainerRef}
+            data-testid="manifest-modal-scroll"
+            className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain scroll-pb-[calc(7rem+env(safe-area-inset-bottom,0px))]"
+          >
             {Content}
           </div>
         </DrawerContent>

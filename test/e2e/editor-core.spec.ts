@@ -111,6 +111,7 @@ test('disconnects a synced AIOMetadata manifest from the setup modal', async ({ 
   }
 
   await expect(page.getByText('AIOMetadata synced')).toBeVisible();
+  await expect(page.getByTestId('manifest-url-input')).toHaveCount(0);
 
   await page.getByTestId('manifest-settings-button').click();
   await expect(page.getByText('Synced', { exact: true })).toBeVisible();
@@ -120,6 +121,33 @@ test('disconnects a synced AIOMetadata manifest from the setup modal', async ({ 
   await expect(page.getByText('Synced', { exact: true })).toHaveCount(0);
   await expect(page.getByTestId('manifest-url-input')).toHaveCount(1);
   await expect(page.getByTestId('manifest-url-input')).toHaveValue('');
+});
+
+test('keeps the manifest url field in view on mobile after focus', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile-chrome', 'This assertion targets the mobile layout.');
+
+  const fixture = getAuditFixture('medium');
+
+  await mockManifest(page, fixture);
+  await gotoWelcomePage(page);
+
+  await page.getByTestId('welcome-load-template').click();
+  if (!(await page.getByText('AIOMetadata synced').isVisible())) {
+    await page.getByRole('button', { name: /Sync Manifest|Edit/i }).click();
+    const manifestUrlField = page.getByTestId('manifest-url-input');
+
+    await expect(manifestUrlField).toBeVisible();
+    await manifestUrlField.click();
+
+    const scrollContainer = page.getByTestId('manifest-modal-scroll');
+    await expect(scrollContainer).toBeVisible();
+
+    await expect.poll(async () => {
+      return scrollContainer.evaluate((element) => (element as HTMLElement).scrollTop);
+    }).toBeGreaterThan(0);
+
+    await expect(manifestUrlField).toBeInViewport();
+  }
 });
 
 test('merges a partial import and keeps the result after reload', async ({ page }) => {
