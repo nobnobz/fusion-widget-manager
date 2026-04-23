@@ -390,7 +390,7 @@ export function ManifestModal({ isOpen, onOpenChange }: ManifestModalProps) {
         fixed
         repositionInputs={false}
       >
-        <DrawerContent className="h-[100dvh] max-h-[100dvh] overflow-hidden rounded-t-[2.5rem] bg-background border-border/40">
+        <DrawerContent className="max-h-[94dvh] overflow-hidden rounded-t-[2.5rem] bg-background border-border/40">
           <DrawerHeader className="sr-only">
             <DrawerTitle>{isManual ? 'Manual Manifest Sync' : 'AIOMetadata Setup'}</DrawerTitle>
             <DrawerDescription>AIOMetadata setup and sync configuration.</DrawerDescription>
