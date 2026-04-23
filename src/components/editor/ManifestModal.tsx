@@ -49,7 +49,7 @@ export function ManifestModal({ isOpen, onOpenChange }: ManifestModalProps) {
   const [error, setError] = useState<{ title: string; message: string; isCors?: boolean } | null>(null);
   const [copiedManifestUrl, setCopiedManifestUrl] = useState(false);
   const urlInputRef = useRef<HTMLInputElement | null>(null);
-  const isSyncedUrlLocked = Boolean(manifestUrl && !manifestUrl.startsWith('manual://'));
+  const isSyncedUrlLocked = Boolean(manifestUrl && !manifestUrl.startsWith('manual://') && !isMobile);
 
   // Update local URL state when context changes or modal opens
   useEffect(() => {
