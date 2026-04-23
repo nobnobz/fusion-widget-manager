@@ -392,6 +392,7 @@ export function ManifestModal({ isOpen, onOpenChange }: ManifestModalProps) {
         onOpenChange={onOpenChange}
         fixed
         handleOnly
+        repositionInputs={false}
       >
         <DrawerContent className="h-[100dvh] max-h-[100dvh] overflow-hidden rounded-t-[2.5rem] bg-background border-border/40">
           <DrawerHeader className="sr-only">
