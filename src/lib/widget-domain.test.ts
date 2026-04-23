@@ -132,8 +132,11 @@ test('parseFusionConfig rejects malformed payloads', () => {
   assert.throws(() => parseFusionConfig({ widgets: [] }), /exportType/);
 });
 
-test('resolveFusionCatalogType keeps all-prefixed catalogs as all', () => {
-  assert.equal(resolveFusionCatalogType('all::trakt.list.29034789', 'movie'), 'all');
+test('resolveFusionCatalogType forces AIOMetadata trakt lists to series', () => {
+  assert.equal(resolveFusionCatalogType('all::trakt.list.29034789', 'all'), 'series');
+  assert.equal(resolveFusionCatalogType('all::trakt.list.29034789', 'movie'), 'series');
+  assert.equal(resolveFusionCatalogType('all::trakt.list.29034789'), 'series');
+  assert.equal(resolveFusionCatalogType('all::mdblist.29034789', 'movie'), 'movie');
 });
 
 test('legacy collection item dataSource normalizes into dataSources', () => {
@@ -715,6 +718,42 @@ test('native trakt collection items round-trip through Fusion export', () => {
     throw new Error('Expected collection export.');
   }
   assert.equal(widget.dataSource.payload.items[0]?.dataSources[0]?.kind, 'traktList');
+});
+
+test('exportConfigToFusion preserves display type for all-prefixed AIOMetadata trakt catalogs', () => {
+  const config = buildConfig([
+    buildCollectionWidget({
+      dataSource: {
+        kind: 'collection',
+        payload: {
+          items: [
+            {
+              id: 'avatar',
+              name: 'Avatar',
+              hideTitle: false,
+              layout: 'Wide',
+              backgroundImageURL: '',
+              dataSources: [buildAioDataSource({ catalogId: 'all::trakt.list.884', catalogType: 'series' })],
+            },
+          ],
+        },
+      },
+    }),
+  ]);
+
+  const exported = exportConfigToFusion(config);
+  const widget = exported.widgets[0];
+  if (!widget || widget.type !== 'collection.row') {
+    throw new Error('Expected collection export.');
+  }
+
+  const dataSource = widget.dataSource.payload.items[0]?.dataSources[0];
+  if (!dataSource || dataSource.kind !== 'addonCatalog') {
+    throw new Error('Expected AIOMetadata addonCatalog source.');
+  }
+
+  assert.equal(dataSource.payload.catalogId, 'all::trakt.list.884');
+  assert.equal(dataSource.payload.type, 'series');
 });
 
 test('processWidgetWithManifest leaves native trakt sources untouched', () => {

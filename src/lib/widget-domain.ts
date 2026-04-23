@@ -161,7 +161,14 @@ export function findCatalog(catalogs: AIOMetadataCatalog[], id: string): AIOMeta
 
 export function resolveFusionCatalogType(catalogId: string, currentType?: string): string {
   const lowId = catalogId.toLowerCase();
+  const normalizedCurrentType = String(currentType || '').trim().toLowerCase();
+  if (lowId.startsWith('all::trakt.list.')) {
+    return 'series';
+  }
   if (lowId.startsWith('all::')) {
+    if (normalizedCurrentType && normalizedCurrentType !== 'all') {
+      return normalizedCurrentType;
+    }
     return 'all';
   }
   if (lowId.includes('mdblist.upnext')) {
@@ -169,7 +176,7 @@ export function resolveFusionCatalogType(catalogId: string, currentType?: string
   }
   if (lowId.startsWith('series::')) return 'series';
   if (lowId.startsWith('movie::')) return 'movie';
-  return currentType || 'movie';
+  return normalizedCurrentType || 'movie';
 }
 
 export function isAIOMetadataDataSource(
@@ -303,7 +310,7 @@ function normalizeDataSource(
   const payload = asRecord(source.payload ?? {}, `${path}.payload`);
   const addonId = asOptionalString(payload.addonId) || MANIFEST_PLACEHOLDER;
   let catalogId = asOptionalString(payload.catalogId) || '';
-  let catalogType = asOptionalString(payload.catalogType) || asOptionalString(payload.type) || 'movie';
+  let catalogType = asOptionalString(payload.catalogType) || asOptionalString(payload.type) || '';
 
   if (isAIOMetadataAddon(addonId) && options.catalogs && catalogId) {
     const found = resolveCatalogForNormalization(options.catalogs, catalogId, `${path}.payload.catalogId`);
@@ -315,7 +322,7 @@ function normalizeDataSource(
     }
   }
 
-  const finalType = resolveFusionCatalogType(catalogId, catalogType);
+  const finalType = resolveFusionCatalogType(catalogId, catalogType || undefined);
   
   // Normalize addonId: if it's an AIOMetadata addon AND we have a local manifestUrl,
   // we treat it as being "from our manifest" to keep fingerprints consistent.

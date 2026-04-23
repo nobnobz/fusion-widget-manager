@@ -3801,6 +3801,7 @@ function WidgetSelectionGridComponent({
                   <Button
                     onClick={onSyncManifest}
                     variant="secondary"
+                    data-testid="manifest-settings-button"
                     className={cn(editorActionButtonClass, "group h-9 shrink-0 border border-emerald-200/30 bg-white/70 px-3.5 text-[10px] text-stone-900/68 transition-all duration-300 hover:bg-emerald-50/75 hover:border-emerald-300/45 hover:text-emerald-700 hover:scale-[1.01] active:scale-[0.98] max-sm:w-full dark:border-white/5 dark:bg-zinc-950/35 dark:text-zinc-300/80 dark:hover:bg-zinc-900/80 dark:hover:text-primary")}
                   >
                     <Pencil className="size-3.5 mr-2 text-emerald-700/60 transition-colors group-hover:text-emerald-700 dark:text-zinc-400/60 dark:group-hover:text-primary" />
@@ -3832,6 +3833,7 @@ function WidgetSelectionGridComponent({
                 <Button
                   onClick={onSyncManifest}
                   variant="secondary"
+                  data-testid="manifest-settings-button"
                   className={cn(editorActionButtonClass, "group h-11 shrink-0 border border-amber-300/50 bg-white/60 px-4 text-[10px] text-stone-900/70 transition-all duration-300 hover:bg-amber-50/80 hover:border-amber-400/50 hover:text-amber-700 hover:scale-[1.02] active:scale-[0.98] max-sm:w-full dark:border-amber-500/20 dark:bg-zinc-950/40 dark:text-amber-300/80 dark:hover:bg-amber-500/10 dark:hover:text-amber-400")}
                 >
                   <Globe className="size-4 mr-2 text-amber-700/60 transition-colors group-hover:text-amber-700 dark:text-amber-400/60 dark:group-hover:text-amber-400" />

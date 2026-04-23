@@ -112,7 +112,7 @@ test('disconnects a synced AIOMetadata manifest from the setup modal', async ({ 
 
   await expect(page.getByText('AIOMetadata synced')).toBeVisible();
 
-  await page.getByRole('button', { name: /Sync Manifest|Edit/i }).click();
+  await page.getByTestId('manifest-settings-button').click();
   await expect(page.getByText('Synced', { exact: true })).toBeVisible();
 
   await page.getByRole('button', { name: 'Disconnect AIOMetadata manifest' }).click();
