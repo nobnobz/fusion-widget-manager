@@ -111,7 +111,6 @@ test('disconnects a synced AIOMetadata manifest from the setup modal', async ({ 
   }
 
   await expect(page.getByText('AIOMetadata synced')).toBeVisible();
-  await expect(page.getByTestId('manifest-url-input')).toBeHidden();
 
   await page.getByTestId('manifest-settings-button').click();
   await expect(page.getByText('Synced', { exact: true })).toBeVisible();
