@@ -3406,7 +3406,7 @@ function WidgetSelectionGridComponent({
     );
 
     const widgetContent = (
-      <div className="mx-auto flex h-full w-full max-w-[48rem] flex-col">
+      <div className="mx-auto flex w-full max-w-[48rem] flex-1 min-h-0 flex-col overflow-hidden">
         <div className="min-h-0 flex-1 overflow-y-auto pr-1 custom-scrollbar max-sm:pr-0">
           <div className="space-y-3 text-left">
             <p className="text-[10px] font-black uppercase tracking-[0.16em] text-primary/75">Install Flow</p>
@@ -3497,7 +3497,20 @@ function WidgetSelectionGridComponent({
           </div>
 
           <div className="mt-4 rounded-[1.5rem] border border-border/60 bg-white/75 p-4 shadow-sm shadow-black/[0.03] dark:border-white/10 dark:bg-white/[0.04] dark:shadow-none">
-            <p className="text-[10px] font-black uppercase tracking-[0.14em] text-muted-foreground/65">Widget JSON</p>
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-[10px] font-black uppercase tracking-[0.14em] text-muted-foreground/65">Widget JSON</p>
+              <Button
+                type="button"
+                onClick={() => void handleCopyAnimatedWidgetJson()}
+                className={cn(
+                  editorActionButtonClass,
+                  "h-8 rounded-xl px-3 text-[10px] font-bold uppercase tracking-wider bg-primary/95 text-primary-foreground hover:bg-primary/85"
+                )}
+              >
+                {isCopiedWidget ? <Check className="mr-1.5 size-3.5" /> : <Copy className="mr-1.5 size-3.5" />}
+                {isCopiedWidget ? 'Copied Widget JSON' : 'Copy Widget JSON'}
+              </Button>
+            </div>
             <div className="mt-3 rounded-2xl border border-border/45 bg-zinc-900 p-2">
               <textarea
                 readOnly
