@@ -3504,7 +3504,7 @@ function WidgetSelectionGridComponent({
                 onClick={() => void handleCopyAnimatedWidgetJson()}
                 className={cn(
                   editorActionButtonClass,
-                  "h-8 rounded-xl px-3 text-[10px] font-bold uppercase tracking-wider bg-primary/95 text-primary-foreground hover:bg-primary/85"
+                  "hidden h-8 rounded-xl px-3 text-[10px] font-bold uppercase tracking-wider bg-primary/95 text-primary-foreground hover:bg-primary/85 sm:inline-flex"
                 )}
               >
                 {isCopiedWidget ? <Check className="mr-1.5 size-3.5" /> : <Copy className="mr-1.5 size-3.5" />}
@@ -3526,7 +3526,7 @@ function WidgetSelectionGridComponent({
             <Button
               type="button"
               onClick={() => void handleCopyAnimatedWidgetJson()}
-              className={cn(editorActionButtonClass, editorFooterPrimaryButtonClass, "w-full sm:w-auto sm:min-w-[14rem] h-11 text-[13px] font-bold uppercase tracking-wider")}
+              className={cn(editorActionButtonClass, editorFooterPrimaryButtonClass, "w-full sm:hidden h-11 text-[13px] font-bold uppercase tracking-wider")}
             >
               {isCopiedWidget ? <Check className="mr-2 size-4" /> : <Copy className="mr-2 size-4" />}
               {isCopiedWidget ? 'Copied Widget JSON' : 'Copy Widget JSON'}
