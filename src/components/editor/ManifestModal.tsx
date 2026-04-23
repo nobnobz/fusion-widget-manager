@@ -112,6 +112,21 @@ export function ManifestModal({ isOpen, onOpenChange }: ManifestModalProps) {
     });
   };
 
+  const blurActiveField = () => {
+    const activeElement = document.activeElement;
+    if (activeElement instanceof HTMLElement) {
+      activeElement.blur();
+    }
+  };
+
+  const handleOpenChange = (nextOpen: boolean) => {
+    if (!nextOpen) {
+      blurActiveField();
+    }
+
+    onOpenChange(nextOpen);
+  };
+
 
   const handleLoad = async () => {
     if (!url) return;
@@ -152,7 +167,7 @@ export function ManifestModal({ isOpen, onOpenChange }: ManifestModalProps) {
     try {
       syncManifest(catalogs, syncUrl, true);
       setView('selection');
-      onOpenChange(false);
+      handleOpenChange(false);
     } catch (bulkErr: unknown) {
       const message = bulkErr instanceof Error ? bulkErr.message : 'Could not automatically sync catalogs with your widgets.';
       setError({
@@ -360,7 +375,7 @@ export function ManifestModal({ isOpen, onOpenChange }: ManifestModalProps) {
         className={cn(editorActionButtonClass, editorFooterSecondaryButtonClass, "w-full sm:flex-1")}
         onClick={() => {
           setView('selection');
-          onOpenChange(false);
+          handleOpenChange(false);
         }}
       >
         Skip for now
@@ -386,7 +401,7 @@ export function ManifestModal({ isOpen, onOpenChange }: ManifestModalProps) {
     return (
       <Drawer
         open={isOpen}
-        onOpenChange={onOpenChange}
+        onOpenChange={handleOpenChange}
         fixed
         repositionInputs={false}
       >
@@ -408,7 +423,7 @@ export function ManifestModal({ isOpen, onOpenChange }: ManifestModalProps) {
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogContent className="w-[min(500px,calc(100vw-2rem))] max-w-[min(500px,calc(100vw-2rem))] rounded-3xl border border-border/40 bg-card/95 p-0 backdrop-blur-2xl overflow-x-hidden">
         <DialogHeader className="sr-only">
           <DialogTitle>{isManual ? 'Manual Manifest Sync' : 'AIOMetadata Setup'}</DialogTitle>
