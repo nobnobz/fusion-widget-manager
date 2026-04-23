@@ -248,7 +248,7 @@ export function ManifestModal({ isOpen, onOpenChange }: ManifestModalProps) {
             <p className="px-1 text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground/55">
               Manifest URL
             </p>
-            <div className={cn(editorFormSurfaceClass, "relative group border-zinc-200/90 bg-white/92 p-1.5 transition-all hover:border-zinc-300/90 focus-within:border-primary/35 focus-within:bg-white dark:border-border/40 dark:bg-background/74 dark:hover:border-border/55 dark:focus-within:bg-background")}>
+            <div className={cn(editorFormSurfaceClass, "relative group p-1 transition-all focus-within:border-primary/30 dark:focus-within:border-primary/28")}>
               {isSyncedUrlLocked ? (
                 <div className="flex min-w-0 items-center gap-1.5 overflow-hidden rounded-lg bg-zinc-50/85 pr-1.5 dark:bg-muted/[0.16]">
                   <div
@@ -287,29 +287,26 @@ export function ManifestModal({ isOpen, onOpenChange }: ManifestModalProps) {
                   </button>
                 </div>
               ) : (
-                <div className="relative flex items-center rounded-lg bg-zinc-50/85 dark:bg-muted/[0.16]">
-                  <Globe className="pointer-events-none absolute left-3.5 size-4 text-muted-foreground/40 group-focus-within:text-primary/80 dark:text-muted-foreground/28 transition-colors" />
-                  <Input
-                    data-testid="manifest-url-input"
-                    ref={urlInputRef}
-                    type="url"
-                    inputMode="url"
-                    autoComplete="url"
-                    autoCapitalize="none"
-                    autoCorrect="off"
-                    spellCheck={false}
-                    placeholder="https://aiometadata.fortheweak.cloud/manifest.json"
-                    className="pl-11 pr-4 h-12 max-sm:h-11 bg-transparent border-none text-foreground/88 placeholder:text-muted-foreground/40 focus-visible:ring-0 transition-all font-medium text-base sm:text-sm dark:text-foreground/84 dark:placeholder:text-muted-foreground/34"
-                    value={url}
-                    onChange={(e) => setUrl(e.target.value)}
-                    onFocus={() => {
-                      if (isMobile) {
-                        scrollFieldIntoView(urlInputRef.current);
-                      }
-                    }}
-                    onKeyDown={(e) => e.key === 'Enter' && handleLoad()}
-                  />
-                </div>
+                <Input
+                  data-testid="manifest-url-input"
+                  ref={urlInputRef}
+                  type="text"
+                  inputMode="url"
+                  autoComplete="off"
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  spellCheck={false}
+                  placeholder="https://aiometadata.fortheweak.cloud/manifest.json"
+                  className="h-11 bg-transparent border-none rounded-xl px-4 text-base font-semibold text-foreground/85 transition-colors focus:text-foreground focus-visible:ring-0 sm:text-sm"
+                  value={url}
+                  onChange={(e) => setUrl(e.target.value)}
+                  onFocus={() => {
+                    if (isMobile) {
+                      scrollFieldIntoView(urlInputRef.current);
+                    }
+                  }}
+                  onKeyDown={(e) => e.key === 'Enter' && handleLoad()}
+                />
               )}
             </div>
           </div>
@@ -391,7 +388,6 @@ export function ManifestModal({ isOpen, onOpenChange }: ManifestModalProps) {
         open={isOpen}
         onOpenChange={onOpenChange}
         fixed
-        handleOnly
         repositionInputs={false}
       >
         <DrawerContent className="h-[100dvh] max-h-[100dvh] overflow-hidden rounded-t-[2.5rem] bg-background border-border/40">
