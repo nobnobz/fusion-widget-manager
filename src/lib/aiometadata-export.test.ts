@@ -12,6 +12,7 @@ import {
   EMPTY_AIOMETADATA_EXPORT_OVERRIDE_STATE,
 } from './aiometadata-export-settings';
 import type {
+  AIOMetadataCatalog,
   AIOMetadataDataSource,
   CollectionRowWidget,
   FusionWidgetsConfig,
@@ -309,6 +310,79 @@ test('getResolvedAiometadataTargetSettings resolves widget, item, and catalog ov
       },
     }
   );
+});
+
+test('buildAiometadataCatalogExport emits unified mdblist catalogs with aiometadata metadata', () => {
+  const manifestCatalogs: AIOMetadataCatalog[] = [
+    {
+      id: 'mdblist.nobnobz.netflix.unified',
+      name: '[Service] Netflix',
+      type: 'all',
+      displayType: 'series',
+      metadata: {
+        itemCount: 2000,
+      },
+    },
+  ];
+
+  const inventory = collectAiometadataExportInventory(
+    buildConfig([
+      buildCollectionWidget({
+        title: 'Streaming Services',
+        dataSource: {
+          kind: 'collection',
+          payload: {
+            items: [
+              {
+                id: 'item-netflix',
+                name: 'Netflix',
+                hideTitle: false,
+                layout: 'Wide',
+                backgroundImageURL: '',
+                dataSources: [
+                  buildAioDataSource({
+                    catalogId: 'all::mdblist.nobnobz.netflix.unified',
+                    catalogType: 'series',
+                  }),
+                ],
+              },
+            ],
+          },
+        },
+      }),
+    ]),
+    { manifestCatalogs }
+  );
+
+  const exported = buildAiometadataCatalogExport({
+    inventory,
+    includeAll: true,
+    exportedAt: '2026-04-23T09:53:54.465Z',
+  });
+
+  assert.deepEqual(exported.catalogs, [
+    {
+      id: 'mdblist.nobnobz.netflix.unified',
+      type: 'all',
+      name: '[Service] Netflix',
+      enabled: true,
+      source: 'mdblist',
+      sort: 'default',
+      order: 'asc',
+      cacheTTL: 86400,
+      showInHome: true,
+      genreSelection: 'standard',
+      enableRatingPosters: true,
+      metadata: {
+        itemCount: 2000,
+        unified: true,
+        username: 'nobnobz',
+        listSlug: 'netflix',
+        author: 'nobnobz',
+        url: 'https://mdblist.com/lists/nobnobz/netflix',
+      },
+    },
+  ]);
 });
 
 test('letterboxd export settings keep only cache TTL and default to 12 hours', () => {

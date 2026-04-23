@@ -24,6 +24,16 @@ export interface AIOMetadataCatalog {
   name: string;
   type: string;
   displayType?: string;
+  metadata?: Record<string, unknown>;
+}
+
+export interface AiometadataCatalogMetadata {
+  unified?: true;
+  url?: string;
+  username?: string;
+  listSlug?: string;
+  author?: string;
+  itemCount?: number;
 }
 
 export interface AiometadataCatalogsOnlyEntry {
@@ -37,6 +47,10 @@ export interface AiometadataCatalogsOnlyEntry {
   order?: 'asc' | 'desc';
   sortDirection?: 'asc' | 'desc';
   cacheTTL?: number;
+  showInHome?: boolean;
+  genreSelection?: string;
+  enableRatingPosters?: boolean;
+  metadata?: AiometadataCatalogMetadata;
 }
 
 export interface AiometadataCatalogsOnlyExport {

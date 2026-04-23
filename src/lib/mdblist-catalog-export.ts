@@ -1,5 +1,6 @@
 import type {
   AIOMetadataCatalog,
+  AiometadataCatalogMetadata,
   AiometadataCatalogsOnlyEntry,
   AiometadataCatalogsOnlyExport,
   AIOMetadataDataSource,
@@ -11,7 +12,9 @@ import {
   getFusionCollectionItemName,
   prefixCatalogNameWithWidget,
 } from './aiometadata-catalog-labels';
-import { isAIOMetadataDataSource, resolveFusionCatalogType } from './widget-domain';
+import { findCatalog, isAIOMetadataDataSource, resolveFusionCatalogType } from './widget-domain';
+
+export const UNIFIED_MDBLIST_DEFAULT_CACHE_TTL = 86400;
 
 export interface UsedMdblistCatalogReference {
   widgetId: string;
@@ -25,6 +28,8 @@ export interface UsedMdblistCatalogReference {
   type: string;
   displayType: string;
   name: string;
+  rawName: string;
+  metadata?: AiometadataCatalogMetadata;
   dataSource: AIOMetadataDataSource;
 }
 
@@ -45,6 +50,65 @@ const PRETTY_BUILTIN_TITLES: Record<string, string> = {
 
 function isMdblistCatalogId(catalogId: string): boolean {
   return getCatalogActualId(catalogId).startsWith('mdblist.');
+}
+
+export function isUnifiedMdblistCatalogId(catalogId: string): boolean {
+  const actualId = getCatalogActualId(catalogId).toLowerCase();
+  return actualId.startsWith('mdblist.') && actualId.endsWith('.unified');
+}
+
+function parseUnifiedMdblistCatalogId(catalogId: string): { username: string; listSlug: string } | null {
+  if (!isUnifiedMdblistCatalogId(catalogId)) {
+    return null;
+  }
+
+  const actualId = getCatalogActualId(catalogId);
+  const body = actualId.slice('mdblist.'.length, -'.unified'.length);
+  const splitIndex = body.indexOf('.');
+  if (splitIndex <= 0 || splitIndex >= body.length - 1) {
+    return null;
+  }
+
+  const username = body.slice(0, splitIndex).trim();
+  const listSlug = body.slice(splitIndex + 1).trim();
+  if (!username || !listSlug) {
+    return null;
+  }
+
+  return { username, listSlug };
+}
+
+export function buildUnifiedMdblistCatalogMetadata(
+  catalogId: string,
+  manifestMetadata?: Record<string, unknown>
+): AiometadataCatalogMetadata | undefined {
+  const parsed = parseUnifiedMdblistCatalogId(catalogId);
+  if (!parsed) {
+    return undefined;
+  }
+
+  const metadata: AiometadataCatalogMetadata = {
+    unified: true,
+    username: parsed.username,
+    listSlug: parsed.listSlug,
+    author: parsed.username,
+    url: `https://mdblist.com/lists/${parsed.username}/${parsed.listSlug}`,
+  };
+
+  if (
+    manifestMetadata
+    && typeof manifestMetadata.itemCount === 'number'
+    && Number.isFinite(manifestMetadata.itemCount)
+  ) {
+    metadata.itemCount = manifestMetadata.itemCount;
+  }
+
+  return metadata;
+}
+
+export function buildUnifiedMdblistCatalogExportName(rawName: string): string {
+  const normalized = String(rawName || '').trim().replace(/^\[Service\]\s*/iu, '');
+  return normalized ? `[Service] ${normalized}` : '[Service]';
 }
 
 function getCatalogType(dataSource: AIOMetadataDataSource): string {
@@ -127,6 +191,7 @@ export function collectUsedMdblistCatalogs(
 
       const type = getCatalogType(widget.dataSource);
       const recognizedName = getCatalogDisplayName(widget.dataSource, manifestCatalogs);
+      const manifestMatch = findCatalog(manifestCatalogs, getCatalogActualId(widget.dataSource.payload.catalogId));
       const fallbackKey = `${widget.id}::row::${type}`;
       const fallbackOccurrence = (fallbackCounts.get(fallbackKey) || 0) + 1;
       fallbackCounts.set(fallbackKey, fallbackOccurrence);
@@ -148,6 +213,13 @@ export function collectUsedMdblistCatalogs(
             occurrence: fallbackOccurrence,
           })
         ),
+        rawName: widgetTitle || `Widget ${widgetIndex + 1}`,
+        metadata: isUnifiedMdblistCatalogId(widget.dataSource.payload.catalogId)
+          ? buildUnifiedMdblistCatalogMetadata(
+              getCatalogActualId(widget.dataSource.payload.catalogId),
+              manifestMatch?.metadata
+            )
+          : undefined,
         dataSource: widget.dataSource,
       });
       return;
@@ -162,6 +234,7 @@ export function collectUsedMdblistCatalogs(
 
         const type = getCatalogType(dataSource);
         const recognizedName = getCatalogDisplayName(dataSource, manifestCatalogs);
+        const manifestMatch = findCatalog(manifestCatalogs, getCatalogActualId(dataSource.payload.catalogId));
         const fallbackKey = `${widget.id}::${item.id}::${type}`;
         const fallbackOccurrence = (fallbackCounts.get(fallbackKey) || 0) + 1;
         fallbackCounts.set(fallbackKey, fallbackOccurrence);
@@ -186,8 +259,15 @@ export function collectUsedMdblistCatalogs(
               itemIndex,
               type,
               occurrence: fallbackOccurrence,
-            })
+              })
           ),
+          rawName: itemName,
+          metadata: isUnifiedMdblistCatalogId(dataSource.payload.catalogId)
+            ? buildUnifiedMdblistCatalogMetadata(
+                getCatalogActualId(dataSource.payload.catalogId),
+                manifestMatch?.metadata
+              )
+            : undefined,
           dataSource,
         });
       });
@@ -219,14 +299,33 @@ export function buildAiometadataMdblistCatalogsOnlyExport(
 ): AiometadataCatalogsOnlyExport {
   const catalogs = dedupeReferences(
     collectUsedMdblistCatalogs(config, manifestCatalogs)
-  ).sort(compareCatalogExportOrder).map<AiometadataCatalogsOnlyEntry>((reference) => ({
-    id: reference.id,
-    type: reference.type,
-    name: reference.name,
-    enabled: true,
-    source: 'mdblist',
-    displayType: reference.displayType,
-  }));
+  ).sort(compareCatalogExportOrder).map<AiometadataCatalogsOnlyEntry>((reference) => {
+    if (isUnifiedMdblistCatalogId(reference.id)) {
+      return {
+        id: reference.id,
+        type: 'all',
+        name: buildUnifiedMdblistCatalogExportName(reference.rawName),
+        enabled: true,
+        source: 'mdblist',
+        sort: 'default',
+        order: 'asc',
+        cacheTTL: UNIFIED_MDBLIST_DEFAULT_CACHE_TTL,
+        showInHome: true,
+        genreSelection: 'standard',
+        enableRatingPosters: true,
+        metadata: reference.metadata || buildUnifiedMdblistCatalogMetadata(reference.id),
+      };
+    }
+
+    return {
+      id: reference.id,
+      type: reference.type,
+      name: reference.name,
+      enabled: true,
+      source: 'mdblist',
+      displayType: reference.displayType,
+    };
+  });
 
   const filteredCatalogs = filterCatalogEntriesAgainstManifest(
     catalogs,

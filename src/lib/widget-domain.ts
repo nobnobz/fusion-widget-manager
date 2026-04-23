@@ -246,6 +246,7 @@ export function parseManifest(input: unknown): AIOMetadataCatalog[] {
       name: asOptionalString(catalog.name) || id,
       type,
       displayType,
+      metadata: isRecord(catalog.metadata) ? catalog.metadata : undefined,
     };
   });
 }

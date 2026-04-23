@@ -12,7 +12,11 @@ import {
 } from './aiometadata-catalog-labels';
 import { collectUsedAnilistCatalogs } from './anilist-catalog-export';
 import { collectUsedLetterboxdCatalogs } from './letterboxd-catalog-export';
-import { collectUsedMdblistCatalogs } from './mdblist-catalog-export';
+import {
+  buildUnifiedMdblistCatalogMetadata,
+  collectUsedMdblistCatalogs,
+  isUnifiedMdblistCatalogId,
+} from './mdblist-catalog-export';
 import { collectNativeTraktSources } from './native-trakt-bridge';
 import { collectUsedSimklCatalogs } from './simkl-catalog-export';
 import { collectUsedStreamingCatalogs } from './streaming-catalog-export';
@@ -286,6 +290,12 @@ function registerOccurrence(params: {
     id: params.id,
     manifestCatalogs: params.manifestCatalogs,
   });
+  const unifiedMetadata = params.source === 'mdblist' && isUnifiedMdblistCatalogId(params.id)
+    ? buildUnifiedMdblistCatalogMetadata(
+        params.id,
+        findCatalog(params.manifestCatalogs, params.id)?.metadata
+      )
+    : undefined;
   const entry: AiometadataCatalogsOnlyEntry = {
     id: params.id,
     type: params.type,
@@ -293,6 +303,7 @@ function registerOccurrence(params: {
     enabled: true,
     source: params.source,
     displayType: params.displayType,
+    ...(unifiedMetadata ? { metadata: unifiedMetadata } : {}),
   };
 
   const existingDefinition = params.catalogMap.get(catalogKey);
@@ -304,7 +315,12 @@ function registerOccurrence(params: {
       entry,
       source: params.source,
       occurrenceCount: 1,
-      isAlreadyInManifest: params.manifestKeys.has(createManifestKey(entry.type, entry.id)),
+      isAlreadyInManifest: params.manifestKeys.has(
+        createManifestKey(
+          params.source === 'mdblist' && isUnifiedMdblistCatalogId(params.id) ? 'all' : entry.type,
+          entry.id
+        )
+      ),
     });
   }
 

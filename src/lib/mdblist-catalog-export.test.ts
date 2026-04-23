@@ -108,6 +108,80 @@ test('buildAiometadataMdblistCatalogsOnlyExport emits used mdblist catalogs', ()
   });
 });
 
+test('buildAiometadataMdblistCatalogsOnlyExport emits unified mdblist catalogs with aiometadata metadata', () => {
+  const manifestCatalogs: AIOMetadataCatalog[] = [
+    {
+      id: 'mdblist.nobnobz.netflix.unified',
+      name: '[Service] Netflix',
+      type: 'all',
+      displayType: 'series',
+      metadata: {
+        itemCount: 2000,
+      },
+    },
+  ];
+
+  const config = buildConfig([
+    buildCollectionWidget({
+      title: 'Streaming Services',
+      dataSource: {
+        kind: 'collection',
+        payload: {
+          items: [
+            {
+              id: 'item-netflix',
+              name: 'Netflix',
+              hideTitle: false,
+              layout: 'Wide',
+              backgroundImageURL: '',
+              dataSources: [
+                buildAioDataSource({
+                  catalogId: 'all::mdblist.nobnobz.netflix.unified',
+                  catalogType: 'series',
+                }),
+              ],
+            },
+          ],
+        },
+      },
+    }),
+  ]);
+
+  const exported = buildAiometadataMdblistCatalogsOnlyExport(
+    config,
+    manifestCatalogs,
+    '2026-04-23T09:53:54.465Z'
+  );
+
+  assert.deepEqual(exported, {
+    version: 1,
+    exportedAt: '2026-04-23T09:53:54.465Z',
+    catalogs: [
+      {
+        id: 'mdblist.nobnobz.netflix.unified',
+        type: 'all',
+        name: '[Service] Netflix',
+        enabled: true,
+        source: 'mdblist',
+        sort: 'default',
+        order: 'asc',
+        cacheTTL: 86400,
+        showInHome: true,
+        genreSelection: 'standard',
+        enableRatingPosters: true,
+        metadata: {
+          itemCount: 2000,
+          unified: true,
+          username: 'nobnobz',
+          listSlug: 'netflix',
+          author: 'nobnobz',
+          url: 'https://mdblist.com/lists/nobnobz/netflix',
+        },
+      },
+    ],
+  });
+});
+
 test('buildAiometadataMdblistCatalogsOnlyExport prefers manifest catalog names and deduplicates', () => {
   const manifestCatalogs: AIOMetadataCatalog[] = [
     {

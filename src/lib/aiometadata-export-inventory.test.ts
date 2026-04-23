@@ -418,6 +418,43 @@ test('collectAiometadataExportInventory can filter to catalogs missing from the 
   );
 });
 
+test('collectAiometadataExportInventory treats unified mdblist catalogs as already present in matching manifests', () => {
+  const manifestCatalogs: AIOMetadataCatalog[] = [
+    {
+      id: 'mdblist.nobnobz.netflix.unified',
+      name: '[Service] Netflix',
+      type: 'all',
+      metadata: {
+        itemCount: 2000,
+      },
+    },
+  ];
+
+  const inventory = collectAiometadataExportInventory(
+    buildConfig([
+      buildRowWidget({
+        id: 'row-mdblist-unified',
+        title: 'Unified Row',
+        dataSource: buildAioDataSource({
+          catalogId: 'all::mdblist.nobnobz.netflix.unified',
+          catalogType: 'series',
+        }),
+      }),
+    ]),
+    { manifestCatalogs }
+  );
+
+  assert.equal(inventory.catalogs[0]?.isAlreadyInManifest, true);
+  assert.deepEqual(inventory.catalogs[0]?.entry.metadata, {
+    unified: true,
+    username: 'nobnobz',
+    listSlug: 'netflix',
+    author: 'nobnobz',
+    url: 'https://mdblist.com/lists/nobnobz/netflix',
+    itemCount: 2000,
+  });
+});
+
 test('buildAiometadataCatalogExport emits only the selected deduplicated catalogs', () => {
   const inventory = collectAiometadataExportInventory(
     buildConfig([

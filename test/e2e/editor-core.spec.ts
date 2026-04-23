@@ -150,6 +150,30 @@ test('keeps the manifest url field in view on mobile after focus', async ({ page
   }
 });
 
+test('keeps the manifest actions visible on mobile when the url is empty', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile-chrome', 'This assertion targets the mobile layout.');
+
+  await gotoWelcomePage(page);
+  await page.getByTestId('welcome-load-template').click();
+  if (!(await page.getByText('AIOMetadata synced').isVisible())) {
+    await page.getByRole('button', { name: /Sync Manifest|Edit/i }).click();
+    const manifestUrlField = page.getByTestId('manifest-url-input');
+
+    await expect(manifestUrlField).toBeVisible();
+    await manifestUrlField.fill('https://fixtures.example/aiometadata/manifest.json');
+    await page.getByTestId('manifest-sync-submit').click();
+  }
+
+  await page.getByTestId('manifest-settings-button').click();
+  await page.getByRole('button', { name: 'Disconnect AIOMetadata manifest' }).click();
+
+  const manifestUrlField = page.getByTestId('manifest-url-input');
+  await expect(manifestUrlField).toBeVisible();
+  await expect(manifestUrlField).toHaveValue('');
+  await expect(page.getByTestId('manifest-sync-submit')).toBeInViewport();
+  await expect(page.getByRole('button', { name: 'Skip for now' })).toBeInViewport();
+});
+
 test('merges a partial import and keeps the result after reload', async ({ page }) => {
   const fixture = getAuditFixture('medium');
   const mergeFixture = createMergeImportFixture(fixture);

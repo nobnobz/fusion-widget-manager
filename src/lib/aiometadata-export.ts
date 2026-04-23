@@ -28,6 +28,12 @@ import type {
   ExportableCatalogOccurrence,
   ExportableCatalogSource,
 } from './aiometadata-export-inventory';
+import {
+  buildUnifiedMdblistCatalogExportName,
+  buildUnifiedMdblistCatalogMetadata,
+  isUnifiedMdblistCatalogId,
+  UNIFIED_MDBLIST_DEFAULT_CACHE_TTL,
+} from './mdblist-catalog-export';
 import { LETTERBOXD_DEFAULT_CACHE_TTL } from './letterboxd-catalog-export';
 
 const MDBLIST_SORT_VALUES = new Set<string>([
@@ -474,7 +480,8 @@ export function getDefaultAiometadataExportOverrides({
 
 function resolveMDBListExportOverrideForOccurrence(
   occurrence: ExportableCatalogOccurrence,
-  overrides?: AIOMetadataExportOverrideState
+  overrides?: AIOMetadataExportOverrideState,
+  defaultCacheTTL = 43200
 ) {
   if (occurrence.source !== 'mdblist') {
     return null;
@@ -508,7 +515,7 @@ function resolveMDBListExportOverrideForOccurrence(
     ),
     cacheTTL: resolveField(
       'cacheTTL',
-      isValidCacheTTL(occurrence.entry.cacheTTL) ? occurrence.entry.cacheTTL : 43200
+      isValidCacheTTL(occurrence.entry.cacheTTL) ? occurrence.entry.cacheTTL : defaultCacheTTL
     ),
   };
 }
@@ -629,16 +636,41 @@ export function applyExportOverrideToCatalog(
   overrides?: AIOMetadataExportOverrideState
 ): AiometadataCatalogsOnlyEntry {
   if (occurrence.source === 'mdblist') {
-    const resolved = resolveMDBListExportOverrideForOccurrence(occurrence, overrides);
-    if (!resolved) {
+    const unified = isUnifiedMdblistCatalogId(occurrence.entry.id);
+    const resolved = resolveMDBListExportOverrideForOccurrence(
+      occurrence,
+      overrides,
+      unified ? UNIFIED_MDBLIST_DEFAULT_CACHE_TTL : 43200
+    );
+    if (!resolved && !unified) {
       return { ...occurrence.entry };
+    }
+
+    if (unified) {
+      const unifiedMetadata = occurrence.entry.metadata
+        || buildUnifiedMdblistCatalogMetadata(occurrence.entry.id);
+      const unifiedCatalog: AiometadataCatalogsOnlyEntry = {
+        ...occurrence.entry,
+        type: 'all',
+        name: buildUnifiedMdblistCatalogExportName(occurrence.rawName),
+        sort: resolved?.sort || 'default',
+        order: resolved?.order || 'asc',
+        cacheTTL: resolved?.cacheTTL || UNIFIED_MDBLIST_DEFAULT_CACHE_TTL,
+        showInHome: true,
+        genreSelection: 'standard',
+        enableRatingPosters: true,
+        metadata: unifiedMetadata,
+      };
+      delete unifiedCatalog.displayType;
+
+      return unifiedCatalog;
     }
 
     return {
       ...occurrence.entry,
-      sort: resolved.sort,
-      order: resolved.order,
-      cacheTTL: resolved.cacheTTL,
+      sort: resolved!.sort,
+      order: resolved!.order,
+      cacheTTL: resolved!.cacheTTL,
     };
   }
 

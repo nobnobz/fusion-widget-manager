@@ -16,6 +16,7 @@ import {
   normalizeFusionConfigDetailed,
   normalizeLoadedState,
   parseFusionConfig,
+  parseManifest,
   resolveFusionCatalogType,
 } from './widget-domain';
 import type {
@@ -138,6 +139,41 @@ test('resolveFusionCatalogType forces AIOMetadata trakt lists to series', () => 
   assert.equal(resolveFusionCatalogType('all::trakt.list.29034789'), 'series');
   assert.equal(resolveFusionCatalogType('all::mdblist.nobnobz.netflix.unified', 'all'), 'series');
   assert.equal(resolveFusionCatalogType('all::mdblist.29034789', 'movie'), 'movie');
+});
+
+test('parseManifest preserves manifest metadata for unified catalogs', () => {
+  const parsed = parseManifest({
+    catalogs: [
+      {
+        id: 'mdblist.nobnobz.netflix.unified',
+        name: '[Service] Netflix',
+        type: 'all',
+        metadata: {
+          itemCount: 2000,
+          unified: true,
+          username: 'nobnobz',
+          listSlug: 'netflix',
+          author: 'nobnobz',
+        },
+      },
+    ],
+  });
+
+  assert.deepEqual(parsed, [
+    {
+      id: 'mdblist.nobnobz.netflix.unified',
+      name: '[Service] Netflix',
+      type: 'all',
+      displayType: 'all',
+      metadata: {
+        itemCount: 2000,
+        unified: true,
+        username: 'nobnobz',
+        listSlug: 'netflix',
+        author: 'nobnobz',
+      },
+    },
+  ]);
 });
 
 test('legacy collection item dataSource normalizes into dataSources', () => {
