@@ -1108,7 +1108,7 @@ export function MainEditor() {
           </a>
           <div className="flex flex-col items-center gap-1 opacity-45">
             <div className="flex items-center gap-2 text-[9.5px] font-mono tracking-[0.2em] font-medium uppercase text-muted-foreground/80">
-              <span>V0.6.0</span><span className="size-1 rounded-full bg-foreground/20" /><span>BY BOT-BID-RAISER</span>
+              <span>V0.6.1</span><span className="size-1 rounded-full bg-foreground/20" /><span>BY BOT-BID-RAISER</span>
             </div>
             <div className="text-[8.5px] font-mono tracking-[0.3em] uppercase opacity-75 text-foreground/80">BUILT WITH ANTIGRAVITY</div>
           </div>

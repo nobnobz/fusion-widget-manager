@@ -3065,11 +3065,11 @@ function WidgetSelectionGridComponent({
         </div>
 
         <div className="mt-3 rounded-2xl border border-primary/15 bg-primary/5 p-4 max-sm:p-3.5">
-          <p className="text-[10px] font-black uppercase tracking-[0.16em] text-primary/80 max-sm:text-[9px]">Install Note</p>
+          <p className="text-[10px] font-black uppercase tracking-[0.16em] text-primary/80 max-sm:text-[9px]">INSTALL NOTE</p>
           <p className="mt-2 text-[12px] leading-relaxed text-foreground/85 max-sm:text-[11.5px]">
             1. Install the widget.
             {' '}
-            2. Paste the cover URL in
+            2. On your <strong>Apple TV</strong>: Paste the cover URL in
             {' '}
             <code>Fusion {'>'} Settings {'>'} Home {'>'} Preview Packs</code>
             {' '}
@@ -3340,7 +3340,7 @@ function WidgetSelectionGridComponent({
             {' '}
             <strong>{activeAnimatedCoverPack.title}</strong>
             {' '}
-            and paste it into Fusion.
+            and paste it on your <strong>Apple TV</strong>.
           </p>
         </div>
 
@@ -3348,6 +3348,8 @@ function WidgetSelectionGridComponent({
           <div>
             <p className="text-[10px] font-black uppercase tracking-[0.14em] text-muted-foreground/65">Preview Pack URL</p>
             <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground/70">
+              On your <strong>Apple TV</strong>:
+              {' '}
               Fusion
               {' '}
               <code>{'>'}</code>

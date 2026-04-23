@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.6.1] - 2026-04-23
+### Changed
+- **Versioning**: Updated the UI release badge and package version to `v0.6.1`.
+- **Mobile UX**: Refined the manifest setup flow and mobile-facing instructions for clearer Apple TV guidance.
+- **Animated Covers**: Clarified the preview pack install instructions so it is obvious the URL needs to be pasted on Apple TV.
+
+### Fixed
+- **Trakt Lists**: Fixed AIOMetadata Trakt list exports so `all::trakt.list.*` catalogs link correctly in Fusion.
+
 ## [0.6.0] - 2026-04-22
 ### Added
 - **AniList Support**: Added AniList catalog handling across the editor, import/export flow, and validation so AniList sources round-trip cleanly with the rest of the widget data.
