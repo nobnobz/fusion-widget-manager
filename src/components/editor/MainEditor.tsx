@@ -1345,6 +1345,14 @@ export function MainEditor() {
                   </DialogDescription>
                 </div>
               </DialogHeader>
+              <div className="mt-4 rounded-2xl border border-primary/15 bg-primary/[0.04] px-4 py-3 text-left">
+                <p className="text-[10px] font-black uppercase tracking-[0.16em] text-primary">
+                  Fusion Setup Note
+                </p>
+                <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground/75">
+                  In Fusion, go to Settings &gt; Filters &gt; Source Card Fields and disable <span className="font-semibold text-foreground">Show Title</span>.
+                </p>
+              </div>
               <DialogFooter className="mt-6 flex-col gap-2.5">
                 <Button className={cn(editorActionButtonClass, editorFooterPrimaryButtonClass)} onClick={handleCopyFormatterUrl}>
                   <Copy className="size-4 mr-2" />
