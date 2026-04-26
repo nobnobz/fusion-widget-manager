@@ -28,7 +28,6 @@ import { EditorMobileHeader } from './EditorMobileHeader';
 import {
   editorActionButtonClass,
   editorFooterPrimaryButtonClass,
-  editorFooterSecondaryButtonClass,
 } from './editorSurfaceStyles';
 import LogoImage from '@/../public/branding/clown_logo.png';
 import { convertAiometadataImportToFusion, isAiometadataImportPayload } from '@/lib/aiometadata-import';
@@ -1190,12 +1189,13 @@ export function MainEditor() {
                 <div className="size-14 rounded-xl border border-primary/10 bg-primary/5 text-primary flex items-center justify-center max-sm:size-12"><Download className="size-7 max-sm:size-6" /></div>
                 <div className="space-y-1">
                   <DialogTitle className="text-2xl font-bold tracking-tight">{formatTemplateLabel('AIOStreams Template', aiostreamsTemplate ?? undefined)}</DialogTitle>
-                  <DialogDescription className="text-muted-foreground/60 text-xs font-medium">Choose to copy the URL or download the file directly.</DialogDescription>
+                  <DialogDescription className="text-muted-foreground/60 text-xs font-medium">
+                    In AIOStreams, open Save &amp; Install, then go to Import &gt; Import Template and paste the URL there.
+                  </DialogDescription>
                 </div>
               </DialogHeader>
               <DialogFooter className="mt-6 flex-col gap-2.5">
-                <Button variant="outline" className={cn(editorActionButtonClass, editorFooterSecondaryButtonClass)} onClick={handleCopyAiostreamsUrl} disabled={!aiostreamsTemplate?.rawUrl}><Copy className="size-4 mr-2" />Copy URL</Button>
-                <Button className={cn(editorActionButtonClass, editorFooterPrimaryButtonClass)} onClick={async () => { await downloadTemplateFile(aiostreamsTemplate); setShowAiostreamsActions(false); }} disabled={!aiostreamsTemplate}><Download className="size-4 mr-2" />Download</Button>
+                <Button className={cn(editorActionButtonClass, editorFooterPrimaryButtonClass)} onClick={handleCopyAiostreamsUrl} disabled={!aiostreamsTemplate?.rawUrl}><Copy className="size-4 mr-2" />Copy URL</Button>
               </DialogFooter>
             </div>
           </DialogContent>
