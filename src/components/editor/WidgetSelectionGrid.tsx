@@ -120,6 +120,7 @@ interface WidgetSelectionGridProps {
   onNewWidget?: () => void;
   onDownload?: () => void;
   onSyncManifest?: () => void;
+  onOpenFormatter?: () => void;
   onInitialSectionFocusHandled?: () => void;
   expandedWidgetId: string | null;
   onExpandedWidgetChange: (id: string | null) => void;
@@ -263,6 +264,7 @@ function WidgetSelectionGridComponent({
   onNewWidget,
   onDownload,
   onSyncManifest,
+  onOpenFormatter,
   onInitialSectionFocusHandled,
   expandedWidgetId,
   onExpandedWidgetChange,
@@ -3771,6 +3773,68 @@ function WidgetSelectionGridComponent({
     );
   };
 
+  const renderFormatterSection = () => {
+    const handleOpenFormatter = () => {
+      if (onOpenFormatter) {
+        onOpenFormatter();
+      }
+    };
+
+    return (
+      <section
+        data-testid="manager-formatter-section"
+        role="button"
+        tabIndex={0}
+        onClick={handleOpenFormatter}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            handleOpenFormatter();
+          }
+        }}
+        className={cn(
+          editorPanelClass,
+          "group mt-6 cursor-pointer rounded-3xl border-zinc-200/70 bg-zinc-50/55 p-5 transition-all hover:border-primary/15 hover:bg-white/70 dark:border-border/20 dark:bg-zinc-900/50 max-sm:mt-5 max-sm:rounded-[1.5rem] max-sm:p-3.5"
+        )}
+      >
+        <div className="flex flex-wrap items-start justify-between gap-3 max-sm:gap-2">
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-[0.16em] text-primary/75 max-sm:text-[9px]">Formatter</p>
+            <h2 className="mt-1 text-xl font-black tracking-tight text-foreground max-sm:text-[1.45rem]">UME Formatter for AIOStreams</h2>
+          </div>
+        </div>
+
+        <div className="mt-3 rounded-2xl border border-primary/15 bg-primary/5 p-4 max-sm:p-3.5">
+          <p className="text-[10px] font-black uppercase tracking-[0.16em] text-primary/80 max-sm:text-[9px]">Install Note</p>
+          <p className="mt-2 text-[12px] leading-relaxed text-foreground/85 max-sm:text-[11.5px]">
+            In AIOStreams, go to Formatter, tap the import icon, and paste the URL there.
+          </p>
+          <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground/75 max-sm:text-[10.5px]">
+            In Fusion, go to Settings &gt; Filters &gt; Source Card Fields and disable <strong>Show Title</strong> so you do not see the filename.
+          </p>
+        </div>
+
+        <div className="mt-4 overflow-hidden rounded-2xl border border-border/50 bg-black/90 sm:mx-1 max-sm:mt-3 max-sm:mx-0">
+          <div className="relative aspect-[16/10.35] bg-black max-sm:aspect-[16/9.05]">
+            <Image
+              src="/branding/aios-ume-formatter-preview.jpg"
+              alt="AIOS UME Formatter preview"
+              fill
+              sizes="(max-width: 640px) 100vw, 33vw"
+              className="object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/5 to-black/20" />
+          </div>
+        </div>
+
+        <div className="mt-3 flex items-center justify-between gap-2 whitespace-nowrap text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground/60">
+          <span>Install</span>
+          <ChevronRight className="size-3.5 transition-transform group-hover:translate-x-0.5 group-hover:text-primary" />
+        </div>
+      </section>
+    );
+  };
+
   return (
     <div className="flex-1 flex flex-col bg-transparent">
       <main className="max-w-5xl mx-auto w-full px-6 max-sm:px-4 py-12 max-sm:py-6 max-sm:pb-[calc(env(safe-area-inset-bottom)+2rem)]">
@@ -3979,6 +4043,7 @@ function WidgetSelectionGridComponent({
 
         {renderAnimatedCoversSection()}
         {renderRegexPatternsSection()}
+        {renderFormatterSection()}
 
         {filteredWidgets.length === 0 && searchQuery && (
           <div className="py-20 text-center">

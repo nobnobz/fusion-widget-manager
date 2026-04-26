@@ -68,7 +68,6 @@ import { normalizeFusionConfigDetailed } from '@/lib/widget-domain';
 import { copyTextToClipboard, downloadTextFile } from '@/lib/browser-transfer';
 import { getErrorMessage } from '@/lib/error-utils';
 import { useMobile } from '@/hooks/use-mobile';
-import FormatterPreviewImage from '@/../public/branding/aios-ume-formatter-preview.jpg';
 
 type JsonRecord = Record<string, unknown>;
 type IncludedPackFocusTarget = {
@@ -191,7 +190,7 @@ const INCLUDED_PACK_CARDS: FeaturedPackCard[] = [
   {
     section: 'Formatter',
     title: 'UME Formatter for AIOStreams',
-    previewImageUrl: FormatterPreviewImage,
+    previewImageUrl: '/branding/aios-ume-formatter-preview.jpg',
   },
 ] as const;
 
@@ -1117,6 +1116,7 @@ export function MainEditor() {
           onExpandedWidgetChange={setExpandedWidgetId}
           onNewWidget={openNewWidgetDialog}
           onSyncManifest={openManifestModal}
+          onOpenFormatter={handleOpenFormatterActions}
           onInitialSectionFocusHandled={() => setIncludedPackFocus(null)}
           initialSectionFocus={includedPackFocus}
         />

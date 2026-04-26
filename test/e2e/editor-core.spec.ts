@@ -95,6 +95,7 @@ test('loads the mocked template, syncs the manifest, and creates a widget', asyn
   }
 
   await expect(page.getByText('AIOMetadata synced')).toBeVisible();
+  await expect(page.getByTestId('manager-formatter-section')).toBeVisible();
 
   await page.getByTestId('new-widget-button').click();
   await page.getByTestId('new-widget-title-input').fill('Audit Added Widget');
