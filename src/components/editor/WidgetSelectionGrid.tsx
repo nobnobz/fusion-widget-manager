@@ -3815,8 +3815,8 @@ function WidgetSelectionGridComponent({
           </p>
         </div>
 
-        <div className="mt-4 overflow-hidden rounded-2xl border border-border/50 bg-black/90 sm:mx-1 max-sm:mt-3 max-sm:mx-0">
-          <div className="relative h-44 bg-black sm:h-52">
+        <div className="mt-4 mx-auto w-full max-w-[24rem] overflow-hidden rounded-2xl border border-border/50 bg-black/90 max-sm:mt-3 max-sm:max-w-none">
+          <div className="relative aspect-[16/10.35] bg-black max-sm:aspect-[16/9.05]">
             <Image
               src={FormatterPreviewImage}
               alt="AIOS UME Formatter preview"
