@@ -89,6 +89,7 @@ import type { FusionWidgetsConfig, CollectionItem, CollectionRowWidget, WidgetDa
 import { isAIOMetadataDataSource } from '@/lib/widget-domain';
 import { copyTextToClipboard, downloadTextFile } from '@/lib/browser-transfer';
 import { getErrorMessage } from '@/lib/error-utils';
+import { withBasePath } from '@/lib/base-path';
 import {
   fetchAnimatedCoverPacks,
   fetchAnimatedCoverWidgetBlueprints,
@@ -3809,7 +3810,7 @@ function WidgetSelectionGridComponent({
           <p className="mt-2 text-[12px] leading-relaxed text-foreground/85 max-sm:text-[11.5px]">
             In AIOStreams, go to Formatter, tap the import icon, and paste the URL there.
           </p>
-          <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground/75 max-sm:text-[10.5px]">
+          <p className="mt-2 text-[12px] leading-relaxed text-foreground/85 max-sm:text-[11.5px]">
             In Fusion, go to Settings &gt; Filters &gt; Source Card Fields and disable <strong>Show Title</strong> so you do not see the filename.
           </p>
         </div>
@@ -3817,7 +3818,7 @@ function WidgetSelectionGridComponent({
         <div className="mt-4 overflow-hidden rounded-2xl border border-border/50 bg-black/90 sm:mx-1 max-sm:mt-3 max-sm:mx-0">
           <div className="relative aspect-[16/10.35] bg-black max-sm:aspect-[16/9.05]">
             <Image
-              src="/branding/aios-ume-formatter-preview.jpg"
+              src={withBasePath('/branding/aios-ume-formatter-preview.jpg')}
               alt="AIOS UME Formatter preview"
               fill
               sizes="(max-width: 640px) 100vw, 33vw"

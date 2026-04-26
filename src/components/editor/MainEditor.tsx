@@ -68,6 +68,7 @@ import { normalizeFusionConfigDetailed } from '@/lib/widget-domain';
 import { copyTextToClipboard, downloadTextFile } from '@/lib/browser-transfer';
 import { getErrorMessage } from '@/lib/error-utils';
 import { useMobile } from '@/hooks/use-mobile';
+import { withBasePath } from '@/lib/base-path';
 
 type JsonRecord = Record<string, unknown>;
 type IncludedPackFocusTarget = {
@@ -190,7 +191,7 @@ const INCLUDED_PACK_CARDS: FeaturedPackCard[] = [
   {
     section: 'Formatter',
     title: 'UME Formatter for AIOStreams',
-    previewImageUrl: '/branding/aios-ume-formatter-preview.jpg',
+    previewImageUrl: withBasePath('/branding/aios-ume-formatter-preview.jpg'),
   },
 ] as const;
 
@@ -1390,7 +1391,7 @@ export function MainEditor() {
                   <p className="text-[10px] font-black uppercase tracking-[0.16em] text-primary">
                     Fusion Setup Note
                   </p>
-                  <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground/75">
+                  <p className="mt-1 text-xs font-medium leading-relaxed text-muted-foreground/60">
                     In Fusion, go to Settings &gt; Filters &gt; Source Card Fields and disable <span className="font-semibold text-foreground">Show Title</span> so you do not see the filename.
                   </p>
                 </div>
@@ -1428,7 +1429,7 @@ export function MainEditor() {
                   <p className="text-[10px] font-black uppercase tracking-[0.16em] text-primary">
                     Fusion Setup Note
                   </p>
-                  <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground/75">
+                  <p className="mt-1 text-xs font-medium leading-relaxed text-muted-foreground/60">
                     In Fusion, go to Settings &gt; Filters &gt; Source Card Fields and disable <span className="font-semibold text-foreground">Show Title</span> so you do not see the filename.
                   </p>
                 </div>
