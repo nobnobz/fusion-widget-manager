@@ -3822,7 +3822,7 @@ function WidgetSelectionGridComponent({
               alt="AIOS UME Formatter preview"
               fill
               sizes="(max-width: 640px) 100vw, 33vw"
-              className="object-cover"
+              className="object-cover sm:object-contain"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/5 to-black/20" />
           </div>
