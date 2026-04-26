@@ -225,6 +225,27 @@ export function MainEditor() {
     manifestUrl
   } = useConfig();
 
+  const aiometadataDownloadOptions = [
+    {
+      key: 'full',
+      title: 'Full Template',
+      subtitle: 'Use this for first setup.',
+      filename: aiometadataTemplate?.filename ?? 'Not available',
+      disabled: !aiometadataTemplate,
+      accent: true,
+      onClick: () => downloadTemplateFile(aiometadataTemplate),
+    },
+    {
+      key: 'catalogs',
+      title: 'Catalogs Only',
+      subtitle: 'Use this for updates only.',
+      filename: aiometadataCatalogsOnlyTemplate?.filename ?? 'Not available',
+      disabled: !aiometadataCatalogsOnlyTemplate,
+      accent: false,
+      onClick: () => downloadTemplateFile(aiometadataCatalogsOnlyTemplate),
+    },
+  ] as const;
+
   const buildImportIssueDetails = useCallback(
     (
       issues: Array<{ label: string; parentLabel?: string; message: string }>,
@@ -1158,19 +1179,50 @@ export function MainEditor() {
                 <div className="space-y-1">
                   <DialogTitle className="text-2xl font-bold tracking-tight">AIOMetadata Download</DialogTitle>
                   <DialogDescription className="max-w-[34ch] text-xs font-medium leading-relaxed text-muted-foreground/60 max-sm:max-w-none">
-                    Use Full Template for first setup, or Catalogs Only for updates.
+                    Use Full Template for a fresh setup, or Catalogs Only to update an existing install.
                   </DialogDescription>
                 </div>
               </DialogHeader>
               <div className="mt-8 grid gap-3 max-sm:mt-6">
-                {[aiometadataTemplate, aiometadataCatalogsOnlyTemplate].map((t, i) => (
+                {aiometadataDownloadOptions.map((option) => (
                   <Button
-                    key={i} variant="outline" className="h-auto min-h-[5.25rem] w-full rounded-2xl border-border/50 bg-background/55 px-4 py-3 text-left transition-all hover:bg-primary/[0.04]"
-                    onClick={async () => { await downloadTemplateFile(t); setShowAiometadataActions(false); }} disabled={!t}
+                    key={option.key}
+                    variant="outline"
+                    className={cn(
+                      "group h-auto min-h-[5.25rem] w-full rounded-2xl px-4 py-3 text-left transition-all",
+                      option.accent
+                        ? "border-primary/20 bg-primary/[0.05] hover:border-primary/30 hover:bg-primary/[0.08]"
+                        : "border-border/50 bg-background/55 hover:bg-primary/[0.04]"
+                    )}
+                    onClick={async () => {
+                      await option.onClick();
+                      setShowAiometadataActions(false);
+                    }}
+                    disabled={option.disabled}
                   >
                     <div className="flex w-full items-center gap-3">
-                      <div className="flex min-w-0 flex-1 flex-col items-start font-bold uppercase tracking-[0.16em] text-[11px]">{i === 0 ? 'Full Template' : 'Catalogs Only'}<span className="pt-1 text-[10px] font-medium normal-case text-muted-foreground/58">{t?.filename ?? 'Not available'}</span></div>
-                      <div className="size-11 shrink-0 items-center justify-center rounded-xl border border-primary/12 bg-primary/6 text-primary flex"><Download className="size-4.5" /></div>
+                      <div className="flex min-w-0 flex-1 flex-col items-start">
+                        <span className={cn(
+                          "text-[11px] font-black uppercase tracking-[0.18em]",
+                          option.accent ? "text-primary" : "text-foreground/90"
+                        )}>
+                          {option.title}
+                        </span>
+                        <span className="pt-1 text-[10px] font-medium normal-case text-muted-foreground/60">
+                          {option.subtitle}
+                        </span>
+                        <span className="pt-1.5 truncate text-[10px] font-mono tracking-[0.14em] text-muted-foreground/42">
+                          {option.filename}
+                        </span>
+                      </div>
+                      <div className={cn(
+                        "size-11 shrink-0 items-center justify-center rounded-xl border flex transition-colors",
+                        option.accent
+                          ? "border-primary/15 bg-primary/10 text-primary"
+                          : "border-border/40 bg-background/80 text-muted-foreground/70"
+                      )}>
+                        <Download className="size-4.5" />
+                      </div>
                     </div>
                   </Button>
                 ))}
