@@ -18,11 +18,10 @@ permissions:
   pages: write
   id-token: write
 
-# Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
-# However, do NOT cancel in-progress runs as we want to allow these production deployments to complete.
+# Keep only the newest Pages deployment active so rapid pushes cannot block each other.
 concurrency:
   group: "pages"
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   # Build job
@@ -33,7 +32,7 @@ jobs:
       NEXT_PUBLIC_BASE_PATH: /fusion-widget-manager
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Detect package manager
         id: detect-package-manager
         run: |
@@ -52,7 +51,7 @@ jobs:
             exit 1
           fi
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: "22"
           cache: ${{ steps.detect-package-manager.outputs.manager }}
@@ -65,7 +64,7 @@ jobs:
           # You can substitute this part by setting the static export inside next.config.ts
           static_site_generator: next
       - name: Restore cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
             .next/cache

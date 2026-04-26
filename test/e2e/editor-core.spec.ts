@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 import {
   createStoredAppState,
   createMergeImportFixture,
@@ -14,6 +14,20 @@ import {
   mockTemplateRepository,
   openExportDialog,
 } from '../support/app-harness';
+
+async function waitForBlockingOverlayToClose(page: Page) {
+  await expect(page.locator('[data-state="open"][aria-hidden="true"].fixed.inset-0.z-50')).toHaveCount(0);
+}
+
+async function syncManifestFromSetupModal(page: Page, manifestUrl: string) {
+  await page.getByRole('button', { name: /Sync Manifest|Edit/i }).click();
+  const manifestUrlField = page.getByTestId('manifest-url-input');
+
+  await expect(manifestUrlField).toBeVisible();
+  await manifestUrlField.fill(manifestUrl);
+  await page.getByTestId('manifest-sync-submit').click();
+  await waitForBlockingOverlayToClose(page);
+}
 
 test.beforeEach(async ({ page }) => {
   await mockTemplateRepository(page, getAuditFixture('medium'));
@@ -89,9 +103,7 @@ test('loads the mocked template, syncs the manifest, and creates a widget', asyn
   await expect(page.getByTestId('new-widget-button')).toBeVisible();
 
   if (!(await page.getByText('AIOMetadata synced').isVisible())) {
-    await page.getByRole('button', { name: /Sync Manifest|Edit/i }).click();
-    await page.getByTestId('manifest-url-input').fill(fixture.manifestUrl);
-    await page.getByTestId('manifest-sync-submit').click();
+    await syncManifestFromSetupModal(page, fixture.manifestUrl);
   }
 
   await expect(page.getByText('AIOMetadata synced')).toBeVisible();
@@ -114,17 +126,11 @@ test('disconnects a synced AIOMetadata manifest from the setup modal', async ({ 
 
   await page.getByTestId('welcome-load-template').click();
   if (!(await page.getByText('AIOMetadata synced').isVisible())) {
-    await page.getByRole('button', { name: /Sync Manifest|Edit/i }).click();
-    const manifestUrlField = page.getByTestId('manifest-url-input');
-    const manifestUrlFieldTag = await manifestUrlField.evaluate((element) => element.tagName);
-
-    if (manifestUrlFieldTag === 'INPUT' || manifestUrlFieldTag === 'TEXTAREA') {
-      await manifestUrlField.fill(fixture.manifestUrl);
-      await page.getByTestId('manifest-sync-submit').click();
-    }
+    await syncManifestFromSetupModal(page, fixture.manifestUrl);
   }
 
   await expect(page.getByText('AIOMetadata synced')).toBeVisible();
+  await waitForBlockingOverlayToClose(page);
 
   await page.getByTestId('manifest-settings-button').click();
   await expect(page.getByText('Synced', { exact: true })).toBeVisible();
@@ -169,14 +175,10 @@ test('keeps the manifest actions visible on mobile when the url is empty', async
   await gotoWelcomePage(page);
   await page.getByTestId('welcome-load-template').click();
   if (!(await page.getByText('AIOMetadata synced').isVisible())) {
-    await page.getByRole('button', { name: /Sync Manifest|Edit/i }).click();
-    const manifestUrlField = page.getByTestId('manifest-url-input');
-
-    await expect(manifestUrlField).toBeVisible();
-    await manifestUrlField.fill('https://fixtures.example/aiometadata/manifest.json');
-    await page.getByTestId('manifest-sync-submit').click();
+    await syncManifestFromSetupModal(page, 'https://fixtures.example/aiometadata/manifest.json');
   }
 
+  await waitForBlockingOverlayToClose(page);
   await page.getByTestId('manifest-settings-button').click();
   await page.getByRole('button', { name: 'Disconnect AIOMetadata manifest' }).click();
 

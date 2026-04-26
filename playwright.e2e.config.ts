@@ -16,7 +16,7 @@ export default defineConfig({
   expect: {
     timeout: 10_000,
   },
-  reporter: isCi ? [['github'], ['html', { open: 'never' }]] : 'list',
+  reporter: isCi ? [['list'], ['html', { open: 'never' }]] : 'list',
   use: {
     baseURL,
     trace: 'retain-on-failure',
