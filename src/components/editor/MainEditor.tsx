@@ -84,7 +84,7 @@ type FeaturedPackCard = {
 };
 
 const AIOS_UME_FORMATTER_URL =
-  'https://github.com/nobnobz/Omni-Template-Bot-Bid-Raiser/blob/main/Other/fusion-ume-formatter-aios.json';
+  'https://raw.githubusercontent.com/nobnobz/Omni-Template-Bot-Bid-Raiser/refs/heads/main/Other/fusion-ume-formatter-aios.json';
 
 function isHttpUrlInput(value: string): boolean {
   if (!value || /\s/.test(value)) {
