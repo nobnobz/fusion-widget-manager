@@ -932,7 +932,7 @@ export function MainEditor() {
                   <div className="flex items-center gap-2 opacity-75">
                     <Sparkles className="size-3.5 text-primary" />
                     <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
-                      Included Packs
+                      Featured Packs
                     </span>
                   </div>
                 </div>
