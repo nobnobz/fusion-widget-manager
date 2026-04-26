@@ -231,6 +231,7 @@ export function MainEditor() {
   const [showAiometadataActions, setShowAiometadataActions] = useState(false);
   const [showAiostreamsActions, setShowAiostreamsActions] = useState(false);
   const [showFormatterActions, setShowFormatterActions] = useState(false);
+  const [copiedAiostreamsUrl, setCopiedAiostreamsUrl] = useState(false);
   const [copiedFormatterUrl, setCopiedFormatterUrl] = useState(false);
   const [showImportMergeDialog, setShowImportMergeDialog] = useState(false);
   const [initialImportJson, setInitialImportJson] = useState<string | undefined>(undefined);
@@ -242,6 +243,7 @@ export function MainEditor() {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const omniFileInputRef = useRef<HTMLInputElement>(null);
+  const aiostreamsCopyTimeoutRef = useRef<number | null>(null);
 
   const {
     importConfig,
@@ -671,6 +673,7 @@ export function MainEditor() {
 
   const handleDownloadAiostreams = () => {
     if (!aiostreamsTemplate) return;
+    setCopiedAiostreamsUrl(false);
     setShowAiostreamsActions(true);
   };
 
@@ -679,22 +682,16 @@ export function MainEditor() {
 
     try {
       await copyTextToClipboard(aiostreamsTemplate.rawUrl);
-      setAlertDialog({
-        isOpen: true,
-        title: 'URL Copied',
-        message: 'The template URL for the UME AIOStreams template has been copied to your clipboard.',
-        variant: 'info',
-        confirmText: 'CONTINUE'
-      });
-      setShowAiostreamsActions(false);
+      setCopiedAiostreamsUrl(true);
+      if (aiostreamsCopyTimeoutRef.current !== null) {
+        window.clearTimeout(aiostreamsCopyTimeoutRef.current);
+      }
+      aiostreamsCopyTimeoutRef.current = window.setTimeout(() => {
+        setCopiedAiostreamsUrl(false);
+        aiostreamsCopyTimeoutRef.current = null;
+      }, 1800);
     } catch {
-      setAlertDialog({
-        isOpen: true,
-        title: 'Clipboard Failed',
-        message: 'The template URL could not be copied to your clipboard.',
-        variant: 'danger',
-        confirmText: 'CONTINUE'
-      });
+      setCopiedAiostreamsUrl(false);
     }
   };
 
@@ -713,6 +710,14 @@ export function MainEditor() {
     } catch {
       setCopiedFormatterUrl(false);
     }
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (aiostreamsCopyTimeoutRef.current !== null) {
+        window.clearTimeout(aiostreamsCopyTimeoutRef.current);
+      }
+    };
   }, []);
 
   const openSupportLink = () => {
@@ -1303,6 +1308,9 @@ export function MainEditor() {
       {showAiostreamsActions && (
         isMobile ? (
           <Drawer open={showAiostreamsActions} onOpenChange={(open) => {
+            if (!open) {
+              setCopiedAiostreamsUrl(false);
+            }
             setShowAiostreamsActions(open);
           }}>
             <DrawerContent className="max-h-[94dvh] border-border/40 bg-background rounded-t-[2.5rem] overflow-hidden">
@@ -1322,14 +1330,19 @@ export function MainEditor() {
                 <DrawerFooter className="mt-6 px-0 pb-0">
                   <Button className={cn(editorActionButtonClass, editorFooterPrimaryButtonClass)} onClick={handleCopyAiostreamsUrl} disabled={!aiostreamsTemplate?.rawUrl}>
                     <Copy className="size-4 mr-2" />
-                    Copy URL
+                    {copiedAiostreamsUrl ? 'Copied' : 'Copy URL'}
                   </Button>
                 </DrawerFooter>
               </div>
             </DrawerContent>
           </Drawer>
         ) : (
-          <Dialog open={showAiostreamsActions} onOpenChange={setShowAiostreamsActions}>
+          <Dialog open={showAiostreamsActions} onOpenChange={(open) => {
+            if (!open) {
+              setCopiedAiostreamsUrl(false);
+            }
+            setShowAiostreamsActions(open);
+          }}>
             <DialogContent className="sm:max-w-[420px] rounded-3xl border border-border/40 bg-card/95 p-0 backdrop-blur-2xl overflow-hidden max-sm:w-[calc(100vw-1rem)]">
               <DialogTitle className="sr-only">AIOStreams Templates</DialogTitle>
               <div className="p-8 pt-10 max-sm:px-5 max-sm:pt-6 text-left">
@@ -1343,7 +1356,7 @@ export function MainEditor() {
                   </div>
                 </DialogHeader>
                 <DialogFooter className="mt-6 flex-col gap-2.5">
-                  <Button className={cn(editorActionButtonClass, editorFooterPrimaryButtonClass)} onClick={handleCopyAiostreamsUrl} disabled={!aiostreamsTemplate?.rawUrl}><Copy className="size-4 mr-2" />Copy URL</Button>
+                  <Button className={cn(editorActionButtonClass, editorFooterPrimaryButtonClass)} onClick={handleCopyAiostreamsUrl} disabled={!aiostreamsTemplate?.rawUrl}><Copy className="size-4 mr-2" />{copiedAiostreamsUrl ? 'Copied' : 'Copy URL'}</Button>
                 </DialogFooter>
               </div>
             </DialogContent>
