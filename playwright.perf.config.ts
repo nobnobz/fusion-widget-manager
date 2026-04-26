@@ -14,7 +14,7 @@ export default defineConfig({
   expect: {
     timeout: 15_000,
   },
-  reporter: isCi ? [['list'], ['html', { open: 'never' }]] : 'list',
+  reporter: isCi ? [['github'], ['html', { open: 'never' }]] : 'list',
   use: {
     ...devices['Desktop Chrome'],
     baseURL,

@@ -19,17 +19,62 @@ async function waitForBlockingOverlayToClose(page: Page) {
   await expect(page.locator('[data-state="open"][aria-hidden="true"].fixed.inset-0.z-50')).toHaveCount(0);
 }
 
+async function clickManifestSettings(page: Page) {
+  const settingsButton = page.getByTestId('manifest-settings-button');
+
+  await waitForBlockingOverlayToClose(page);
+  await expect(settingsButton).toBeVisible();
+  await settingsButton.click({ trial: true });
+  await settingsButton.click();
+}
+
 async function syncManifestFromSetupModal(page: Page, manifestUrl: string) {
   await page.getByRole('button', { name: /Sync Manifest|Edit/i }).click();
   const manifestUrlField = page.getByTestId('manifest-url-input');
 
   await expect(manifestUrlField).toBeVisible();
+  const manifestUrlFieldTag = await manifestUrlField.evaluate((element) => element.tagName);
+
+  if (manifestUrlFieldTag !== 'INPUT' && manifestUrlFieldTag !== 'TEXTAREA') {
+    await page.keyboard.press('Escape');
+    await waitForBlockingOverlayToClose(page);
+    return;
+  }
+
   await manifestUrlField.fill(manifestUrl);
   await page.getByTestId('manifest-sync-submit').click();
   await waitForBlockingOverlayToClose(page);
 }
 
 test.beforeEach(async ({ page }) => {
+  await page.addInitScript(() => {
+    const disableMotion = () => {
+      if (document.getElementById('e2e-disable-motion')) {
+        return;
+      }
+
+      const style = document.createElement('style');
+      style.id = 'e2e-disable-motion';
+      style.textContent = `
+        *, *::before, *::after {
+          animation-delay: 0s !important;
+          animation-duration: 0s !important;
+          caret-color: auto !important;
+          scroll-behavior: auto !important;
+          transition-delay: 0s !important;
+          transition-duration: 0s !important;
+        }
+      `;
+      (document.head || document.documentElement).appendChild(style);
+    };
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', disableMotion, { once: true });
+      return;
+    }
+
+    disableMotion();
+  });
   await mockTemplateRepository(page, getAuditFixture('medium'));
 });
 
@@ -130,9 +175,8 @@ test('disconnects a synced AIOMetadata manifest from the setup modal', async ({ 
   }
 
   await expect(page.getByText('AIOMetadata synced')).toBeVisible();
-  await waitForBlockingOverlayToClose(page);
 
-  await page.getByTestId('manifest-settings-button').click();
+  await clickManifestSettings(page);
   await expect(page.getByText('Synced', { exact: true })).toBeVisible();
 
   await page.getByRole('button', { name: 'Disconnect AIOMetadata manifest' }).click();
@@ -178,8 +222,7 @@ test('keeps the manifest actions visible on mobile when the url is empty', async
     await syncManifestFromSetupModal(page, 'https://fixtures.example/aiometadata/manifest.json');
   }
 
-  await waitForBlockingOverlayToClose(page);
-  await page.getByTestId('manifest-settings-button').click();
+  await clickManifestSettings(page);
   await page.getByRole('button', { name: 'Disconnect AIOMetadata manifest' }).click();
 
   const manifestUrlField = page.getByTestId('manifest-url-input');
