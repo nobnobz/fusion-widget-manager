@@ -21,7 +21,7 @@ import {
   UploadCloud,
   Sparkles,
 } from 'lucide-react';
-import Image from 'next/image';
+import Image, { type StaticImageData } from 'next/image';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { ManagerSwitcher } from '@/components/ui/ManagerSwitcher';
 import { EditorMobileHeader } from './EditorMobileHeader';
@@ -68,6 +68,7 @@ import { normalizeFusionConfigDetailed } from '@/lib/widget-domain';
 import { copyTextToClipboard, downloadTextFile } from '@/lib/browser-transfer';
 import { getErrorMessage } from '@/lib/error-utils';
 import { useMobile } from '@/hooks/use-mobile';
+import FormatterPreviewImage from '@/../public/branding/aios-ume-formatter-preview.jpg';
 
 type JsonRecord = Record<string, unknown>;
 type IncludedPackFocusTarget = {
@@ -78,7 +79,7 @@ type IncludedPackFocusTarget = {
 type FeaturedPackCard = {
   section: string;
   title: string;
-  previewImageUrl?: string;
+  previewImageUrl?: string | StaticImageData;
   focusTarget?: IncludedPackFocusTarget;
 };
 
@@ -190,7 +191,7 @@ const INCLUDED_PACK_CARDS: FeaturedPackCard[] = [
   {
     section: 'Formatter',
     title: 'UME Formatter for AIOStreams',
-    previewImageUrl: '/branding/aios-ume-formatter-preview.jpg',
+    previewImageUrl: FormatterPreviewImage,
   },
 ] as const;
 
@@ -1019,7 +1020,7 @@ export function MainEditor() {
                           {pack.section === 'Animated Covers' ? (
                             <div className="mt-2 mx-0.5 overflow-hidden rounded-2xl border border-border/50 bg-black/90 sm:mx-1 max-sm:mt-1.5 max-sm:mx-0">
                               <div
-                                className="relative aspect-[16/10.35] bg-no-repeat bg-center max-sm:aspect-[16/10.7]"
+                                className="relative aspect-[16/10.35] bg-no-repeat bg-center max-sm:aspect-[16/9.05]"
                                 style={{
                                   backgroundImage: `url('${animatedPreviewUrl}')`,
                                   backgroundColor: '#c86a17',
@@ -1076,7 +1077,7 @@ export function MainEditor() {
                             </div>
                           ) : (
                             <div className="mt-2 overflow-hidden rounded-2xl border border-border/50 bg-black/90 sm:mx-1 max-sm:mt-1.5 max-sm:mx-0">
-                              <div className="relative aspect-[16/10.35] bg-black">
+                              <div className="relative aspect-[16/10.35] bg-black max-sm:aspect-[16/9.05]">
                                 <Image
                                   src={pack.previewImageUrl ?? ''}
                                   alt="AIOS UME Formatter preview"
