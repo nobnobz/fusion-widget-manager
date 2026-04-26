@@ -48,7 +48,7 @@ test('opens the AIOS UME formatter modal from the welcome screen', async ({ page
 
   await expect(page.getByTestId('featured-formatter-card')).toBeVisible();
 
-  await page.getByTestId('formatter-resource-button').click();
+  await page.getByTestId('featured-formatter-card').click();
 
   const formatterDialog = page.locator('[role="dialog"]').filter({ hasText: 'AIOS UME Formatter' }).last();
   await expect(formatterDialog).toBeVisible();

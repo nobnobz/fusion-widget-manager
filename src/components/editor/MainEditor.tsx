@@ -837,16 +837,6 @@ export function MainEditor() {
                 </Button>
                 <Button
                   type="button"
-                  data-testid="formatter-resource-button"
-                  variant="ghost"
-                  className={cn(editorActionButtonClass, "col-span-2 sm:col-span-1 h-10 sm:h-[2.2rem] border border-border/65 bg-background/65 hover:border-primary/35 hover:bg-primary/[0.04] text-[9px] px-2 sm:px-3 text-muted-foreground/68 hover:text-primary whitespace-nowrap shrink-0 justify-center")}
-                  onClick={handleOpenFormatterActions}
-                >
-                  <Download className="size-3 mr-1.5" />
-                  AIOS UME Formatter
-                </Button>
-                <Button
-                  type="button"
                   variant="ghost"
                   className={cn(editorActionButtonClass, "col-span-2 sm:col-span-1 h-10 sm:h-[2.2rem] border border-primary/20 bg-primary/5 hover:border-primary/40 hover:bg-primary/10 text-[10px] sm:text-[9px] px-3.5 sm:px-3 text-primary whitespace-nowrap shrink-0 justify-center")}
                   onClick={() => omniFileInputRef.current?.click()}
