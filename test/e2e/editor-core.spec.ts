@@ -50,10 +50,10 @@ test('opens the AIOS UME formatter modal from the welcome screen', async ({ page
 
   await page.getByTestId('featured-formatter-card').click();
 
-  const formatterDialog = page.locator('[role="dialog"]').filter({ hasText: 'AIOS UME Formatter' }).last();
+  const formatterDialog = page.locator('[role="dialog"]').filter({ hasText: 'UME Formatter for AIOStreams' }).last();
   await expect(formatterDialog).toBeVisible();
   await expect(formatterDialog).toContainText('Copy URL');
-  await expect(formatterDialog).toContainText('open Formatter, tap the import icon');
+  await expect(formatterDialog).toContainText('go to Formatter, tap the import icon');
 });
 
 test('imports a fixture from the welcome screen and opens export preview', async ({ page }) => {
