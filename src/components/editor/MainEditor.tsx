@@ -1300,25 +1300,54 @@ export function MainEditor() {
       )}
 
       {showAiostreamsActions && (
-        <Dialog open={showAiostreamsActions} onOpenChange={setShowAiostreamsActions}>
-          <DialogContent className="sm:max-w-[420px] rounded-3xl border border-border/40 bg-card/95 p-0 backdrop-blur-2xl overflow-hidden max-sm:w-[calc(100vw-1rem)]">
-            <DialogTitle className="sr-only">AIOStreams Templates</DialogTitle>
-            <div className="p-8 pt-10 max-sm:px-5 max-sm:pt-6 text-left">
-              <DialogHeader className="space-y-6 items-start text-left">
-                <div className="size-14 rounded-xl border border-primary/10 bg-primary/5 text-primary flex items-center justify-center max-sm:size-12"><Download className="size-7 max-sm:size-6" /></div>
-                <div className="space-y-1">
-                  <DialogTitle className="text-2xl font-bold tracking-tight">{formatTemplateLabel('AIOStreams Template', aiostreamsTemplate ?? undefined)}</DialogTitle>
-                  <DialogDescription className="text-muted-foreground/60 text-xs font-medium">
-                    In AIOStreams, open Save &amp; Install, then go to Import &gt; Import Template and paste the URL there.
-                  </DialogDescription>
-                </div>
-              </DialogHeader>
-              <DialogFooter className="mt-6 flex-col gap-2.5">
-                <Button className={cn(editorActionButtonClass, editorFooterPrimaryButtonClass)} onClick={handleCopyAiostreamsUrl} disabled={!aiostreamsTemplate?.rawUrl}><Copy className="size-4 mr-2" />Copy URL</Button>
-              </DialogFooter>
-            </div>
-          </DialogContent>
-        </Dialog>
+        isMobile ? (
+          <Drawer open={showAiostreamsActions} onOpenChange={(open) => {
+            setShowAiostreamsActions(open);
+          }}>
+            <DrawerContent className="max-h-[94dvh] border-border/40 bg-background rounded-t-[2.5rem] overflow-hidden">
+              <DrawerTitle className="sr-only">AIOStreams Templates</DrawerTitle>
+              <div className="flex min-h-0 flex-1 flex-col overflow-hidden px-5 pb-[max(env(safe-area-inset-bottom),1rem)] pt-0">
+                <DrawerHeader className="space-y-5 px-0 pt-1 text-left items-start">
+                  <div className="size-14 rounded-xl border border-primary/10 bg-primary/5 text-primary flex items-center justify-center max-sm:size-12">
+                    <Download className="size-7 max-sm:size-6" />
+                  </div>
+                  <div className="space-y-1">
+                    <DrawerTitle className="text-2xl font-bold tracking-tight">{formatTemplateLabel('AIOStreams Template', aiostreamsTemplate ?? undefined)}</DrawerTitle>
+                    <DrawerDescription className="text-muted-foreground/60 text-xs font-medium">
+                      In AIOStreams, go to Save &amp; Install, then Import &gt; Import Template and paste the URL there.
+                    </DrawerDescription>
+                  </div>
+                </DrawerHeader>
+                <DrawerFooter className="mt-6 px-0 pb-0">
+                  <Button className={cn(editorActionButtonClass, editorFooterPrimaryButtonClass)} onClick={handleCopyAiostreamsUrl} disabled={!aiostreamsTemplate?.rawUrl}>
+                    <Copy className="size-4 mr-2" />
+                    Copy URL
+                  </Button>
+                </DrawerFooter>
+              </div>
+            </DrawerContent>
+          </Drawer>
+        ) : (
+          <Dialog open={showAiostreamsActions} onOpenChange={setShowAiostreamsActions}>
+            <DialogContent className="sm:max-w-[420px] rounded-3xl border border-border/40 bg-card/95 p-0 backdrop-blur-2xl overflow-hidden max-sm:w-[calc(100vw-1rem)]">
+              <DialogTitle className="sr-only">AIOStreams Templates</DialogTitle>
+              <div className="p-8 pt-10 max-sm:px-5 max-sm:pt-6 text-left">
+                <DialogHeader className="space-y-6 items-start text-left">
+                  <div className="size-14 rounded-xl border border-primary/10 bg-primary/5 text-primary flex items-center justify-center max-sm:size-12"><Download className="size-7 max-sm:size-6" /></div>
+                  <div className="space-y-1">
+                    <DialogTitle className="text-2xl font-bold tracking-tight">{formatTemplateLabel('AIOStreams Template', aiostreamsTemplate ?? undefined)}</DialogTitle>
+                    <DialogDescription className="text-muted-foreground/60 text-xs font-medium">
+                      In AIOStreams, go to Save &amp; Install, then Import &gt; Import Template and paste the URL there.
+                    </DialogDescription>
+                  </div>
+                </DialogHeader>
+                <DialogFooter className="mt-6 flex-col gap-2.5">
+                  <Button className={cn(editorActionButtonClass, editorFooterPrimaryButtonClass)} onClick={handleCopyAiostreamsUrl} disabled={!aiostreamsTemplate?.rawUrl}><Copy className="size-4 mr-2" />Copy URL</Button>
+                </DialogFooter>
+              </div>
+            </DialogContent>
+          </Dialog>
+        )
       )}
 
       {showFormatterActions && (
