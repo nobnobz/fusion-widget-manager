@@ -752,7 +752,7 @@ export function MainEditor() {
                   disabled={isLoadingTemplates || (!aiometadataTemplate && !aiometadataCatalogsOnlyTemplate)}
                 >
                   {isLoadingTemplates ? <RotateCcw className="size-3 mr-1.5 animate-spin" /> : <Download className="size-3 mr-1.5" />}
-                  {formatTemplateLabel('AIOMeta', aiometadataTemplate ?? undefined)}
+                  {formatTemplateLabel('AIOMETADATA', aiometadataTemplate ?? undefined)}
                 </Button>
                 <Button
                   type="button"
