@@ -43,6 +43,19 @@ test('opens the Fusion setup guide with dynamic template and recommended AIOMeta
   await expect(templateButton).toBeVisible();
 });
 
+test('opens the AIOS UME formatter modal from the welcome screen', async ({ page }) => {
+  await gotoWelcomePage(page);
+
+  await expect(page.getByTestId('featured-formatter-card')).toBeVisible();
+
+  await page.getByTestId('formatter-resource-button').click();
+
+  const formatterDialog = page.locator('[role="dialog"]').filter({ hasText: 'AIOS UME Formatter' }).last();
+  await expect(formatterDialog).toBeVisible();
+  await expect(formatterDialog).toContainText('Copy URL');
+  await expect(formatterDialog).toContainText('open Formatter, tap the import icon');
+});
+
 test('imports a fixture from the welcome screen and opens export preview', async ({ page }) => {
   const fixture = getAuditFixture('small');
   const firstWidget = fixture.config.widgets[0]!;

@@ -66,6 +66,16 @@ type IncludedPackFocusTarget = {
   packSlug: string;
 };
 
+type FeaturedPackCard = {
+  section: string;
+  title: string;
+  previewImageUrl?: string;
+  focusTarget?: IncludedPackFocusTarget;
+};
+
+const AIOS_UME_FORMATTER_URL =
+  'https://github.com/nobnobz/Omni-Template-Bot-Bid-Raiser/blob/main/Other/fusion-ume-formatter-aios.json';
+
 function isHttpUrlInput(value: string): boolean {
   if (!value || /\s/.test(value)) {
     return false;
@@ -157,7 +167,7 @@ function buildRegexPreviewFilters(pack: RegexPatternPack | null | undefined): Re
   return [...mixedSelection, ...remaining].slice(0, 12);
 }
 
-const INCLUDED_PACK_CARDS = [
+const INCLUDED_PACK_CARDS: FeaturedPackCard[] = [
   {
     section: 'Animated Covers',
     title: 'Apple TV Preview Pack',
@@ -167,6 +177,11 @@ const INCLUDED_PACK_CARDS = [
     section: 'Regex Patterns',
     title: 'Fusion Filter Tags',
     focusTarget: { section: 'regex', packSlug: 'classic' } satisfies IncludedPackFocusTarget,
+  },
+  {
+    section: 'Formatter',
+    title: 'AIOS UME Formatter',
+    previewImageUrl: '/branding/aios-ume-formatter-preview.jpg',
   },
 ] as const;
 
@@ -205,6 +220,7 @@ export function MainEditor() {
   const [isDraggingFile, setIsDraggingFile] = useState(false);
   const [showAiometadataActions, setShowAiometadataActions] = useState(false);
   const [showAiostreamsActions, setShowAiostreamsActions] = useState(false);
+  const [showFormatterActions, setShowFormatterActions] = useState(false);
   const [showImportMergeDialog, setShowImportMergeDialog] = useState(false);
   const [initialImportJson, setInitialImportJson] = useState<string | undefined>(undefined);
   const [initialImportFileName, setInitialImportFileName] = useState<string | undefined>(undefined);
@@ -670,6 +686,32 @@ export function MainEditor() {
     }
   };
 
+  const handleOpenFormatterActions = useCallback(() => {
+    setShowFormatterActions(true);
+  }, []);
+
+  const handleCopyFormatterUrl = useCallback(async () => {
+    try {
+      await copyTextToClipboard(AIOS_UME_FORMATTER_URL);
+      setAlertDialog({
+        isOpen: true,
+        title: 'URL Copied',
+        message: 'The AIOS UME Formatter URL has been copied to your clipboard.',
+        variant: 'info',
+        confirmText: 'CONTINUE',
+      });
+      setShowFormatterActions(false);
+    } catch {
+      setAlertDialog({
+        isOpen: true,
+        title: 'Clipboard Failed',
+        message: 'The formatter URL could not be copied to your clipboard.',
+        variant: 'danger',
+        confirmText: 'CONTINUE',
+      });
+    }
+  }, []);
+
   const openSupportLink = () => {
     window.open('https://ko-fi.com/botbidraiser', '_blank', 'noopener,noreferrer');
   };
@@ -683,6 +725,15 @@ export function MainEditor() {
     }));
     setView('selection');
   }, [setView]);
+
+  const handleOpenFeaturedPack = useCallback((pack: FeaturedPackCard) => {
+    if (pack.focusTarget) {
+      handleOpenIncludedPack(pack.focusTarget);
+      return;
+    }
+
+    handleOpenFormatterActions();
+  }, [handleOpenIncludedPack, handleOpenFormatterActions]);
 
   const openManifestModal = useCallback(() => {
     setShowManifestModal(true);
@@ -783,6 +834,16 @@ export function MainEditor() {
                 >
                   {isLoadingTemplates ? <RotateCcw className="size-3 mr-1.5 animate-spin" /> : <Download className="size-3 mr-1.5" />}
                   {formatTemplateLabel('AIOStreams', aiostreamsTemplate ?? undefined)}
+                </Button>
+                <Button
+                  type="button"
+                  data-testid="formatter-resource-button"
+                  variant="ghost"
+                  className={cn(editorActionButtonClass, "col-span-2 sm:col-span-1 h-10 sm:h-[2.2rem] border border-border/65 bg-background/65 hover:border-primary/35 hover:bg-primary/[0.04] text-[9px] px-2 sm:px-3 text-muted-foreground/68 hover:text-primary whitespace-nowrap shrink-0 justify-center")}
+                  onClick={handleOpenFormatterActions}
+                >
+                  <Download className="size-3 mr-1.5" />
+                  AIOS UME Formatter
                 </Button>
                 <Button
                   type="button"
@@ -941,19 +1002,24 @@ export function MainEditor() {
                     const animatedPreviewUrl = includedAnimatedPack?.previewImageUrl
                       ?? 'https://i.postimg.cc/L5jnk6gT/20s.png';
                     const regexPreviewFilters = buildRegexPreviewFilters(includedRegexPack);
+                    const isFormatterCard = Boolean(pack.previewImageUrl);
                     return (
                       <article
                         key={`${pack.section}-${pack.title}`}
                         role="button"
+                        data-testid={isFormatterCard ? 'featured-formatter-card' : undefined}
                         tabIndex={0}
-                        onClick={() => handleOpenIncludedPack(pack.focusTarget)}
+                        onClick={() => handleOpenFeaturedPack(pack)}
                         onKeyDown={(event) => {
                           if (event.key === 'Enter' || event.key === ' ') {
                             event.preventDefault();
-                            handleOpenIncludedPack(pack.focusTarget);
+                            handleOpenFeaturedPack(pack);
                           }
                         }}
-                        className="group flex h-full cursor-pointer flex-col rounded-2xl border border-zinc-200/70 bg-white/70 p-3.5 text-left shadow-sm shadow-black/[0.02] transition-all hover:border-primary/20 hover:bg-white/85 hover:shadow-md hover:shadow-black/[0.03] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 max-sm:p-3 dark:border-white/10 dark:bg-zinc-950/20 dark:hover:bg-zinc-950/30"
+                        className={cn(
+                          "group flex h-full cursor-pointer flex-col rounded-2xl border border-zinc-200/70 bg-white/70 p-3.5 text-left shadow-sm shadow-black/[0.02] transition-all hover:border-primary/20 hover:bg-white/85 hover:shadow-md hover:shadow-black/[0.03] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 max-sm:p-3 dark:border-white/10 dark:bg-zinc-950/20 dark:hover:bg-zinc-950/30",
+                          isFormatterCard && "sm:col-span-2"
+                        )}
                       >
                         <div className="flex-1 space-y-2 max-sm:space-y-1.5">
                           <p className="text-[10px] font-black uppercase tracking-[0.16em] text-primary/75">
@@ -981,7 +1047,7 @@ export function MainEditor() {
                                 </div>
                               </div>
                             </div>
-                          ) : (
+                          ) : pack.section === 'Regex Patterns' ? (
                             <div className="mt-2 overflow-hidden rounded-2xl border border-border/50 bg-background/80 p-2 sm:p-2.5">
                               <div className="px-1">
                                 <p className="text-[10px] font-black uppercase tracking-[0.16em] text-primary/75">
@@ -1019,6 +1085,15 @@ export function MainEditor() {
                                   );
                                 })}
                               </div>
+                            </div>
+                          ) : (
+                            <div className="mt-2 overflow-hidden rounded-2xl border border-border/50 bg-black/90 sm:mx-1 max-sm:mt-1.5 max-sm:mx-0">
+                              <div
+                                className="relative aspect-[16/9] bg-black bg-cover bg-center"
+                                style={{
+                                  backgroundImage: `url('${pack.previewImageUrl}')`,
+                                }}
+                              />
                             </div>
                           )}
                         </div>
@@ -1248,6 +1323,33 @@ export function MainEditor() {
               </DialogHeader>
               <DialogFooter className="mt-6 flex-col gap-2.5">
                 <Button className={cn(editorActionButtonClass, editorFooterPrimaryButtonClass)} onClick={handleCopyAiostreamsUrl} disabled={!aiostreamsTemplate?.rawUrl}><Copy className="size-4 mr-2" />Copy URL</Button>
+              </DialogFooter>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {showFormatterActions && (
+        <Dialog open={showFormatterActions} onOpenChange={setShowFormatterActions}>
+          <DialogContent className="sm:max-w-[420px] rounded-3xl border border-border/40 bg-card/95 p-0 backdrop-blur-2xl overflow-hidden max-sm:w-[calc(100vw-1rem)]">
+            <DialogTitle className="sr-only">AIOS UME Formatter</DialogTitle>
+            <div className="p-8 pt-10 max-sm:px-5 max-sm:pt-6 text-left">
+              <DialogHeader className="space-y-6 items-start text-left">
+                <div className="size-14 rounded-xl border border-primary/10 bg-primary/5 text-primary flex items-center justify-center max-sm:size-12">
+                  <Download className="size-7 max-sm:size-6" />
+                </div>
+                <div className="space-y-1">
+                  <DialogTitle className="text-2xl font-bold tracking-tight">AIOS UME Formatter</DialogTitle>
+                  <DialogDescription className="text-muted-foreground/60 text-xs font-medium">
+                    In AIOStreams, open Formatter, tap the import icon, and paste the URL there.
+                  </DialogDescription>
+                </div>
+              </DialogHeader>
+              <DialogFooter className="mt-6 flex-col gap-2.5">
+                <Button className={cn(editorActionButtonClass, editorFooterPrimaryButtonClass)} onClick={handleCopyFormatterUrl}>
+                  <Copy className="size-4 mr-2" />
+                  Copy URL
+                </Button>
               </DialogFooter>
             </div>
           </DialogContent>
