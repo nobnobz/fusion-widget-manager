@@ -147,6 +147,26 @@ interface PreparedAnimatedWidgetInstall {
 const FUSION_SYNC_REQUIRED_MESSAGE =
   'Sync your AIOMetadata manifest before Fusion export so the AIOMetadata URL can be embedded in your Fusion setup.';
 const FORMATTER_PREVIEW_ASPECT_RATIO = `${FormatterPreviewImage.width} / ${FormatterPreviewImage.height}`;
+const FORMATTER_STATUS_GUIDE = [
+  ['⤓', 'Library'],
+  ['⧉', 'Usenet'],
+  ['⌁', 'Cached'],
+  ['∅', 'Uncached'],
+] as const;
+const FORMATTER_SCORE_GUIDE = [
+  ['♛', '5★'],
+  ['⭑', '4★'],
+  ['✦', '3★'],
+  ['△', '2★'],
+  ['⊘', '1★ / 0★'],
+] as const;
+const FORMATTER_NOTE_GUIDE = [
+  'Streaming service',
+  'Extended edition',
+  "Director's cut",
+  'Theatrical cut',
+  'Anniversary edition',
+] as const;
 
 const REGEX_PREVIEW_PAGE_SIZE = 9;
 
@@ -3830,6 +3850,62 @@ function WidgetSelectionGridComponent({
               className="object-cover"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/5 to-black/20" />
+          </div>
+        </div>
+
+        <div className="mt-3 rounded-2xl border border-border/55 bg-background/70 p-3.5 shadow-sm shadow-black/[0.02] max-sm:p-3">
+          <div className="flex items-center gap-2">
+            <Info className="size-3.5 shrink-0 text-primary/75" />
+            <p className="text-[10px] font-black uppercase tracking-[0.16em] text-primary/80 max-sm:text-[9px]">
+              What the formatter shows
+            </p>
+          </div>
+
+          <div className="mt-3 grid gap-2 text-[11px] leading-relaxed text-foreground/80 sm:grid-cols-2 max-sm:text-[10.5px]">
+            <div className="rounded-xl border border-border/45 bg-muted/25 p-2.5">
+              <p className="font-black uppercase tracking-[0.11em] text-foreground/70">Status icons</p>
+              <div className="mt-1.5 flex flex-wrap gap-1.5">
+                {FORMATTER_STATUS_GUIDE.map(([icon, label]) => (
+                  <span key={icon} className="inline-flex items-center gap-1 rounded-lg border border-border/45 bg-background/70 px-2 py-1 font-semibold">
+                    <span className="font-black text-foreground">{icon}</span>
+                    {label}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-border/45 bg-muted/25 p-2.5">
+              <p className="font-black uppercase tracking-[0.11em] text-foreground/70">Metadata line</p>
+              <p className="mt-1.5">
+                Shows language when available, plus runtime, smart file size (for example <strong>4.7 GB</strong>) and bitrate.
+              </p>
+            </div>
+
+            <div className="rounded-xl border border-border/45 bg-muted/25 p-2.5">
+              <p className="font-black uppercase tracking-[0.11em] text-foreground/70">Addon score</p>
+              <div className="mt-1.5 flex flex-wrap gap-1.5">
+                {FORMATTER_SCORE_GUIDE.map(([badge, score]) => (
+                  <span key={badge} className="inline-flex items-center gap-1 rounded-lg border border-border/45 bg-background/70 px-2 py-1 font-semibold">
+                    <span className="font-black text-foreground">{badge}</span>
+                    {score}
+                  </span>
+                ))}
+              </div>
+              <p className="mt-1.5">
+                Health-checked UsenetStreamer NZBs show a checkmark (<strong>✓</strong>) next to the indexer.
+              </p>
+            </div>
+
+            <div className="rounded-xl border border-border/45 bg-muted/25 p-2.5">
+              <p className="font-black uppercase tracking-[0.11em] text-foreground/70">Notes and cuts</p>
+              <div className="mt-1.5 flex flex-wrap gap-1.5">
+                {FORMATTER_NOTE_GUIDE.map((note) => (
+                  <span key={note} className="rounded-lg border border-border/45 bg-background/70 px-2 py-1 font-semibold">
+                    {note}
+                  </span>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
 
