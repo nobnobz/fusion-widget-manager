@@ -85,6 +85,7 @@ type FeaturedPackCard = {
 
 const AIOS_UME_FORMATTER_URL =
   'https://raw.githubusercontent.com/nobnobz/Omni-Template-Bot-Bid-Raiser/refs/heads/main/Other/fusion-ume-formatter-aios.json';
+const FORMATTER_PREVIEW_ASPECT_RATIO = `${FormatterPreviewImage.width} / ${FormatterPreviewImage.height}`;
 
 function isHttpUrlInput(value: string): boolean {
   if (!value || /\s/.test(value)) {
@@ -1081,14 +1082,17 @@ export function MainEditor() {
                               </div>
                             </div>
                           ) : (
-                            <div className="mt-2 mx-auto w-full max-w-[24rem] overflow-hidden rounded-2xl border border-border/50 bg-black/90 max-sm:mt-1.5 max-sm:max-w-none">
-                              <div className="relative aspect-[16/10.35] bg-black max-sm:aspect-[16/9.05]">
+                            <div className="mt-2 mx-auto w-full max-w-[24rem] overflow-hidden rounded-2xl border border-border/50 max-sm:mt-1.5 max-sm:max-w-none">
+                              <div
+                                className="relative"
+                                style={{ aspectRatio: FORMATTER_PREVIEW_ASPECT_RATIO }}
+                              >
                                 <Image
                                   src={pack.previewImageUrl ?? ''}
                                   alt="AIOS UME Formatter preview"
                                   fill
                                   sizes="(min-width: 640px) 24rem, 100vw"
-                                  className="object-cover sm:object-contain"
+                                  className="object-cover"
                                 />
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/5 to-black/20" />
                               </div>

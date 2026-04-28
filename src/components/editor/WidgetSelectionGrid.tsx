@@ -146,6 +146,7 @@ interface PreparedAnimatedWidgetInstall {
 
 const FUSION_SYNC_REQUIRED_MESSAGE =
   'Sync your AIOMetadata manifest before Fusion export so the AIOMetadata URL can be embedded in your Fusion setup.';
+const FORMATTER_PREVIEW_ASPECT_RATIO = `${FormatterPreviewImage.width} / ${FormatterPreviewImage.height}`;
 
 const REGEX_PREVIEW_PAGE_SIZE = 9;
 
@@ -3815,14 +3816,17 @@ function WidgetSelectionGridComponent({
           </p>
         </div>
 
-        <div className="mt-4 mx-auto w-full max-w-[24rem] overflow-hidden rounded-2xl border border-border/50 bg-black/90 max-sm:mt-3 max-sm:max-w-none">
-          <div className="relative aspect-[16/10.35] bg-black max-sm:aspect-[16/9.05]">
+        <div className="mt-4 mx-auto w-full max-w-[24rem] overflow-hidden rounded-2xl border border-border/50 max-sm:mt-3 max-sm:max-w-none">
+          <div
+            className="relative"
+            style={{ aspectRatio: FORMATTER_PREVIEW_ASPECT_RATIO }}
+          >
             <Image
               src={FormatterPreviewImage}
               alt="AIOS UME Formatter preview"
               fill
               sizes="(max-width: 640px) 100vw, 33vw"
-              className="object-cover sm:object-contain"
+              className="object-cover"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/5 to-black/20" />
           </div>
