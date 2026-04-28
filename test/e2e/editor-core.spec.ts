@@ -29,7 +29,7 @@ async function clickManifestSettings(page: Page) {
 }
 
 async function syncManifestFromSetupModal(page: Page, manifestUrl: string) {
-  await page.getByRole('button', { name: /Sync Manifest|Edit/i }).click();
+  await clickManifestSettings(page);
   const manifestUrlField = page.getByTestId('manifest-url-input');
 
   await expect(manifestUrlField).toBeVisible();
@@ -196,7 +196,7 @@ test('keeps the manifest url field in view on mobile after focus', async ({ page
 
   await page.getByTestId('welcome-load-template').click();
   if (!(await page.getByText('AIOMetadata synced').isVisible())) {
-    await page.getByRole('button', { name: /Sync Manifest|Edit/i }).click();
+    await clickManifestSettings(page);
     const manifestUrlField = page.getByTestId('manifest-url-input');
 
     await expect(manifestUrlField).toBeVisible();

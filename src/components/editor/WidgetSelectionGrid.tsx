@@ -3786,6 +3786,7 @@ function WidgetSelectionGridComponent({
       <section
         data-testid="manager-formatter-section"
         role="button"
+        aria-label="Open UME formatter import dialog"
         tabIndex={0}
         onClick={handleOpenFormatter}
         onKeyDown={(event) => {
