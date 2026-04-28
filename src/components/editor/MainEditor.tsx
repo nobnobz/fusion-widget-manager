@@ -85,7 +85,7 @@ type FeaturedPackCard = {
 
 const AIOS_UME_FORMATTER_URL =
   'https://raw.githubusercontent.com/nobnobz/Omni-Template-Bot-Bid-Raiser/refs/heads/main/Other/fusion-ume-formatter-aios.json';
-const FORMATTER_PREVIEW_ASPECT_RATIO = `${FormatterPreviewImage.width} / ${FormatterPreviewImage.height}`;
+const FEATURED_PACK_PREVIEW_ASPECT_RATIO = '16 / 9';
 
 function isHttpUrlInput(value: string): boolean {
   if (!value || /\s/.test(value)) {
@@ -1026,8 +1026,9 @@ export function MainEditor() {
                           {pack.section === 'Animated Covers' ? (
                             <div className="mt-2 mx-0.5 overflow-hidden rounded-2xl border border-border/50 bg-black/90 sm:mx-1 max-sm:mt-1.5 max-sm:mx-0">
                               <div
-                                className="relative aspect-[16/10.35] bg-no-repeat bg-center max-sm:aspect-[16/9.05]"
+                                className="relative bg-no-repeat bg-center"
                                 style={{
+                                  aspectRatio: FEATURED_PACK_PREVIEW_ASPECT_RATIO,
                                   backgroundImage: `url('${animatedPreviewUrl}')`,
                                   backgroundColor: '#c86a17',
                                   backgroundSize: '108% auto',
@@ -1043,49 +1044,53 @@ export function MainEditor() {
                               </div>
                             </div>
                           ) : pack.section === 'Regex Patterns' ? (
-                            <div className="mt-2 overflow-hidden rounded-2xl border border-border/50 bg-background/80 p-2 sm:p-2.5">
-                              <div className="px-1">
-                                <p className="text-[10px] font-black uppercase tracking-[0.16em] text-primary/75">
-                                  {includedRegexPack?.title || 'Classic'}
-                                </p>
-                              </div>
-                              <div className="mt-1.5 grid grid-cols-4 gap-[0.375rem] sm:gap-1.25">
-                                {Array.from({ length: 12 }, (_, index) => regexPreviewFilters[index] ?? null).map((previewFilter, index) => {
-                                  const hasFilter = Boolean(previewFilter);
-                                  const label = hasFilter ? previewFilter.name : ['#1', '#2', '#3', '★', '@1', '@2', '@3', '@4', '@5', '@6', '@7', '@8'][index] ?? '';
-                                  return (
-                                    <div
-                                      key={hasFilter ? previewFilter.id : `fallback-${index}`}
-                                      className="inline-flex h-7 w-full items-center justify-center rounded-[0.6rem] border px-1 py-0.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] sm:h-9 sm:px-2"
-                                      style={previewFilter ? buildIncludedRegexChipStyle(previewFilter) : {
-                                        backgroundColor: index < 3 ? 'rgba(34,197,94,0.10)' : 'rgba(59,130,246,0.10)',
-                                        borderColor: index < 3 ? 'rgba(34,197,94,0.30)' : 'rgba(59,130,246,0.30)',
-                                        color: index < 3 ? '#16A34A' : '#2563EB',
-                                      }}
-                                    >
-                                      {previewFilter && previewFilter.imageURL ? (
-                                          <Image
-                                            src={previewFilter.imageURL}
-                                            alt={`${previewFilter.name} icon`}
-                                            width={18}
-                                            height={18}
-                                          className="max-h-[0.68rem] w-auto shrink-0 object-contain sm:max-h-[0.82rem]"
-                                        />
-                                      ) : (
-                                        <span className="text-[7px] font-black uppercase tracking-[0.11em] sm:text-[8px]">
-                                          {label}
-                                        </span>
-                                      )}
-                                    </div>
-                                  );
-                                })}
+                            <div className="mt-2 overflow-hidden rounded-2xl border border-border/50 bg-background/80">
+                              <div className="relative" style={{ aspectRatio: FEATURED_PACK_PREVIEW_ASPECT_RATIO }}>
+                                <div className="absolute inset-0 p-2 sm:p-2.5">
+                                  <div className="px-1">
+                                    <p className="text-[10px] font-black uppercase tracking-[0.16em] text-primary/75">
+                                      {includedRegexPack?.title || 'Classic'}
+                                    </p>
+                                  </div>
+                                  <div className="mt-1.5 grid grid-cols-4 gap-[0.375rem] sm:gap-1.25">
+                                    {Array.from({ length: 12 }, (_, index) => regexPreviewFilters[index] ?? null).map((previewFilter, index) => {
+                                      const hasFilter = Boolean(previewFilter);
+                                      const label = hasFilter ? previewFilter.name : ['#1', '#2', '#3', '★', '@1', '@2', '@3', '@4', '@5', '@6', '@7', '@8'][index] ?? '';
+                                      return (
+                                        <div
+                                          key={hasFilter ? previewFilter.id : `fallback-${index}`}
+                                          className="inline-flex h-7 w-full items-center justify-center rounded-[0.6rem] border px-1 py-0.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] sm:h-9 sm:px-2"
+                                          style={previewFilter ? buildIncludedRegexChipStyle(previewFilter) : {
+                                            backgroundColor: index < 3 ? 'rgba(34,197,94,0.10)' : 'rgba(59,130,246,0.10)',
+                                            borderColor: index < 3 ? 'rgba(34,197,94,0.30)' : 'rgba(59,130,246,0.30)',
+                                            color: index < 3 ? '#16A34A' : '#2563EB',
+                                          }}
+                                        >
+                                          {previewFilter && previewFilter.imageURL ? (
+                                              <Image
+                                                src={previewFilter.imageURL}
+                                                alt={`${previewFilter.name} icon`}
+                                                width={18}
+                                                height={18}
+                                              className="max-h-[0.68rem] w-auto shrink-0 object-contain sm:max-h-[0.82rem]"
+                                            />
+                                          ) : (
+                                            <span className="text-[7px] font-black uppercase tracking-[0.11em] sm:text-[8px]">
+                                              {label}
+                                            </span>
+                                          )}
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
                               </div>
                             </div>
                           ) : (
                             <div className="mt-2 mx-auto w-full max-w-[24rem] overflow-hidden rounded-2xl border border-border/50 max-sm:mt-1.5 max-sm:max-w-none">
                               <div
                                 className="relative"
-                                style={{ aspectRatio: FORMATTER_PREVIEW_ASPECT_RATIO }}
+                                style={{ aspectRatio: FEATURED_PACK_PREVIEW_ASPECT_RATIO }}
                               >
                                 <Image
                                   src={pack.previewImageUrl ?? ''}
