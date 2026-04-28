@@ -147,26 +147,6 @@ interface PreparedAnimatedWidgetInstall {
 const FUSION_SYNC_REQUIRED_MESSAGE =
   'Sync your AIOMetadata manifest before Fusion export so the AIOMetadata URL can be embedded in your Fusion setup.';
 const FORMATTER_PREVIEW_ASPECT_RATIO = `${FormatterPreviewImage.width} / ${FormatterPreviewImage.height}`;
-const FORMATTER_STATUS_ICONS = [
-  { icon: '⤓', label: 'In your Library' },
-  { icon: '⧉', label: 'Usenet stream' },
-  { icon: '⌁', label: 'Cached (instantly playable)' },
-  { icon: '∅', label: 'Uncached (needs download)' },
-] as const;
-const FORMATTER_SCORE_BADGES = [
-  { badge: '♛', score: '5★' },
-  { badge: '⭑', score: '4★' },
-  { badge: '✦', score: '3★' },
-  { badge: '△', score: '2★' },
-  { badge: '⊘', score: '1★ / 0★' },
-] as const;
-const FORMATTER_NOTES_EXAMPLES = [
-  'Streaming services',
-  'Extended editions',
-  "Director's cut",
-  'Theatrical cut',
-  'Anniversary edition',
-] as const;
 
 const REGEX_PREVIEW_PAGE_SIZE = 9;
 
@@ -3834,71 +3814,6 @@ function WidgetSelectionGridComponent({
           <p className="mt-2 text-[12px] leading-relaxed text-foreground/85 max-sm:text-[11.5px]">
             In Fusion, go to Settings &gt; Filters &gt; Source Card Fields and disable <strong>Show Title</strong> so you do not see the filename.
           </p>
-        </div>
-
-        <div className="mt-3 rounded-2xl border border-border/55 bg-background/70 p-4 shadow-sm shadow-black/[0.02] max-sm:p-3.5">
-          <div className="flex items-center gap-2">
-            <Info className="size-3.5 text-primary/75" />
-            <p className="text-[10px] font-black uppercase tracking-[0.16em] text-primary/80 max-sm:text-[9px]">
-              What the formatter shows
-            </p>
-          </div>
-          <div className="mt-3 grid gap-2 sm:grid-cols-2">
-            <div className="rounded-xl border border-border/50 bg-background/80 p-3">
-              <p className="text-[10px] font-black uppercase tracking-[0.12em] text-foreground/75">1) Title line + status icon</p>
-              <div className="mt-1.5 space-y-1">
-                {FORMATTER_STATUS_ICONS.map((item) => (
-                  <p key={item.icon} className="text-[11px] leading-relaxed text-foreground/80 max-sm:text-[10.5px]">
-                    <span className="font-black text-foreground">{item.icon}</span> {item.label}
-                  </p>
-                ))}
-              </div>
-            </div>
-            <div className="rounded-xl border border-border/50 bg-background/80 p-3">
-              <p className="text-[10px] font-black uppercase tracking-[0.12em] text-foreground/75">2) Language</p>
-              <p className="mt-1.5 text-[11px] leading-relaxed text-foreground/80 max-sm:text-[10.5px]">
-                Language metadata is shown whenever it is available.
-              </p>
-              <p className="mt-2 text-[10px] font-black uppercase tracking-[0.12em] text-foreground/75">3) Runtime</p>
-              <p className="mt-1 text-[11px] leading-relaxed text-foreground/80 max-sm:text-[10.5px]">
-                Includes movie runtime or episode runtime for series (when available).
-              </p>
-            </div>
-            <div className="rounded-xl border border-border/50 bg-background/80 p-3">
-              <p className="text-[10px] font-black uppercase tracking-[0.12em] text-foreground/75">4) Size</p>
-              <p className="mt-1.5 text-[11px] leading-relaxed text-foreground/80 max-sm:text-[10.5px]">
-                Shows file size as smart bytes (for example <strong>4.7 GB</strong>) and bitrate when available.
-              </p>
-              <p className="mt-2 text-[10px] font-black uppercase tracking-[0.12em] text-foreground/75">5) Addons + score badge</p>
-              <div className="mt-1.5 flex flex-wrap gap-1.5">
-                {FORMATTER_SCORE_BADGES.map((item) => (
-                  <span
-                    key={item.badge}
-                    className="inline-flex items-center gap-1 rounded-md border border-border/55 bg-muted/40 px-1.5 py-1 text-[10px] font-bold text-foreground/80"
-                  >
-                    <span className="font-black text-foreground">{item.badge}</span>
-                    <span>{item.score}</span>
-                  </span>
-                ))}
-              </div>
-              <p className="mt-2 text-[11px] leading-relaxed text-foreground/80 max-sm:text-[10.5px]">
-                UsenetStreamer health-checked NZBs show a checkmark (<strong>✓</strong>) next to the indexer name.
-              </p>
-            </div>
-            <div className="rounded-xl border border-border/50 bg-background/80 p-3">
-              <p className="text-[10px] font-black uppercase tracking-[0.12em] text-foreground/75">6) Notes / editions / cuts</p>
-              <div className="mt-1.5 flex flex-wrap gap-1.5">
-                {FORMATTER_NOTES_EXAMPLES.map((note) => (
-                  <span
-                    key={note}
-                    className="inline-flex rounded-md border border-border/55 bg-muted/40 px-1.5 py-1 text-[10px] font-semibold text-foreground/78"
-                  >
-                    {note}
-                  </span>
-                ))}
-              </div>
-            </div>
-          </div>
         </div>
 
         <div className="mt-4 mx-auto w-full max-w-[24rem] overflow-hidden rounded-2xl border border-border/50 max-sm:mt-3 max-sm:max-w-none">
