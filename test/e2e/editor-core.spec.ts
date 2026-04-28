@@ -204,12 +204,9 @@ test('keeps the manifest url field in view on mobile after focus', async ({ page
 
     const scrollContainer = page.getByTestId('manifest-modal-scroll');
     await expect(scrollContainer).toBeVisible();
-
-    await expect.poll(async () => {
-      return scrollContainer.evaluate((element) => (element as HTMLElement).scrollTop);
-    }).toBeGreaterThan(0);
-
+    await expect(manifestUrlField).toBeFocused();
     await expect(manifestUrlField).toBeInViewport();
+    await expect(page.getByTestId('manifest-sync-submit')).toBeInViewport();
   }
 });
 
