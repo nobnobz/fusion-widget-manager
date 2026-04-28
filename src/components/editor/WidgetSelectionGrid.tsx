@@ -166,6 +166,7 @@ const FORMATTER_NOTE_GUIDE = [
   "Director's cut",
   'Theatrical cut',
   'Anniversary edition',
+  'Many more...',
 ] as const;
 
 const REGEX_PREVIEW_PAGE_SIZE = 9;
@@ -3875,14 +3876,14 @@ function WidgetSelectionGridComponent({
             </div>
 
             <div className="rounded-xl border border-border/45 bg-muted/25 p-2.5">
-              <p className="font-black uppercase tracking-[0.11em] text-foreground/70">Metadata line</p>
+              <p className="font-black uppercase tracking-[0.11em] text-foreground/70">Metadata</p>
               <p className="mt-1.5">
-                Shows language when available, plus runtime, smart file size (for example <strong>4.7 GB</strong>) and bitrate.
+                Shows language when available, plus runtime and smart file size.
               </p>
             </div>
 
             <div className="rounded-xl border border-border/45 bg-muted/25 p-2.5">
-              <p className="font-black uppercase tracking-[0.11em] text-foreground/70">Addon score</p>
+              <p className="font-black uppercase tracking-[0.11em] text-foreground/70">Stream Score</p>
               <div className="mt-1.5 flex flex-wrap gap-1.5">
                 {FORMATTER_SCORE_GUIDE.map(([badge, score]) => (
                   <span key={badge} className="inline-flex items-center gap-1 rounded-lg border border-border/45 bg-background/70 px-2 py-1 font-semibold">
