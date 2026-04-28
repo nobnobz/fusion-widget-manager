@@ -173,7 +173,7 @@ const REGEX_PREVIEW_PAGE_SIZE = 9;
 
 const UME_SORTING_EXPLANATION_SECTIONS = [
   {
-    groups: ['Streaming Services', 'Studios', 'Decades', 'Genres', 'Directors', 'Actors', 'IMDb Top Shows', 'Oscars 2026', 'Trending'],
+    groups: ['Streaming Services', 'Studios', 'Decades', 'Genres', 'Directors', 'Actors', 'Oscars 2026', 'Trending'],
     summary: 'Popularity',
     refresh: 'Refreshes every 12 hours',
   },
@@ -184,7 +184,7 @@ const UME_SORTING_EXPLANATION_SECTIONS = [
     refresh: 'Refreshes every 12 hours',
   },
   {
-    groups: ['IMDb Top Movies'],
+    groups: ['IMDb Top Movies', 'IMDb Top Shows'],
     summary: 'Random order',
     refresh: 'Refreshes every 12 hours',
   },
@@ -197,7 +197,7 @@ const UME_SORTING_EXPLANATION_SECTIONS = [
   {
     groups: ['Trakt Watchlist'],
     summary: 'Added date',
-    detail: 'Oldest first',
+    detail: 'Newest first',
     refresh: 'Refreshes every 30 minutes',
   },
 ];

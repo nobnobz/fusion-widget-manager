@@ -487,7 +487,7 @@ export const DEFAULT_AIOMETADATA_EXPORT_TEMPLATE: AIOMetadataExportTemplateDefin
         names: ['IMDb Top Shows'],
       },
       values: {
-        sort: 'tmdbpopular',
+        sort: 'random',
         order: 'asc',
         cacheTTL: 43200,
       },
@@ -600,7 +600,7 @@ export const DEFAULT_AIOMETADATA_EXPORT_TEMPLATE: AIOMetadataExportTemplateDefin
       },
       values: {
         sort: 'added',
-        sortDirection: 'asc',
+        sortDirection: 'desc',
         cacheTTL: 1800,
       },
     },
