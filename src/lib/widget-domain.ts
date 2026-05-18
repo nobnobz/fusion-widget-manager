@@ -161,7 +161,7 @@ export function findCatalog(catalogs: AIOMetadataCatalog[], id: string): AIOMeta
 
 export function resolveFusionCatalogType(catalogId: string, currentType?: string): string {
   const lowId = catalogId.toLowerCase();
-  const normalizedCurrentType = String(currentType || '').trim().toLowerCase();
+  const normalizedCurrentType = normalizeFusionCatalogType(currentType);
   if (lowId.startsWith('all::trakt.list.')) {
     return 'series';
   }
@@ -179,7 +179,16 @@ export function resolveFusionCatalogType(catalogId: string, currentType?: string
   }
   if (lowId.startsWith('series::')) return 'series';
   if (lowId.startsWith('movie::')) return 'movie';
+  if (lowId.startsWith('shows::')) return 'series';
+  if (lowId.startsWith('movies::')) return 'movie';
   return normalizedCurrentType || 'movie';
+}
+
+function normalizeFusionCatalogType(value: unknown): string {
+  const normalized = String(value || '').trim().toLowerCase();
+  if (normalized === 'movies') return 'movie';
+  if (normalized === 'shows' || normalized === 'show' || normalized === 'tv') return 'series';
+  return normalized;
 }
 
 export function isAIOMetadataDataSource(
@@ -207,7 +216,11 @@ export function getPrimaryDataSource(item: Pick<CollectionItem, 'dataSources'>):
 function normalizeCatalogId(catalogId: string, catalogType: string): string {
   const trimmed = catalogId.trim();
   if (!trimmed) return '';
-  if (trimmed.includes('::')) return trimmed;
+  if (trimmed.includes('::')) {
+    const parts = trimmed.split('::');
+    const prefix = normalizeFusionCatalogType(parts[0]) || parts[0].toLowerCase();
+    return `${prefix}::${parts.slice(1).join('::')}`;
+  }
   const resolvedType = resolveFusionCatalogType(trimmed, catalogType).toLowerCase();
   return `${resolvedType}::${trimmed}`;
 }

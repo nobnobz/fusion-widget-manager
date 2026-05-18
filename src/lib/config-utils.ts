@@ -44,6 +44,13 @@ export interface FusionExportSanitizationResult {
   emptiedItems: number;
 }
 
+function normalizeFusionCatalogIdPrefix(prefix: string): string {
+  const normalized = prefix.trim().toLowerCase();
+  if (normalized === 'movies') return 'movie';
+  if (normalized === 'shows' || normalized === 'show' || normalized === 'tv') return 'series';
+  return normalized;
+}
+
 export function processWidgetWithManifest(
   widget: unknown,
   manifestUrl: string | null = null,
@@ -115,7 +122,7 @@ function normalizeFusionDataSourcePayload(
   let normalizedCatalogId = payload.catalogId;
   if (normalizedCatalogId.includes('::')) {
     const parts = normalizedCatalogId.split('::');
-    normalizedCatalogId = `${parts[0].toLowerCase()}::${parts.slice(1).join('::')}`;
+    normalizedCatalogId = `${normalizeFusionCatalogIdPrefix(parts[0])}::${parts.slice(1).join('::')}`;
   } else {
     normalizedCatalogId = `${type}::${normalizedCatalogId}`;
   }
@@ -291,7 +298,9 @@ export function collectUsedAiometadataCatalogKeys(config: FusionWidgetsConfig): 
     }
 
     const resolvedType = resolveFusionCatalogType(catalogId, dataSource.payload.catalogType);
-    const normalizedCatalogId = catalogId.includes('::') ? catalogId : `${resolvedType}::${catalogId}`;
+    const normalizedCatalogId = catalogId.includes('::')
+      ? `${normalizeFusionCatalogIdPrefix(catalogId.split('::')[0] || resolvedType)}::${catalogId.split('::').slice(1).join('::')}`
+      : `${resolvedType}::${catalogId}`;
     catalogKeys.add(normalizedCatalogId);
   };
 

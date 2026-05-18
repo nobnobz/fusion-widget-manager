@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.2] - 2026-05-18
+### Changed
+- **Versioning**: Updated the UI release badge and package version to `v0.6.2`.
+
+### Fixed
+- **Omni Import Compatibility**: Fixed imported AIOMetadata `Movies` and `Shows` catalog rows so Classic Row widgets export with Fusion-compatible `movie::` and `series::` catalog IDs.
+
 ## [0.6.1] - 2026-04-23
 ### Changed
 - **Versioning**: Updated the UI release badge and package version to `v0.6.1`.

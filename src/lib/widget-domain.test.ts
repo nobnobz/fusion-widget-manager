@@ -141,6 +141,73 @@ test('resolveFusionCatalogType forces AIOMetadata trakt lists to series', () => 
   assert.equal(resolveFusionCatalogType('all::mdblist.29034789', 'movie'), 'movie');
 });
 
+test('parseFusionConfig canonicalizes AIOMetadata Movies and Shows catalog types', () => {
+  const parsed = parseFusionConfig({
+    exportType: 'fusionWidgets',
+    exportVersion: 1,
+    widgets: [
+      {
+        id: 'catalog.movies',
+        title: 'Trending Movies',
+        type: 'row.classic',
+        dataSource: {
+          kind: 'addonCatalog',
+          payload: {
+            addonId: 'https://example.com/manifest.json',
+            catalogId: 'movies::custom.cloud_fortheweak_stremthru_list.Movies.st_list_mdblist_87667',
+            type: 'Movies',
+          },
+        },
+      },
+      {
+        id: 'catalog.shows',
+        title: 'Trending Shows',
+        type: 'row.classic',
+        dataSource: {
+          kind: 'addonCatalog',
+          payload: {
+            addonId: 'https://example.com/manifest.json',
+            catalogId: 'shows::custom.cloud_fortheweak_stremthru_list.Shows.st_list_mdblist_88434',
+            type: 'Shows',
+          },
+        },
+      },
+    ],
+  });
+
+  const movieWidget = parsed.widgets[0];
+  const seriesWidget = parsed.widgets[1];
+  assert.equal(movieWidget?.type, 'row.classic');
+  assert.equal(seriesWidget?.type, 'row.classic');
+  if (movieWidget?.type !== 'row.classic' || seriesWidget?.type !== 'row.classic') {
+    throw new Error('Expected classic row widgets.');
+  }
+
+  if (!isAIOMetadataDataSource(movieWidget.dataSource) || !isAIOMetadataDataSource(seriesWidget.dataSource)) {
+    throw new Error('Expected AIOMetadata data sources.');
+  }
+  assert.equal(movieWidget.dataSource.payload.catalogId, 'movie::custom.cloud_fortheweak_stremthru_list.Movies.st_list_mdblist_87667');
+  assert.equal(movieWidget.dataSource.payload.catalogType, 'movie');
+  assert.equal(seriesWidget.dataSource.payload.catalogId, 'series::custom.cloud_fortheweak_stremthru_list.Shows.st_list_mdblist_88434');
+  assert.equal(seriesWidget.dataSource.payload.catalogType, 'series');
+
+  const exported = exportConfigToFusion(parsed);
+  const exportedMovie = exported.widgets[0];
+  const exportedSeries = exported.widgets[1];
+  assert.equal(exportedMovie?.type, 'row.classic');
+  assert.equal(exportedSeries?.type, 'row.classic');
+  if (exportedMovie?.type !== 'row.classic' || exportedSeries?.type !== 'row.classic') {
+    throw new Error('Expected classic row exports.');
+  }
+  if (exportedMovie.dataSource.kind !== 'addonCatalog' || exportedSeries.dataSource.kind !== 'addonCatalog') {
+    throw new Error('Expected addon catalog exports.');
+  }
+  assert.equal(exportedMovie.dataSource.payload.catalogId, 'movie::custom.cloud_fortheweak_stremthru_list.Movies.st_list_mdblist_87667');
+  assert.equal(exportedMovie.dataSource.payload.type, 'movie');
+  assert.equal(exportedSeries.dataSource.payload.catalogId, 'series::custom.cloud_fortheweak_stremthru_list.Shows.st_list_mdblist_88434');
+  assert.equal(exportedSeries.dataSource.payload.type, 'series');
+});
+
 test('parseManifest preserves manifest metadata for unified catalogs', () => {
   const parsed = parseManifest({
     catalogs: [
